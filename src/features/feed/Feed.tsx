@@ -18,6 +18,7 @@ export const Feed = () => {
     skipPollingIfUnfocused: true,
   });
   const userId = useAppSelector(selectCurrentUserId);
+  const hasError = !!error;
 
   // Front load the userInformation so we can access messages quickly
   const { data: userInformation, isLoading: userInfoLoading } =
@@ -35,8 +36,8 @@ export const Feed = () => {
   return (
     <div className={styles.feed}>
       {stillLoading && <CircularProgress />}
-      {error && (
-        <DarbeComms isError={!!error} isSuccess={!!data} contentType="feed" />
+      {hasError && (
+        <DarbeComms isError={hasError} isSuccess={!!data} contentType="feed" />
       )}
       {data &&
         data.map((post) => (

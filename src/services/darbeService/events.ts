@@ -390,6 +390,10 @@ export const getEventDetails = async (eventId: string): Promise<EventsState> => 
 export const createEvent = async (newEvent: CreateEvent): Promise<SimpleEventState> => {
   const userId = await ensureUserId();
   const eventOwnerId = newEvent.eventOwner || userId;
+  const eventDate =
+    typeof newEvent.eventDate === "string"
+      ? newEvent.eventDate
+      : newEvent.eventDate.toISOString().slice(0, 10);
 
   const { data: event, error } = await supabase
     .from("events")
@@ -397,7 +401,7 @@ export const createEvent = async (newEvent: CreateEvent): Promise<SimpleEventSta
       event_owner_id: eventOwnerId,
       event_name: newEvent.eventName,
       event_description: newEvent.eventDescription,
-      event_date: newEvent.eventDate,
+      event_date: eventDate,
       start_time: decimalToTimeString(newEvent.startTime),
       end_time: decimalToTimeString(newEvent.endTime),
       is_repeating: newEvent.isRepeating ?? false,
@@ -579,7 +583,7 @@ export const getSignedUpEvents = async (
       event: eventMap.get(signup.event_id) as ShortEventState,
       signedUpUser,
       eventActionTimeStamp: signup.event_action_timestamp,
-      status: signup.status,
+      status: signup.status as "volunteered" | "confirmed" | "passed",
       signupCount: signupCountMap.get(signup.event_id) ?? 0,
     }));
 };

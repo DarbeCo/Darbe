@@ -26,7 +26,7 @@ const mapNotification = (
     id: string;
     recipient_user_id: string;
     sender_user_id: string;
-    content_type: Notification["contentType"];
+    content_type: string;
     content_type_id: string;
     created_at: string;
     read: boolean;
@@ -41,7 +41,7 @@ const mapNotification = (
   recipientUserId: recipientProfile
     ? mapProfileToSimpleUserInfo(recipientProfile)
     : fallbackSimpleUser(row.recipient_user_id),
-  contentType: row.content_type,
+  contentType: row.content_type as Notification["contentType"],
   contentTypeId: row.content_type_id,
   createdAt: row.created_at,
   read: row.read,
