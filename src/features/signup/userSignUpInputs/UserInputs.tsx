@@ -24,6 +24,7 @@ interface UserInputsProps {
   updateAvailabilityCheckbox: (e: React.ChangeEvent<HTMLInputElement>) => void;
   updateAvailabilityData: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   markError: (hasError: boolean) => void;
+  emailAvailabilityError?: string | null;
 }
 
 export const UserInputs = ({
@@ -35,6 +36,7 @@ export const UserInputs = ({
   updateAvailabilityCheckbox,
   updateAvailabilityData,
   markError,
+  emailAvailabilityError,
 }: UserInputsProps) => {
   const [errors, setErrors] = useState({
     email: false,
@@ -111,9 +113,13 @@ export const UserInputs = ({
       <Inputs
         key={`${step}-email`}
         label="Email"
-        error={errors.email}
+        error={errors.email || !!emailAvailabilityError}
         value={data.email}
-        errorHelperText="Please enter a valid email address"
+        errorHelperText={
+          errors.email
+            ? "Please enter a valid email address"
+            : emailAvailabilityError ?? ""
+        }
         darbeInputType="standardInput"
         handleChange={handleChange}
         name="email"

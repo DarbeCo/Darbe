@@ -9,7 +9,10 @@ import { SignUpSteps } from "./SignUpSteps";
 import { SignUpState } from "./types";
 import { useAppDispatch } from "../../services/hooks";
 import { setUser } from "../users/userSlice";
-import { useSubmitSignUpMutation } from "../../services/api/endpoints/signup/signup.api";
+import {
+  useLazyCheckEmailAvailabilityQuery,
+  useSubmitSignUpMutation,
+} from "../../services/api/endpoints/signup/signup.api";
 
 import styles from "./styles/signUpPage.module.css";
 
@@ -72,6 +75,11 @@ export const SignUpForms = () => {
   const [step, setStep] = useState(1);
   const [signUpData, setSignUpData] = useState<SignUpState>(INITIAL_STATE);
   const [submitSignUp] = useSubmitSignUpMutation();
+  const [checkEmailAvailability] = useLazyCheckEmailAvailabilityQuery();
+  const [emailAvailabilityError, setEmailAvailabilityError] = useState<string | null>(
+    null
+  );
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -91,6 +99,8 @@ export const SignUpForms = () => {
     setSignUpStarted(false);
     setSignUpData(INITIAL_STATE);
     setStep(1);
+    setEmailAvailabilityError(null);
+    setIsCheckingEmail(false);
   };
 
   const handleGoBack = () => {
@@ -100,7 +110,35 @@ export const SignUpForms = () => {
     }
   };
 
-  const handleGoNext = () => {
+  const handleGoNext = async () => {
+    if (step === 2) {
+      const emailToCheck = signUpData.email.trim();
+      if (!emailToCheck) {
+        setEmailAvailabilityError("Please enter a valid email address.");
+        return;
+      }
+
+      setIsCheckingEmail(true);
+      try {
+        const result = await checkEmailAvailability(emailToCheck).unwrap();
+        if (!result.available) {
+          setEmailAvailabilityError(
+            "An account with this email already exists. Please log in."
+          );
+          return;
+        }
+        setEmailAvailabilityError(null);
+      } catch (error) {
+        console.error(error);
+        setEmailAvailabilityError(
+          "Unable to verify email availability. Please try again."
+        );
+        return;
+      } finally {
+        setIsCheckingEmail(false);
+      }
+    }
+
     setStep((state) => state + 1);
     if (signUpData.userType === "individual" && step === 5) {
       submitSignUpData();
@@ -141,6 +179,12 @@ export const SignUpForms = () => {
     setErrorFound(hasError);
   };
 
+  const clearEmailAvailabilityError = () => {
+    if (emailAvailabilityError) {
+      setEmailAvailabilityError(null);
+    }
+  };
+
   return (
     <div className={styles.signUpFormArea}>
       {!signUpStarted && (
@@ -158,6 +202,8 @@ export const SignUpForms = () => {
             entityType={signUpData.userType}
             handleChange={setSignUpData}
             markError={markError}
+            emailAvailabilityError={emailAvailabilityError}
+            clearEmailAvailabilityError={clearEmailAvailabilityError}
           />
           <div className={styles.signUpButtonArea}>
             <DarbeButton
@@ -168,7 +214,7 @@ export const SignUpForms = () => {
             <DarbeButton
               buttonText={buttonText}
               onClick={handleGoNext}
-              isDisabled={errorFound}
+              isDisabled={errorFound || !!emailAvailabilityError || isCheckingEmail}
               darbeButtonType="primaryButton"
             />
           </div>

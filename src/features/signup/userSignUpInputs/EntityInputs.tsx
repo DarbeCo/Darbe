@@ -19,6 +19,7 @@ interface EntityInputsProps {
   updateFormData: (e: React.ChangeEvent<HTMLInputElement>) => void;
   updateCauseData: (evt: React.MouseEvent<HTMLButtonElement>) => void;
   markError: (hasError: boolean) => void;
+  emailAvailabilityError?: string | null;
 }
 
 export const EntityInputs = ({
@@ -28,6 +29,7 @@ export const EntityInputs = ({
   updateFormData,
   updateCauseData,
   markError,
+  emailAvailabilityError,
 }: EntityInputsProps) => {
   const [errors, setErrors] = useState({
     email: false,
@@ -115,9 +117,13 @@ export const EntityInputs = ({
       <Inputs
         key={`${step}-email`}
         label="Email"
-        error={errors.email}
+        error={errors.email || !!emailAvailabilityError}
         value={data.email}
-        errorHelperText="Please enter a valid email address"
+        errorHelperText={
+          errors.email
+            ? "Please enter a valid email address"
+            : emailAvailabilityError ?? ""
+        }
         darbeInputType="standardInput"
         handleChange={handleChange}
         name="email"

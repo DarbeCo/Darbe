@@ -12,6 +12,8 @@ interface SignUpInputsProps {
   data: SignUpState;
   handleChange: Dispatch<SetStateAction<SignUpState>>;
   markError: (hasError: boolean) => void;
+  emailAvailabilityError?: string | null;
+  clearEmailAvailabilityError: () => void;
 }
 
 export const SignUpInputs = ({
@@ -20,10 +22,15 @@ export const SignUpInputs = ({
   entityType,
   handleChange,
   markError,
+  emailAvailabilityError,
+  clearEmailAvailabilityError,
 }: SignUpInputsProps) => {
   const updateFormData = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     handleChange((prevState) => ({ ...prevState, [name]: value }));
+    if (name === "email") {
+      clearEmailAvailabilityError();
+    }
   };
 
   const updateCauseData = (evt: React.MouseEvent<HTMLButtonElement>) => {
@@ -107,6 +114,7 @@ export const SignUpInputs = ({
           updateAvailabilityData={updateAvailabilityData}
           updateAvailabilityCheckbox={updateAvailabilityCheckbox}
           markError={markError}
+          emailAvailabilityError={emailAvailabilityError}
         />
       ) : (
         <EntityInputs
@@ -116,6 +124,7 @@ export const SignUpInputs = ({
           updateFormData={updateFormData}
           updateCauseData={updateCauseData}
           markError={markError}
+          emailAvailabilityError={emailAvailabilityError}
         />
       )}
     </div>
