@@ -1,0 +1,106 @@
+.text {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 16.41px;
+  color: #000;
+}
+
+.whiteBoldText {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 16.41px;
+  color: #fff;
+}
+
+.smallTimeStamp {
+}
+
+.nameHeader {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32.68px;
+  color: #263238;
+  padding-top: 30px;
+}
+
+.header {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32.68px;
+  color: #000;
+}
+
+.tagline {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 19.07px;
+  color: #263238;
+}
+
+.informational {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 19.07px;
+  color: #000000;
+}
+
+.grayText {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16.34px;
+  color: #717070;
+}
+
+.locationSmall {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16.34px;
+  color: #263238;
+}
+
+.locationRegular {
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 21.79px;
+  text-align: left;
+  color: #000000;
+}
+
+.tabs {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 21.79px;
+  text-align: left;
+  color: #000000;
+  cursor: pointer;
+}
+
+.entityTitleSmall {
+}
+
+.blueTextSmall {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16.34px;
+  color: #2c77e7;
+}
+
+.blueTextNormal {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 21.79px;
+  color: #2c77e7;
+}
+
+.boldTextSmall {
+}
+
+.greenTextSmall {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16.34px;
+  color: #088f26;
+}

@@ -1,0 +1,17 @@
+.dropDown {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
+  row-gap: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  width: 100%;
+}
+
+.rosterDropdown {
+  width: 200px;
+  border-radius: 8px;
+  margin: 8px;
+  background-color: #263238;
+}

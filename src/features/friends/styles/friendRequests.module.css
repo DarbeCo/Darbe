@@ -1,0 +1,45 @@
+
+.friendsListCard {
+    padding: .5em 1em 1em 1em !important;
+    height: calc(100vh - 150px);
+    overflow: auto !important;
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.friendRequestCardContent {
+    padding: 1em 0 3em 0 !important;
+}
+
+.friendRequestCardHeader {
+    font-size: 20px;
+    font-weight: 700;
+    text-align: left;
+    border-bottom: 1px #EAEAEA solid;
+    padding: .5em 0 .5em 0 !important;
+}
+
+.friendCardContentDiv {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1em;
+    border-bottom: 1px solid #D8D8D8;
+    padding-bottom: 1em;
+}
+
+.friendRequestsButton {
+    display: flex;
+    justify-content: space-evenly;
+    max-width: 65px;
+    width: 100%;
+}
+
+.acceptFriendRequestIcon {
+    color: #1976d2;
+}
+
+.denyFriendRequestIcon {
+    color: #FF0000
+}

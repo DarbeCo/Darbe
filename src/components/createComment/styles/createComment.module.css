@@ -1,0 +1,24 @@
+.createCommentContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  row-gap: 10px;
+  align-items: flex-end;
+  width: 100%;
+}
+
+.commentEntryArea {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
+.darbeCommentActions {
+  display: flex;
+  flex-direction: row;
+  column-gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  padding-bottom: 10px;
+}

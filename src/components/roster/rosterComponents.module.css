@@ -1,0 +1,64 @@
+@media (min-width: 250px) and (max-width: 1260px) {
+  .organizationFollowers {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-height: 200px;
+    overflow: auto;
+  }
+
+  .rosterMembers {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-height: 200px;
+    overflow: auto;
+  }
+
+  .rosterRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .createRosterContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .stepOneContent {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .stepTwoContent {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .modalFooter {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+  }
+
+  .organizationFollowers {
+    width: 100%;
+  }
+
+  .rosterMembers {
+    width: 100%;
+  }
+}

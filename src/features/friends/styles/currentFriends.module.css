@@ -1,0 +1,36 @@
+
+
+.currentFriendCardContent {
+    padding: 1em 0 3em 0 !important;
+}
+
+.friendCardHeader {
+    font-size: 20px;
+    font-weight: 700;
+    text-align: left;
+    border-bottom: 1px #EAEAEA solid;
+    padding: .5em 0 .5em 0 !important;
+}
+
+.currentFriendCardContentDiv {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1em;
+    border-bottom: 1px solid #D8D8D8;
+    padding-bottom: 1em;
+}
+
+.currentFriendButton {
+    display: flex;
+    justify-content: flex-end;
+    max-width: 65px;
+    width: 100%;
+}
+
+.removeCurrentFriendIcon {
+    color: #FF0000;
+    margin-right: .25em;
+    &:hover {
+        cursor: pointer;
+    }
+}

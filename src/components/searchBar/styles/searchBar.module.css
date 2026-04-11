@@ -1,0 +1,65 @@
+.searchBarContainer {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  column-gap: 10px;
+  width: 100%;
+  background-color: #fff;
+}
+
+.searchInputBar {
+  height: 32px;
+  border: 1px solid #263238;
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+
+.searchInputBar input {
+  font-size: 18px;
+  padding-left: 5px;
+}
+
+.searchInputArea {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  column-gap: 10px;
+  width: 100%;
+  position: relative;
+}
+
+.searchResults {
+  width: 100%;
+  background-color: #fff;
+  border: 1px solid #263238;
+  border-radius: 4px;
+  z-index: 5;
+  max-height: 300px;
+  overflow-y: auto;
+
+  /* This keeps the results from increasing the height of the input */
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /*  pop effect */
+}
+
+.searchResultItem {
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+  align-items: center;
+  padding: 8px;
+}
+
+.searchResultInfo {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
+  row-gap: 2px;
+  cursor: pointer;
+}

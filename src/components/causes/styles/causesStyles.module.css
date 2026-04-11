@@ -1,0 +1,32 @@
+.causesDisplay {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  row-gap: 20px;
+  align-items: center;
+  width: 100%;
+}
+
+.causesContainer {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-self: center;
+  column-gap: 15px;
+  row-gap: 10px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.causesTitle {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 22px;
+  text-align: center;
+}
+
+.blueText {
+  color: #2c77e7;
+}

@@ -1,0 +1,26 @@
+/* Global properties should live here for the whole page, IE fonts, etc */
+body {
+  margin: 0;
+  font-family: "Open Sans", sans-serif;
+  color: #000;
+}
+
+.paddingLeft {
+  padding-left: 16px;
+}
+
+.paddingRight {
+  padding-right: 16px;
+}
+
+.paddingTop {
+  padding-top: 16px;
+}
+
+.paddingBottom {
+  padding-bottom: 16px;
+}
+
+.clickable {
+  cursor: pointer;
+}

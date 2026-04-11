@@ -1,0 +1,45 @@
+.volunteerCarouselCards {
+  height: 180px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0px;
+  background-color: #fff;
+}
+
+.volunteerStatCard {
+  width: 320px;
+  height: 250px;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.volunteerStatCardTitle {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 10px;
+}
+
+.volunteerStatsTitle {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 30px;
+}
+
+@media (min-width: 560px) and (max-width: 1260px) {
+  .volunteerCarouselCards {
+    height: 180px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 0px;
+    background-color: #faf9f9;
+  }
+}

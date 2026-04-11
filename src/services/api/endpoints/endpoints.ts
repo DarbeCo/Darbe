@@ -1,0 +1,110 @@
+export const ENDPOINTS = {
+  CAUSES: {
+    GET_ALL: "causes/",
+  },
+  COMMENTS: {
+    GET_POST_COMMENTS: (postId: string) => `comments/${postId}`,
+    SUBMIT_COMMENT_LIKE: (commentId: string) => `comments/likes/${commentId}`,
+    SUBMIT_COMMENT: "comments/",
+    GET_COMMENT_REPLIES: (commentId: string) => `comments/replies/${commentId}`,
+    SUBMIT_REPLY: (commentId: string) => `comments/reply/${commentId}`,
+    DELETE_COMMENT: (commentId: string) => `comments/${commentId}`,
+    DELETE_REPLY: (replyId: string) => `comments/reply/${replyId}`,
+  },
+  EVENTS: {
+    CREATE_EVENT: "events/",
+    GET_EVENTS: "events/",
+    GET_EVENT_DETAILS: (eventId: string) => `events/${eventId}`,
+    DELETE_EVENT: (eventId: string) => `events/${eventId}`,
+    VOLUNTEER: (eventId: string) => `events/${eventId}/volunteer`,
+    PASS: (eventId: string) => `events/${eventId}/pass`,
+    SIGNED_UP: "events/signed-up",
+    VOLUNTEER_MATCHES: "events/volunteer-matches",
+  },
+  FEED: {
+    GET_USER_FEED: "feed",
+    SUBMIT_POST_LIKE: (postId: string) => `posts/${postId}/like`,
+  },
+  FRIENDS: {
+    GET_FRIEND_REQUESTS: "friends/requests",
+    GET_SENT_FRIEND_REQUESTS: "friends/requests/sent",
+    GET_FRIENDS: (userId: string) => `friends/${userId}`,
+    GET_MUTUAL_FRIENDS: (userId: string) => `friends/${userId}/mutual`,
+    SEND_FRIEND_REQUEST: (friendId: string) => `friends/${friendId}/requests`,
+    DELETE_FRIEND_REQUEST: (friendId: string) => `friends/${friendId}/requests`,
+    DELETE_FRIEND: (friendId: string) => `/friends/${friendId}/friends`,
+    ACCEPT_FRIEND_REQUEST: (friendId: string) =>
+      `friends/${friendId}/requests/accept`,
+    DENY_FRIEND_REQUEST: (friendId: string) =>
+      `friends/${friendId}/requests/deny`,
+    FOLLOW_ENTITY: (entityId: string) => `friends/follow/${entityId}`,
+    GET_FOLLOWERS: (userId: string) => `friends/followers/${userId}`,
+    GET_SUGGESTED_FRIENDS: "friends/suggested",
+  },
+  IMPACT: {
+    USER_IMPACT: (userId: string) => `impact/${userId}`,
+  },
+  LOGIN: {
+    LOGIN: "login",
+  },
+  LOGOUT: {
+    LOGOUT: "logout",
+  },
+  MESSAGES: {
+    GET_MESSAGES: "messages",
+    CREATE_MESSAGE: "messages",
+    DELETE_MESSAGE_THREAD: (messageId: string) => `messages/${messageId}`,
+    MARK_MESSAGE_READ: (messageId: string) => `messages/${messageId}/markRead`,
+    GET_MESSAGE_THREAD: (friendId: string) => `messages/threads/${friendId}`,
+  },
+  NOTIFICATIONS: {
+    GET_NOTIFICATIONS: (userId: string) => `notifications/${userId}`,
+    GET_NOTIFICATION_COUNT: `notifications/count`,
+    MARK_NOTIFICATIONS_READ: "notifications/read",
+  },
+  POSTS: {
+    SUBMIT_POST: "posts",
+    GET_USER_POSTS: (userId: string) => `posts/users/${userId}`,
+    DELETE_POST: (postId: string) => `posts/${postId}`,
+    GET_POST: (postId: string) => `posts/${postId}`,
+  },
+  PROFILES: {
+    GET_DOCUMENTS: "profiles/documents",
+    UPLOAD_DOCUMENT: (documentCategory: string) => `profiles/documents/${documentCategory}`,
+    GET_SIMPLE_USER_INFO: (userId: string | undefined) => `profiles/${userId}/simple`,
+    GET_USER_PROFILE: (userId: string) => `profiles/${userId}`,
+    UPDATE_USER_PROFILE: (userId: string | undefined) => `profiles/${userId}`,
+    UPDATE_ENTITY_PROFILE: (userId: string | undefined) =>
+      `profiles/entity/${userId}`,
+    REMOVE_USER_ORGANIZATION: (organizationId: string) =>
+      `profiles/organizations/${organizationId}`,
+    REMOVE_USER_SKILL: (skillName: string) => `profiles/skills/${skillName}`,
+    REMOVE_USER_LICENSE: (licenseId: string) => `profiles/licenses/${licenseId}`,
+    GET_MUTUAL_CAUSES: (userId: string) => `profiles/causes/${userId}/mutual`,
+    GET_FOLLOWERS: (userId: string) => `profiles/followers/${userId}`,
+    GET_DONORS_AND_STAFF: (userId: string) => `profiles/${userId}/donors-and-staff`,
+    ADD_TO_DONORS: (userId: string) => `profiles/donors/${userId}`,
+    REMOVE_FROM_DONORS: (userId: string) => `profiles/donors/${userId}`,
+    ADD_TO_STAFF: (userId: string) => `profiles/staff/${userId}`,
+    REMOVE_FROM_STAFF: (userId: string) => `profiles/staff/${userId}`,
+    DELETE_DOCUMENT: (documentId: string) => `profiles/documents/${documentId}`,
+  },
+  ROSTER: {
+    GET_ENTITY_ROSTERS: "roster/",
+    CREATE_ROSTER: "roster/",
+    PROMOTE_USER_TO_ADMIN: "roster/promote-admin",
+    DEMOTE_USER_FROM_ADMIN: "roster/demote-admin",
+    ADD_TO_ROSTER: "roster/add-to-roster",
+    REMOVE_FROM_ROSTER: "roster/remove-from-roster",
+    GET_ROSTER_ADMINS: "roster/admins",
+    GET_ALL_ROSTER_MEMBERS: "roster/members",
+    GET_ROSTER_MEMBERS: (rosterId: string) => `roster/members/${rosterId}`,
+  },
+  SEARCH: {
+    SEARCH: (searchText: string) => `search/${searchText}`,
+    ACTIVITY: (userId: string) => `search/${userId}/activity`,
+  },
+  SIGNUP: {
+    SIGNUP: "signup",
+  },
+};

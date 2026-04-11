@@ -1,0 +1,130 @@
+.feedCard {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: auto;
+  border-bottom: 8px solid #d8d8d8;
+}
+
+.postHeader {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  align-items: flex-start;
+  padding: 15px 12px 10px 12px;
+}
+.postContent {
+  display: flex;
+  flex-direction: column;
+  padding: 15px 12px 0px 12px;
+}
+
+.postText {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #263238;
+  word-break: break-word;
+  padding-left: 10px;
+}
+
+.postImages {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Leave empty for now, images get full height and not full width idk */
+.postImage {
+}
+
+.postButtons {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  row-gap: 15px;
+  padding: 15px 22px 15px 22px;
+}
+
+.postStats {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 5px;
+}
+
+.postStat {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 21px;
+  color: #717070;
+}
+
+.likeCount {
+  display: flex;
+  flex-direction: row;
+  column-gap: 8px;
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background-color: #263238;
+}
+
+.postActions {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@media (min-width: 560px) and (max-width: 1260px) {
+  .feedCard {
+    display: flex;
+    flex-direction: column;
+    width: 90%;
+    height: auto;
+    border: 1px solid #eaeaea;
+    border-radius: 10px;
+    max-width: 700px;
+    background-color: #fff;
+  }
+
+  .postImages {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .postImage {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+@media (min-width: 1260px) {
+  .postImage {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+  }
+
+  .feedCard {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    border: 1px solid #eaeaea;
+    border-radius: 10px;
+    background-color: #fff;
+    width: 100%;
+    max-width: 700px;
+  }
+}

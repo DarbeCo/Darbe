@@ -1,0 +1,22 @@
+@media (min-width: 250px) and (max-width: 560px) {
+  .notificationCard {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: center;
+    background: #fff;
+    width: 100%;
+  }
+}
+
+@media (min-width: 560px) {
+  .notificationCard {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: center;
+    background: #fff;
+    width: 100%;
+    border-radius: 8px;
+  }
+}

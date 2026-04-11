@@ -1,0 +1,21 @@
+.simpleLinksRow {
+  display: flex;
+  flex-direction: row;
+  column-gap: 20px;
+  row-gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.simpleLinksColumn {
+  display: flex;
+  flex-direction: column;
+  row-gap: 20px;
+  justify-content: center;
+}
+
+.simpleLink {
+  font-size: 16px;
+  color: #000000;
+  text-decoration: none;
+}

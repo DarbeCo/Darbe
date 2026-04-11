@@ -1,0 +1,16 @@
+.expanderContainer {
+  display: flex;
+  flex-direction: column;
+  justify-items: end;
+  row-gap: 8px;
+  width: 100%;
+}
+
+.showMoreButton {
+  font-weight: 700;
+  align-self: flex-end;
+  cursor: pointer;
+  color: #2c77e7;
+  position: relative;
+  right: 20px;
+}

@@ -1,0 +1,7 @@
+.darbeInputs {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
+  width: 95%;
+}

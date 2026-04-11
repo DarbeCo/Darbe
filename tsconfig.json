@@ -1,0 +1,13 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+  "compilerOptions": {
+    // TODO: did this work?
+    // REMOVE THESE BEFORE LAUNCH
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  }
+}

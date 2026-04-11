@@ -1,0 +1,28 @@
+@media (min-width: 250px) {
+  .eventDisplay {
+    display: flex;
+    flex-direction: column;
+    width: 96%;
+    padding-inline: 5px;
+    /* This is needed due to the bad design choice of a fixed bottom navbar on mobile */
+    padding-bottom: 60px;
+  }
+
+  .darbeEventCards {
+    display: flex;
+    flex-direction: column;
+    row-gap: 20px;
+    width: 100%;
+    /* This is needed due to the bad design choice of a fixed bottom navbar on mobile */
+    padding-bottom: 80px;
+  }
+
+  .eventFilterButtonContainer {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    background-color: #ffffff;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+}

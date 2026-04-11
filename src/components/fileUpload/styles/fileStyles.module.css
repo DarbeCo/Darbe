@@ -1,0 +1,52 @@
+.filePreview {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  column-gap: 10px;
+  row-gap: 10px;
+}
+
+.pictureImagePreview {
+  max-height: 375px;
+  width: 345px;
+  border-radius: 50%;
+}
+
+.imagePreview {
+  height: 375px;
+  width: 345px;
+  border-radius: 50%;
+}
+
+.coverPhotoPreview {
+  width: 100%;
+  height: 125px;
+}
+
+.fileImagePreview {
+  display: flex;
+  align-items: flex-start;
+}
+
+.removeFileButton {
+  position: relative;
+  right: 25px;
+  bottom: 15px;
+}
+
+#fileImagePreview {
+  height: 75px;
+  width: 75px;
+}
+
+#eventPhotoPreview {
+  width: 100%;
+  height: 204px;
+  border-radius: 8px;
+}
+
+.eventPhotoPreview {
+  width: 100%;
+  height: 204px;
+  border-radius: 8px;
+}

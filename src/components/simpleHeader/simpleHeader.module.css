@@ -1,0 +1,20 @@
+.simpleHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 90px;
+  background-color: #fff;
+}
+
+.formHeader {
+  min-width: 375px;
+  width: 90%;
+  height: 40px;
+  border-radius: 8px;
+  background: #263238;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}

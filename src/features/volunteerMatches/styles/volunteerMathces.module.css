@@ -1,0 +1,74 @@
+@media (min-width: 250px) and (max-width: 560px) {
+  .volunteerMatchesContainer {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background: #d8d8d8;
+    /* For mobile bar covering the card */
+    padding-bottom: 60px;
+  }
+
+  .volunteerCard {
+    width: 90%;
+    padding: 16px;
+    margin: 10px auto;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    gap: 15px;
+    background: #fff;
+  }
+
+  .volunteerImpactCard {
+    border: 1px solid #d8d8d8;
+    padding: 16px;
+  }
+
+  .volunteerImpactDetail {
+    display: flex;
+    flex-direction: row;
+    column-gap: 35px;
+    justify-content: start;
+  }
+}
+
+@media (min-width: 560px) {
+  .volunteerMatchesContainer {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background: #d8d8d8;
+    /* For mobile bar covering the card */
+    padding-bottom: 60px;
+  }
+
+  .volunteerCard {
+    width: 90%;
+    padding: 16px;
+    margin: 10px auto;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    gap: 15px;
+    background: #fff;
+  }
+
+  .volunteerImpactCard {
+    border: 1px solid #d8d8d8;
+    padding: 16px;
+  }
+
+  .volunteerContact {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .volunteerImpactDetail {
+    display: flex;
+    flex-direction: row;
+    column-gap: 35px;
+    justify-content: start;
+  }
+}

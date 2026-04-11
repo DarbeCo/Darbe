@@ -1,0 +1,98 @@
+.feedCardCommentSection {
+  display: flex;
+  flex-direction: column;
+  row-gap: 16px;
+  padding: 15px 22px 15px 22px;
+}
+
+.commentCard {
+  display: flex;
+  flex-direction: row;
+  column-gap: 8px;
+  justify-content: start;
+  align-items: flex-start;
+}
+
+.commentCardArea {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: auto;
+}
+
+.commentCardContainer {
+  background-color: #eaeaea;
+  padding: 8px 8px;
+  border-radius: 4px;
+}
+
+.commentCardHeader {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.commentCardUserName {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 14.06px;
+  color: #000000;
+}
+
+.commentCardText {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 14.06px;
+  color: #000;
+}
+
+.commentCardButtons {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 5px;
+  width: 100%;
+}
+
+.commentLikesArea {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 2px;
+}
+
+.likeCount {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 5px;
+}
+
+.cardButtonText {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 21px;
+  color: #666666;
+}
+
+.commentStat {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 21px;
+  color: #717070;
+}
+
+.cardButtonDate {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 21px;
+  color: #a9a9a9;
+}
+
+.cardButtonDot {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+}

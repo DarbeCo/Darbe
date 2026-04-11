@@ -1,0 +1,49 @@
+.avatarDefault {
+  height: 34px;
+  width: 34px;
+}
+
+.smallAvatar {
+  height: 32px;
+  width: 32px;
+}
+
+.largeAvatar {
+  height: 40px;
+  width: 40px;
+}
+
+.avatarUserDiv {
+  display: flex;
+  &:hover {
+    cursor:pointer ;
+  }
+}
+
+.avatarUserInfo {
+  display: flex;
+  flex-direction: column;
+  row-gap: 5px;
+  align-items: start;
+  margin: auto;
+}
+
+.avatarUserName {
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  display: flex;
+  word-wrap: normal;
+  padding-left: 10px;
+  color: black;
+  max-width: 250px;
+  text-align: start;
+}
+
+.avatarTimeStamp {
+  font-size: 12px;
+  font-weight: 400;
+  color: #717070;
+  text-align: center;
+  padding-left: 10px;
+}

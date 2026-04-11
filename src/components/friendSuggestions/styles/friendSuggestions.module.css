@@ -1,0 +1,121 @@
+@media (min-width: 250px) and (max-width: 1260px) {
+  .friendSuggestions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    row-gap: 20px;
+    width: 100%;
+    height: auto;
+    background-color: #fff;
+  }
+
+  .friendSuggestionsHeader {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: start;
+    width: 100%;
+  }
+
+  .suggestedFriendCard {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+  }
+}
+
+@media (min-width: 1260px) {
+  .friendSuggestions {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    width: 100%;
+    border: 1px solid #eaeaea;
+    border-radius: 8px;
+    row-gap: 5px;
+    background-color: #fff;
+  }
+
+  .friendSuggestionsHeader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 10px;
+  }
+
+  .friendSuggestionsTitle {
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .addFriendCard {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 10px 10px;
+    column-gap: 10px;
+  }
+
+  .addFriendCardInfo {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .addFriendCardName {
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .addFriendCardLocation {
+    font-size: 16px;
+    font-weight: 400;
+  }
+
+  .suggestedFriendCard {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+    padding-bottom: .75em;
+    padding-top: .75em;
+    border-bottom: 1px solid #EAEAEA;
+  }
+
+  .addFriendCardAddIcon {
+    display: 'flex';
+    align-items: 'center';
+    margin-top: .5em;
+    &:hover {
+      cursor: pointer;
+    }
+  }
+  
+  .friendSuggestionCardHeader {
+    font-size: 20px;
+    font-weight: 700;
+    text-align: left;
+    border-bottom: 1px #EAEAEA solid;
+    padding: .75em !important;
+
+    .refreshTwoTone {
+      
+      &:hover {
+        cursor: pointer;
+      }
+    }
+  }
+
+  .friendSuggestionsCard {
+    max-height: 900px;
+    padding: .5em;
+    overflow-y: auto !important;
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+  
+}
+
