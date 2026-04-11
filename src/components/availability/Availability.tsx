@@ -1,4 +1,5 @@
 import { type Availability as StartingAvailabilityState } from "../../services/types/availability.types";
+import { useCallback, useState } from "react";
 import { capitalizeFirstLetter } from "../../utils/CommonFunctions";
 import { CheckBox } from "../checkbox/Checkbox";
 import { Dropdown } from "../dropdowns/Dropdown";
@@ -18,6 +19,7 @@ export const Availability = ({
   startingAvailability,
 }: AvailabilityProps) => {
   const hours = DropdownTypes({ type: "hours" });
+  const [clearTokens, setClearTokens] = useState<Record<string, number>>({});
   const daysInWeek = [
     "monday",
     "tuesday",
@@ -28,6 +30,18 @@ export const Availability = ({
     "sunday",
   ];
 
+  const emitAvailabilityChange = useCallback(
+    (day: string, category: "start" | "end", value: string) => {
+      onAvailabilityChange({
+        target: {
+          name: `availability ${day} ${category}`,
+          value,
+        },
+      } as React.ChangeEvent<HTMLSelectElement>);
+    },
+    [onAvailabilityChange]
+  );
+
   const availabilityDays = daysInWeek.map((day) => {
     const isDayOpen =
       startingAvailability?.[day as keyof StartingAvailabilityState]?.open ??
@@ -37,6 +51,12 @@ export const Availability = ({
       startingAvailability?.[day as keyof StartingAvailabilityState]?.start;
     const endingHour =
       startingAvailability?.[day as keyof StartingAvailabilityState]?.end;
+    const clearKey = clearTokens[day] ?? 0;
+    const handleClearTimes = () => {
+      emitAvailabilityChange(day, "start", "");
+      emitAvailabilityChange(day, "end", "");
+      setClearTokens((prev) => ({ ...prev, [day]: (prev[day] ?? 0) + 1 }));
+    };
 
     return (
       <div className={styles.availabilityDays} key={day}>
@@ -50,21 +70,38 @@ export const Availability = ({
           />
         </div>
         <div className={styles.availabilityDay}>
-          <Dropdown
-            name={`availability ${day} start`}
-            onChange={onAvailabilityChange}
-            initialValue={startingHour}
-          >
-            {hours()}
-          </Dropdown>
+          <div className={styles.timeDropdown}>
+            <Dropdown
+              key={`${day}-start-${clearKey}`}
+              name={`availability ${day} start`}
+              onChange={onAvailabilityChange}
+              initialValue={startingHour}
+              displayEmpty
+              showClearOption
+            >
+              {hours()}
+            </Dropdown>
+          </div>
           <span className={styles.tinyTo}>to</span>
-          <Dropdown
-            name={`availability ${day} end`}
-            onChange={onAvailabilityChange}
-            initialValue={endingHour}
+          <div className={styles.timeDropdown}>
+            <Dropdown
+              key={`${day}-end-${clearKey}`}
+              name={`availability ${day} end`}
+              onChange={onAvailabilityChange}
+              initialValue={endingHour}
+              displayEmpty
+              showClearOption
+            >
+              {hours()}
+            </Dropdown>
+          </div>
+          <button
+            type="button"
+            className={styles.clearTimesButton}
+            onClick={handleClearTimes}
           >
-            {hours()}
-          </Dropdown>
+            Clear
+          </button>
         </div>
       </div>
     );

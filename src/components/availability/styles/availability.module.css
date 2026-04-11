@@ -30,6 +30,26 @@
   column-gap: 10px;
 }
 
+.timeDropdown {
+  width: 140px;
+  min-width: 140px;
+  flex: 0 0 140px;
+}
+
+.clearTimesButton {
+  background: transparent;
+  border: none;
+  color: #1976d2;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+.clearTimesButton:hover {
+  text-decoration: underline;
+}
+
 .allDay {
   display: flex;
   flex-direction: row;
