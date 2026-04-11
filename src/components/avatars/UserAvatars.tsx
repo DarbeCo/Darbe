@@ -54,11 +54,17 @@ export const UserAvatars = ({
 
   const showCity = useMemo(() => !!(city && zip), [city, zip]);
 
+  const handleClick = useCallback(() => {
+    if (onClick) {
+      onClick();
+      return;
+    }
+
+    handleFriendClick?.(userId);
+  }, [handleFriendClick, onClick, userId]);
+
   return (
-    <div
-      onClick={() => onClick?.() || handleFriendClick?.(userId)}
-      className={styles.avatarUserDiv}
-    >
+    <div onClick={handleClick} className={styles.avatarUserDiv}>
       <Avatar className={styleToUse} alt="user picture" src={profilePicture} />
       <div className={styles.avatarUserInfo}>
         <span className={styles.avatarUserName}>{nameToUse}</span>
