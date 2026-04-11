@@ -15,5 +15,5 @@ const base = currentBranch === 'main' ? '/Darbe/' : '/'
 
 export default defineConfig({
   plugins: [react()],
-  base,
+  base: '/Darbe/',
 })
