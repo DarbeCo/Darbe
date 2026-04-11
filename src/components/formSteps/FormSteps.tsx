@@ -1,3 +1,5 @@
+import { assetUrl } from "../../utils/assetUrl";
+
 interface FormStepsProps {
   step: string;
   formName: string;
@@ -5,7 +7,9 @@ interface FormStepsProps {
 }
 
 export const FormSteps = ({ step, formName, entityType }: FormStepsProps) => {
-  const constructedPath = `/svgs/forms/${entityType}/${formName}/${step}.svg`;
+  const constructedPath = assetUrl(
+    `/svgs/forms/${entityType}/${formName}/${step}.svg`
+  );
   return (
     <img
       src={constructedPath}

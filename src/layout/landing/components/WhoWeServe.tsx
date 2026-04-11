@@ -1,6 +1,7 @@
 import individuals from "/svgs/common/individuals.svg";
 import nonProfits from "/svgs/common/nonProfits.svg";
 import organizations from "/svgs/common/organizations.svg";
+import { assetUrl } from "../../../utils/assetUrl";
 import useScreenWidthHook from "../../../utils/commonHooks/UseScreenWidth";
 
 import styles from "../styles/landingComponents.module.css";
@@ -22,7 +23,7 @@ export const WhoWeServe = () => {
         <>
           <div className={styles.callToActionTypes}>
             <div className={styles.callToActionIndividualHeader}>
-              <img src={individuals} alt="individuals Svg" />
+              <img src={assetUrl(individuals)} alt="individuals Svg" />
             </div>
             <div className={styles.callToActionIndividualDescription}>
               <span className={styles.callToActionDescriptionText}>
@@ -34,7 +35,7 @@ export const WhoWeServe = () => {
           </div>
           <div className={styles.callToActionTypes}>
             <div className={styles.callToActionIndividualHeader}>
-              <img src={nonProfits} alt="Nonprofits Svg" />
+              <img src={assetUrl(nonProfits)} alt="Nonprofits Svg" />
             </div>
             <div className={styles.callToActionIndividualDescription}>
               <span className={styles.callToActionDescriptionText}>
@@ -46,7 +47,7 @@ export const WhoWeServe = () => {
           </div>
           <div className={styles.callToActionTypes}>
             <div className={styles.callToActionIndividualHeader}>
-              <img src={organizations} alt="Organization Svg" />
+              <img src={assetUrl(organizations)} alt="Organization Svg" />
             </div>
             <div className={styles.callToActionIndividualDescription}>
               <span className={styles.callToActionDescriptionText}>
@@ -63,7 +64,7 @@ export const WhoWeServe = () => {
           <div className={styles.desktopAlignment}>
             <div className={styles.callToActionTypes}>
               <div className={styles.callToActionIndividualHeader}>
-                <img src={individuals} alt="individuals Svg" />
+                <img src={assetUrl(individuals)} alt="individuals Svg" />
               </div>
               <div className={styles.callToActionIndividualDescription}>
                 <span className={styles.callToActionDescriptionText}>
@@ -75,7 +76,7 @@ export const WhoWeServe = () => {
             </div>
             <div className={styles.callToActionTypes}>
               <div className={styles.callToActionIndividualHeader}>
-                <img src={nonProfits} alt="Nonprofits Svg" />
+                <img src={assetUrl(nonProfits)} alt="Nonprofits Svg" />
               </div>
               <div className={styles.callToActionIndividualDescription}>
                 <span className={styles.callToActionDescriptionText}>
@@ -87,7 +88,7 @@ export const WhoWeServe = () => {
             </div>
             <div className={styles.callToActionTypes}>
               <div className={styles.callToActionIndividualHeader}>
-                <img src={organizations} alt="Organization Svg" />
+                <img src={assetUrl(organizations)} alt="Organization Svg" />
               </div>
               <div className={styles.callToActionIndividualDescription}>
                 <span className={styles.callToActionDescriptionText}>

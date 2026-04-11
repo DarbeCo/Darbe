@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Menu as MenuIcon } from "@mui/icons-material";
 import { IconButton, Menu, MenuItem } from "@mui/material";
 import darbeLogo from "/svgs/common/darbeLogo.svg";
+import { assetUrl } from "../../../utils/assetUrl";
 import useScreenWidthHook from "../../../utils/commonHooks/UseScreenWidth";
 
 import styles from "../styles/landingComponents.module.css";
@@ -27,7 +28,7 @@ export const LandingNavBar = () => {
 
   return (
     <nav className={styles.landingNavBar}>
-      <img src={darbeLogo} alt="darbeLogo" />
+      <img src={assetUrl(darbeLogo)} alt="darbeLogo" />
       {!isDesktop && (
         <>
           <IconButton onClick={handleClick}>

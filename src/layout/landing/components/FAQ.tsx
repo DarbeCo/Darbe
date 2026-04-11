@@ -3,6 +3,8 @@ import worldLove from "/svgs/common/worldLove.svg";
 import unity from "/svgs/common/unity.svg";
 import worldLocation from "/svgs/common/worldLocation.svg";
 import handShake from "/svgs/common/handShake.svg";
+import { Link } from "react-router-dom";
+import { assetUrl } from "../../../utils/assetUrl";
 import useScreenWidthHook from "../../../utils/commonHooks/UseScreenWidth";
 
 import styles from "../styles/landingComponents.module.css";
@@ -25,7 +27,7 @@ export const FAQ = () => {
         </span>
       </div>
       <div className={reverseClassName}>
-        <img src={hands} alt="hands Svg" />
+        <img src={assetUrl(hands)} alt="hands Svg" />
         <div className={styles.faqQaCard}>
           <div className={styles.faqQuestionText}>
             <span className={styles.faqQRegularText}>
@@ -43,7 +45,7 @@ export const FAQ = () => {
         </div>
       </div>
       <div className={className}>
-        <img src={worldLove} alt="world love Svg" />
+        <img src={assetUrl(worldLove)} alt="world love Svg" />
         <div className={styles.faqQaCard}>
           <div className={styles.faqQuestionText}>
             <span className={styles.faqQRegularText}>
@@ -63,7 +65,7 @@ export const FAQ = () => {
         </div>
       </div>
       <div className={reverseClassName}>
-        <img src={unity} alt="unity Svg" />
+        <img src={assetUrl(unity)} alt="unity Svg" />
         <div className={styles.faqQaCard}>
           <div className={styles.faqQuestionText}>
             <span className={styles.faqQRegularText}>
@@ -74,16 +76,16 @@ export const FAQ = () => {
           <div className={styles.faqQuestionText}>
             <span className={styles.faqAnswerText}>
               <span className={styles.faqQBlueText}>A : </span>
-              For <a href="/signup">Individuals</a> who want to connect with
-              causes they are passionate about around their own schedule to
-              create long lasting impact in their local community.
+              For <Link to="/signup">Individuals</Link> who want to connect
+              with causes they are passionate about around their own schedule
+              to create long lasting impact in their local community.
             </span>
           </div>
           <div className={styles.faqQuestionText}>
             <span className={styles.faqAnswerText}>
               <span className={styles.faqQBlueText}>A : </span>
-              For <a href="/signup">Organizations</a> of all sizes who want to
-              be connected with highly impactful nonprofits on one social
+              For <Link to="/signup">Organizations</Link> of all sizes who want
+              to be connected with highly impactful nonprofits on one social
               networking platform. This allows meaningful engagement with
               members and purposeful impact in their community.
             </span>
@@ -91,7 +93,7 @@ export const FAQ = () => {
         </div>
       </div>
       <div className={className}>
-        <img src={worldLocation} alt="world location Svg" />
+        <img src={assetUrl(worldLocation)} alt="world location Svg" />
         <div className={styles.faqQaCard}>
           <div className={styles.faqQuestionText}>
             <span className={styles.faqQRegularText}>
@@ -110,7 +112,7 @@ export const FAQ = () => {
         </div>
       </div>
       <div className={reverseClassName}>
-        <img src={handShake} alt="handshake Svg" />
+        <img src={assetUrl(handShake)} alt="handshake Svg" />
         <div className={styles.faqQaCard}>
           <div className={styles.faqQuestionText}>
             <span className={styles.faqQRegularText}>

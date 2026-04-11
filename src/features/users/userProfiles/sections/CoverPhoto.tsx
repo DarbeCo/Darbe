@@ -1,5 +1,6 @@
 import { useModal } from "../../../../utils/commonHooks/UseModal";
 import { EditProfileIcon } from "./EditProfileIcon";
+import { assetUrl } from "../../../../utils/assetUrl";
 
 import styles from "../styles/userProfiles.module.css";
 import { PictureModal } from "../../editProfile/editSections/subSections/PIctureModal";
@@ -32,7 +33,7 @@ export const CoverPhoto = ({
   return (
     <div className={styles.coverPhoto}>
       <img
-        src={coverPhoto ?? fallbackCoverPhoto}
+        src={assetUrl(coverPhoto ?? fallbackCoverPhoto)}
         alt={altText}
         className={styles.coverPhotoImage}
       />

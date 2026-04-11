@@ -1,6 +1,7 @@
 import { useModal } from "../../../../utils/commonHooks/UseModal";
 import { PictureModal } from "../../editProfile/editSections/subSections/PIctureModal";
 import { EditProfileIcon } from "./EditProfileIcon";
+import { assetUrl } from "../../../../utils/assetUrl";
 
 import styles from "../styles/userProfiles.module.css";
 
@@ -33,7 +34,7 @@ export const UserProfilePicture = ({
   return (
     <div className={styles.profilePicture}>
       <img
-        src={profilePicture ?? profilePictureFallback}
+        src={assetUrl(profilePicture ?? profilePictureFallback)}
         alt={altText}
         className={styles.profilePictureImage}
       />

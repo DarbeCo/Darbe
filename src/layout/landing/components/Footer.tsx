@@ -1,6 +1,8 @@
 import instagram from "/svgs/common/blueInstagram.svg";
 import facebook from "/svgs/common/blueFacebook.svg";
 import linkedin from "/svgs/common/blueLinkedIn.svg";
+import { Link } from "react-router-dom";
+import { assetUrl } from "../../../utils/assetUrl";
 
 import styles from "../styles/landingComponents.module.css";
 
@@ -9,13 +11,13 @@ export const Footer = () => {
     <div className={styles.landingFooter} id="contactUs">
       <div className={styles.footerSocials}>
         <div className={styles.socialMediaIcon}>
-          <img src={instagram} alt="instagram" />
+          <img src={assetUrl(instagram)} alt="instagram" />
         </div>
         <div className={styles.socialMediaIcon}>
-          <img src={facebook} alt="facebook" />
+          <img src={assetUrl(facebook)} alt="facebook" />
         </div>
         <div className={styles.socialMediaIcon}>
-          <img src={linkedin} alt="linkedin" />
+          <img src={assetUrl(linkedin)} alt="linkedin" />
         </div>
       </div>
       <div className={styles.footerClosingTextArea}>
@@ -31,7 +33,7 @@ export const Footer = () => {
         <span className={styles.footerLegalText}>Copyrights 2024 Darbe</span>
         <span className={styles.footerLegalText}>All Rights Reserved</span>
         <span className={styles.footerLegalText}>
-          <a href="/privacyPolicy">Privacy Policy</a>
+          <Link to="/privacyPolicy">Privacy Policy</Link>
         </span>
       </div>
     </div>

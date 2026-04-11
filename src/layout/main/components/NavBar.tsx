@@ -1,4 +1,5 @@
 import darbeLogo from "/svgs/common/darbeLogo.svg";
+import { assetUrl } from "../../../utils/assetUrl";
 import useScreenWidthHook from "../../../utils/commonHooks/UseScreenWidth";
 import { Notifications } from "../../../components/notification/Notifications";
 import { SearchBar } from "../../../components/searchBar/SearchBar";
@@ -13,14 +14,14 @@ export const NavBar = () => {
     <div className={styles.navBar}>
       {isMobile && (
         <>
-          <img src={darbeLogo} alt="Darbe logo" />
+          <img src={assetUrl(darbeLogo)} alt="Darbe logo" />
           <Notifications />
           <MiniMenu />
         </>
       )}
       {isTablet && (
         <>
-          <img src={darbeLogo} alt="Darbe logo" />
+          <img src={assetUrl(darbeLogo)} alt="Darbe logo" />
           <SearchBar isTabletMode showMessageIcon={false} showAvatar={false} />
           <Notifications />
           <MiniMenu />

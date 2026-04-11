@@ -2,9 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/svgs/common/darbeLogo.svg" />
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%svgs/common/darbeLogo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Darbe</title>
+    <style>
+      :root {
+        --base-url: %BASE_URL%;
+      }
+    </style>
     <script>
       // GitHub Pages SPA fallback: restore the original path from the 404 redirect.
       (function (l) {

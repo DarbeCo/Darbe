@@ -5,7 +5,7 @@
         #2c77e7 34.88%,
         rgba(30, 108, 226, 0.146) 87.49%
       ),
-      url(/images/landingImageBackgroundCTA.png);
+      url(var(--base-url)images/landingImageBackgroundCTA.png);
     background-repeat: no-repeat;
     background-size: cover;
     height: 450px;
@@ -272,7 +272,7 @@
         #2c77e7 34.88%,
         rgba(30, 108, 226, 0.146) 87.49%
       ),
-      url(/images/landingImageBackgroundCTA.png);
+      url(var(--base-url)images/landingImageBackgroundCTA.png);
     background-repeat: no-repeat;
     background-size: cover;
     background-position: 100%;

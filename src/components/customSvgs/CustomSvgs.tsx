@@ -1,3 +1,4 @@
+import { assetUrl } from "../../utils/assetUrl";
 import styles from "./styles/customSvgStyles.module.css";
 
 interface CustomSvgsProps {
@@ -24,5 +25,7 @@ export const CustomSvgs = ({
     extraClass ?? ""
   }`;
 
-  return <img src={svgPath} alt={altText} className={styleToUse} />;
+  return (
+    <img src={assetUrl(svgPath)} alt={altText} className={styleToUse} />
+  );
 };
