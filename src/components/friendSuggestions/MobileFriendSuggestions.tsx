@@ -7,6 +7,7 @@ import { SuggestedFriendState } from "../../features/friends/types";
 import { UserAvatars } from "../avatars/UserAvatars";
 import { Typography } from "../typography/Typography";
 import { PROFILE_ROUTE } from "../../routes/route.constants";
+import { useRef, useState } from "react";
 
 import styles from "./styles/friendSuggestions.module.css";
 
@@ -20,9 +21,24 @@ export const MobileFriendSuggestions = ({
   const showSuggestedFriends = suggestedFriends && suggestedFriends?.length > 0;
   const [sendFriendRequest] = useSendFriendRequestMutation();
   const navigate = useNavigate();
+  const [requestingIds, setRequestingIds] = useState<Record<string, boolean>>(
+    {}
+  );
+  const requestLocksRef = useRef(new Set<string>());
 
   const handleSendFriendRequest = async (suggestedFriendId: string) => {
-    await sendFriendRequest(suggestedFriendId);
+    if (requestLocksRef.current.has(suggestedFriendId)) return;
+
+    requestLocksRef.current.add(suggestedFriendId);
+    setRequestingIds((prev) => ({ ...prev, [suggestedFriendId]: true }));
+
+    try {
+      await sendFriendRequest(suggestedFriendId).unwrap();
+    } catch (error) {
+      requestLocksRef.current.delete(suggestedFriendId);
+      setRequestingIds((prev) => ({ ...prev, [suggestedFriendId]: false }));
+      console.error(error, "Error sending friend request");
+    }
   };
 
   const handleClick = (userId: string) => {
@@ -46,15 +62,18 @@ export const MobileFriendSuggestions = ({
                   : suggestedFriend.firstName;
 
               return (
-                <div className={styles.suggestedFriendCard}>
+                <div
+                  key={suggestedFriend.id}
+                  className={styles.suggestedFriendCard}
+                >
                   <UserAvatars
-                    key={suggestedFriend.id}
                     profilePicture={suggestedFriend.profilePicture}
                     fullName={nameToUse}
                     onClick={() => handleClick(suggestedFriend.id)}
                   />
                   <IconButton
                     onClick={() => handleSendFriendRequest(suggestedFriend.id)}
+                    disabled={!!requestingIds[suggestedFriend.id]}
                   >
                     <Add />
                   </IconButton>

@@ -14,9 +14,9 @@ const PendingFriendRequests = () => {
         className={styles.friendCardHeader}
       />
       <CardContent className={styles.currentFriendCardContent}>
-        {pendingRequests.map((el, idx) => (
+        {pendingRequests.map((el) => (
           <PendingFriends
-            key={`${el.requesterId}_${idx}_${el.receiverId}`}
+            key={el.receiverId.id}
             friendRequest={el}
           />
         ))}

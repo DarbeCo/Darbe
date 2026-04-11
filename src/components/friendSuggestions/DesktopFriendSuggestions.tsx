@@ -7,7 +7,7 @@ import { UserAvatars } from "../avatars/UserAvatars";
 import { Typography } from "../typography/Typography";
 
 import styles from "./styles/friendSuggestions.module.css";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 export interface DesktopFriendSuggestionsProps {
   suggestedFriends?: SuggestedFriendState[];
@@ -16,10 +16,12 @@ export interface DesktopFriendSuggestionsProps {
 
 const FriendSuggestion = ({ 
   suggestedFriend, 
-   handleSendFriendRequest
+  handleSendFriendRequest,
+  isRequesting,
 }: { 
   suggestedFriend: SuggestedFriendState,  
   handleSendFriendRequest: (suggestedFriendId: string) => Promise<void> 
+  isRequesting: boolean;
 }) => {
 
   const nameToUse =
@@ -38,10 +40,13 @@ const FriendSuggestion = ({
         />
       </div>
       <div
-        onClick={() =>
-          handleSendFriendRequest(suggestedFriend.id) 
-        }
+        onClick={() => {
+          if (isRequesting) return;
+          handleSendFriendRequest(suggestedFriend.id);
+        }}
+        aria-disabled={isRequesting}
         className={styles.addFriendCardAddIcon}
+        style={isRequesting ? { opacity: 0.5, pointerEvents: "none" } : undefined}
       >
         <AddCircleTwoTone 
           htmlColor="#1976d2"
@@ -58,10 +63,28 @@ export const DesktopFriendSuggestions = ({
 
 
   const [sendFriendRequest] = useSendFriendRequestMutation();
+  const [requestingIds, setRequestingIds] = useState<Record<string, boolean>>(
+    {}
+  );
+  const requestLocksRef = useRef(new Set<string>());
 
-  const handleSendFriendRequest = useCallback(async (suggestedFriendId: string) => {
-    await sendFriendRequest(suggestedFriendId);
-  }, []);
+  const handleSendFriendRequest = useCallback(
+    async (suggestedFriendId: string) => {
+      if (requestLocksRef.current.has(suggestedFriendId)) return;
+
+      requestLocksRef.current.add(suggestedFriendId);
+      setRequestingIds((prev) => ({ ...prev, [suggestedFriendId]: true }));
+
+      try {
+        await sendFriendRequest(suggestedFriendId).unwrap();
+      } catch (error) {
+        requestLocksRef.current.delete(suggestedFriendId);
+        setRequestingIds((prev) => ({ ...prev, [suggestedFriendId]: false }));
+        console.error(error, "Error sending friend request");
+      }
+    },
+    [sendFriendRequest]
+  );
 
   
   const showSuggestedFriends = useMemo(() => {
@@ -95,11 +118,13 @@ export const DesktopFriendSuggestions = ({
         {showSuggestedFriends ? (
           <>
             {suggestions.map((suggestedFriend, index) => {
+              const isRequesting = !!requestingIds[suggestedFriend.id];
               return (
                   <FriendSuggestion 
                     key={`${suggestedFriend.id}_${index}`}
                     suggestedFriend={suggestedFriend}
                     handleSendFriendRequest={handleSendFriendRequest}
+                    isRequesting={isRequesting}
                   />
               );
             })}

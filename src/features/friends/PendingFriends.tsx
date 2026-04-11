@@ -2,7 +2,7 @@ import { CancelTwoTone } from "@mui/icons-material";
 import { UserAvatars } from "../../components/avatars/UserAvatars";
 import { PendingFriendRequestState } from "./types";
 import styles from "./styles/currentFriends.module.css";
-import { useCallback } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDeleteFriendRequestMutation } from "../../services/api/endpoints/friends/friends.api";
 import { PROFILE_ROUTE } from "../../routes/route.constants";
@@ -15,14 +15,23 @@ const PendingFriends = ({
   const navigate = useNavigate();
 
   const [deleteFriendRequest] = useDeleteFriendRequestMutation();
+  const [isDeleting, setIsDeleting] = useState(false);
+  const deleteLockRef = useRef(false);
 
   const handleDeletePendingFriendRequest = useCallback(async () => {
+    if (!friendRequest.receiverId?.id) return;
+    if (deleteLockRef.current || isDeleting) return;
+
+    deleteLockRef.current = true;
+    setIsDeleting(true);
     try {
-      await deleteFriendRequest(friendRequest.receiverId.id);
+      await deleteFriendRequest(friendRequest.receiverId.id).unwrap();
     } catch (err) {
+      deleteLockRef.current = false;
+      setIsDeleting(false);
       console.log(err, "Error deleting incoming friend request");
     }
-  }, [deleteFriendRequest]);
+  }, [deleteFriendRequest, friendRequest.receiverId?.id, isDeleting]);
 
   const redirectToFriendProfile = (friendId: string) => {
     navigate(`${PROFILE_ROUTE}/${friendId}`);
@@ -41,7 +50,9 @@ const PendingFriends = ({
               friendRequest.receiverId.lastName
             }
             onClick={() =>
-              redirectToFriendProfile(friendRequest.receiverId._id)
+              redirectToFriendProfile(
+                friendRequest.receiverId._id || friendRequest.receiverId.id
+              )
             }
             city={friendRequest.receiverId.city}
             zip={friendRequest.receiverId.zip}
@@ -52,6 +63,8 @@ const PendingFriends = ({
         <CancelTwoTone
           className={styles.removeCurrentFriendIcon}
           onClick={handleDeletePendingFriendRequest}
+          aria-disabled={isDeleting}
+          style={isDeleting ? { opacity: 0.5, pointerEvents: "none" } : undefined}
         />
       </div>
     </div>
