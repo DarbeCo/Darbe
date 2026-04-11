@@ -20,6 +20,16 @@ import type { EntityDocument, SimpleUserInfo } from "../api/endpoints/types/user
 import type { Availability, DayOfWeek } from "../types/availability.types";
 import { supabase } from "../supabase/client";
 import { ensureUserId } from "./utils";
+import type { MilitaryBranch } from "../../features/users/userProfiles/constants";
+
+type RelatedUserTable =
+  | "user_skills"
+  | "user_licenses"
+  | "user_education"
+  | "user_job_experiences"
+  | "user_volunteer_experiences"
+  | "user_military_service"
+  | "user_organizations";
 
 const DAY_ORDER: DayOfWeek[] = [
   "sunday",
@@ -336,7 +346,6 @@ export const deleteDocument = async (documentId: string) => {
 };
 
 const mapUserDetailsToProfile = (
-  userId: string,
   profileRow: any,
   detailsRow: any,
   causeIds: string[],
@@ -380,13 +389,13 @@ const mapUserDetailsToProfile = (
 };
 
 const replaceTableRows = async (
-  table: string,
+  table: RelatedUserTable,
   userId: string,
-  rows: Record<string, any>[]
+  rows: any[]
 ) => {
-  await supabase.from(table).delete().eq("user_id", userId);
+  await supabase.from(table as any).delete().eq("user_id", userId);
   if (rows.length) {
-    const { error } = await supabase.from(table).insert(rows);
+    const { error } = await supabase.from(table as any).insert(rows as any);
     if (error) throw error;
   }
 };
@@ -583,7 +592,7 @@ export const getUserProfile = async (userId: string): Promise<DarbeProfileShared
   const causeIds = (causesRes.data ?? []).map((row) => row.cause_id);
   const availabilityRows = availabilityRes.data ?? [];
 
-  const base = mapUserDetailsToProfile(userId, profile, details, causeIds, availabilityRows);
+  const base = mapUserDetailsToProfile(profile, details, causeIds, availabilityRows);
 
   const [skillsRes, licensesRes, educationRes, jobRes, volunteerRes, militaryRes, orgRes] =
     await Promise.all([
@@ -668,7 +677,7 @@ export const getUserProfile = async (userId: string): Promise<DarbeProfileShared
 
   const militaryService: MilitaryServiceState[] = (militaryRes.data ?? []).map((military) => ({
     _id: military.id,
-    branch: military.branch,
+    branch: military.branch as MilitaryBranch,
     startDate: military.start_date ?? undefined,
     endDate: military.end_date ?? undefined,
     rank: military.rank ?? "",

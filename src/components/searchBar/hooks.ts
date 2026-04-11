@@ -1,9 +1,21 @@
 import { useState, useEffect } from "react";
 import debounce from "lodash.debounce";
+import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
+import { SerializedError } from "@reduxjs/toolkit";
 
 import { useGetSearchResultsQuery } from "../../services/api/endpoints/search/search.api";
+import type { SearchResultState } from "../../services/api/endpoints/types/search.api.types";
 
-const useDebouncedSearch = (input: string, searchFilter?: string) => {
+interface DebouncedSearchResult {
+  data?: SearchResultState[];
+  error: FetchBaseQueryError | SerializedError | undefined;
+  isLoading: boolean;
+}
+
+const useDebouncedSearch = (
+  input: string,
+  searchFilter?: string
+): DebouncedSearchResult => {
   const [debouncedInput, setDebouncedInput] = useState<string>("");
 
   useEffect(() => {
@@ -26,7 +38,11 @@ const useDebouncedSearch = (input: string, searchFilter?: string) => {
 
   const { data, error, isLoading } = useGetSearchResultsQuery(populatedInput);
 
-  return { data, error, isLoading };
+  return {
+    data,
+    error: error as FetchBaseQueryError | SerializedError | undefined,
+    isLoading,
+  };
 };
 
 export default useDebouncedSearch;
