@@ -185,7 +185,7 @@ export const PROFILE_SECTIONS = {
   jobs: "Current Occupation",
   education: "Education",
   military: "Military History",
-  licenses: "Licenses",
+  licenses: "Licenses and Certificates",
   skills: "Skills",
   values: "Values",
 };
