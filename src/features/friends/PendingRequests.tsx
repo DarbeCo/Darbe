@@ -6,11 +6,12 @@ import PendingFriends from "./PendingFriends";
 
 const PendingFriendRequests = () => {
   const { data: pendingRequests = [] } = useGetSentFriendRequestsQuery();
+  const pendingCount = pendingRequests.length;
 
   return (
     <div>
       <CardHeader
-        title={`Pending Requests`}
+        title={`Pending Requests (${pendingCount})`}
         className={styles.friendCardHeader}
       />
       <CardContent className={styles.currentFriendCardContent}>
