@@ -27,7 +27,7 @@ export const getCauses = async (): Promise<Cause[]> => {
   return (data ?? []).map(mapCause);
 };
 
-export const getMutualCauses = async (otherUserId: string): Promise<string[]> => {
+export const getMutualCauses = async (otherUserId: string): Promise<Cause[]> => {
   const userId = await ensureUserId();
 
   const [{ data: myCauses, error: myError }, { data: otherCauses, error: otherError }] =
@@ -40,7 +40,19 @@ export const getMutualCauses = async (otherUserId: string): Promise<string[]> =>
   if (otherError) throw otherError;
 
   const myCauseIds = new Set((myCauses ?? []).map((row) => row.cause_id));
-  return (otherCauses ?? [])
+  const mutualIds = (otherCauses ?? [])
     .map((row) => row.cause_id)
     .filter((causeId) => myCauseIds.has(causeId));
+
+  if (!mutualIds.length) return [];
+
+  const { data: causes, error: causesError } = await supabase
+    .from("causes")
+    .select("id, name, description, image_url, active")
+    .in("id", mutualIds)
+    .order("name");
+
+  if (causesError) throw causesError;
+
+  return (causes ?? []).map(mapCause);
 };

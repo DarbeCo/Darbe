@@ -1,4 +1,5 @@
 import { useGetMutualCausesQuery } from "../../services/api/endpoints/causes/causes.api";
+import { DarbeButton } from "../buttons/DarbeButton";
 
 import styles from "./styles/causesStyles.module.css";
 
@@ -15,11 +16,18 @@ export const MutualCausesDisplay = ({ userId }: MutualCausesDisplayProps) => {
     content = <div className={styles.noMutualFriends}>No mutual friends</div>;
   }
   if (hasMutualCauses) {
-    content = mutualCauses.map((cause) => (
-      <div key={cause} className={styles.mutualFriendCard}>
-        {cause}
+    content = (
+      <div className={styles.causesContainer}>
+        {mutualCauses.map((cause) => (
+          <DarbeButton
+            key={cause.id}
+            buttonText={cause.name}
+            darbeButtonType="causesButtonBlue"
+            isDisabled
+          />
+        ))}
       </div>
-    ));
+    );
   }
 
   return <div className={styles.mutualFriendsContainer}>{content}</div>;

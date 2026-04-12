@@ -109,6 +109,12 @@ export const causesButtonBlue = {
   fontWeight: "400",
   backgroundColor: "#2C77E7",
   color: "#FFF",
+  "&.Mui-disabled": {
+    color: "#FFF",
+    backgroundColor: "#2C77E7",
+    borderColor: "#D8D8D8",
+    opacity: 1,
+  },
   "@media (min-width: 550px)": {
     fontSize: "14px",
     height: "44px",

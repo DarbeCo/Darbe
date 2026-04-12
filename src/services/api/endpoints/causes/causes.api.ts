@@ -20,7 +20,7 @@ const causesApi = darbeBaseApi.injectEndpoints({
       },
       providesTags: ["Causes"],
     }),
-    getMutualCauses: builder.query<string[], string>({
+    getMutualCauses: builder.query<Cause[], string>({
       async queryFn(userId) {
         try {
           const data = await getMutualCauses(userId);
