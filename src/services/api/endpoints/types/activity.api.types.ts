@@ -5,6 +5,7 @@ export interface UserActivity {
     contentType: string;
     postText?: string;
     commentText?: string;
+    files?: string[] | null;
     likeCount?: number;
     commentCount?: number;
     replyCount?: number;

@@ -47,6 +47,20 @@ export const RenderActivityContent = ({
           />
         )}
       </div>
+      {item.files && item.files.length > 0 && (
+        <div className={styles.activityImageWrapper}>
+          <img
+            src={item.files[0]}
+            alt="post attachment"
+            className={styles.activityImage}
+          />
+          {item.files.length > 1 && (
+            <span className={styles.activityImageCount}>
+              +{item.files.length - 1}
+            </span>
+          )}
+        </div>
+      )}
       <div className={styles.activityFooter}>
         <div className={styles.activityFooterLikes}>
           <CustomSvgs

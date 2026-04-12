@@ -81,3 +81,30 @@
   align-items: center;
   justify-content: center;
 }
+
+.activityImageWrapper {
+  position: relative;
+  width: 100%;
+  padding: 0 8px 8px 8px;
+  box-sizing: border-box;
+}
+
+.activityImage {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 6px;
+  display: block;
+}
+
+.activityImageCount {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  background-color: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 12px;
+}

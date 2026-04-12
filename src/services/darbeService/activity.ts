@@ -22,39 +22,51 @@ export const getUserActivity = async (userId: string): Promise<UserActivity[]> =
   const postIds = posts.map((post) => post.id);
   const commentIds = comments.map((comment) => comment.id);
 
-  const [postLikesRes, postCommentsRes, commentLikesRes, repliesRes] =
-    await Promise.all([
-      postIds.length
-        ? supabase
-            .from("post_likes")
-            .select("post_id")
-            .in("post_id", postIds)
-        : Promise.resolve({ data: [], error: null }),
-      postIds.length
-        ? supabase
-            .from("comments")
-            .select("post_id")
-            .in("post_id", postIds)
-            .is("parent_comment_id", null)
-        : Promise.resolve({ data: [], error: null }),
-      commentIds.length
-        ? supabase
-            .from("comment_likes")
-            .select("comment_id")
-            .in("comment_id", commentIds)
-        : Promise.resolve({ data: [], error: null }),
-      commentIds.length
-        ? supabase
-            .from("comments")
-            .select("parent_comment_id")
-            .in("parent_comment_id", commentIds)
-        : Promise.resolve({ data: [], error: null }),
-    ]);
+  const [
+    postLikesRes,
+    postCommentsRes,
+    commentLikesRes,
+    repliesRes,
+    postFilesRes,
+  ] = await Promise.all([
+    postIds.length
+      ? supabase
+          .from("post_likes")
+          .select("post_id")
+          .in("post_id", postIds)
+      : Promise.resolve({ data: [], error: null }),
+    postIds.length
+      ? supabase
+          .from("comments")
+          .select("post_id")
+          .in("post_id", postIds)
+          .is("parent_comment_id", null)
+      : Promise.resolve({ data: [], error: null }),
+    commentIds.length
+      ? supabase
+          .from("comment_likes")
+          .select("comment_id")
+          .in("comment_id", commentIds)
+      : Promise.resolve({ data: [], error: null }),
+    commentIds.length
+      ? supabase
+          .from("comments")
+          .select("parent_comment_id")
+          .in("parent_comment_id", commentIds)
+      : Promise.resolve({ data: [], error: null }),
+    postIds.length
+      ? supabase
+          .from("post_files")
+          .select("post_id, file_url")
+          .in("post_id", postIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
 
   if (postLikesRes.error) throw postLikesRes.error;
   if (postCommentsRes.error) throw postCommentsRes.error;
   if (commentLikesRes.error) throw commentLikesRes.error;
   if (repliesRes.error) throw repliesRes.error;
+  if (postFilesRes.error) throw postFilesRes.error;
 
   const postLikeCounts = new Map<string, number>();
   (postLikesRes.data ?? []).forEach((row) => {
@@ -86,6 +98,13 @@ export const getUserActivity = async (userId: string): Promise<UserActivity[]> =
     );
   });
 
+  const filesByPost = new Map<string, string[]>();
+  (postFilesRes.data ?? []).forEach((row) => {
+    const list = filesByPost.get(row.post_id) ?? [];
+    list.push(row.file_url);
+    filesByPost.set(row.post_id, list);
+  });
+
   const profile = (await getProfilesByIds([userId]))[0];
   const simpleUser = profile
     ? mapProfileToSimpleUserInfo(profile)
@@ -105,6 +124,7 @@ export const getUserActivity = async (userId: string): Promise<UserActivity[]> =
       id: post.id,
       contentType: "post",
       postText: post.post_text,
+      files: filesByPost.get(post.id) ?? null,
       likeCount: postLikeCounts.get(post.id) ?? 0,
       commentCount: postCommentCounts.get(post.id) ?? 0,
       createdAt: post.created_at,
