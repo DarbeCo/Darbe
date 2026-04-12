@@ -183,7 +183,13 @@ export const Modal = () => {
             case MODAL_TYPE.mutualCauses:
               return <MutualCausesDisplay userId={modalUserId} />;
             case MODAL_TYPE.profileCauses:
-              return <SimpleCauseDisplay externalData={externalData} />;
+              return (
+                <SimpleCauseDisplay
+                  externalData={externalData}
+                  userId={modalUserId}
+                  canEdit={modalUserId === currentUser?.id}
+                />
+              );
             case MODAL_TYPE.profileFriends:
               return <SimpleFriendListDisplay externalData={externalData} />;
             case MODAL_TYPE.editRoster:

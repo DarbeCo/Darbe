@@ -29,7 +29,8 @@ type RelatedUserTable =
   | "user_job_experiences"
   | "user_volunteer_experiences"
   | "user_military_service"
-  | "user_organizations";
+  | "user_organizations"
+  | "user_causes";
 
 const DAY_ORDER: DayOfWeek[] = [
   "sunday",
@@ -40,6 +41,31 @@ const DAY_ORDER: DayOfWeek[] = [
   "friday",
   "saturday",
 ];
+
+const isUuid = (value: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value
+  );
+
+const resolveCauseIds = async (causeValues: string[]) => {
+  const values = (causeValues ?? []).filter(Boolean);
+  if (!values.length) return [];
+
+  const directIds = values.filter(isUuid);
+  const names = values.filter((value) => !isUuid(value));
+
+  if (!names.length) return Array.from(new Set(directIds));
+
+  const { data, error } = await supabase
+    .from("causes")
+    .select("id, name")
+    .in("name", names);
+
+  if (error) throw error;
+
+  const idsFromNames = (data ?? []).map((row) => row.id);
+  return Array.from(new Set([...directIds, ...idsFromNames]));
+};
 
 const mapProfileToUserState = (
   profile: {
@@ -447,6 +473,15 @@ export const updateUserProfile = async (
     .eq("user_id", userId);
 
   if (detailsError) throw detailsError;
+
+  if (profile.user?.causes) {
+    const resolvedIds = await resolveCauseIds(profile.user.causes);
+    const rows = resolvedIds.map((causeId) => ({
+      user_id: userId,
+      cause_id: causeId,
+    }));
+    await replaceTableRows("user_causes", userId, rows);
+  }
 
   if (profile.skills) {
     const rows = profile.skills.map((skill) => ({

@@ -1,6 +1,7 @@
 import { DarbeButton } from "../buttons/DarbeButton";
 
 interface IndividualCauseProps {
+  id: string;
   name: string;
   description: string;
   active: boolean;
@@ -10,6 +11,7 @@ interface IndividualCauseProps {
 }
 
 export const Individualcause = ({
+  id,
   name,
   disabled,
   isBlue,
@@ -22,6 +24,7 @@ export const Individualcause = ({
       buttonText={name}
       darbeButtonType={causesType}
       onClick={onClick}
+      dataAttributes={{ "data-cause-id": id }}
     />
   );
 };

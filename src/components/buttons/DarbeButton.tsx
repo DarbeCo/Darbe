@@ -48,6 +48,7 @@ interface ButtonProps {
   startingIconPath?: string;
   endingIconPath?: React.ReactNode;
   isDisabled?: boolean;
+  dataAttributes?: Record<string, string | number | undefined>;
 }
 
 // TODO: Too many buttons, remove the useless ones, keep it simple
@@ -58,6 +59,7 @@ export const DarbeButton = ({
   startingIconPath,
   endingIconPath,
   darbeButtonType,
+  dataAttributes,
 }: ButtonProps) => {
   const sxDefinitions: Record<DarbeButtonType, object> = {
     signUpButton,
@@ -93,6 +95,7 @@ export const DarbeButton = ({
         onClick={onClick}
         startIcon={startingElement}
         endIcon={endingElement}
+        {...dataAttributes}
       >
         {buttonText}
       </Button>

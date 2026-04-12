@@ -18,19 +18,27 @@ export const EditCauses = () => {
   const [updatedCauses, setUpdatedCauses] = useState<string[]>(currentCauses);
 
   const handleCauseChange = (evt: React.MouseEvent<HTMLButtonElement>) => {
-    const { textContent } = evt.target as HTMLButtonElement;
-    if (!textContent) return;
+    const target = evt.currentTarget as HTMLButtonElement;
+    const causeId = target.dataset.causeId;
+    const causeName = target.textContent?.trim();
 
     setUpdatedCauses((prevState) => {
-      const isAlreadySelected = prevState.includes(textContent);
+      const hasId = causeId ? prevState.includes(causeId) : false;
+      const hasName = causeName ? prevState.includes(causeName) : false;
+      const isAlreadySelected = hasId || hasName;
 
       if (isAlreadySelected) {
         return prevState.filter(
-          (selectedCause) => selectedCause !== textContent
+          (selectedCause) =>
+            selectedCause !== causeId && selectedCause !== causeName
         );
-      } else {
-        return [...prevState, textContent];
       }
+
+      const valueToAdd = causeId || causeName;
+      if (!valueToAdd) return prevState;
+
+      const nextState = [...prevState, valueToAdd];
+      return Array.from(new Set(nextState));
     });
   };
 

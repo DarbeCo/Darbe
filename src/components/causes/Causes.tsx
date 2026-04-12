@@ -33,8 +33,10 @@ export const Causes = ({
   // Once causes is loaded, update userSelectedCauses
   useEffect(() => {
     if (causes && currentUserCauses && editMode) {
-      const selected = causes.filter((cause) =>
-        currentUserCauses.includes(cause.name)
+      const selected = causes.filter(
+        (cause) =>
+          currentUserCauses.includes(cause.name) ||
+          currentUserCauses.includes(cause.id)
       );
       setUserSelectedCauses(selected);
     }
@@ -115,6 +117,7 @@ export const Causes = ({
                 return (
                   <Individualcause
                     key={cause.id}
+                    id={cause.id}
                     disabled={disableCause}
                     {...cause}
                     isBlue={userSelectedCauses.some(
