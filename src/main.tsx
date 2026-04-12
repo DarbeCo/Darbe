@@ -9,6 +9,10 @@ import { persistor, store } from "./services/store";
 
 import "./globalStyles/global.css";
 
+const baseUrl = import.meta.env.BASE_URL || "/";
+const normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+document.documentElement.style.setProperty("--base-url", normalizedBaseUrl);
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Provider store={store}>
