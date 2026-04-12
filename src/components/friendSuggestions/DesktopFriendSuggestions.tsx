@@ -33,6 +33,7 @@ const FriendSuggestion = ({
       <div>
         <UserAvatars
           key={suggestedFriend.id}
+          userId={suggestedFriend.id}
           profilePicture={suggestedFriend.profilePicture}
           fullName={nameToUse}
           city={suggestedFriend.city}
