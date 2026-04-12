@@ -112,14 +112,15 @@ export const Causes = ({
           )}
           {causes && (
             <div className={styles.causesContainer}>
-              {causes.map((cause) => {
-                const disableCause = shouldCauseBeDisabled(cause);
-                return (
+            {causes.map((cause) => {
+              const disableCause = shouldCauseBeDisabled(cause);
+              const { id, ...causeProps } = cause;
+              return (
                   <Individualcause
-                    key={cause.id}
-                    id={cause.id}
+                    key={id}
+                    id={id}
                     disabled={disableCause}
-                    {...cause}
+                    {...causeProps}
                     isBlue={userSelectedCauses.some(
                       (selectedCause) => selectedCause.id === cause.id
                     )}
