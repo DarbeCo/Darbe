@@ -222,6 +222,7 @@ export const UserInputs = ({
       <Availability
         onCheckboxChange={updateAvailabilityCheckbox}
         onAvailabilityChange={updateAvailabilityData}
+        startingAvailability={data.availability}
       />
     </>,
   ];

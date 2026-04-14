@@ -37,7 +37,7 @@ export const EditAvailability = () => {
       return {
         ...prevState,
         [dayOfWeek as DayOfWeek]: {
-          ...newAvailability?.[dayOfWeek as DayOfWeek],
+          ...prevState?.[dayOfWeek as DayOfWeek],
           [category]: value.toString(),
         },
       };
@@ -53,7 +53,7 @@ export const EditAvailability = () => {
       return {
         ...prevState,
         [dayOfWeek as DayOfWeek]: {
-          ...newAvailability?.[dayOfWeek as DayOfWeek],
+          ...prevState?.[dayOfWeek as DayOfWeek],
           open: checked,
         },
       };

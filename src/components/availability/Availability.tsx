@@ -76,6 +76,7 @@ export const Availability = ({
               name={`availability ${day} start`}
               onChange={onAvailabilityChange}
               initialValue={startingHour}
+              disabled={isDayOpen}
               displayEmpty
               showClearOption
             >
@@ -89,6 +90,7 @@ export const Availability = ({
               name={`availability ${day} end`}
               onChange={onAvailabilityChange}
               initialValue={endingHour}
+              disabled={isDayOpen}
               displayEmpty
               showClearOption
             >
