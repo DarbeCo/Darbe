@@ -1,279 +1,531 @@
 import { useState } from "react";
 
-import { useUpdateUserProfileMutation } from "../../../../services/api/endpoints/profiles/profiles.api";
-import { Inputs } from "../../../../components/inputs/Inputs";
-import { Dropdown } from "../../../../components/dropdowns/Dropdown";
-import { Genders } from "../../../../components/dropdowns/dropdownTypes/Genders";
-import { Race } from "../../../../components/dropdowns/dropdownTypes/Race";
 import { DarbeButton } from "../../../../components/buttons/DarbeButton";
-import { EDIT_SECTIONS } from "../../userProfiles/constants";
-import { useEditProfileInformation } from "../hooks";
-import { DarbeProfileSharedState } from "../../userSlice";
-import { States } from "../../../../components/dropdowns/dropdownTypes/States";
+import {
+  getModalStatus,
+  getModalType,
+} from "../../../../components/modal/selectors";
 import {
   hideModal,
   setModalType,
   showModal,
 } from "../../../../components/modal/modalSlice";
+import { useUpdateUserProfileMutation } from "../../../../services/api/endpoints/profiles/profiles.api";
 import { useAppDispatch, useAppSelector } from "../../../../services/hooks";
+import { EDIT_SECTIONS } from "../../userProfiles/constants";
 import { selectCurrentUserId, selectUser } from "../../selectors";
+import { DarbeProfileSharedState } from "../../userSlice";
+import { useEditProfileInformation } from "../hooks";
 
 import styles from "../styles/profileEdit.module.css";
 
+type DateOfBirthFields = {
+  month: string;
+  day: string;
+  year: string;
+};
+
+const MONTH_OPTIONS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+const GENDER_OPTIONS = [
+  "Male",
+  "Female",
+  "Non-Binary",
+  "Transgender",
+  "Prefer not to answer",
+];
+
+const RACE_OPTIONS = [
+  "American Indian or Alaskan Native",
+  "Black or African American",
+  "Asian",
+  "Hispanic or Latino",
+  "Native Hawaiian or Pacific Islander",
+  "White",
+  "Prefer not to answer",
+];
+
+const emptyDateOfBirth = (): DateOfBirthFields => ({
+  month: "",
+  day: "",
+  year: "",
+});
+
+const parseDateOfBirth = (value?: string): DateOfBirthFields => {
+  if (!value) {
+    return emptyDateOfBirth();
+  }
+
+  const date = new Date(`${value}T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) {
+    return emptyDateOfBirth();
+  }
+
+  return {
+    month: MONTH_OPTIONS[date.getUTCMonth()] ?? "",
+    day: date.getUTCDate().toString(),
+    year: date.getUTCFullYear().toString(),
+  };
+};
+
+const formatDateOfBirth = (value: DateOfBirthFields): string | undefined => {
+  if (!value.year || !value.month || !value.day) {
+    return undefined;
+  }
+
+  const monthIndex = MONTH_OPTIONS.indexOf(value.month);
+  if (monthIndex === -1) {
+    return undefined;
+  }
+
+  const month = `${monthIndex + 1}`.padStart(2, "0");
+  const day = value.day.padStart(2, "0");
+
+  return `${value.year}-${month}-${day}`;
+};
+
+const buildLocationValue = (city?: string, state?: string) =>
+  [city, state].filter(Boolean).join(", ");
+
+const parseLocationValue = (value: string, fallbackState?: string) => {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return {
+      city: "",
+      state: "",
+    };
+  }
+
+  const parts = trimmed
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length === 1) {
+    return {
+      city: parts[0],
+      state: fallbackState ?? "",
+    };
+  }
+
+  return {
+    city: parts.slice(0, -1).join(", "),
+    state: parts[parts.length - 1],
+  };
+};
+
+const getCount = (value?: string) => value?.length ?? 0;
+
+type TextFieldProps = {
+  label: string;
+  value?: string;
+  placeholder?: string;
+  onChange: (value: string) => void;
+  maxLength?: number;
+  required?: boolean;
+  readOnly?: boolean;
+  type?: string;
+  className?: string;
+  textarea?: boolean;
+};
+
+const ProfileTextField = ({
+  label,
+  value = "",
+  placeholder,
+  onChange,
+  maxLength,
+  required = true,
+  readOnly = false,
+  type = "text",
+  className,
+  textarea = false,
+}: TextFieldProps) => {
+  const inputProps = {
+    className: textarea
+      ? styles.profileDialogTextarea
+      : styles.profileDialogInput,
+    placeholder,
+    value,
+    onChange: (
+      event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => onChange(event.target.value),
+    maxLength,
+    readOnly,
+  };
+
+  return (
+    <div className={`${styles.profileDialogField} ${className ?? ""}`.trim()}>
+      <label className={styles.profileDialogLabel}>
+        {label}
+        {required && <span className={styles.profileDialogRequired}>*</span>}
+      </label>
+      {textarea ? (
+        <textarea {...inputProps} rows={3} />
+      ) : (
+        <input {...inputProps} type={type} />
+      )}
+      {typeof maxLength === "number" && (
+        <div className={styles.profileDialogCounter}>
+          {getCount(value)}/{maxLength}
+        </div>
+      )}
+    </div>
+  );
+};
+
+type SelectFieldProps = {
+  label: string;
+  value?: string;
+  onChange: (value: string) => void;
+  options: string[];
+  placeholder: string;
+  required?: boolean;
+  className?: string;
+  showLabel?: boolean;
+};
+
+const ProfileSelectField = ({
+  label,
+  value = "",
+  onChange,
+  options,
+  placeholder,
+  required = true,
+  className,
+  showLabel = true,
+}: SelectFieldProps) => (
+  <div className={`${styles.profileDialogField} ${className ?? ""}`.trim()}>
+    {showLabel && (
+      <label className={styles.profileDialogLabel}>
+        {label}
+        {required && <span className={styles.profileDialogRequired}>*</span>}
+      </label>
+    )}
+    <select
+      className={styles.profileDialogSelect}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    >
+      <option value="">{placeholder}</option>
+      {options.map((option) => (
+        <option key={option} value={option}>
+          {option}
+        </option>
+      ))}
+    </select>
+  </div>
+);
+
 export const EditProfileInfo = () => {
   const userId = useAppSelector(selectCurrentUserId);
-  const user = useAppSelector(selectUser);
+  const { user } = useAppSelector(selectUser);
+  const isModalOpen = useAppSelector(getModalStatus);
+  const modalType = useAppSelector(getModalType);
   const editProfileState = useEditProfileInformation();
   const [formData, setFormData] =
     useState<Partial<DarbeProfileSharedState>>(editProfileState);
-
-  const userType = user.user?.userType;
+  const [location, setLocation] = useState(
+    buildLocationValue(editProfileState.user?.city, editProfileState.state)
+  );
+  const [dateOfBirth, setDateOfBirth] = useState<DateOfBirthFields>(
+    parseDateOfBirth(editProfileState.user?.dateOfBirth)
+  );
+  const [titlePrefix, setTitlePrefix] = useState(editProfileState.title ?? "");
 
   const [updateUserProfile] = useUpdateUserProfileMutation();
   const dispatch = useAppDispatch();
-  // TODO: Messy, clean up
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  const isProfileDialog = isModalOpen && modalType === EDIT_SECTIONS.profile;
 
-    if (
-      name === "firstName" ||
-      name === "lastName" ||
-      name === "zip" ||
-      name === "nonprofitName" ||
-      name === "organizationName" ||
-      name === "ein"
-    ) {
-      setFormData((prev) => ({
-        ...prev,
-        user: { ...prev.user, [name]: value },
-      }));
-    } else if (
-      name === "emergencyContact name" ||
-      name === "emergencyContact phone"
-    ) {
-      const [, subKey] = name.split(" ");
-
-      setFormData((prev) => ({
-        ...prev,
-        emergencyContact: { ...prev.emergencyContact, [subKey]: value },
-      }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
+  const setUserField = (
+    field:
+      | "firstName"
+      | "lastName"
+      | "city"
+      | "zip"
+      | "dateOfBirth"
+      | "ein"
+      | "nonprofitName"
+      | "organizationName",
+    value: string
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      user: {
+        ...prev.user,
+        [field]: value,
+      },
+    }));
   };
 
-  const handleDropdownChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const setProfileField = (
+    field:
+      | "tagLine"
+      | "gender"
+      | "race"
+      | "allergies"
+      | "phoneNumber"
+      | "state",
+    value: string
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
-  const handleSave = async () => {
-    const payload = {
+  const setEmergencyField = (
+    field: "name" | "phone" | "relation",
+    value: string
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      emergencyContact: {
+        ...prev.emergencyContact,
+        [field]: value,
+      },
+    }));
+  };
+
+  const buildPayload = (): Partial<DarbeProfileSharedState> => {
+    const parsedLocation = parseLocationValue(location, formData.state);
+    const formattedDateOfBirth = formatDateOfBirth(dateOfBirth);
+
+    return {
       ...formData,
+      title: titlePrefix,
+      state: parsedLocation.state,
       user: {
         ...formData.user,
         id: userId,
+        city: parsedLocation.city,
+        dateOfBirth: formattedDateOfBirth,
+      },
+      emergencyContact: {
+        name: formData.emergencyContact?.name ?? "",
+        phone: formData.emergencyContact?.phone ?? "",
+        relation: formData.emergencyContact?.relation ?? "",
       },
     };
-
-    await updateUserProfile(payload);
-    dispatch(hideModal());
-  };
-  const isFormDirty = () => {
-    return JSON.stringify(formData) !== JSON.stringify(editProfileState);
   };
 
-  const handleNextSection = () => {
-    if (isFormDirty()) {
-      handleSave();
+  const persistProfile = async (shouldClose: boolean) => {
+    await updateUserProfile(buildPayload());
+
+    if (shouldClose) {
+      dispatch(hideModal());
     }
+  };
+
+  const initialLocation = buildLocationValue(
+    editProfileState.user?.city,
+    editProfileState.state
+  );
+  const initialDateOfBirth = parseDateOfBirth(editProfileState.user?.dateOfBirth);
+
+  const isFormDirty = () =>
+    JSON.stringify(formData) !== JSON.stringify(editProfileState) ||
+    location !== initialLocation ||
+    JSON.stringify(dateOfBirth) !== JSON.stringify(initialDateOfBirth) ||
+    titlePrefix !== (editProfileState.title ?? "");
+
+  const handleSave = async () => {
+    await persistProfile(true);
+  };
+
+  const handleSecondaryAction = async () => {
+    if (isFormDirty()) {
+      await persistProfile(false);
+    }
+
+    if (isProfileDialog) {
+      dispatch(setModalType(EDIT_SECTIONS.causes));
+      return;
+    }
+
     dispatch(setModalType(EDIT_SECTIONS.availability));
     dispatch(showModal());
   };
 
-  // TODO: Messy, clean up into separete components
-  return (
-    <div className={styles.profileEditContent}>
-      {userType === "individual" && (
-        <div className={styles.editProfileInfoInputs}>
-          <Inputs
-            label="First Name"
-            placeholder="Update your first name"
-            value={formData.user?.firstName}
-            name="firstName"
-            handleChange={handleChange}
-            darbeInputType="standardInput"
-          />
-          <Inputs
-            label="Last Name"
-            placeholder="Update your last name"
-            value={formData.user?.lastName}
-            name="lastName"
-            handleChange={handleChange}
-            darbeInputType="standardInput"
-          />
-          <Inputs
-            label="City"
-            placeholder="Update your city"
-            name="city"
-            value={formData.city}
-            handleChange={handleChange}
-            darbeInputType="standardInput"
-          />
-          <div className={styles.editProfileDropdownAreaFullWidth}>
-            <Dropdown
-              label="State"
-              name="state"
-              initialValue={formData.state}
-              onChange={handleDropdownChange}
-            >
-              {States()}
-            </Dropdown>
-          </div>
-          <Inputs
-            label="Zip"
-            placeholder="Update your zip"
-            name="zip"
-            value={formData.user?.zip}
-            handleChange={handleChange}
-            darbeInputType="standardInput"
-          />
-          <Inputs
-            label="Tagline"
-            placeholder="Update your tagline"
-            name="tagLine"
-            value={formData.tagLine}
-            handleChange={handleChange}
-            darbeInputType="standardInput"
-          />
-          <div className={styles.editProfileDropdownAreaFullWidth}>
-            <Dropdown
-              label="Gender"
-              name="gender"
-              initialValue={formData.gender}
-              onChange={handleDropdownChange}
-            >
-              {Genders()}
-            </Dropdown>
-          </div>
-          <div className={styles.editProfileDropdownAreaFullWidth}>
-            <Dropdown
-              label="Race"
-              name="race"
-              initialValue={formData.race}
-              onChange={handleDropdownChange}
-            >
-              {Race()}
-            </Dropdown>
-          </div>
-          <Inputs
-            label="Emergency Contact Name"
-            placeholder="Emergency contact name"
-            name="emergencyContact name"
-            handleChange={handleChange}
-            value={formData.emergencyContact?.name}
-            darbeInputType="standardInput"
-          />
-          <Inputs
-            label="Emergency Contact Phone Number"
-            placeholder="Emergency contact phone number"
-            name="emergencyContact phone"
-            handleChange={handleChange}
-            value={formData.emergencyContact?.phone}
-            darbeInputType="standardInput"
-          />
-          <Inputs
-            label="Allergies"
-            placeholder="Update your allergies"
-            name="allergies"
-            value={formData.allergies}
-            handleChange={handleChange}
-            darbeInputType="textAreaInput"
-          />
-        </div>
-      )}
+  if (user?.userType !== "individual") {
+    return null;
+  }
 
-      <div className={styles.editProfileInfoInputsNonprofit}>
-        {userType === "organization" && (
-          <>
-            <Inputs
-              label="Organization Name"
-              placeholder="Update your organization name"
-              value={formData.user?.organizationName}
-              name="organizationName"
-              handleChange={handleChange}
-              darbeInputType="standardInput"
-            />
-            <Inputs
-              label="Parent Organization"
-              placeholder="Update your parent organization"
-              value={formData.user?.nonprofitName}
-              name="parentOrganization"
-              handleChange={handleChange}
-              darbeInputType="standardInput"
-            />
-            <Inputs
-              label="Tagline"
-              placeholder="Update your tagline"
-              name="tagLine"
-              value={formData.tagLine}
-              handleChange={handleChange}
-              darbeInputType="standardInput"
-            />
-            <Inputs
-              label="City"
-              placeholder="Update your city"
-              name="city"
-              value={formData.city}
-              handleChange={handleChange}
-              darbeInputType="standardInput"
-            />
-            <div className={styles.twoInputsRow}>
-              <div className={styles.editProfileDropdownAreaFullWidth}>
-                <Dropdown
-                  label="State"
-                  name="state"
-                  initialValue={formData.state}
-                  onChange={handleDropdownChange}
-                >
-                  {States()}
-                </Dropdown>
-              </div>
-              <Inputs
-                label="Zip"
-                placeholder="Update your zip"
-                name="zip"
-                value={formData.user?.zip}
-                handleChange={handleChange}
-                darbeInputType="standardInput"
+  return (
+    <div className={styles.profileDialogContent}>
+      <div className={styles.profileDialogScrollArea}>
+        <div className={styles.profileDialogGrid}>
+          <ProfileTextField
+            label="First Name"
+            placeholder="John"
+            value={formData.user?.firstName}
+            onChange={(value) => setUserField("firstName", value)}
+            maxLength={50}
+          />
+          <ProfileTextField
+            label="Last Name"
+            placeholder="Smith"
+            value={formData.user?.lastName}
+            onChange={(value) => setUserField("lastName", value)}
+            maxLength={50}
+          />
+          <ProfileTextField
+            label="Location"
+            placeholder="Houston, TX"
+            value={location}
+            onChange={setLocation}
+            maxLength={300}
+          />
+          <ProfileTextField
+            label="Zip Code"
+            placeholder="77001"
+            value={formData.user?.zip}
+            onChange={(value) => setUserField("zip", value)}
+            maxLength={50}
+          />
+          <div className={styles.profileDialogFieldFullWidth}>
+            <label className={styles.profileDialogLabel}>
+              Date Of Birth
+              <span className={styles.profileDialogRequired}>*</span>
+            </label>
+            <div className={styles.profileDialogDobRow}>
+              <ProfileSelectField
+                label="Month"
+                placeholder="Month"
+                value={dateOfBirth.month}
+                onChange={(value) =>
+                  setDateOfBirth((prev) => ({ ...prev, month: value }))
+                }
+                options={MONTH_OPTIONS}
+                className={styles.profileDialogCompactField}
+                showLabel={false}
+              />
+              <ProfileSelectField
+                label="Day"
+                placeholder="Day"
+                value={dateOfBirth.day}
+                onChange={(value) =>
+                  setDateOfBirth((prev) => ({ ...prev, day: value }))
+                }
+                options={Array.from({ length: 31 }, (_, index) =>
+                  `${index + 1}`
+                )}
+                className={styles.profileDialogCompactField}
+                showLabel={false}
+              />
+              <ProfileSelectField
+                label="Year"
+                placeholder="Year"
+                value={dateOfBirth.year}
+                onChange={(value) =>
+                  setDateOfBirth((prev) => ({ ...prev, year: value }))
+                }
+                options={Array.from({ length: 101 }, (_, index) =>
+                  `${new Date().getFullYear() - index}`
+                )}
+                className={styles.profileDialogCompactField}
+                showLabel={false}
               />
             </div>
-            <Inputs
-              label="EIN"
-              placeholder="000-00-0000"
-              name="ein"
-              handleChange={handleChange}
-              value={formData.user?.ein}
-              darbeInputType="standardInput"
-            />
-          </>
-        )}
+          </div>
+          <ProfileTextField
+            label="Tagline"
+            placeholder="Volunteer at NP"
+            value={formData.tagLine}
+            onChange={(value) => setProfileField("tagLine", value)}
+            maxLength={300}
+            className={styles.profileDialogFieldFullWidth}
+          />
+          <ProfileTextField
+            label="Title / Prefix"
+            placeholder="Mr."
+            value={titlePrefix}
+            onChange={setTitlePrefix}
+            maxLength={50}
+            className={styles.profileDialogFieldFullWidth}
+          />
+          <ProfileSelectField
+            label="Gender"
+            placeholder="Select gender"
+            value={formData.gender}
+            onChange={(value) => setProfileField("gender", value)}
+            options={GENDER_OPTIONS}
+          />
+          <ProfileSelectField
+            label="Race"
+            placeholder="Select race"
+            value={formData.race}
+            onChange={(value) => setProfileField("race", value)}
+            options={RACE_OPTIONS}
+          />
+          <ProfileTextField
+            label="Emergency Contact Name"
+            placeholder="Karen Smith"
+            value={formData.emergencyContact?.name}
+            onChange={(value) => setEmergencyField("name", value)}
+            maxLength={50}
+          />
+          <ProfileTextField
+            label="Relationship"
+            placeholder="Sister"
+            value={formData.emergencyContact?.relation}
+            onChange={(value) => setEmergencyField("relation", value)}
+            maxLength={20}
+          />
+          <ProfileTextField
+            label="Phone Number"
+            placeholder="123-456-7890"
+            value={formData.phoneNumber}
+            onChange={(value) => setProfileField("phoneNumber", value)}
+            maxLength={50}
+          />
+          <ProfileTextField
+            label="Email"
+            placeholder="something@mail.com"
+            value={user?.email}
+            onChange={() => undefined}
+            maxLength={50}
+            readOnly
+          />
+          <ProfileTextField
+            label="Allergies (optional)"
+            placeholder="Peanut, and Soy"
+            value={formData.allergies}
+            onChange={(value) => setProfileField("allergies", value)}
+            maxLength={300}
+            required={false}
+            textarea
+            className={styles.profileDialogFieldFullWidth}
+          />
+        </div>
       </div>
 
-      <div className={styles.editProfileButtons}>
+      <div className={styles.profileDialogFooter}>
         <DarbeButton
           buttonText="Save"
           darbeButtonType="saveButton"
           onClick={handleSave}
         />
-        {userType === "individual" && (
-          <DarbeButton
-            buttonText="Availability"
-            darbeButtonType="nextButton"
-            endingIconPath="/svgs/common/goForwardIconWhite.svg"
-            onClick={handleNextSection}
-          />
-        )}
+        <DarbeButton
+          buttonText={isProfileDialog ? "Edit Causes" : "Availability"}
+          darbeButtonType="nextButton"
+          onClick={handleSecondaryAction}
+        />
       </div>
     </div>
   );

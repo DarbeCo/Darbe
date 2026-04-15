@@ -3,13 +3,15 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
+  height: 100dvh;
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
   overflow-y: auto;
   z-index: 3;
+  padding: 12px;
+  box-sizing: border-box;
 }
 
 .modalContent {
@@ -25,10 +27,35 @@
   overflow-y: auto;
 }
 
+.profileModalContent {
+  --profile-dialog-inline-padding: clamp(14px, 3vw, 32px);
+  width: min(768px, calc(100dvw - 24px));
+  height: min(1024px, calc(100dvh - 24px));
+  max-height: calc(100dvh - 24px);
+  padding: 0;
+  border-radius: 8px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow-x: hidden;
+  overflow-y: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+}
+
 .modalContentHeader {
   display: flex;
   flex-direction: column;
   margin-bottom: 10px;
+}
+
+.profileModalHeader {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #fff;
+  margin-bottom: 0;
+  border-bottom: 1px solid #e1e1e1;
 }
 
 .modalHeaderText {
@@ -40,6 +67,28 @@
   font-size: 20px;
   font-weight: 700;
   line-height: 27.24px;
+}
+
+.profileModalHeaderText {
+  position: relative;
+  justify-content: center;
+  padding: 20px var(--profile-dialog-inline-padding);
+  font-size: 24px;
+  line-height: 1.2;
+  color: #263238;
+}
+
+.profileModalCloseButton {
+  position: absolute;
+  top: 50%;
+  right: var(--profile-dialog-inline-padding);
+  transform: translateY(-50%);
+}
+
+.profileModalCloseButton :global(.MuiIconButton-root) {
+  width: 24px;
+  height: 24px;
+  padding: 0;
 }
 
 @media (min-width: 560px) {
@@ -55,5 +104,51 @@
     row-gap: 10px;
     display: flex;
     flex-direction: column;
+  }
+
+  .profileModalContent {
+    width: min(768px, calc(100dvw - 48px));
+    height: min(1024px, calc(100dvh - 48px));
+    max-height: calc(100dvh - 48px);
+  }
+}
+
+@media (max-width: 640px) {
+  .modalContainer {
+    padding: 8px;
+    align-items: flex-start;
+  }
+
+  .profileModalContent {
+    width: 100%;
+    height: auto;
+    max-height: calc(100dvh - 16px);
+  }
+
+  .profileModalHeaderText {
+    padding: 16px var(--profile-dialog-inline-padding);
+    justify-content: flex-start;
+    font-size: 22px;
+  }
+
+  .profileModalCloseButton {
+    right: var(--profile-dialog-inline-padding);
+  }
+}
+
+@media (max-height: 760px) {
+  .modalContainer {
+    align-items: flex-start;
+  }
+
+  .profileModalContent {
+    height: auto;
+    max-height: calc(100dvh - 16px);
+  }
+
+  .profileModalHeaderText {
+    padding-top: 16px;
+    padding-bottom: 16px;
+    font-size: 22px;
   }
 }

@@ -77,6 +77,7 @@ const mapProfileToUserState = (
     user_type: string;
     zip: string;
     city: string;
+    date_of_birth?: string | null;
     ein: string | null;
     nonprofit_name: string | null;
     organization_name: string | null;
@@ -93,6 +94,7 @@ const mapProfileToUserState = (
     `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim(),
   firstName: profile.first_name ?? "",
   lastName: profile.last_name ?? "",
+  dateOfBirth: profile.date_of_birth ?? undefined,
   causes: causeIds,
   userType: profile.user_type,
   zip: profile.zip,
@@ -439,6 +441,7 @@ export const updateUserProfile = async (
         last_name: profile.user.lastName ?? undefined,
         city: profile.user.city ?? undefined,
         zip: profile.user.zip ?? undefined,
+        date_of_birth: profile.user.dateOfBirth ?? undefined,
         ein: profile.user.ein ?? undefined,
         nonprofit_name: profile.user.nonprofitName ?? undefined,
         organization_name: profile.user.organizationName ?? undefined,
@@ -605,7 +608,7 @@ export const getUserProfile = async (userId: string): Promise<DarbeProfileShared
     supabase
       .from("profiles")
       .select(
-        "id, email, full_name, first_name, last_name, user_type, zip, city, ein, nonprofit_name, organization_name, profile_picture_url, cover_photo_url"
+        "id, email, full_name, first_name, last_name, user_type, zip, city, date_of_birth, ein, nonprofit_name, organization_name, profile_picture_url, cover_photo_url"
       )
       .eq("id", userId)
       .single(),

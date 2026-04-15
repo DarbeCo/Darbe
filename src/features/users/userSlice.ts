@@ -24,6 +24,7 @@ export interface UserState {
   fullName: string;
   firstName: string;
   lastName: string;
+  dateOfBirth?: string;
   causes: string[];
   userType: string;
   zip: string;

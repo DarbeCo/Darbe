@@ -79,12 +79,26 @@ export const Modal = () => {
     closeModal();
   };
 
+  const isProfileModal = modalType === MODAL_TYPE.profile;
+
   // TODO: This is getting messy, use children instead of switch statement
   const modalContent = (
     <div className={styles.modalContainer}>
-      <div className={styles.modalContent}>
-        <div className={styles.modalContentHeader}>
-          <div className={styles.modalHeaderText}>
+      <div
+        className={`${styles.modalContent} ${
+          isProfileModal ? styles.profileModalContent : ""
+        }`.trim()}
+      >
+        <div
+          className={`${styles.modalContentHeader} ${
+            isProfileModal ? styles.profileModalHeader : ""
+          }`.trim()}
+        >
+          <div
+            className={`${styles.modalHeaderText} ${
+              isProfileModal ? styles.profileModalHeaderText : ""
+            }`.trim()}
+          >
             {(() => {
               switch (modalType) {
                 case MODAL_TYPE.profile:
@@ -133,7 +147,13 @@ export const Modal = () => {
                   return null;
               }
             })()}
-            <ClosingIcon onClick={closeModal} useNoSx />
+            <div
+              className={
+                isProfileModal ? styles.profileModalCloseButton : undefined
+              }
+            >
+              <ClosingIcon onClick={closeModal} useNoSx />
+            </div>
           </div>
         </div>
         {(() => {

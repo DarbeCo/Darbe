@@ -1,4 +1,6 @@
 .profileEdit {
+  --profile-dialog-inline-padding: clamp(14px, 3vw, 32px);
+  --profile-dialog-column-gap: clamp(10px, 1.5vw, 16px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -7,6 +9,14 @@
   width: 100%;
   height: 100vh;
   row-gap: 10px;
+}
+
+.profileEditFrame {
+  width: min(768px, calc(100vw - 24px));
+  max-width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .editEntityUserHeader {
@@ -43,14 +53,48 @@
 }
 
 .profileEditHeader {
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
+  column-gap: var(--profile-dialog-column-gap);
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
+  width: calc(100% - (2 * var(--profile-dialog-inline-padding)));
+  max-width: calc(100% - (2 * var(--profile-dialog-inline-padding)));
+  margin: 0 auto;
   height: 90px;
   background-color: #fff;
-  padding: 10px 30px 10px 30px;
+  padding: 10px 0;
+  box-sizing: border-box;
+}
+
+.backIconContainer,
+.closeIconContainer {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.backIconContainer {
+  justify-content: flex-start;
+}
+
+.headerTitleContainer {
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+  text-align: center;
+}
+
+.closeIconContainer {
+  justify-content: flex-end;
+}
+
+.backIconContainer :global(.MuiIconButton-root),
+.closeIconContainer :global(.MuiIconButton-root) {
+  width: 24px;
+  height: 24px;
+  padding: 0;
 }
 
 .profileEditContent {
@@ -59,7 +103,8 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
   background-color: #fff;
   padding: 15px 0px;
   row-gap: 10px;
@@ -265,4 +310,259 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
+}
+
+.profileDialogContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: clamp(14px, 2vw, 24px);
+  width: 100%;
+  padding: clamp(12px, 2vw, 18px) clamp(14px, 3vw, 32px) clamp(18px, 3vw, 28px);
+  background: #fff;
+  overflow: hidden;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.profileDialogScrollArea {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.profileDialogGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(10px, 1.5vw, 16px);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.profileDialogField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.profileDialogFieldFullWidth {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.profileDialogCompactField {
+  gap: 0;
+}
+
+.profileDialogLabel {
+  font-size: clamp(12px, 1.35vw, 14px);
+  font-weight: 700;
+  line-height: 1.2;
+  color: #313131;
+}
+
+.profileDialogRequired {
+  color: #d9534f;
+}
+
+.profileDialogInput,
+.profileDialogTextarea,
+.profileDialogSelect {
+  width: 100%;
+  border: 1px solid #cfd5db;
+  border-radius: 8px;
+  min-height: 42px;
+  padding: clamp(8px, 1.1vw, 10px) clamp(10px, 1.4vw, 12px);
+  font-size: clamp(13px, 1.5vw, 15px);
+  line-height: 1.2;
+  color: #2f3941;
+  background: #fff;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.profileDialogInput::placeholder,
+.profileDialogTextarea::placeholder {
+  color: #8b8f94;
+}
+
+.profileDialogInput:focus,
+.profileDialogTextarea:focus,
+.profileDialogSelect:focus {
+  border-color: #2c77e7;
+  box-shadow: 0 0 0 3px rgb(44 119 231 / 12%);
+}
+
+.profileDialogInput[readonly] {
+  background: #f7f8fa;
+  color: #6f7680;
+}
+
+.profileDialogTextarea {
+  min-height: clamp(56px, 8vh, 68px);
+  resize: vertical;
+}
+
+.profileDialogSelect {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #5f6770 50%),
+    linear-gradient(135deg, #5f6770 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 2px),
+    calc(100% - 12px) calc(50% - 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 34px;
+}
+
+.profileDialogCounter {
+  align-self: flex-end;
+  min-height: 12px;
+  font-size: 11px;
+  line-height: 1;
+  color: #8b8f94;
+  margin-top: -4px;
+}
+
+.profileDialogDobRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(10px, 1.6vw, 14px);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.profileDialogDobRow > * {
+  min-width: 0;
+}
+
+.profileDialogFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  width: 100%;
+  flex-shrink: 0;
+  padding-top: 10px;
+  background: #fff;
+  border-top: 1px solid #eef1f4;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.profileDialogFooter :global(.MuiButton-root) {
+  flex: 0 0 auto;
+  min-width: 0 !important;
+  width: auto !important;
+}
+
+@media (max-width: 560px) {
+  .profileDialogContent {
+    padding: 12px 12px 16px;
+    gap: 12px;
+  }
+
+  .profileDialogGrid {
+    gap: 10px;
+  }
+
+  .profileDialogScrollArea {
+    padding-right: 0;
+  }
+
+  .profileDialogFooter {
+    gap: 8px;
+  }
+
+  .profileDialogFooter :global(.MuiButton-root) {
+    flex: 1 1 0;
+  }
+}
+
+@media (max-width: 430px) {
+  .profileDialogContent {
+    padding: 12px 12px 18px;
+  }
+
+  .profileDialogGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .profileDialogFieldFullWidth {
+    grid-column: auto;
+  }
+
+  .profileDialogField {
+    gap: 6px;
+  }
+
+  .profileDialogDobRow {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .profileDialogInput,
+  .profileDialogTextarea,
+  .profileDialogSelect {
+    border-radius: 7px;
+  }
+
+  .profileDialogFooter {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .profileDialogFooter :global(.MuiButton-root) {
+    width: 100% !important;
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-height: 820px) {
+  .profileDialogContent {
+    gap: 12px;
+  }
+
+  .profileDialogTextarea {
+    min-height: 54px;
+  }
+}
+
+@media (max-height: 680px) {
+  .profileDialogContent {
+    padding-bottom: 12px;
+  }
+
+  .profileDialogLabel {
+    font-size: 12px;
+  }
+
+  .profileDialogInput,
+  .profileDialogTextarea,
+  .profileDialogSelect {
+    min-height: 38px;
+    padding-top: 7px;
+    padding-bottom: 7px;
+    font-size: 13px;
+  }
+
+  .profileDialogGrid {
+    gap: 8px;
+  }
+
+  .profileDialogFooter {
+    padding-top: 8px;
+  }
 }

@@ -47,9 +47,9 @@ export const useEditProfileInformation = () => {
   const profileInformation = useGetProfileInformation();
 
   const editProfileState = {
-    city: profileInformation?.user?.city,
     state: profileInformation?.state,
     tagLine: profileInformation?.tagLine,
+    title: profileInformation?.title,
     gender: profileInformation?.gender,
     race: profileInformation?.race,
     allergies: profileInformation?.allergies,
@@ -64,7 +64,9 @@ export const useEditProfileInformation = () => {
     user: {
       firstName: profileInformation?.user?.firstName,
       lastName: profileInformation?.user?.lastName,
+      city: profileInformation?.user?.city,
       zip: profileInformation?.user?.zip,
+      dateOfBirth: profileInformation?.user?.dateOfBirth,
       nonprofitName: profileInformation?.user?.nonprofitName,
       organizationName: profileInformation?.user?.organizationName,
       ein: profileInformation?.user?.ein,

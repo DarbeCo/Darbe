@@ -30,27 +30,37 @@ export const ProfileEdit = () => {
 
   return (
     <div className={styles.profileEdit}>
-      {/* Replace this div with SimpleHeader */}
-      <div className={styles.profileEditHeader}>
-        <IconButton onClick={handleGoBack}>
-          <CustomSvgs svgPath="/svgs/common/goBackIcon.svg" altText="Go back" />
-        </IconButton>
-        <Typography
-          variant="sectionTitle"
-          textToDisplay={`Edit Profile Info`}
-        />
-        <ClosingIcon useNoSx onClick={handleExitEdit} />
+      <div className={styles.profileEditFrame}>
+        <div className={styles.profileEditHeader}>
+          <div className={styles.backIconContainer}>
+            <IconButton onClick={handleGoBack}>
+              <CustomSvgs
+                svgPath="/svgs/common/goBackIcon.svg"
+                altText="Go back"
+              />
+            </IconButton>
+          </div>
+          <div className={styles.headerTitleContainer}>
+            <Typography
+              variant="sectionTitle"
+              textToDisplay={`Edit Profile Info`}
+            />
+          </div>
+          <div className={styles.closeIconContainer}>
+            <ClosingIcon useNoSx onClick={handleExitEdit} />
+          </div>
+        </div>
+        {!isEntityProfile && (
+          <UserEditSections section={section} userId={userId} />
+        )}
+        {isEntityProfile && (
+          <EntityEditSections
+            section={section}
+            entityType={user?.userType}
+            userId={userId}
+          />
+        )}
       </div>
-      {!isEntityProfile && (
-        <UserEditSections section={section} userId={userId} />
-      )}
-      {isEntityProfile && (
-        <EntityEditSections
-          section={section}
-          entityType={user?.userType}
-          userId={userId}
-        />
-      )}
     </div>
   );
 };
