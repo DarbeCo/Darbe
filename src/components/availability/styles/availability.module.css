@@ -13,6 +13,26 @@
   row-gap: 14px;
 }
 
+.availabilityHeader {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) 140px minmax(280px, 2fr);
+  align-items: end;
+  column-gap: 16px;
+  width: 100%;
+}
+
+.availabilityHeaderLabel {
+  color: #1f1f1f;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+}
+
+.profileDialogDayHeader {
+  display: block;
+}
+
 .availabilityTitle {
   font-weight: 600;
   font-size: 16px;
@@ -29,9 +49,12 @@
 }
 
 .availabilityContainerProfileDialog .availabilityDays {
-  justify-content: space-evenly;
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) 140px minmax(280px, 2fr);
+  justify-content: unset;
+  align-items: center;
   column-gap: 16px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .availabilityDay {
@@ -43,7 +66,7 @@
 }
 
 .availabilityContainerProfileDialog .availabilityDay {
-  justify-content: flex-end;
+  justify-content: flex-start;
   column-gap: 12px;
 }
 
@@ -70,7 +93,7 @@
 }
 
 .availabilityContainerProfileDialog .clearTimesButton {
-  color: #2c77e7;
+  display: none;
 }
 
 .clearTimesButton:hover {
@@ -86,7 +109,15 @@
 }
 
 .availabilityContainerProfileDialog .allDay {
-  width: 180px;
+  width: 140px;
+  justify-content: center;
+}
+
+.profileDialogDayLabel {
+  color: #8b8b8b;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 22px;
 }
 
 .tinyTo {
@@ -100,24 +131,58 @@
 }
 
 @media (max-width: 640px) {
+  .availabilityHeader {
+    grid-template-columns: minmax(88px, 1fr) 88px minmax(180px, 2fr);
+    column-gap: 10px;
+  }
+
+  .availabilityHeaderLabel {
+    font-size: 12px;
+    line-height: 18px;
+  }
+
   .availabilityContainerProfileDialog .availabilityDays {
-    flex-direction: column;
-    align-items: stretch;
-    row-gap: 10px;
+    grid-template-columns: minmax(88px, 1fr) 88px minmax(180px, 2fr);
+    column-gap: 10px;
   }
 
   .availabilityContainerProfileDialog .availabilityDay {
     justify-content: flex-start;
-    flex-wrap: wrap;
   }
 
   .availabilityContainerProfileDialog .allDay {
-    width: 100%;
+    width: 88px;
   }
 
   .availabilityContainerProfileDialog .timeDropdown {
     width: calc(50% - 18px);
     min-width: 132px;
     flex: 1 1 132px;
+  }
+}
+
+@media (max-width: 520px) {
+  .availabilityHeader {
+    display: none;
+  }
+
+  .availabilityContainerProfileDialog .availabilityDays {
+    grid-template-columns: 1fr;
+    row-gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .profileDialogDayLabel {
+    font-weight: 600;
+    color: #4f4f4f;
+  }
+
+  .availabilityContainerProfileDialog .allDay {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .availabilityContainerProfileDialog .availabilityDay {
+    flex-wrap: wrap;
   }
 }

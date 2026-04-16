@@ -63,12 +63,17 @@ export const Availability = ({
 
     return (
       <div className={styles.availabilityDays} key={day}>
+        {isProfileDialog ? (
+          <div className={styles.profileDialogDayLabel}>
+            {capitalizeFirstLetter(day)}
+          </div>
+        ) : null}
         <div className={styles.allDay}>
           <CheckBox
             name={`availability ${day}`}
             labelPlacement="right"
             defaultChecked={isDayOpen}
-            label={capitalizeFirstLetter(day)}
+            label={isProfileDialog ? "" : capitalizeFirstLetter(day)}
             onChange={onCheckboxChange}
           />
         </div>
@@ -106,6 +111,8 @@ export const Availability = ({
             type="button"
             className={styles.clearTimesButton}
             onClick={handleClearTimes}
+            aria-hidden={isProfileDialog}
+            tabIndex={isProfileDialog ? -1 : 0}
           >
             Clear
           </button>
@@ -124,6 +131,17 @@ export const Availability = ({
         <span className={styles.availabilityTitle}>
           Please Set Your Availability
         </span>
+      )}
+      {isProfileDialog && (
+        <div className={styles.availabilityHeader}>
+          <span className={styles.profileDialogDayHeader} />
+          <span className={styles.availabilityHeaderLabel}>
+            Available All Day
+          </span>
+          <span className={styles.availabilityHeaderLabel}>
+            Select Time Availability
+          </span>
+        </div>
       )}
       {availabilityDays}
     </div>
