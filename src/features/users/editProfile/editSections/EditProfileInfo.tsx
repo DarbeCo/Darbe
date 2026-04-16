@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { MenuItem, Select, SelectChangeEvent } from "@mui/material";
 
 import { DarbeButton } from "../../../../components/buttons/DarbeButton";
 import {
@@ -156,10 +157,12 @@ const ProfileTextField = ({
   className,
   textarea = false,
 }: TextFieldProps) => {
+  const inputClassName = `${
+    textarea ? styles.profileDialogTextarea : styles.profileDialogInput
+  } ${value ? styles.profileDialogFieldFilled : ""}`.trim();
+
   const inputProps = {
-    className: textarea
-      ? styles.profileDialogTextarea
-      : styles.profileDialogInput,
+    className: inputClassName,
     placeholder,
     value,
     onChange: (
@@ -200,6 +203,17 @@ type SelectFieldProps = {
   showLabel?: boolean;
 };
 
+type CustomSelectFieldProps = {
+  value?: string;
+  onChange: (value: string) => void;
+  options: string[];
+  placeholder: string;
+  className?: string;
+  hasValue?: boolean;
+  menuPaperClassName?: string;
+  menuListClassName?: string;
+};
+
 const ProfileSelectField = ({
   label,
   value = "",
@@ -217,18 +231,61 @@ const ProfileSelectField = ({
         {required && <span className={styles.profileDialogRequired}>*</span>}
       </label>
     )}
-    <select
-      className={styles.profileDialogSelect}
+    <ProfileMuiSelectField
       value={value}
-      onChange={(event) => onChange(event.target.value)}
+      onChange={onChange}
+      options={options}
+      placeholder={placeholder}
+      hasValue={Boolean(value)}
+      menuPaperClassName={styles.profileDialogMenuPaper}
+      menuListClassName={styles.profileDialogMenuList}
+    />
+  </div>
+);
+
+const ProfileMuiSelectField = ({
+  value = "",
+  onChange,
+  options,
+  placeholder,
+  className,
+  hasValue = false,
+  menuPaperClassName,
+  menuListClassName,
+}: CustomSelectFieldProps) => (
+  <div className={`${styles.profileDialogField} ${className ?? ""}`.trim()}>
+    <Select
+      displayEmpty
+      value={value}
+      onChange={(event: SelectChangeEvent<string>) => onChange(event.target.value)}
+      className={`${styles.profileDialogMuiSelect} ${
+        hasValue ? styles.profileDialogFieldFilled : ""
+      }`.trim()}
+      MenuProps={{
+        PaperProps: {
+          className: menuPaperClassName,
+        },
+        MenuListProps: {
+          className: menuListClassName,
+        },
+      }}
+      renderValue={(selected) =>
+        selected ? (
+          selected
+        ) : (
+          <span className={styles.profileDialogSelectPlaceholder}>
+            {placeholder}
+          </span>
+        )
+      }
     >
-      <option value="">{placeholder}</option>
+      <MenuItem value="">{placeholder}</MenuItem>
       {options.map((option) => (
-        <option key={option} value={option}>
+        <MenuItem key={option} value={option}>
           {option}
-        </option>
+        </MenuItem>
       ))}
-    </select>
+    </Select>
   </div>
 );
 
@@ -404,8 +461,7 @@ export const EditProfileInfo = () => {
               <span className={styles.profileDialogRequired}>*</span>
             </label>
             <div className={styles.profileDialogDobRow}>
-              <ProfileSelectField
-                label="Month"
+              <ProfileMuiSelectField
                 placeholder="Month"
                 value={dateOfBirth.month}
                 onChange={(value) =>
@@ -413,10 +469,11 @@ export const EditProfileInfo = () => {
                 }
                 options={MONTH_OPTIONS}
                 className={styles.profileDialogCompactField}
-                showLabel={false}
+                hasValue={Boolean(dateOfBirth.month)}
+                menuPaperClassName={styles.profileDialogDateMenuPaper}
+                menuListClassName={styles.profileDialogDateMenuList}
               />
-              <ProfileSelectField
-                label="Day"
+              <ProfileMuiSelectField
                 placeholder="Day"
                 value={dateOfBirth.day}
                 onChange={(value) =>
@@ -426,10 +483,11 @@ export const EditProfileInfo = () => {
                   `${index + 1}`
                 )}
                 className={styles.profileDialogCompactField}
-                showLabel={false}
+                hasValue={Boolean(dateOfBirth.day)}
+                menuPaperClassName={styles.profileDialogDateMenuPaper}
+                menuListClassName={styles.profileDialogDateMenuList}
               />
-              <ProfileSelectField
-                label="Year"
+              <ProfileMuiSelectField
                 placeholder="Year"
                 value={dateOfBirth.year}
                 onChange={(value) =>
@@ -439,7 +497,9 @@ export const EditProfileInfo = () => {
                   `${new Date().getFullYear() - index}`
                 )}
                 className={styles.profileDialogCompactField}
-                showLabel={false}
+                hasValue={Boolean(dateOfBirth.year)}
+                menuPaperClassName={styles.profileDialogDateMenuPaper}
+                menuListClassName={styles.profileDialogDateMenuList}
               />
             </div>
           </div>

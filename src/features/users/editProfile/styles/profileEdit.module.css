@@ -402,8 +402,8 @@
 .profileDialogInput:focus,
 .profileDialogTextarea:focus,
 .profileDialogSelect:focus {
-  border-color: #2c77e7;
-  box-shadow: 0 0 0 3px rgb(44 119 231 / 12%);
+  border-color: #263238;
+  box-shadow: 0 0 0 3px rgb(38 50 56 / 12%);
 }
 
 .profileDialogInput[readonly] {
@@ -427,6 +427,83 @@
   background-size: 6px 6px, 6px 6px;
   background-repeat: no-repeat;
   padding-right: 34px;
+}
+
+.profileDialogMuiSelect {
+  width: 100%;
+  min-height: 42px;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.profileDialogMuiSelect :global(.MuiOutlinedInput-notchedOutline) {
+  border: 2px solid #D8D8D8;
+}
+
+.profileDialogMuiSelect:hover :global(.MuiOutlinedInput-notchedOutline) {
+  border-color: #D8D8D8;
+}
+
+.profileDialogMuiSelect :global(.MuiSelect-select) {
+  padding: clamp(8px, 1.1vw, 10px) 40px clamp(8px, 1.1vw, 10px)
+    clamp(10px, 1.4vw, 12px);
+  font-size: clamp(13px, 1.5vw, 15px);
+  line-height: 1.2;
+  color: #2f3941;
+  box-sizing: border-box;
+}
+
+.profileDialogFieldFilled {
+  border-color: #088F26;
+}
+
+.profileDialogMuiSelect.profileDialogFieldFilled :global(.MuiOutlinedInput-notchedOutline) {
+  border-color: #088F26;
+}
+
+.profileDialogMuiSelect :global(.MuiSelect-icon) {
+  color: #5f6770;
+  right: 12px;
+}
+
+.profileDialogSelectPlaceholder {
+  color: #8b8f94;
+}
+
+.profileDialogDateMenuPaper {
+  width: 237px;
+  height: 220px;
+  border: 2px solid #263238;
+  border-radius: 8px;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.profileDialogDateMenuList {
+  padding: 0;
+}
+
+.profileDialogMenuPaper {
+  border: 2px solid #263238;
+  border-radius: 8px;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.profileDialogMenuList {
+  padding: 0;
+}
+
+.profileDialogMenuList :global(.MuiMenuItem-root) {
+  min-height: 40px;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.profileDialogDateMenuList :global(.MuiMenuItem-root) {
+  min-height: 40px;
+  font-size: 15px;
+  line-height: 1.2;
 }
 
 .profileDialogCounter {
@@ -517,7 +594,8 @@
 
   .profileDialogInput,
   .profileDialogTextarea,
-  .profileDialogSelect {
+  .profileDialogSelect,
+  .profileDialogMuiSelect {
     border-radius: 7px;
   }
 
@@ -555,6 +633,16 @@
   .profileDialogTextarea,
   .profileDialogSelect {
     min-height: 38px;
+    padding-top: 7px;
+    padding-bottom: 7px;
+    font-size: 13px;
+  }
+
+  .profileDialogMuiSelect {
+    min-height: 38px;
+  }
+
+  .profileDialogMuiSelect :global(.MuiSelect-select) {
     padding-top: 7px;
     padding-bottom: 7px;
     font-size: 13px;
