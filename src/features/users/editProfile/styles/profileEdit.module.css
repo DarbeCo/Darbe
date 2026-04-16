@@ -320,7 +320,7 @@
   gap: clamp(14px, 2vw, 24px);
   width: 100%;
   padding: clamp(12px, 2vw, 18px) clamp(14px, 3vw, 32px) clamp(18px, 3vw, 28px);
-  background: #fff;
+  background: #FAF9F9;
   overflow: hidden;
   box-sizing: border-box;
   max-width: 100%;
@@ -366,9 +366,11 @@
 }
 
 .profileDialogLabel {
-  font-size: clamp(12px, 1.35vw, 14px);
-  font-weight: 700;
-  line-height: 1.2;
+  font-family: "Open Sans", sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
   color: #313131;
 }
 
@@ -380,7 +382,7 @@
 .profileDialogTextarea,
 .profileDialogSelect {
   width: 100%;
-  border: 1px solid #cfd5db;
+  border: 2px solid #D8D8D8;
   border-radius: 8px;
   min-height: 42px;
   padding: clamp(8px, 1.1vw, 10px) clamp(10px, 1.4vw, 12px);

@@ -41,6 +41,7 @@
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
+  background: #FAF9F9;
 }
 
 .modalContentHeader {
@@ -50,23 +51,37 @@
 }
 
 .profileModalHeader {
-  --profile-dialog-column-gap: clamp(10px, 1.5vw, 16px);
   position: sticky;
   top: 0;
   z-index: 2;
-  background: #fff;
+  background-color: #FAF9F9;
   margin-bottom: 0;
-  border-bottom: 1px solid #e1e1e1;
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  padding: 20px 0 0;
+  box-sizing: border-box;
+}
+
+.profileModalHeaderInner {
+  --profile-dialog-column-gap: clamp(10px, 1.5vw, 16px);
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr) 32px;
   column-gap: var(--profile-dialog-column-gap);
   align-items: center;
-  width: calc(100% - (2 * var(--profile-dialog-inline-padding)));
-  max-width: calc(100% - (2 * var(--profile-dialog-inline-padding)));
-  margin-left: auto;
-  margin-right: auto;
-  padding: 20px 0;
+  width: 100%;
+  padding: 0 var(--profile-dialog-inline-padding) 20px;
   box-sizing: border-box;
+}
+
+.profileModalDivider {
+  width: calc(100% + (2 * var(--profile-dialog-inline-padding)));
+  height: 8px;
+  background: #D8D8D8;
+  flex: 0 0 8px;
+  margin-left: calc(var(--profile-dialog-inline-padding) * -1);
+  margin-right: calc(var(--profile-dialog-inline-padding) * -1);
 }
 
 .modalHeaderText {
@@ -131,6 +146,7 @@
     width: min(768px, calc(100dvw - 48px));
     height: min(1024px, calc(100dvh - 48px));
     max-height: calc(100dvh - 48px);
+    background: #FAF9F9;
   }
 }
 
@@ -144,6 +160,7 @@
     width: 100%;
     height: auto;
     max-height: calc(100dvh - 16px);
+    background: #FAF9F9;
   }
 
   .profileModalHeaderText {
@@ -153,7 +170,11 @@
   }
 
   .profileModalHeader {
-    padding: 16px 0;
+    padding-top: 16px;
+  }
+
+  .profileModalHeaderInner {
+    padding: 0 var(--profile-dialog-inline-padding) 16px;
   }
 }
 
@@ -165,6 +186,7 @@
   .profileModalContent {
     height: auto;
     max-height: calc(100dvh - 16px);
+    background: #FAF9F9;
   }
 
   .profileModalHeaderText {
@@ -173,6 +195,9 @@
 
   .profileModalHeader {
     padding-top: 16px;
+  }
+
+  .profileModalHeaderInner {
     padding-bottom: 16px;
   }
 }

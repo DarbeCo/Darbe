@@ -94,70 +94,76 @@ export const Modal = () => {
             isProfileModal ? styles.profileModalHeader : ""
           }`.trim()}
         >
-          {isProfileModal && (
-            <div className={styles.profileModalHeaderSpacer} aria-hidden="true" />
-          )}
-          <div
-            className={`${styles.modalHeaderText} ${
-              isProfileModal ? styles.profileModalHeaderText : ""
-            }`.trim()}
-          >
-            {(() => {
-              switch (modalType) {
-                case MODAL_TYPE.profile:
-                  return "Edit Profile";
-                case MODAL_TYPE.createPost:
-                  return "Create Post";
-                case MODAL_TYPE.about:
-                  return "Edit About";
-                case MODAL_TYPE.availability:
-                  return "Edit Availability";
-                case MODAL_TYPE.background:
-                  return "Edit Background";
-                case MODAL_TYPE.causes:
-                  return "Edit Causes";
-                case MODAL_TYPE.friends:
-                  return "Edit Friends";
-                case MODAL_TYPE.military:
-                  return "Edit Military";
-                case MODAL_TYPE.organizations:
-                  return "Edit Organizations";
-                case MODAL_TYPE.qualifications:
-                  return "Edit Qualifications";
-                case MODAL_TYPE.activity:
-                  return "Edit Activity";
-                case MODAL_TYPE.mutualFriends:
-                  return "Mutual Friends";
-                case MODAL_TYPE.mutualCauses:
-                  return "Mutual Causes";
-                case MODAL_TYPE.profileCauses:
-                  return "User Causes";
-                case MODAL_TYPE.profileFriends:
-                  return "User Friends";
-                case MODAL_TYPE.editRoster:
-                  return "Edit Roster";
-                case MODAL_TYPE.createRoster:
-                  return "Create Roster";
-                case MODAL_TYPE.entityProfile:
-                  return "Edit Profile";
-                case MODAL_TYPE.entityAbout:
-                  return "Edit About";
-                case MODAL_TYPE.values:
-                  return "Edit Values";
-                case MODAL_TYPE.programs:
-                  return "Edit Programs";
-                default:
-                  return null;
+          <div className={isProfileModal ? styles.profileModalHeaderInner : ""}>
+            {isProfileModal && (
+              <div
+                className={styles.profileModalHeaderSpacer}
+                aria-hidden="true"
+              />
+            )}
+            <div
+              className={`${styles.modalHeaderText} ${
+                isProfileModal ? styles.profileModalHeaderText : ""
+              }`.trim()}
+            >
+              {(() => {
+                switch (modalType) {
+                  case MODAL_TYPE.profile:
+                    return "Edit Profile";
+                  case MODAL_TYPE.createPost:
+                    return "Create Post";
+                  case MODAL_TYPE.about:
+                    return "Edit About";
+                  case MODAL_TYPE.availability:
+                    return "Edit Availability";
+                  case MODAL_TYPE.background:
+                    return "Edit Background";
+                  case MODAL_TYPE.causes:
+                    return "Edit Causes";
+                  case MODAL_TYPE.friends:
+                    return "Edit Friends";
+                  case MODAL_TYPE.military:
+                    return "Edit Military";
+                  case MODAL_TYPE.organizations:
+                    return "Edit Organizations";
+                  case MODAL_TYPE.qualifications:
+                    return "Edit Qualifications";
+                  case MODAL_TYPE.activity:
+                    return "Edit Activity";
+                  case MODAL_TYPE.mutualFriends:
+                    return "Mutual Friends";
+                  case MODAL_TYPE.mutualCauses:
+                    return "Mutual Causes";
+                  case MODAL_TYPE.profileCauses:
+                    return "User Causes";
+                  case MODAL_TYPE.profileFriends:
+                    return "User Friends";
+                  case MODAL_TYPE.editRoster:
+                    return "Edit Roster";
+                  case MODAL_TYPE.createRoster:
+                    return "Create Roster";
+                  case MODAL_TYPE.entityProfile:
+                    return "Edit Profile";
+                  case MODAL_TYPE.entityAbout:
+                    return "Edit About";
+                  case MODAL_TYPE.values:
+                    return "Edit Values";
+                  case MODAL_TYPE.programs:
+                    return "Edit Programs";
+                  default:
+                    return null;
+                }
+              })()}
+            </div>
+            <div
+              className={
+                isProfileModal ? styles.profileModalCloseButton : undefined
               }
-            })()}
+            >
+              <ClosingIcon onClick={closeModal} useNoSx />
+            </div>
           </div>
-          <div
-            className={
-              isProfileModal ? styles.profileModalCloseButton : undefined
-            }
-          >
-            <ClosingIcon onClick={closeModal} useNoSx />
-          </div>
+          {isProfileModal && <div className={styles.profileModalDivider} />}
         </div>
         {(() => {
           switch (modalType) {

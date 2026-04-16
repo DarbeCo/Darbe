@@ -212,16 +212,19 @@ export const messageFriendButton = {
 };
 
 export const saveButton = {
-  width: "80px",
-  height: "40px",
+  width: "70px",
+  minWidth: "70px",
+  height: "38px",
   borderRadius: "4px",
-  border: "2px solid #088F26",
+  border: "1px solid #088F26",
   color: "#088F26",
   backgroundColor: "#fff",
   textTransform: "none",
   fontSize: "14px",
   fontWeight: "700",
   lineHeight: "19px",
+  gap: "8px",
+  padding: "8px 16px",
   "&:hover": {
     backgroundColor: "#088F26",
     color: "#FFF",
@@ -229,14 +232,17 @@ export const saveButton = {
 };
 
 export const nextButton = {
-  width: "135px",
-  height: "40px",
+  width: "123px",
+  minWidth: "123px",
+  height: "38px",
   borderRadius: "4px",
   backgroundColor: "#2C77E7",
   color: "#fff",
   fontSize: "14px",
   fontWeight: "600",
   textTransform: "none",
+  gap: "8px",
+  padding: "8px 16px",
   "&:hover": {
     backgroundColor: "#2C77E7",
     color: "#fff",
