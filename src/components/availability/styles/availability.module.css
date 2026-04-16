@@ -29,8 +29,9 @@
 }
 
 .availabilityContainerProfileDialog .availabilityDays {
-  justify-content: space-between;
+  justify-content: space-evenly;
   column-gap: 16px;
+  margin-bottom: 16px;
 }
 
 .availabilityDay {
@@ -53,9 +54,9 @@
 }
 
 .availabilityContainerProfileDialog .timeDropdown {
-  width: 160px;
-  min-width: 160px;
-  flex: 0 0 160px;
+  max-width: 122px;
+  min-width: 122px;
+  flex: 0 0 122px;
 }
 
 .clearTimesButton {

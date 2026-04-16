@@ -136,6 +136,16 @@ export const Dropdown = ({
                     color: "#5f6770",
                     right: "12px",
                   },
+                  "&.Mui-disabled": {
+                    color: "#717070",
+                    backgroundColor: "#D8D8D8",
+                  },
+                  "&.Mui-disabled .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#D8D8D8",
+                  },
+                  "&.Mui-disabled .MuiSelect-icon": {
+                    color: "#717070",
+                  },
                 }
               : { ...DropdownSx, color: variantTextColor }
           }
@@ -143,7 +153,7 @@ export const Dropdown = ({
           {children}
           {showClearOption && (
             <MenuItem value="" onClick={() => setDropdownValue("")}>
-              None
+              &nbsp;
             </MenuItem>
           )}
         </Select>
