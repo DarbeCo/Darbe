@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { Checkbox } from "@mui/material";
 
 import { Causes } from "../../../../components/causes/Causes";
 import { DarbeButton } from "../../../../components/buttons/DarbeButton";
 import { useAppDispatch, useAppSelector } from "../../../../services/hooks";
 import { selectCurrentUserCauses, selectCurrentUserId } from "../../selectors";
+import { useGetCausesQuery } from "../../../../services/api/endpoints/causes/causes.api";
 import { useUpdateEntityProfileMutation } from "../../../../services/api/endpoints/profiles/profiles.api";
 import { updateUserCauses } from "../../userSlice";
 import { hideModal } from "../../../../components/modal/modalSlice";
@@ -15,7 +17,12 @@ export const EditCauses = () => {
   const currentCauses = useAppSelector(selectCurrentUserCauses);
   const userId = useAppSelector(selectCurrentUserId);
   const [updateUserProfile] = useUpdateEntityProfileMutation();
+  const { data: causes = [] } = useGetCausesQuery();
   const [updatedCauses, setUpdatedCauses] = useState<string[]>(currentCauses);
+  const allCauseIds = causes.map((cause) => cause.id);
+  const areAllCausesSelected =
+    allCauseIds.length > 0 &&
+    allCauseIds.every((causeId) => updatedCauses.includes(causeId));
 
   const handleCauseChange = (evt: React.MouseEvent<HTMLButtonElement>) => {
     const target = evt.currentTarget as HTMLButtonElement;
@@ -42,6 +49,10 @@ export const EditCauses = () => {
     });
   };
 
+  const handleToggleSelectAll = () => {
+    setUpdatedCauses((prevState) => (areAllCausesSelected ? [] : allCauseIds));
+  };
+
   const handleSaveCauses = async () => {
     const payload = {
       user: { id: userId, causes: updatedCauses },
@@ -57,18 +68,49 @@ export const EditCauses = () => {
   };
 
   return (
-    <div className={styles.profileEditContentCauses}>
-      <Causes
-        isIndividual={true}
-        onChange={handleCauseChange}
-        currentUserCauses={currentCauses}
-        editMode
-      />
-      <DarbeButton
-        buttonText="Save"
-        darbeButtonType="saveButton"
-        onClick={handleSaveCauses}
-      />
+    <div className={styles.profileDialogContent}>
+      <div className={styles.profileDialogScrollArea}>
+        <div className={styles.profileDialogCausesContent}>
+          <Causes
+            isIndividual={true}
+            onChange={handleCauseChange}
+            currentUserCauses={updatedCauses}
+            editMode
+          />
+        </div>
+      </div>
+      <div className={styles.profileDialogCausesFooter}>
+        <label className={styles.profileDialogCheckboxLabel}>
+          <Checkbox
+            checked={areAllCausesSelected}
+            onChange={handleToggleSelectAll}
+            className={styles.profileDialogCheckbox}
+            sx={{
+              padding: 0,
+              color: "#2C77E7",
+              "&.Mui-checked": {
+                color: "#2C77E7",
+              },
+              "& .MuiSvgIcon-root": {
+                fontSize: 24,
+              },
+            }}
+          />
+          <span>Select All</span>
+        </label>
+        <div className={styles.profileDialogFooterActions}>
+          <DarbeButton
+            buttonText="Save"
+            darbeButtonType="saveButton"
+            onClick={handleSaveCauses}
+          />
+          <DarbeButton
+            buttonText="Edit Causes"
+            darbeButtonType="nextButton"
+            onClick={handleSaveCauses}
+          />
+        </div>
+      </div>
     </div>
   );
 };

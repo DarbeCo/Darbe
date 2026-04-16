@@ -527,6 +527,25 @@
   min-width: 0;
 }
 
+.profileDialogCausesContent {
+  width: 100%;
+  padding-top: 8px;
+}
+
+.profileDialogCausesFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  flex-shrink: 0;
+  padding-top: 10px;
+  background: #fff;
+  border-top: 1px solid #eef1f4;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
 .profileDialogFooter {
   display: flex;
   justify-content: flex-end;
@@ -540,7 +559,35 @@
   max-width: 100%;
 }
 
+.profileDialogFooterActions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.profileDialogCheckboxLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  line-height: 1.2;
+  color: #263238;
+  cursor: pointer;
+}
+
+.profileDialogCheckbox {
+  flex: 0 0 auto;
+}
+
 .profileDialogFooter :global(.MuiButton-root) {
+  flex: 0 0 auto;
+  min-width: 0 !important;
+  width: auto !important;
+}
+
+.profileDialogCausesFooter :global(.MuiButton-root) {
   flex: 0 0 auto;
   min-width: 0 !important;
   width: auto !important;
@@ -565,6 +612,19 @@
   }
 
   .profileDialogFooter :global(.MuiButton-root) {
+    flex: 1 1 0;
+  }
+
+  .profileDialogCausesFooter {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .profileDialogFooterActions {
+    width: 100%;
+  }
+
+  .profileDialogCausesFooter :global(.MuiButton-root) {
     flex: 1 1 0;
   }
 }
@@ -605,6 +665,24 @@
   }
 
   .profileDialogFooter :global(.MuiButton-root) {
+    width: 100% !important;
+    flex: 1 1 100%;
+  }
+
+  .profileDialogCausesFooter {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .profileDialogCheckboxLabel {
+    width: 100%;
+  }
+
+  .profileDialogFooterActions {
+    width: 100%;
+  }
+
+  .profileDialogCausesFooter :global(.MuiButton-root) {
     width: 100% !important;
     flex: 1 1 100%;
   }

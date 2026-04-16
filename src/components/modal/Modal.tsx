@@ -79,7 +79,8 @@ export const Modal = () => {
     closeModal();
   };
 
-  const isProfileModal = modalType === MODAL_TYPE.profile;
+  const isProfileModal =
+    modalType === MODAL_TYPE.profile || modalType === MODAL_TYPE.causes;
 
   // TODO: This is getting messy, use children instead of switch statement
   const modalContent = (

@@ -107,9 +107,6 @@ export const Causes = ({
               {entityText} Supports
             </span>
           )}
-          {editMode && (
-            <span className={styles.causesTitle}>Edit your causes</span>
-          )}
           {causes && (
             <div className={styles.causesContainer}>
             {causes.map((cause) => {
