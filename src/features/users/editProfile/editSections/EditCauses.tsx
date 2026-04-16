@@ -55,7 +55,7 @@ export const EditCauses = () => {
   };
 
   const handleToggleSelectAll = () => {
-    setUpdatedCauses((prevState) => (areAllCausesSelected ? [] : allCauseIds));
+    setUpdatedCauses(areAllCausesSelected ? [] : allCauseIds);
   };
 
   const persistCauses = async (shouldClose: boolean) => {
