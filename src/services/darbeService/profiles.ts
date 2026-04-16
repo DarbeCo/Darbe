@@ -42,10 +42,59 @@ const DAY_ORDER: DayOfWeek[] = [
   "saturday",
 ];
 
+const DAY_TO_INDEX = DAY_ORDER.reduce(
+  (acc, day, index) => {
+    acc[day] = index;
+    return acc;
+  },
+  {} as Record<DayOfWeek, number>
+);
+
 const isUuid = (value: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     value
   );
+
+const hoursToTime = (value?: string): string | null => {
+  if (!value) {
+    return null;
+  }
+
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return null;
+  }
+
+  const hours = Math.floor(numeric);
+  const minutes = numeric % 1 === 0 ? 0 : 30;
+  const hh = String(hours).padStart(2, "0");
+  const mm = minutes === 0 ? "00" : "30";
+  return `${hh}:${mm}`;
+};
+
+const buildAvailabilityRows = (userId: string, availability?: Availability) => {
+  if (!availability) {
+    return [] as Array<{
+      user_id: string;
+      day_of_week: number;
+      start_time: string | null;
+      end_time: string | null;
+      is_open: boolean;
+    }>;
+  }
+
+  return DAY_ORDER.map((day) => {
+    const entry = availability[day];
+    const isOpen = Boolean(entry?.open);
+    return {
+      user_id: userId,
+      day_of_week: DAY_TO_INDEX[day],
+      start_time: hoursToTime(entry?.start),
+      end_time: hoursToTime(entry?.end),
+      is_open: isOpen,
+    };
+  });
+};
 
 const resolveCauseIds = async (causeValues: string[]) => {
   const values = (causeValues ?? []).filter(Boolean);
@@ -432,6 +481,7 @@ export const updateUserProfile = async (
   profile: Partial<DarbeProfileSharedState>
 ): Promise<DarbeProfileSharedState> => {
   const userId = profile.user?.id ?? (await ensureUserId());
+  const availability = profile.user?.availability;
 
   if (profile.user) {
     const { error } = await supabase
@@ -568,6 +618,15 @@ export const updateUserProfile = async (
       is_child_organization: org.isChildOrganization ?? false,
     }));
     await replaceTableRows("user_organizations", userId, rows);
+  }
+
+  if (availability) {
+    const availabilityRows = buildAvailabilityRows(userId, availability);
+    const { error: availabilityError } = await supabase
+      .from("user_availability")
+      .upsert(availabilityRows, { onConflict: "user_id,day_of_week" });
+
+    if (availabilityError) throw availabilityError;
   }
 
   return getUserProfile(userId);

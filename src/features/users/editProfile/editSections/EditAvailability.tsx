@@ -79,18 +79,24 @@ export const EditAvailability = () => {
   };
 
   return (
-    <div className={styles.profileEditContentAvailability}>
-      <Availability
-        startingAvailability={newAvailability}
-        onCheckboxChange={updateAvailabilityCheckbox}
-        onAvailabilityChange={updateAvailabilityData}
-      />
-
-      <DarbeButton
-        buttonText="Save"
-        darbeButtonType="saveButton"
-        onClick={handleSave}
-      />
+    <div className={styles.profileDialogContent}>
+      <div className={styles.profileDialogScrollArea}>
+        <div className={styles.profileDialogAvailabilityContent}>
+          <Availability
+            startingAvailability={newAvailability}
+            onCheckboxChange={updateAvailabilityCheckbox}
+            onAvailabilityChange={updateAvailabilityData}
+            variant="profileDialog"
+          />
+        </div>
+      </div>
+      <div className={styles.profileDialogCenteredFooter}>
+        <DarbeButton
+          buttonText="Save"
+          darbeButtonType="saveButton"
+          onClick={handleSave}
+        />
+      </div>
     </div>
   );
 };

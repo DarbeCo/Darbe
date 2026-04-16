@@ -11,12 +11,14 @@ interface AvailabilityProps {
   onCheckboxChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onAvailabilityChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   startingAvailability?: StartingAvailabilityState;
+  variant?: "default" | "profileDialog";
 }
 
 export const Availability = ({
   onCheckboxChange,
   onAvailabilityChange,
   startingAvailability,
+  variant = "default",
 }: AvailabilityProps) => {
   const hours = DropdownTypes({ type: "hours" });
   const [clearTokens, setClearTokens] = useState<Record<string, number>>({});
@@ -42,6 +44,7 @@ export const Availability = ({
     [onAvailabilityChange]
   );
 
+  const isProfileDialog = variant === "profileDialog";
   const availabilityDays = daysInWeek.map((day) => {
     const isDayOpen =
       startingAvailability?.[day as keyof StartingAvailabilityState]?.open ??
@@ -79,6 +82,7 @@ export const Availability = ({
               disabled={isDayOpen}
               displayEmpty
               showClearOption
+              variant={isProfileDialog ? "availabilityModal" : "default"}
             >
               {hours()}
             </Dropdown>
@@ -93,6 +97,7 @@ export const Availability = ({
               disabled={isDayOpen}
               displayEmpty
               showClearOption
+              variant={isProfileDialog ? "availabilityModal" : "default"}
             >
               {hours()}
             </Dropdown>
@@ -110,10 +115,16 @@ export const Availability = ({
   });
 
   return (
-    <div className={styles.availabilityContainer}>
-      <span className={styles.availabilityTitle}>
-        Please Set Your Availability
-      </span>
+    <div
+      className={`${styles.availabilityContainer} ${
+        isProfileDialog ? styles.availabilityContainerProfileDialog : ""
+      }`.trim()}
+    >
+      {!isProfileDialog && (
+        <span className={styles.availabilityTitle}>
+          Please Set Your Availability
+        </span>
+      )}
       {availabilityDays}
     </div>
   );

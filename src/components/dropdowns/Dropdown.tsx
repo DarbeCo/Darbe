@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from "react";
+import React, { ReactNode, useEffect, useState } from "react";
 import {
   FormControl,
   FormHelperText,
@@ -25,7 +25,7 @@ interface DropdownProps {
   error?: boolean;
   errorHelperText?: string;
   showClearOption?: boolean;
-  variant?: "rosterDropdown" | "default";
+  variant?: "rosterDropdown" | "availabilityModal" | "default";
 }
 
 export const Dropdown = ({
@@ -43,7 +43,13 @@ export const Dropdown = ({
   showClearOption = false,
   variant = "default",
 }: DropdownProps) => {
-  const [dropdownValue, setDropdownValue] = useState<string | undefined>("");
+  const [dropdownValue, setDropdownValue] = useState<string | undefined>(
+    initialValue ?? ""
+  );
+
+  useEffect(() => {
+    setDropdownValue(initialValue ?? "");
+  }, [initialValue]);
 
   const handleChange = (event: SelectChangeEvent) => {
     setDropdownValue(event.target.value.toString());
@@ -56,8 +62,13 @@ export const Dropdown = ({
   const className =
     variant === "rosterDropdown"
       ? styles.rosterDropdown
+      : variant === "availabilityModal"
+        ? styles.availabilityModalDropdown
       : styles.defaultDropdown;
   const variantTextColor = variant === "rosterDropdown" ? "white" : "black";
+  const currentValue = dropdownValue ?? "";
+  const hasValue = currentValue !== "";
+  const isAvailabilityModal = variant === "availabilityModal";
 
   return (
     <div className={className}>
@@ -75,12 +86,19 @@ export const Dropdown = ({
         <Select
           MenuProps={{
             PaperProps: {
-              style: {
-                maxHeight: 300,
-              },
+              sx: isAvailabilityModal
+                ? {
+                    maxHeight: 220,
+                    border: "2px solid #263238",
+                    borderRadius: "8px",
+                    boxShadow: "none",
+                  }
+                : {
+                    maxHeight: 300,
+                  },
             },
           }}
-          value={initialValue ?? dropdownValue}
+          value={currentValue}
           onChange={handleChange}
           displayEmpty={displayEmpty}
           disabled={disabled}
@@ -88,7 +106,39 @@ export const Dropdown = ({
           name={name}
           label={label}
           id={id}
-          sx={{ ...DropdownSx, color: variantTextColor }}
+          sx={
+            isAvailabilityModal
+              ? {
+                  ...DropdownSx,
+                  border: "2px solid #D8D8D8",
+                  borderRadius: "8px",
+                  minWidth: "92px",
+                  width: "100%",
+                  height: "42px",
+                  color: "#2f3941",
+                  backgroundColor: "#fff",
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    border: "2px solid",
+                    borderColor: hasValue ? "#088F26" : "#D8D8D8",
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: hasValue ? "#088F26" : "#D8D8D8",
+                  },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#263238",
+                  },
+                  "& .MuiSelect-select": {
+                    padding: "8px 40px 8px 12px",
+                    fontSize: "15px",
+                    lineHeight: 1.2,
+                  },
+                  "& .MuiSelect-icon": {
+                    color: "#5f6770",
+                    right: "12px",
+                  },
+                }
+              : { ...DropdownSx, color: variantTextColor }
+          }
         >
           {children}
           {showClearOption && (

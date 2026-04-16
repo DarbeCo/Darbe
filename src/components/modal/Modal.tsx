@@ -80,7 +80,9 @@ export const Modal = () => {
   };
 
   const isProfileModal =
-    modalType === MODAL_TYPE.profile || modalType === MODAL_TYPE.causes;
+    modalType === MODAL_TYPE.profile ||
+    modalType === MODAL_TYPE.causes ||
+    modalType === MODAL_TYPE.availability;
 
   // TODO: This is getting messy, use children instead of switch statement
   const modalContent = (

@@ -9,6 +9,10 @@
   width: 100%;
 }
 
+.availabilityModalDropdown {
+  width: 100%;
+}
+
 .rosterDropdown {
   width: 200px;
   border-radius: 8px;

@@ -532,9 +532,28 @@
   padding-top: 8px;
 }
 
+.profileDialogAvailabilityContent {
+  width: 100%;
+  padding-top: 8px;
+}
+
 .profileDialogCausesFooter {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  flex-shrink: 0;
+  padding-top: 10px;
+  background: #fff;
+  border-top: 1px solid #eef1f4;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.profileDialogCenteredFooter {
+  display: flex;
+  justify-content: center;
   align-items: center;
   gap: 10px;
   width: 100%;
@@ -593,6 +612,12 @@
   width: auto !important;
 }
 
+.profileDialogCenteredFooter :global(.MuiButton-root) {
+  flex: 0 0 auto;
+  min-width: 0 !important;
+  width: auto !important;
+}
+
 @media (max-width: 560px) {
   .profileDialogContent {
     padding: 12px 12px 16px;
@@ -618,6 +643,10 @@
   .profileDialogCausesFooter {
     gap: 8px;
     flex-wrap: wrap;
+  }
+
+  .profileDialogCenteredFooter {
+    gap: 8px;
   }
 
   .profileDialogFooterActions {
@@ -674,6 +703,10 @@
     flex-wrap: wrap;
   }
 
+  .profileDialogCenteredFooter {
+    gap: 10px;
+  }
+
   .profileDialogCheckboxLabel {
     width: 100%;
   }
@@ -683,6 +716,11 @@
   }
 
   .profileDialogCausesFooter :global(.MuiButton-root) {
+    width: 100% !important;
+    flex: 1 1 100%;
+  }
+
+  .profileDialogCenteredFooter :global(.MuiButton-root) {
     width: 100% !important;
     flex: 1 1 100%;
   }

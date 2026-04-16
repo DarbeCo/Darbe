@@ -8,7 +8,12 @@ import { selectCurrentUserCauses, selectCurrentUserId } from "../../selectors";
 import { useGetCausesQuery } from "../../../../services/api/endpoints/causes/causes.api";
 import { useUpdateEntityProfileMutation } from "../../../../services/api/endpoints/profiles/profiles.api";
 import { updateUserCauses } from "../../userSlice";
-import { hideModal } from "../../../../components/modal/modalSlice";
+import {
+  hideModal,
+  setModalType,
+  showModal,
+} from "../../../../components/modal/modalSlice";
+import { EDIT_SECTIONS } from "../../userProfiles/constants";
 
 import styles from "../styles/profileEdit.module.css";
 
@@ -53,7 +58,7 @@ export const EditCauses = () => {
     setUpdatedCauses((prevState) => (areAllCausesSelected ? [] : allCauseIds));
   };
 
-  const handleSaveCauses = async () => {
+  const persistCauses = async (shouldClose: boolean) => {
     const payload = {
       user: { id: userId, causes: updatedCauses },
     };
@@ -63,8 +68,20 @@ export const EditCauses = () => {
     if (updatedUser.user?.causes) {
       dispatch(updateUserCauses(updatedUser.user.causes));
     }
-    
-    dispatch(hideModal());
+
+    if (shouldClose) {
+      dispatch(hideModal());
+    }
+  };
+
+  const handleSaveCauses = async () => {
+    await persistCauses(true);
+  };
+
+  const handleEditAvailability = async () => {
+    await persistCauses(false);
+    dispatch(setModalType(EDIT_SECTIONS.availability));
+    dispatch(showModal());
   };
 
   return (
@@ -105,9 +122,9 @@ export const EditCauses = () => {
             onClick={handleSaveCauses}
           />
           <DarbeButton
-            buttonText="Edit Causes"
+            buttonText="Edit Availability"
             darbeButtonType="nextButton"
-            onClick={handleSaveCauses}
+            onClick={handleEditAvailability}
           />
         </div>
       </div>
