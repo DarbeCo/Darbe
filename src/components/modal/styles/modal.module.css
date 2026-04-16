@@ -50,12 +50,23 @@
 }
 
 .profileModalHeader {
+  --profile-dialog-column-gap: clamp(10px, 1.5vw, 16px);
   position: sticky;
   top: 0;
   z-index: 2;
   background: #fff;
   margin-bottom: 0;
   border-bottom: 1px solid #e1e1e1;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
+  column-gap: var(--profile-dialog-column-gap);
+  align-items: center;
+  width: calc(100% - (2 * var(--profile-dialog-inline-padding)));
+  max-width: calc(100% - (2 * var(--profile-dialog-inline-padding)));
+  margin-left: auto;
+  margin-right: auto;
+  padding: 20px 0;
+  box-sizing: border-box;
 }
 
 .modalHeaderText {
@@ -70,19 +81,29 @@
 }
 
 .profileModalHeaderText {
-  position: relative;
+  min-width: 0;
   justify-content: center;
-  padding: 20px var(--profile-dialog-inline-padding);
+  text-align: center;
   font-size: 24px;
   line-height: 1.2;
   color: #263238;
 }
 
+.profileModalHeaderSpacer,
 .profileModalCloseButton {
-  position: absolute;
-  top: 50%;
-  right: var(--profile-dialog-inline-padding);
-  transform: translateY(-50%);
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.profileModalHeaderSpacer {
+  justify-content: flex-start;
+}
+
+.profileModalCloseButton {
+  justify-content: flex-end;
 }
 
 .profileModalCloseButton :global(.MuiIconButton-root) {
@@ -126,13 +147,13 @@
   }
 
   .profileModalHeaderText {
-    padding: 16px var(--profile-dialog-inline-padding);
     justify-content: flex-start;
     font-size: 22px;
+    text-align: left;
   }
 
-  .profileModalCloseButton {
-    right: var(--profile-dialog-inline-padding);
+  .profileModalHeader {
+    padding: 16px 0;
   }
 }
 
@@ -147,8 +168,11 @@
   }
 
   .profileModalHeaderText {
+    font-size: 22px;
+  }
+
+  .profileModalHeader {
     padding-top: 16px;
     padding-bottom: 16px;
-    font-size: 22px;
   }
 }

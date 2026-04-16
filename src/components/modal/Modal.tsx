@@ -94,6 +94,9 @@ export const Modal = () => {
             isProfileModal ? styles.profileModalHeader : ""
           }`.trim()}
         >
+          {isProfileModal && (
+            <div className={styles.profileModalHeaderSpacer} aria-hidden="true" />
+          )}
           <div
             className={`${styles.modalHeaderText} ${
               isProfileModal ? styles.profileModalHeaderText : ""
@@ -147,13 +150,13 @@ export const Modal = () => {
                   return null;
               }
             })()}
-            <div
-              className={
-                isProfileModal ? styles.profileModalCloseButton : undefined
-              }
-            >
-              <ClosingIcon onClick={closeModal} useNoSx />
-            </div>
+          </div>
+          <div
+            className={
+              isProfileModal ? styles.profileModalCloseButton : undefined
+            }
+          >
+            <ClosingIcon onClick={closeModal} useNoSx />
           </div>
         </div>
         {(() => {
