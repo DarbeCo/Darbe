@@ -34,7 +34,7 @@ export const UserProfilePicture = ({
   return (
     <div className={styles.profilePicture}>
       <img
-        src={assetUrl(profilePicture ?? profilePictureFallback)}
+        src={assetUrl(profilePicture || profilePictureFallback)}
         alt={altText}
         className={styles.profilePictureImage}
       />
@@ -50,6 +50,7 @@ export const UserProfilePicture = ({
         <PictureModal
           isCoverPhoto={false}
           closeModal={hideProfilePictureModal}
+          currentPicture={profilePicture}
           userId={userId}
         />
       )}

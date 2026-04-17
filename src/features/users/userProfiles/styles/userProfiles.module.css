@@ -98,6 +98,7 @@
   .profilePictureImage {
     height: 128px;
     width: 128px;
+    object-fit: cover;
     border-radius: 50%;
     border: 2px solid #fff;
   }
