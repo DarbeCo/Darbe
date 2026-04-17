@@ -21,6 +21,7 @@ import {
   selectCurrentFriends,
   selectCurrentUserId,
 } from "../../features/users/selectors";
+import { ProfileFriendState } from "../../features/friends/types";
 import { useAppSelector } from "../../services/hooks";
 import { DefaultTime } from "../../utils/CommonDateFormats";
 import { assetUrl } from "../../utils/assetUrl";
@@ -247,12 +248,90 @@ const MessageThreadPopup = ({
   );
 };
 
+const NewMessagePopup = ({
+  friends,
+  searchTerm,
+  onSearchChange,
+  onClose,
+  onSelectFriend,
+}: {
+  friends: ProfileFriendState[];
+  searchTerm: string;
+  onSearchChange: (value: string) => void;
+  onClose: () => void;
+  onSelectFriend: (friend: ProfileFriendState) => void;
+}) => {
+  const filteredFriends = friends.filter((friend) => {
+    const displayName = getDisplayName(friend).toLowerCase();
+    return !searchTerm.trim() || displayName.includes(searchTerm.trim().toLowerCase());
+  });
+
+  return (
+    <div className={styles.chatPopup}>
+      <div className={styles.chatHeader}>
+        <div className={styles.composeHeaderTitle}>New Message</div>
+        <div className={styles.chatHeaderActions}>
+          <IconButton size="small" onClick={onClose}>
+            <Close fontSize="small" />
+          </IconButton>
+        </div>
+      </div>
+
+      <div className={styles.composeBody}>
+        <InputBase
+          value={searchTerm}
+          onChange={(event) => onSearchChange(event.target.value)}
+          placeholder="Type in a name or pick a name below.."
+          className={styles.composeSearchInput}
+        />
+
+        <div className={styles.composeList}>
+          {filteredFriends.length > 0 ? (
+            filteredFriends.map((friend) => (
+              <button
+                type="button"
+                key={friend.id}
+                className={styles.composeRecipientRow}
+                onClick={() => onSelectFriend(friend)}
+              >
+                <Avatar
+                  src={
+                    friend.profilePicture ? assetUrl(friend.profilePicture) : undefined
+                  }
+                  alt={getDisplayName(friend)}
+                  className={styles.threadAvatar}
+                />
+                <div className={styles.composeRecipientBody}>
+                  <span className={styles.threadName}>{getDisplayName(friend)}</span>
+                  <span className={styles.composeRecipientSubtitle}>
+                    {friend.organizationName ||
+                      friend.nonprofitName ||
+                      `${friend.city}, ${friend.zip}`}
+                  </span>
+                </div>
+              </button>
+            ))
+          ) : (
+            <div className={styles.drawerState}>
+              <Typography
+                variant="grayText"
+                textToDisplay="No matching friends found"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const DesktopMessagingDrawer = () => {
   const currentUserId = useAppSelector(selectCurrentUserId);
   const currentFriends = useAppSelector(selectCurrentFriends);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isComposeMode, setIsComposeMode] = useState(false);
+  const [composeSearchTerm, setComposeSearchTerm] = useState("");
+  const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [openThread, setOpenThread] = useState<ThreadSummary | null>(null);
   const { data: messageThreads = [], isLoading } = useGetMessagesQuery(undefined, {
     pollingInterval: 5000,
@@ -307,21 +386,12 @@ export const DesktopMessagingDrawer = () => {
       });
   }, [currentUserId, messageThreads, searchTerm]);
 
-  const composeCandidates = useMemo(() => {
-    const searchValue = searchTerm.trim().toLowerCase();
-
-    return currentFriends.filter((friend) => {
-      const displayName = getDisplayName(friend).toLowerCase();
-      return !searchValue || displayName.includes(searchValue);
-    });
-  }, [currentFriends, searchTerm]);
-
   const handleOpenThread = (thread: ThreadSummary) => {
     setOpenThread(thread);
-    setIsComposeMode(false);
+    setIsComposeOpen(false);
   };
 
-  const handleOpenComposeThread = (friend: (typeof currentFriends)[number]) => {
+  const handleOpenComposeThread = (friend: ProfileFriendState) => {
     const existingThread = threads.find((thread) => thread.friendId === friend.id);
     setOpenThread(
       existingThread ?? {
@@ -334,12 +404,24 @@ export const DesktopMessagingDrawer = () => {
         unreadCount: 0,
       }
     );
-    setIsComposeMode(false);
-    setSearchTerm("");
+    setIsComposeOpen(false);
+    setComposeSearchTerm("");
   };
 
   return (
     <>
+      {isComposeOpen && (
+        <NewMessagePopup
+          friends={currentFriends}
+          searchTerm={composeSearchTerm}
+          onSearchChange={setComposeSearchTerm}
+          onClose={() => {
+            setIsComposeOpen(false);
+            setComposeSearchTerm("");
+          }}
+          onSelectFriend={handleOpenComposeThread}
+        />
+      )}
       {openThread && currentUserId && (
         <MessageThreadPopup
           currentUserId={currentUserId}
@@ -372,8 +454,9 @@ export const DesktopMessagingDrawer = () => {
                 size="small"
                 className={styles.composeButton}
                 onClick={() => {
-                  setIsComposeMode((prev) => !prev);
-                  setSearchTerm("");
+                  setIsComposeOpen(true);
+                  setOpenThread(null);
+                  setComposeSearchTerm("");
                 }}
               >
                 <CreateOutlined fontSize="small" />
@@ -381,7 +464,7 @@ export const DesktopMessagingDrawer = () => {
               <InputBase
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder={isComposeMode ? "Search Friends" : "Search Messages"}
+                placeholder="Search Messages"
                 className={styles.drawerSearchInput}
               />
             </div>
@@ -391,46 +474,6 @@ export const DesktopMessagingDrawer = () => {
                 <div className={styles.drawerState}>
                   <CircularProgress size={22} />
                 </div>
-              ) : isComposeMode ? (
-                composeCandidates.length > 0 ? (
-                  composeCandidates.map((friend) => (
-                    <button
-                      type="button"
-                      key={friend.id}
-                      className={styles.threadRow}
-                      onClick={() => handleOpenComposeThread(friend)}
-                    >
-                      <Avatar
-                        src={
-                          friend.profilePicture
-                            ? assetUrl(friend.profilePicture)
-                            : undefined
-                        }
-                        alt={getDisplayName(friend)}
-                        className={styles.threadAvatar}
-                      />
-                      <div className={styles.threadBody}>
-                        <div className={styles.threadTopRow}>
-                          <span className={styles.threadName}>
-                            {getDisplayName(friend)}
-                          </span>
-                        </div>
-                        <div className={styles.threadBottomRow}>
-                          <span className={styles.threadSnippet}>
-                            Start a new conversation
-                          </span>
-                        </div>
-                      </div>
-                    </button>
-                  ))
-                ) : (
-                  <div className={styles.drawerState}>
-                    <Typography
-                      variant="grayText"
-                      textToDisplay="No matching friends found"
-                    />
-                  </div>
-                )
               ) : threads.length > 0 ? (
                 threads.map((thread) => (
                   <button
