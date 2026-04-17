@@ -27,12 +27,29 @@ export const PictureModal = ({
   isCoverPhoto,
   currentPicture,
 }: PictureModalProps) => {
-  const storageKey = `picture-modal-original:${isCoverPhoto ? "cover" : "profile"}:${userId}`;
+  const pictureType = isCoverPhoto ? "cover" : "profile";
+  const storageKey = `picture-modal-original:${pictureType}:${userId}`;
+  const positionStorageKey = `picture-modal-position:${pictureType}:${userId}`;
   const getStoredOriginal = () => {
     try {
       return window.localStorage.getItem(storageKey) ?? "";
     } catch {
       return "";
+    }
+  };
+  const getStoredPosition = () => {
+    try {
+      const value = window.localStorage.getItem(positionStorageKey);
+      if (!value) {
+        return { x: 50, y: 50 };
+      }
+      const parsed = JSON.parse(value) as { x?: number; y?: number };
+      return {
+        x: typeof parsed.x === "number" ? parsed.x : 50,
+        y: typeof parsed.y === "number" ? parsed.y : 50,
+      };
+    } catch {
+      return { x: 50, y: 50 };
     }
   };
 
@@ -50,7 +67,8 @@ export const PictureModal = ({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isAdjusting, setIsAdjusting] = useState(false);
   const [hasPendingChanges, setHasPendingChanges] = useState(false);
-  const [cropCenter, setCropCenter] = useState({ x: 50, y: 50 });
+  const [cropCenter, setCropCenter] = useState(getStoredPosition);
+  const [coverPosition, setCoverPosition] = useState(getStoredPosition);
   const pictureTitle = isCoverPhoto ? "Cover Photo" : "Profile Photo";
   const fallbackImage = isCoverPhoto
     ? assetUrl("/images/defaultCoverPhoto.jpg")
@@ -58,8 +76,9 @@ export const PictureModal = ({
   const activePreviewSrc = displayImageSrc || fallbackImage;
 
   const resetAdjustments = () => {
-    const centeredCrop = { x: 50, y: 50 };
-    setCropCenter(centeredCrop);
+    const centeredPosition = { x: 50, y: 50 };
+    setCropCenter(centeredPosition);
+    setCoverPosition(centeredPosition);
   };
 
   const openFilePicker = () => {
@@ -103,6 +122,7 @@ export const PictureModal = ({
 
   const getCropSizeRatio = () => 0.8125;
   const getProfileFrameSize = () => ({ width: 320, height: 230 });
+  const getCoverFrameSize = () => ({ width: 480, height: 160 });
 
   const createProfileCropPreview = async (
     nextCropCenter: { x: number; y: number },
@@ -135,16 +155,23 @@ export const PictureModal = ({
     canvas.height = targetHeight;
 
     if (isCoverPhoto) {
+      const { width: frameWidth, height: frameHeight } = getCoverFrameSize();
       const baseScale = Math.max(
-        targetWidth / image.width,
-        targetHeight / image.height
+        frameWidth / image.width,
+        frameHeight / image.height
       );
-      const scaledWidth = image.width * baseScale;
-      const scaledHeight = image.height * baseScale;
-      const drawX = (targetWidth - scaledWidth) / 2;
-      const drawY = (targetHeight - scaledHeight) / 2;
+      const renderedWidth = image.width * baseScale;
+      const renderedHeight = image.height * baseScale;
+      const overflowX = Math.max(0, renderedWidth - frameWidth);
+      const overflowY = Math.max(0, renderedHeight - frameHeight);
+      const drawX = -overflowX * (nextCropCenter.x / 100);
+      const drawY = -overflowY * (nextCropCenter.y / 100);
+      const targetScale = targetWidth / frameWidth;
 
-      ctx.drawImage(image, drawX, drawY, scaledWidth, scaledHeight);
+      ctx.save();
+      ctx.scale(targetScale, targetScale);
+      ctx.drawImage(image, drawX, drawY, renderedWidth, renderedHeight);
+      ctx.restore();
       return canvas.toDataURL("image/jpeg", 0.92);
     }
 
@@ -183,7 +210,7 @@ export const PictureModal = ({
     try {
       const category = isCoverPhoto ? "coverPhoto" : "profilePicture";
       const pictureValue = isCoverPhoto
-        ? await createProfileCropPreview(cropCenter)
+        ? await createProfileCropPreview(coverPosition)
         : await createProfileCropPreview(cropCenter);
       if (!pictureValue) {
         return;
@@ -201,6 +228,10 @@ export const PictureModal = ({
         if (sourceImageSrc) {
           window.localStorage.setItem(storageKey, sourceImageSrc);
         }
+        window.localStorage.setItem(
+          positionStorageKey,
+          JSON.stringify(isCoverPhoto ? coverPosition : cropCenter)
+        );
       } catch {
         // Ignore storage failures and keep the saved profile update.
       }
@@ -221,6 +252,7 @@ export const PictureModal = ({
       }).unwrap();
       try {
         window.localStorage.removeItem(storageKey);
+        window.localStorage.removeItem(positionStorageKey);
       } catch {
         // Ignore storage failures and keep the delete behavior.
       }
@@ -241,13 +273,23 @@ export const PictureModal = ({
 
   const handleAdjustPointer = (clientX: number, clientY: number) => {
     const frame = adjustFrameRef.current;
-    if (!frame || isCoverPhoto) {
+    if (!frame) {
       return;
     }
 
     const rect = frame.getBoundingClientRect();
     const nextX = ((clientX - rect.left) / rect.width) * 100;
     const nextY = ((clientY - rect.top) / rect.height) * 100;
+    if (isCoverPhoto) {
+      const nextCoverPosition = {
+        x: Math.min(100, Math.max(0, nextX)),
+        y: Math.min(100, Math.max(0, nextY)),
+      };
+      setCoverPosition(nextCoverPosition);
+      setHasPendingChanges(true);
+      return;
+    }
+
     const nextCropCenter = clampCropPosition(nextX, nextY, getCropSizeRatio());
     setCropCenter(nextCropCenter);
     setHasPendingChanges(true);
@@ -256,10 +298,6 @@ export const PictureModal = ({
   const handleAdjustPointerDown = (
     event: React.PointerEvent<HTMLDivElement>
   ) => {
-    if (isCoverPhoto) {
-      return;
-    }
-
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     handleAdjustPointer(event.clientX, event.clientY);
@@ -315,7 +353,9 @@ export const PictureModal = ({
               className={`${styles.pictureModalPreviewFrame} ${
                 isAdjusting && !isCoverPhoto
                   ? styles.profilePhotoAdjustFrame
-                  : isCoverPhoto
+                  : isCoverPhoto && isAdjusting
+                    ? styles.coverPhotoAdjustFrame
+                    : isCoverPhoto
                     ? styles.coverPhotoFrame
                     : styles.profilePhotoFrame
               }`}
@@ -327,12 +367,19 @@ export const PictureModal = ({
               <>
                 <img
                   src={
-                    isAdjusting && !isCoverPhoto && sourceImageSrc
+                    isAdjusting && sourceImageSrc
                       ? sourceImageSrc
                       : activePreviewSrc
                   }
                   alt={pictureTitle}
                   className={styles.pictureModalPreviewImage}
+                  style={
+                    isCoverPhoto
+                      ? {
+                          objectPosition: `${coverPosition.x}% ${coverPosition.y}%`,
+                        }
+                      : undefined
+                  }
                 />
                 {isAdjusting && !isCoverPhoto && (
                   <div
@@ -373,10 +420,12 @@ export const PictureModal = ({
               </div>
             )}
           </div>
-          {isAdjusting && !isCoverPhoto && (
+          {isAdjusting && (
             <div className={styles.pictureModalAdjustPanel}>
               <span className={styles.pictureModalAdjustHint}>
-                Drag the circle over the part of the photo you want to use.
+                {isCoverPhoto
+                  ? "Drag across the image to reposition your cover photo."
+                  : "Drag the circle over the part of the photo you want to use."}
               </span>
             </div>
           )}
@@ -386,7 +435,7 @@ export const PictureModal = ({
             type="button"
             className={styles.pictureModalAction}
             onClick={handleStartAdjusting}
-            disabled={!hasCustomPicture || isLoading || isCoverPhoto}
+            disabled={!hasCustomPicture || isLoading}
           >
             <TuneOutlined fontSize="small" />
             <span>Adjust</span>

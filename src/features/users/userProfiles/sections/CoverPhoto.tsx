@@ -33,7 +33,7 @@ export const CoverPhoto = ({
   return (
     <div className={styles.coverPhoto}>
       <img
-        src={assetUrl(coverPhoto ?? fallbackCoverPhoto)}
+        src={assetUrl(coverPhoto || fallbackCoverPhoto)}
         alt={altText}
         className={styles.coverPhotoImage}
       />
