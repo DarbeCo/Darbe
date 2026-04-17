@@ -7,6 +7,7 @@ import { UserAvatars } from "../avatars/UserAvatars";
 import { DefaultTime } from "../../utils/CommonDateFormats";
 import { SimpleUserInfo } from "../../services/api/endpoints/types/user.api.types";
 import { VerticalMore } from "../verticalMore/VerticalMore";
+import { getMessagePreviewText } from "./messageUtils";
 
 import styles from "./styles/messaging.module.css";
 import { ITEM_CATEGORIES } from "../miniMenu/constants";
@@ -73,7 +74,9 @@ export const MessagingCard = ({
         >
           <Typography
             variant="text"
-            textToDisplay={lastMessage?.message ?? "No messages yet"}
+            textToDisplay={
+              lastMessage ? getMessagePreviewText(lastMessage.message) : "No messages yet"
+            }
             extraClass="paddingLeft"
           />
         </div>

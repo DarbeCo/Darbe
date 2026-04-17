@@ -1,6 +1,7 @@
 import { DefaultTime } from "../../utils/CommonDateFormats";
 import { UserAvatars } from "../avatars/UserAvatars";
 import { Typography } from "../typography/Typography";
+import { getImageMessageSrc, isImageMessage } from "./messageUtils";
 
 import styles from "./styles/messaging.module.css";
 
@@ -24,17 +25,26 @@ export const ChatCard = ({
   const chatMessageFormatting = isMyMessage
     ? styles.myMessageChatFormat
     : styles.friendMessageChatFormat;
+  const isPhotoMessage = isImageMessage(message);
 
   return (
     <div className={myMessageClass}>
       <UserAvatars userId={userId} profilePicture={profilePicture} />
       <div className={chatMessageFormatting}>
         <div className={styles.chatContent}>
-          <Typography
-            variant="text"
-            textToDisplay={message}
-            extraClass="ChatCardText"
-          />
+          {isPhotoMessage ? (
+            <img
+              src={getImageMessageSrc(message)}
+              alt="Message attachment"
+              className={styles.chatMessageImage}
+            />
+          ) : (
+            <Typography
+              variant="text"
+              textToDisplay={message}
+              extraClass="ChatCardText"
+            />
+          )}
         </div>
         <Typography variant="grayText" textToDisplay={formattedDate} />
       </div>

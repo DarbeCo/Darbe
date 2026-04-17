@@ -98,6 +98,13 @@
   padding: 10px;
 }
 
+.chatMessageImage {
+  max-width: 220px;
+  max-height: 220px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
 .unreadDot {
   width: 16px;
   height: 16px;

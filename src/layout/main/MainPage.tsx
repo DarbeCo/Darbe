@@ -10,6 +10,8 @@ import { VolunteerCarouselCards } from "../../components/volunteerStats/Voluntee
 import { Feed } from "../../features/feed/Feed";
 import { useAppSelector } from "../../services/hooks";
 import { selectUser } from "../../features/users/selectors";
+import { MESSAGING_ROUTE } from "../../routes/route.constants";
+import { DesktopMessagingDrawer } from "../../components/messaging/DesktopMessagingDrawer";
 
 import styles from "./styles/mainPage.module.css";
 
@@ -23,6 +25,7 @@ export const Home = () => {
   const hideSearchBar = pathName.includes("profile_edit");
   const hideNavBar = pathName.includes("profile_edit");
   const hideBottomNavBar = pathName.includes("profile_edit");
+  const hideDesktopMessagingDrawer = location.pathname.startsWith(MESSAGING_ROUTE);
   const showSuggestedFriends =
     pathName.length > 2 && user.user?.userType === "individual";
 
@@ -65,6 +68,7 @@ export const Home = () => {
           <div className={styles.rightSide}>
             <RightPanel showSuggestedFriends={showSuggestedFriends} />
           </div>
+          {!hideDesktopMessagingDrawer && <DesktopMessagingDrawer />}
           <Modal />
         </div>
       )}
