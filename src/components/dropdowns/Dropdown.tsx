@@ -150,12 +150,12 @@ export const Dropdown = ({
               : { ...DropdownSx, color: variantTextColor }
           }
         >
-          {children}
           {showClearOption && (
             <MenuItem value="" onClick={() => setDropdownValue("")}>
               &nbsp;
             </MenuItem>
           )}
+          {children}
         </Select>
         {error && <FormHelperText>{errorHelperText}</FormHelperText>}
       </FormControl>
