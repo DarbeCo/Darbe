@@ -47,6 +47,7 @@ export const CoverPhoto = ({
         <PictureModal
           isCoverPhoto
           closeModal={hideCoverPhotoModal}
+          currentPicture={coverPhoto}
           userId={userId}
         />
       )}
