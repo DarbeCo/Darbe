@@ -56,6 +56,11 @@
     text-align: center;
   }
 
+  .navBarItemIconSelected {
+    filter: brightness(0) saturate(100%) invert(45%) sepia(69%)
+      saturate(2179%) hue-rotate(201deg) brightness(96%) contrast(88%);
+  }
+
   .navBarMenuItem {
     display: flex;
     flex-direction: column;
@@ -170,6 +175,11 @@
     line-height: 16px;
     padding-top: 3px;
     text-align: center;
+  }
+
+  .navBarItemIconSelected {
+    filter: brightness(0) saturate(100%) invert(45%) sepia(69%)
+      saturate(2179%) hue-rotate(201deg) brightness(96%) contrast(88%);
   }
 
   .simpleLinksArea {

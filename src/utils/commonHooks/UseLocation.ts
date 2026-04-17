@@ -1,20 +1,5 @@
-import { useState, useEffect } from "react";
+import { useLocation as useReactRouterLocation } from "react-router-dom";
 
-// TODO: Probs no needed?
 export const useLocation = () => {
-  const [location, setLocation] = useState(window.location);
-
-  useEffect(() => {
-    const handleLocationChange = () => {
-      setLocation(window.location);
-    };
-
-    window.addEventListener("popstate", handleLocationChange);
-
-    return () => {
-      window.removeEventListener("popstate", handleLocationChange);
-    };
-  }, []);
-
-  return location;
+  return useReactRouterLocation();
 };

@@ -23,11 +23,17 @@ export const NavBarItem = ({
   const menuItemTextStyle = isBlue
     ? styles.navBarItemTextSelected
     : styles.navBarItemText;
+  const menuItemIconStyle = isBlue ? styles.navBarItemIconSelected : "";
   const variantSize = variant ?? "small";
 
   return (
     <IconButton onClick={onClick} className={styles.navBarMenuItem}>
-      <CustomSvgs svgPath={svgPath} altText={altText} variant={variantSize} />
+      <CustomSvgs
+        svgPath={svgPath}
+        altText={altText}
+        variant={variantSize}
+        extraClass={menuItemIconStyle}
+      />
       <span className={menuItemTextStyle}>{text}</span>
     </IconButton>
   );

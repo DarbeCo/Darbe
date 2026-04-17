@@ -54,7 +54,7 @@ export const SideNavBar = () => {
       navigate(`${MESSAGING_ROUTE}/${userId}`);
     }
     if (route === "notifications") {
-      navigate(`${NOTIFICATIONS_ROUTE}/`);
+      navigate(`${NOTIFICATIONS_ROUTE}`);
     }
   };
 
@@ -82,10 +82,22 @@ export const SideNavBar = () => {
     }
   };
 
-  const navBarItemText =
-    location.pathname.split("/")[location.pathname.split("/").length - 1];
   const determineCSS = (navBarItem: string) => {
-    return navBarItem === navBarItemText;
+    const pathname = location.pathname.replace(/\/+$/, "");
+
+    if (navBarItem === "home") {
+      return pathname === HOME_ROUTE;
+    }
+
+    if (navBarItem === "messages") {
+      return pathname.startsWith(MESSAGING_ROUTE);
+    }
+
+    if (navBarItem === "notifications") {
+      return pathname.startsWith(NOTIFICATIONS_ROUTE);
+    }
+
+    return pathname.startsWith(`/home/${navBarItem}`);
   };
 
   const navBarItems = [
