@@ -328,7 +328,7 @@ const NewMessagePopup = ({
 export const DesktopMessagingDrawer = () => {
   const currentUserId = useAppSelector(selectCurrentUserId);
   const currentFriends = useAppSelector(selectCurrentFriends);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [composeSearchTerm, setComposeSearchTerm] = useState("");
   const [isComposeOpen, setIsComposeOpen] = useState(false);

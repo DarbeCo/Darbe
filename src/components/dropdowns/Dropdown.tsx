@@ -24,8 +24,9 @@ interface DropdownProps {
   initialValue?: string;
   error?: boolean;
   errorHelperText?: string;
+  isValid?: boolean;
   showClearOption?: boolean;
-  variant?: "rosterDropdown" | "availabilityModal" | "default";
+  variant?: "rosterDropdown" | "availabilityModal" | "internalEventTime" | "default";
 }
 
 export const Dropdown = ({
@@ -40,6 +41,7 @@ export const Dropdown = ({
   initialValue,
   error,
   errorHelperText,
+  isValid,
   showClearOption = false,
   variant = "default",
 }: DropdownProps) => {
@@ -69,6 +71,7 @@ export const Dropdown = ({
   const currentValue = dropdownValue ?? "";
   const hasValue = currentValue !== "";
   const isAvailabilityModal = variant === "availabilityModal";
+  const isInternalEventTime = variant === "internalEventTime";
 
   return (
     <div className={className}>
@@ -86,7 +89,37 @@ export const Dropdown = ({
         <Select
           MenuProps={{
             PaperProps: {
-              sx: isAvailabilityModal
+              sx: isInternalEventTime
+                ? {
+                    maxHeight: 170,
+                    mt: 0.5,
+                    border: "2px solid #263238",
+                    borderRadius: "8px",
+                    boxShadow: "none",
+                    "& .MuiList-root": {
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "12px",
+                      padding: "8px 10px",
+                    },
+                    "& .MuiMenuItem-root": {
+                      minHeight: "20px",
+                      padding: "0 8px",
+                      borderRadius: "8px",
+                      color: "#717070",
+                      fontSize: "16px",
+                      lineHeight: "22px",
+                    },
+                    "& .MuiMenuItem-root.Mui-selected": {
+                      color: "#fff",
+                      backgroundColor: "#263238",
+                    },
+                    "& .MuiMenuItem-root.Mui-selected:hover": {
+                      color: "#fff",
+                      backgroundColor: "#263238",
+                    },
+                  }
+                : isAvailabilityModal
                 ? {
                     maxHeight: 220,
                     border: "2px solid #263238",
@@ -107,7 +140,35 @@ export const Dropdown = ({
           label={label}
           id={id}
           sx={
-            isAvailabilityModal
+            isInternalEventTime
+              ? {
+                  ...DropdownSx,
+                  height: "30px",
+                  borderRadius: "4px",
+                  color: "#717070",
+                  backgroundColor: "#fff",
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    border: "2px solid #D8D8D8",
+                    borderColor: isValid ? "#088F26" : "#D8D8D8",
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: isValid ? "#088F26" : "#D8D8D8",
+                  },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#263238",
+                  },
+                  "& .MuiSelect-select": {
+                    padding: "4px 32px 4px 16px",
+                    color: isValid ? "#000" : "#717070",
+                    fontSize: "14px",
+                    lineHeight: "20px",
+                  },
+                  "& .MuiSelect-icon": {
+                    color: "#263238",
+                    right: "8px",
+                  },
+                }
+              : isAvailabilityModal
               ? {
                   ...DropdownSx,
                   border: "2px solid #D8D8D8",

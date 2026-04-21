@@ -10,7 +10,7 @@ import { VolunteerCarouselCards } from "../../components/volunteerStats/Voluntee
 import { Feed } from "../../features/feed/Feed";
 import { useAppSelector } from "../../services/hooks";
 import { selectUser } from "../../features/users/selectors";
-import { MESSAGING_ROUTE } from "../../routes/route.constants";
+import { MESSAGING_ROUTE, POST_A_NEED } from "../../routes/route.constants";
 import { DesktopMessagingDrawer } from "../../components/messaging/DesktopMessagingDrawer";
 
 import styles from "./styles/mainPage.module.css";
@@ -22,12 +22,13 @@ export const Home = () => {
   const location = useLocation();
   const pathName = location.pathname.split("/");
   const isHomePage = pathName.length === 2;
-  const hideSearchBar = pathName.includes("profile_edit");
+  const isPostNeedPage = location.pathname === POST_A_NEED;
+  const hideSearchBar = pathName.includes("profile_edit") || isPostNeedPage;
   const hideNavBar = pathName.includes("profile_edit");
   const hideBottomNavBar = pathName.includes("profile_edit");
   const hideDesktopMessagingDrawer = location.pathname.startsWith(MESSAGING_ROUTE);
   const showSuggestedFriends =
-    pathName.length > 2 && user.user?.userType === "individual";
+    isPostNeedPage || (pathName.length > 2 && user.user?.userType === "individual");
 
   return (
     <div className={styles.homePage}>
@@ -60,7 +61,9 @@ export const Home = () => {
             <LeftPanel />
           </div>
           <div className={styles.centerContent}>
-            <SearchBar showMessageIcon={false} showAvatar={false} />
+            {!hideSearchBar && (
+              <SearchBar showMessageIcon={false} showAvatar={false} />
+            )}
             {isHomePage && <Feed />}
             <Outlet />
           </div>

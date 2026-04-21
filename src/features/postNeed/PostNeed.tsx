@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { IconButton } from "@mui/material";
 
 import { SimpleHeader } from "../../components/simpleHeader/SimpleHeader";
 import { DarbeButton } from "../../components/buttons/DarbeButton";
@@ -9,13 +10,17 @@ import { CreateEvent } from "../../services/api/endpoints/types/events.api.types
 import { FormSteps } from "../../components/formSteps/FormSteps";
 import { useCreateEventMutation } from "../../services/api/endpoints/events/events.api";
 import { useAppSelector } from "../../services/hooks";
-import { EVENTS_ROUTE } from "../../routes/route.constants";
+import { EVENTS_ROUTE, HOME_ROUTE } from "../../routes/route.constants";
 import { selectCurrentUserId } from "../users/selectors";
 import { EventDetails } from "./forms/EventDetails";
 import { EventInfo } from "./forms/EventInfo";
 import { EventLocation } from "./forms/EventLocation";
 import { EventRequirements } from "./forms/EventRequirements";
 import { EventType } from "./EventType";
+import { InternalEventReview } from "./InternalEventReview";
+import { ClosingIcon } from "../../components/closingIcon/ClosingIcon";
+import { Typography } from "../../components/typography/Typography";
+import { CustomSvgs } from "../../components/customSvgs/CustomSvgs";
 
 import styles from "./styles/postNeed.module.css";
 
@@ -59,6 +64,31 @@ const INITIAL_EVENT_STATE: CreateEvent = {
   minorWaiver: "",
 };
 
+const toDatabaseDate = (date: CreateEvent["eventDate"]) => {
+  if (date instanceof Date) {
+    return date.toISOString().slice(0, 10);
+  }
+
+  if (typeof date !== "string") {
+    return "";
+  }
+
+  const mmDdYyyyMatch = date.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+
+  if (mmDdYyyyMatch) {
+    const [, month, day, year] = mmDdYyyyMatch;
+    return `${year}-${month}-${day}`;
+  }
+
+  return date.split("T")[0];
+};
+
+const toNumber = (value: number | string | undefined, fallback = 0) => {
+  const numberValue = Number(value);
+
+  return Number.isFinite(numberValue) ? numberValue : fallback;
+};
+
 export const PostNeed = () => {
   const navigate = useNavigate();
   const userId = useAppSelector(selectCurrentUserId);
@@ -70,9 +100,18 @@ export const PostNeed = () => {
 
   const handlePostEvent = async () => {
     try {
+      const isInternalEvent = eventType === "internalEvent";
       // build the payload with the current userId
       const payload: CreateEvent = {
         ...eventData,
+        eventDate: toDatabaseDate(eventData.eventDate),
+        startTime: toNumber(eventData.startTime),
+        endTime: toNumber(eventData.endTime),
+        maxVolunteerCount:
+          isInternalEvent && !toNumber(eventData.maxVolunteerCount)
+            ? 15
+            : toNumber(eventData.maxVolunteerCount),
+        isFollowersOnly: isInternalEvent,
         // set the event owner to the current user
         eventOwner: userId,
       };
@@ -84,11 +123,14 @@ export const PostNeed = () => {
     }
   };
 
-  const handleEventSelection = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setEventType(event.target.name);
-    setCurrentStep((step) => step + 1);
+  const handleExit = () => {
+    navigate(HOME_ROUTE);
+  };
 
-    const isInternalEvent = event.target.name === "internalEvent";
+  const handleEventSelection = (selectedEventType: string) => {
+    setEventType(selectedEventType);
+
+    const isInternalEvent = selectedEventType === "internalEvent";
 
     setEventData((prevState) => ({
       ...prevState,
@@ -97,13 +139,24 @@ export const PostNeed = () => {
   };
 
   const handleGoBack = () => {
-    setCurrentStep((step) => step - 1);
-    if (currentStep === -1) {
-      setEventType("");
+    if (currentStep === 0) {
+      setCurrentStep(-1);
+      return;
     }
+
+    setCurrentStep((step) => step - 1);
   };
 
   const handleGoForward = () => {
+    if (currentStep === -1) {
+      if (!eventType) {
+        return;
+      }
+
+      setCurrentStep(0);
+      return;
+    }
+
     if (currentStep === EventForms.length - 1) {
       handlePostEvent();
     } else {
@@ -156,7 +209,6 @@ export const PostNeed = () => {
     return "";
   };
 
-  const headerText = figureOutEventHeader();
   const formStep = figureOutStringFromStep(currentStep);
   const markError = (hasError: boolean) => {
     setErrorFound(hasError);
@@ -196,31 +248,106 @@ export const PostNeed = () => {
     currentStep === EventForms.length - 1 ? "Post" : "Next";
   const notEditingForm =
     currentStep === -1 || currentStep === EventForms.length - 1;
+  const isSelectionStep = currentStep === -1;
+  const isInternalEventDetailsStep =
+    eventType === "internalEvent" && currentStep === 0;
+  const isInternalEventLocationStep =
+    eventType === "internalEvent" && currentStep === 1;
+  const isInternalEventRequirementsStep =
+    eventType === "internalEvent" && currentStep === 2;
+  const isInternalEventOtherStep =
+    eventType === "internalEvent" && currentStep === 3;
+  const isInternalEventReviewStep =
+    eventType === "internalEvent" && currentStep === 4;
+  const isInternalEventPanelStep =
+    isInternalEventDetailsStep ||
+    isInternalEventLocationStep ||
+    isInternalEventRequirementsStep ||
+    isInternalEventOtherStep;
+  const isInternalEventLocationValid =
+    Boolean(eventData.eventAddress.locationName) &&
+    Boolean(eventData.eventAddress.streetName) &&
+    Boolean(eventData.eventAddress.city) &&
+    Boolean(eventData.eventParkingInfo) &&
+    (eventData.isIndoor || eventData.isOutdoor);
+  const internalEventSectionHeader = isInternalEventDetailsStep
+    ? "Event Details"
+    : isInternalEventRequirementsStep
+      ? "Requirements"
+      : isInternalEventOtherStep
+        ? "Other"
+        : isInternalEventLocationValid
+          ? "Location"
+          : "Physical Location";
 
   return (
     <div className={styles.postNeed}>
-      {!notEditingForm && (
-        <FormSteps step={formStep} entityType="entity" formName="signup" />
-      )}
-      <SimpleHeader headerText={headerText} textVariant="header" />
-      {currentStep === -1 ? (
-        <EventType onClick={handleEventSelection} />
-      ) : (
-        <>
-          <SimpleSubHeader
-            headerText={figureOutSubHeaderText()}
-            variants="formHeader"
+      {isSelectionStep ? (
+        <div className={styles.createEventPanel}>
+          <div className={styles.createEventHeader}>
+            <div />
+            <Typography variant="header" textToDisplay="Create Event" />
+            <ClosingIcon useNoSx onClick={handleExit} />
+          </div>
+          <EventType
+            onSelect={handleEventSelection}
+            selectedEventType={eventType}
           />
+          <div className={styles.selectionButtonArea}>
+            <DarbeButton
+              onClick={handleGoForward}
+              isDisabled={!eventType}
+              buttonText="Next"
+              darbeButtonType="nextButton"
+            />
+          </div>
+        </div>
+      ) : isInternalEventReviewStep ? (
+        <InternalEventReview
+          data={eventData}
+          onCancel={handleGoBack}
+          onSubmit={handlePostEvent}
+        />
+      ) : isInternalEventPanelStep ? (
+        <div
+          className={`${styles.createEventPanel} ${styles.eventStepPanel} ${
+            isInternalEventOtherStep ? styles.internalOtherPanel : ""
+          }`}
+        >
+          <div className={styles.eventStepHeader}>
+            <div>
+              {currentStep > 0 && (
+                <IconButton
+                  aria-label="Previous step"
+                  onClick={handleGoBack}
+                  sx={{ padding: 0 }}
+                >
+                  <CustomSvgs
+                    svgPath="/svgs/common/goBackIcon.svg"
+                    altText="Previous step"
+                  />
+                </IconButton>
+              )}
+            </div>
+            <div className={styles.eventStepTitleArea}>
+              <Typography variant="header" textToDisplay="Internal Event" />
+              <FormSteps step={formStep} entityType="entity" formName="signup" />
+            </div>
+            <ClosingIcon useNoSx onClick={handleExit} />
+          </div>
+          <div className={styles.eventStepSectionHeader}>
+            <Typography
+              variant="whiteBoldText"
+              extraClass={styles.eventStepSectionTitle}
+              textToDisplay={internalEventSectionHeader}
+            />
+          </div>
           {EventForms[currentStep]}
-        </>
-      )}
-      <div className={styles.buttonArea}>
-        {currentStep > -1 && (
-          <>
+          <div className={styles.eventStepButtonArea}>
             <DarbeButton
               onClick={handleGoBack}
               isDisabled={errorFound}
-              buttonText={previousButtonText}
+              buttonText="Previous"
               darbeButtonType="secondaryNextButton"
             />
             <DarbeButton
@@ -229,9 +356,40 @@ export const PostNeed = () => {
               buttonText={nextButtonText}
               darbeButtonType="nextButton"
             />
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {!notEditingForm && (
+            <FormSteps step={formStep} entityType="entity" formName="signup" />
+          )}
+          <SimpleHeader
+            headerText={figureOutEventHeader()}
+            textVariant="header"
+          />
+          <SimpleSubHeader
+            headerText={figureOutSubHeaderText()}
+            variants="formHeader"
+          />
+          {EventForms[currentStep]}
+        </>
+      )}
+      {!isSelectionStep && !isInternalEventPanelStep && !isInternalEventReviewStep && (
+        <div className={styles.buttonArea}>
+          <DarbeButton
+            onClick={handleGoBack}
+            isDisabled={errorFound}
+            buttonText={previousButtonText}
+            darbeButtonType="secondaryNextButton"
+          />
+          <DarbeButton
+            onClick={handleGoForward}
+            isDisabled={errorFound}
+            buttonText={nextButtonText}
+            darbeButtonType="nextButton"
+          />
+        </div>
+      )}
     </div>
   );
 };

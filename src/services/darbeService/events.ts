@@ -85,9 +85,26 @@ const timeToDecimal = (time: string | null): number | undefined => {
 
 const decimalToTimeString = (value: number | undefined): string | null => {
   if (value === undefined || value === null) return null;
-  const hours = Math.floor(value);
-  const minutes = value % 1 === 0 ? "00" : "30";
+  const numberValue = Number(value);
+  if (!Number.isFinite(numberValue)) return null;
+  const hours = Math.floor(numberValue);
+  const minutes = numberValue % 1 === 0 ? "00" : "30";
   return `${hours.toString().padStart(2, "0")}:${minutes}:00`;
+};
+
+const toDatabaseDateString = (value: Date | string): string => {
+  if (value instanceof Date) {
+    return value.toISOString().slice(0, 10);
+  }
+
+  const mmDdYyyyMatch = value.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+
+  if (mmDdYyyyMatch) {
+    const [, month, day, year] = mmDdYyyyMatch;
+    return `${year}-${month}-${day}`;
+  }
+
+  return value.split("T")[0];
 };
 
 const buildSignupPlaceholders = (count: number, eventId: string) =>
@@ -390,10 +407,7 @@ export const getEventDetails = async (eventId: string): Promise<EventsState> => 
 export const createEvent = async (newEvent: CreateEvent): Promise<SimpleEventState> => {
   const userId = await ensureUserId();
   const eventOwnerId = newEvent.eventOwner || userId;
-  const eventDate =
-    typeof newEvent.eventDate === "string"
-      ? newEvent.eventDate
-      : newEvent.eventDate.toISOString().slice(0, 10);
+  const eventDate = toDatabaseDateString(newEvent.eventDate);
 
   const { data: event, error } = await supabase
     .from("events")

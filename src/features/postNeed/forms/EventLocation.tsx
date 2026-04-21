@@ -1,4 +1,5 @@
 import { RadioButtonChecked, RadioButtonUnchecked } from "@mui/icons-material";
+import type { SvgIconProps } from "@mui/material";
 
 import { EventFormCommonProps } from "../types";
 import { Inputs } from "../../../components/inputs/Inputs";
@@ -11,6 +12,7 @@ import { validateField } from "../utils";
 
 export const EventLocation = ({
   data,
+  eventType,
   onChange,
   markError,
 }: EventFormCommonProps) => {
@@ -89,6 +91,112 @@ export const EventLocation = ({
     }
   };
 
+  const isInternalEvent = eventType === "internalEvent";
+  const selectedRadioStyles: SvgIconProps["sx"] = { color: "#088F26" };
+  const isLocationNameValid = Boolean(data.eventAddress.locationName);
+  const isStreetNameValid = Boolean(data.eventAddress.streetName);
+  const isCityValid = Boolean(data.eventAddress.city);
+  const isParkingValid = Boolean(data.eventParkingInfo);
+  const isAddressValid =
+    isLocationNameValid && isStreetNameValid && isCityValid;
+  const getInternalLocationFieldClassName = (isValid: boolean) =>
+    `${styles.internalLocationInputField} ${
+      isValid ? styles.internalLocationValidField : ""
+    }`;
+
+  if (isInternalEvent) {
+    return (
+      <div
+        className={`${styles.eventFormArea} ${styles.internalLocationForm}`}
+      >
+        <div className={styles.internalLocationAddressGroup}>
+          <span className={styles.internalLocationLabel}>
+            Event Address
+            {isAddressValid && (
+              <span className={styles.requiredIndicator}>*</span>
+            )}
+          </span>
+          <div className={getInternalLocationFieldClassName(isLocationNameValid)}>
+            <Inputs
+              label=""
+              darbeInputType="standardInput"
+              value={data.eventAddress.locationName}
+              error={!!errors.locationName}
+              errorHelperText={errors.locationName}
+              name="locationName"
+              handleChange={handleChange}
+              placeholder="Location Name"
+            />
+          </div>
+          <div className={getInternalLocationFieldClassName(isStreetNameValid)}>
+            <Inputs
+              label=""
+              darbeInputType="standardInput"
+              name="streetName"
+              value={data.eventAddress.streetName}
+              error={!!errors.streetName}
+              errorHelperText={errors.streetName}
+              handleChange={handleChange}
+              placeholder="123 Main St."
+            />
+          </div>
+          <div className={getInternalLocationFieldClassName(isCityValid)}>
+            <Inputs
+              label=""
+              darbeInputType="standardInput"
+              name="city"
+              value={data.eventAddress.city}
+              error={!!errors.city}
+              errorHelperText={errors.city}
+              handleChange={handleChange}
+              placeholder="Houston, TX 77001"
+            />
+          </div>
+        </div>
+
+        <div
+          className={`${styles.internalLocationParkingField} ${
+            isParkingValid ? styles.internalLocationValidField : ""
+          }`}
+        >
+          <span className={styles.internalLocationLabel}>Parking Details</span>
+          <Inputs
+            label=""
+            isTextArea
+            darbeInputType="textAreaInput"
+            value={data.eventParkingInfo}
+            handleChange={handleUnnestedChange}
+            name="eventParkingInfo"
+            placeholder="In front of Building A..."
+          />
+        </div>
+
+        <div className={styles.internalLocationTypeOptions}>
+          <CheckBox
+            name="isIndoor"
+            label="Indoor"
+            labelPlacement="right"
+            textVariant="bold"
+            icon={<RadioButtonUnchecked />}
+            checkedIcon={<RadioButtonChecked sx={selectedRadioStyles} />}
+            checked={!!data.isIndoor}
+            onChange={handleCheckboxChange}
+          />
+          <CheckBox
+            name="isOutdoor"
+            label="Outdoor"
+            labelPlacement="right"
+            textVariant="bold"
+            icon={<RadioButtonUnchecked />}
+            checkedIcon={<RadioButtonChecked sx={selectedRadioStyles} />}
+            checked={!!data.isOutdoor}
+            onChange={handleCheckboxChange}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.eventFormArea}>
       <Inputs
@@ -143,6 +251,7 @@ export const EventLocation = ({
         label="Parking Details"
         isTextArea
         darbeInputType="textAreaInput"
+        value={data.eventParkingInfo}
         handleChange={handleUnnestedChange}
         name="eventParkingInfo"
         placeholder="Parking is available in the lot behind the building"
@@ -151,6 +260,7 @@ export const EventLocation = ({
       <Inputs
         label="Assignment Location"
         darbeInputType="standardInput"
+        value={data.eventInternalLocation}
         handleChange={handleUnnestedChange}
         name="eventInternalLocation"
         placeholder="Floor 2"
