@@ -21,6 +21,51 @@ interface PictureModalProps {
   currentPicture?: string;
 }
 
+const DARBE_S3_IMAGE_HOST =
+  "darbe-image-video-storage.s3.us-east-1.amazonaws.com";
+const S3_IMAGE_PROXY_PATH = "/__darbe_s3_image_proxy";
+
+const isSameOriginImageSource = (source: string) => {
+  if (!source) {
+    return false;
+  }
+
+  if (source.startsWith("data:") || source.startsWith("blob:")) {
+    return true;
+  }
+
+  try {
+    const sourceUrl = new URL(source, window.location.href);
+    return sourceUrl.origin === window.location.origin;
+  } catch {
+    return false;
+  }
+};
+
+const isLocalDevelopmentHost = () =>
+  ["localhost", "127.0.0.1"].includes(window.location.hostname);
+
+const getCanvasImageSource = (source: string) => {
+  if (!source) {
+    return "";
+  }
+
+  if (isSameOriginImageSource(source)) {
+    return source;
+  }
+
+  try {
+    const sourceUrl = new URL(source);
+    if (isLocalDevelopmentHost() && sourceUrl.host === DARBE_S3_IMAGE_HOST) {
+      return `${S3_IMAGE_PROXY_PATH}${sourceUrl.pathname}${sourceUrl.search}`;
+    }
+  } catch {
+    return source;
+  }
+
+  return source;
+};
+
 export const PictureModal = ({
   closeModal,
   userId,
@@ -59,7 +104,7 @@ export const PictureModal = ({
   const adjustFrameRef = useRef<HTMLDivElement>(null);
   const [sourceImageSrc, setSourceImageSrc] = useState<string>(() => {
     const storedOriginal = getStoredOriginal();
-    return storedOriginal || (currentPicture ? assetUrl(currentPicture) : "");
+    return storedOriginal;
   });
   const [displayImageSrc, setDisplayImageSrc] = useState<string>(
     currentPicture ? assetUrl(currentPicture) : ""
@@ -67,6 +112,7 @@ export const PictureModal = ({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isAdjusting, setIsAdjusting] = useState(false);
   const [hasPendingChanges, setHasPendingChanges] = useState(false);
+  const [localError, setLocalError] = useState("");
   const [cropCenter, setCropCenter] = useState(getStoredPosition);
   const [coverPosition, setCoverPosition] = useState(getStoredPosition);
   const pictureTitle = isCoverPhoto ? "Cover Photo" : "Profile Photo";
@@ -99,6 +145,7 @@ export const PictureModal = ({
         setShowDeleteConfirm(false);
         setIsAdjusting(true);
         setHasPendingChanges(true);
+        setLocalError("");
         resetAdjustments();
         try {
           window.localStorage.setItem(storageKey, base64File);
@@ -123,24 +170,47 @@ export const PictureModal = ({
   const getCropSizeRatio = () => 0.8125;
   const getProfileFrameSize = () => ({ width: 320, height: 230 });
   const getCoverFrameSize = () => ({ width: 480, height: 160 });
+  const getImageSourceCandidates = (sourceOverride?: string) =>
+    Array.from(
+      new Set(
+        [
+          sourceOverride,
+          sourceImageSrc,
+          displayImageSrc,
+          currentPicture ? assetUrl(currentPicture) : "",
+          currentPicture,
+        ].filter(Boolean) as string[]
+      )
+    )
+      .map(getCanvasImageSource)
+      .filter(Boolean);
 
-  const createProfileCropPreview = async (
-    nextCropCenter: { x: number; y: number },
-    sourceOverride?: string
-  ) => {
-    const imageSource = sourceOverride || sourceImageSrc || currentPicture;
-    if (!imageSource) {
-      return "";
-    }
-
-    const source = sourceOverride || sourceImageSrc || assetUrl(currentPicture ?? "");
-    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+  const loadImage = (source: string) =>
+    new Promise<HTMLImageElement>((resolve, reject) => {
       const nextImage = new Image();
-      nextImage.crossOrigin = "anonymous";
+
+      if (
+        !source.startsWith("data:") &&
+        !source.startsWith("blob:") &&
+        !isSameOriginImageSource(source)
+      ) {
+        nextImage.crossOrigin = "anonymous";
+      }
+
       nextImage.onload = () => resolve(nextImage);
       nextImage.onerror = () => reject(new Error("Unable to load image"));
       nextImage.src = source;
     });
+
+  const createProfileCropPreview = async (
+    nextCropCenter: { x: number; y: number },
+    sourceOverride?: string
+  ): Promise<{ preview: string; originalSource: string }> => {
+    const rawImageSources = getImageSourceCandidates(sourceOverride);
+    const imageSources = Array.from(new Set(rawImageSources));
+    if (!imageSources.length) {
+      throw new Error("Unable to load image for adjustment.");
+    }
 
     const canvas = document.createElement("canvas");
     const targetWidth = isCoverPhoto ? 1200 : 640;
@@ -154,79 +224,100 @@ export const PictureModal = ({
     canvas.width = targetWidth;
     canvas.height = targetHeight;
 
-    if (isCoverPhoto) {
-      const { width: frameWidth, height: frameHeight } = getCoverFrameSize();
-      const baseScale = Math.max(
-        frameWidth / image.width,
-        frameHeight / image.height
-      );
-      const renderedWidth = image.width * baseScale;
-      const renderedHeight = image.height * baseScale;
-      const overflowX = Math.max(0, renderedWidth - frameWidth);
-      const overflowY = Math.max(0, renderedHeight - frameHeight);
-      const drawX = -overflowX * (nextCropCenter.x / 100);
-      const drawY = -overflowY * (nextCropCenter.y / 100);
-      const targetScale = targetWidth / frameWidth;
+    for (const source of imageSources) {
+      try {
+        const image = await loadImage(source);
+        ctx.clearRect(0, 0, targetWidth, targetHeight);
 
-      ctx.save();
-      ctx.scale(targetScale, targetScale);
-      ctx.drawImage(image, drawX, drawY, renderedWidth, renderedHeight);
-      ctx.restore();
-      return canvas.toDataURL("image/jpeg", 0.92);
+        if (isCoverPhoto) {
+          const { width: frameWidth, height: frameHeight } = getCoverFrameSize();
+          const baseScale = Math.max(
+            frameWidth / image.width,
+            frameHeight / image.height
+          );
+          const renderedWidth = image.width * baseScale;
+          const renderedHeight = image.height * baseScale;
+          const overflowX = Math.max(0, renderedWidth - frameWidth);
+          const overflowY = Math.max(0, renderedHeight - frameHeight);
+          const drawX = -overflowX * (nextCropCenter.x / 100);
+          const drawY = -overflowY * (nextCropCenter.y / 100);
+          const targetScale = targetWidth / frameWidth;
+
+          ctx.save();
+          ctx.scale(targetScale, targetScale);
+          ctx.drawImage(image, drawX, drawY, renderedWidth, renderedHeight);
+          ctx.restore();
+          return {
+            preview: canvas.toDataURL("image/jpeg", 0.92),
+            originalSource: source,
+          };
+        }
+
+        const { width: frameWidth, height: frameHeight } = getProfileFrameSize();
+        const baseScale = Math.max(
+          frameWidth / image.width,
+          frameHeight / image.height
+        );
+        const renderedWidth = image.width * baseScale;
+        const renderedHeight = image.height * baseScale;
+        const imageOffsetX = (frameWidth - renderedWidth) / 2;
+        const imageOffsetY = (frameHeight - renderedHeight) / 2;
+        const cropCenterX = (nextCropCenter.x / 100) * frameWidth;
+        const cropCenterY = (nextCropCenter.y / 100) * frameHeight;
+        const frameCenterX = frameWidth / 2;
+        const frameCenterY = frameHeight / 2;
+        const translateX = frameCenterX - cropCenterX;
+        const translateY = frameCenterY - cropCenterY;
+        const targetScale = targetWidth / frameWidth;
+
+        ctx.save();
+        ctx.scale(targetScale, targetScale);
+        ctx.drawImage(
+          image,
+          imageOffsetX + translateX,
+          imageOffsetY + translateY,
+          renderedWidth,
+          renderedHeight
+        );
+        ctx.restore();
+
+        return {
+          preview: canvas.toDataURL("image/jpeg", 0.92),
+          originalSource: source,
+        };
+      } catch {
+        // Try the next available source; cached originals can become stale.
+      }
     }
 
-    const { width: frameWidth, height: frameHeight } = getProfileFrameSize();
-    const baseScale = Math.max(
-      frameWidth / image.width,
-      frameHeight / image.height
+    throw new Error(
+      "Unable to save this adjustment because image storage is blocking browser editing."
     );
-    const renderedWidth = image.width * baseScale;
-    const renderedHeight = image.height * baseScale;
-    const imageOffsetX = (frameWidth - renderedWidth) / 2;
-    const imageOffsetY = (frameHeight - renderedHeight) / 2;
-    const cropCenterX = (nextCropCenter.x / 100) * frameWidth;
-    const cropCenterY = (nextCropCenter.y / 100) * frameHeight;
-    const frameCenterX = frameWidth / 2;
-    const frameCenterY = frameHeight / 2;
-    const translateX = frameCenterX - cropCenterX;
-    const translateY = frameCenterY - cropCenterY;
-    const targetScale = targetWidth / frameWidth;
-
-    ctx.save();
-    ctx.scale(targetScale, targetScale);
-    ctx.drawImage(
-      image,
-      imageOffsetX + translateX,
-      imageOffsetY + translateY,
-      renderedWidth,
-      renderedHeight
-    );
-    ctx.restore();
-
-    return canvas.toDataURL("image/jpeg", 0.92);
   };
 
   const handleSubmitPicture = async () => {
     try {
+      setLocalError("");
       const category = isCoverPhoto ? "coverPhoto" : "profilePicture";
-      const pictureValue = isCoverPhoto
+      const { preview, originalSource } = isCoverPhoto
         ? await createProfileCropPreview(coverPosition)
         : await createProfileCropPreview(cropCenter);
-      if (!pictureValue) {
+      if (!preview) {
         return;
       }
 
       const payload = {
         user: {
           id: userId,
-          [category]: pictureValue,
+          [category]: preview,
         },
       };
 
       await updateUserProfile(payload).unwrap();
       try {
-        if (sourceImageSrc) {
-          window.localStorage.setItem(storageKey, sourceImageSrc);
+        if (originalSource) {
+          setSourceImageSrc(originalSource);
+          window.localStorage.setItem(storageKey, originalSource);
         }
         window.localStorage.setItem(
           positionStorageKey,
@@ -238,6 +329,11 @@ export const PictureModal = ({
       closeModal();
     } catch (error) {
       console.error("Error submitting post", error);
+      setLocalError(
+        error instanceof Error
+          ? error.message
+          : "Error saving picture! Please try a different one."
+      );
     }
   };
 
@@ -269,6 +365,8 @@ export const PictureModal = ({
 
     setShowDeleteConfirm(false);
     setIsAdjusting(true);
+    setHasPendingChanges(true);
+    setLocalError("");
   };
 
   const handleAdjustPointer = (clientX: number, clientY: number) => {
@@ -339,10 +437,10 @@ export const PictureModal = ({
           </button>
         </div>
         <div className={styles.pictureModalPreviewSection}>
-          {isError && (
+          {(isError || localError) && (
             <Typography
               textToDisplay={
-                "Error uploading picture! Please try a different one"
+                localError || "Error uploading picture! Please try a different one"
               }
               variant="boldTextSmall"
             />
