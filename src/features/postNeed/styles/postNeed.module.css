@@ -239,6 +239,10 @@
   grid-column: 1;
 }
 
+.internalMaxVolunteerField {
+  grid-column: 2;
+}
+
 .internalDescriptionField :global(.MuiInputBase-root) {
   min-height: 170px;
   align-items: flex-start;
@@ -454,6 +458,13 @@
   color: #000;
   font-size: 16px;
   font-weight: 600;
+}
+
+.internalLocationAssignmentField {
+  display: flex;
+  flex-direction: column;
+  grid-column: 1;
+  width: 100%;
 }
 
 .internalRequirementsForm {
@@ -742,6 +753,39 @@
   font-size: 16px;
   font-weight: 600;
   line-height: 22px;
+}
+
+.waiverUploadedStatus {
+  color: #088f26;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 19px !important;
+}
+
+.waiverUploadStatusRow {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  column-gap: 8px;
+}
+
+.waiverRemoveButton {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #717070;
+  cursor: pointer;
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 19px;
+}
+
+.waiverRemoveButton:hover,
+.waiverRemoveButton:focus-visible {
+  color: #263238;
+  outline: none;
+  text-decoration: underline;
 }
 
 .internalImpactSection {
@@ -1233,9 +1277,8 @@
 }
 
 .internalReviewFooter {
-  display: grid;
-  grid-template-columns: 293px 1fr;
-  column-gap: 168px;
+  display: flex;
+  justify-content: flex-end;
   align-items: center;
 }
 

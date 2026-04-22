@@ -6,18 +6,11 @@ import {
   RadioButtonChecked,
   RadioButtonUnchecked,
 } from "@mui/icons-material";
-import { CircularProgress, IconButton } from "@mui/material";
+import { CircularProgress } from "@mui/material";
 
 import { EventFormCommonProps } from "../types";
-import { CheckBox } from "../../../components/checkbox/Checkbox";
 import { Inputs } from "../../../components/inputs/Inputs";
-import { CustomSvgs } from "../../../components/customSvgs/CustomSvgs";
-import { FileUpload } from "../../../components/fileUpload/FileUpload";
-import { FilePreviews } from "../../../components/fileUpload/FilePreviews";
 import { convertFileToBase64 } from "../../../utils/CommonFunctions";
-import { Typography } from "../../../components/typography/Typography";
-import { DarbeButton } from "../../../components/buttons/DarbeButton";
-import SelectField from "../../../components/selectField/SelectField";
 import {
   useGetRosterAdminsQuery,
   useGetRostersQuery,
@@ -116,16 +109,6 @@ export const EventDetails = ({
     }
   };
 
-  const handleRemovingImage = () => {
-    setImagePreview(null);
-    if (onChange) {
-      onChange((prevState) => ({
-        ...prevState,
-        eventCoverPhoto: "",
-      }));
-    }
-  };
-
   const handleInviteRosterSelect = (rosterId: string) => {
     setSelectedRosterId(rosterId);
     setIsInviteDropdownOpen(false);
@@ -164,6 +147,13 @@ export const EventDetails = ({
     }));
 
     event.target.value = "";
+  };
+
+  const handleRemoveWaiver = (waiverType: "adultWaiver" | "minorWaiver") => {
+    onChange?.((prevState) => ({
+      ...prevState,
+      [waiverType]: "",
+    }));
   };
 
   const renderWaiverFileInputs = () => (
@@ -327,7 +317,7 @@ export const EventDetails = ({
     );
   };
 
-  if (eventType === "internalEvent") {
+  if (eventType === "internalEvent" || eventType === "externalEvent") {
     const internalPreviewSrc =
       hasImagePreview && imagePreviewUrl
         ? URL.createObjectURL(imagePreviewUrl)
@@ -427,8 +417,22 @@ export const EventDetails = ({
                   onClick={() => handleWaiverClick("adultWaiver")}
                   type="button"
                 >
-                  Upload
+                  {data.adultWaiver ? "Replace" : "Upload"}
                 </button>
+                {data.adultWaiver && (
+                  <div className={styles.waiverUploadStatusRow}>
+                    <span className={styles.waiverUploadedStatus}>
+                      Uploaded
+                    </span>
+                    <button
+                      className={styles.waiverRemoveButton}
+                      type="button"
+                      onClick={() => handleRemoveWaiver("adultWaiver")}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
               </div>
               <div>
                 <span>Child Waiver</span>
@@ -437,8 +441,22 @@ export const EventDetails = ({
                   onClick={() => handleWaiverClick("minorWaiver")}
                   type="button"
                 >
-                  Upload
+                  {data.minorWaiver ? "Replace" : "Upload"}
                 </button>
+                {data.minorWaiver && (
+                  <div className={styles.waiverUploadStatusRow}>
+                    <span className={styles.waiverUploadedStatus}>
+                      Uploaded
+                    </span>
+                    <button
+                      className={styles.waiverRemoveButton}
+                      type="button"
+                      onClick={() => handleRemoveWaiver("minorWaiver")}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -473,188 +491,57 @@ export const EventDetails = ({
           </div>
         </section>
 
-        <section className={styles.internalInviteSection}>
-          <span className={styles.internalOtherLabel}>Invite Roster Members</span>
-          <button
-            aria-expanded={isInviteDropdownOpen}
-            className={[
-              styles.internalRosterSelect,
-              isInviteDropdownOpen ? styles.internalRosterSelectOpen : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            type="button"
-            onClick={() =>
-              setIsInviteDropdownOpen((isDropdownOpen) => !isDropdownOpen)
-            }
-          >
-            <span>{selectedRosterDisplayText}</span>
-            <KeyboardArrowDown sx={{ color: "#263238", fontSize: 24 }} />
-          </button>
-          {isInviteDropdownOpen && (
-            <div className={styles.internalRosterDropdown}>
-              {inviteRosterGroups.length ? (
-                inviteRosterGroups.map((roster) => (
-                  <button
-                    className={styles.internalRosterDropdownOption}
-                    key={roster.id}
-                    type="button"
-                    onClick={() => handleInviteRosterSelect(roster.id)}
-                  >
-                    <span>{roster.rosterName}</span>
-                  </button>
-                ))
-              ) : (
-                <span className={styles.internalRosterDropdownEmpty}>
-                  No roster groups available
-                </span>
-              )}
-            </div>
-          )}
-        </section>
-
+        {eventType === "internalEvent" && (
+          <section className={styles.internalInviteSection}>
+            <span className={styles.internalOtherLabel}>Invite Roster Members</span>
+            <button
+              aria-expanded={isInviteDropdownOpen}
+              className={[
+                styles.internalRosterSelect,
+                isInviteDropdownOpen ? styles.internalRosterSelectOpen : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              type="button"
+              onClick={() =>
+                setIsInviteDropdownOpen((isDropdownOpen) => !isDropdownOpen)
+              }
+            >
+              <span>{selectedRosterDisplayText}</span>
+              <KeyboardArrowDown sx={{ color: "#263238", fontSize: 24 }} />
+            </button>
+            {isInviteDropdownOpen && (
+              <div className={styles.internalRosterDropdown}>
+                <button
+                  className={styles.internalRosterDropdownOption}
+                  type="button"
+                  onClick={() => handleInviteRosterSelect("")}
+                >
+                  <span>&nbsp;</span>
+                </button>
+                {inviteRosterGroups.length ? (
+                  inviteRosterGroups.map((roster) => (
+                    <button
+                      className={styles.internalRosterDropdownOption}
+                      key={roster.id}
+                      type="button"
+                      onClick={() => handleInviteRosterSelect(roster.id)}
+                    >
+                      <span>{roster.rosterName}</span>
+                    </button>
+                  ))
+                ) : (
+                  <span className={styles.internalRosterDropdownEmpty}>
+                    No roster groups available
+                  </span>
+                )}
+              </div>
+            )}
+          </section>
+        )}
       </div>
     );
   }
 
-  return (
-    <div className={styles.eventFormArea}>
-      {renderWaiverFileInputs()}
-      <div className={styles.eventCoverPhoto}>
-        {hasImagePreview && (
-          <IconButton
-            onClick={handleRemovingImage}
-            sx={{
-              position: "relative",
-              gridRow: "1",
-              gridColumn: "1",
-              left: 170,
-              zIndex: 1,
-            }}
-          >
-            <CustomSvgs
-              svgPath="/svgs/common/removeItemIcon.svg"
-              altText="Add Cover Photo Icon"
-            />
-          </IconButton>
-        )}
-        <FilePreviews
-          nonPostMode
-          isEventPhoto
-          uploadedFiles={imagePreviewUrl ? [imagePreviewUrl] : []}
-          handleRemovingImage={handleRemovingImage}
-        />
-        {!hasImagePreview && (
-          <FileUpload handleFileUploads={handleFileUploads} />
-        )}
-      </div>
-      <div className={styles.eventCoordinator}>
-        {isLoading && <CircularProgress />}
-        <SelectField
-          label="Event Coordinator"
-          options={rosterMembers}
-          value={data.eventCoordinator || ""}
-          onChange={(event) => {
-            onChange?.((prevState) => ({
-              ...prevState,
-              eventCoordinator: event.target.value,
-            }));
-          }}
-        />
-      </div>
-
-      <div className={styles.volunteerImpact}>
-        <div className={styles.checkBoxInputsArea}>
-          <CheckBox
-            name="isIndividualImpact"
-            label="Individual Impact (per hour)"
-            labelPlacement="right"
-            textVariant="bold"
-            checked={!!data.volunteerImpact.isIndividualImpact}
-            icon={<RadioButtonUnchecked />}
-            checkedIcon={<RadioButtonChecked />}
-            onChange={handleCheckboxChange}
-          />
-          {data.volunteerImpact.isIndividualImpact && (
-            <div className={styles.checkBoxInputs}>
-              <Inputs
-                label=""
-                name="individualImpactPerHour"
-                darbeInputType="shortInput"
-                placeholder="1"
-                value={data.volunteerImpact.individualImpactPerHour}
-                handleChange={handleChange}
-              />
-              <Inputs
-                label=""
-                name="individualImpact"
-                darbeInputType="standardInput"
-                placeholder="dog washed"
-                value={data.volunteerImpact.individualImpact}
-                handleChange={handleChange}
-              />
-            </div>
-          )}
-        </div>
-
-        <div className={styles.checkBoxInputsArea}>
-          <CheckBox
-            name="isGroupImpact"
-            label="Group Impact (per hour)"
-            labelPlacement="right"
-            textVariant="bold"
-            checked={!!data.volunteerImpact.isGroupImpact}
-            icon={<RadioButtonUnchecked />}
-            checkedIcon={<RadioButtonChecked />}
-            onChange={handleCheckboxChange}
-          />
-          {data.volunteerImpact.isGroupImpact && (
-            <div className={styles.checkBoxInputs}>
-              <Inputs
-                label=""
-                name="groupImpactPerHour"
-                darbeInputType="shortInput"
-                placeholder="5"
-                value={data.volunteerImpact.groupImpactPerHour}
-                handleChange={handleChange}
-              />
-              <Inputs
-                label=""
-                name="groupImpact"
-                darbeInputType="standardInput"
-                placeholder="dogs walked"
-                value={data.volunteerImpact.groupImpact}
-                handleChange={handleChange}
-              />
-            </div>
-          )}
-        </div>
-
-        <Typography
-          variant="sectionTitle"
-          textToDisplay="Attach Waivers (if applicable)"
-          extraClass="paddingTop paddingBottom"
-        />
-
-        <div className={styles.waiverArea}>
-          <div className={styles.waiverSection}>
-            <Typography variant="sectionTitle" textToDisplay="Adult Waiver" />
-            <DarbeButton
-              onClick={() => handleWaiverClick("adultWaiver")}
-              darbeButtonType="postButton"
-              buttonText="Upload"
-            />
-          </div>
-          <div className={styles.waiverSection}>
-            <Typography variant="sectionTitle" textToDisplay="Minor Waiver" />
-            <DarbeButton
-              onClick={() => handleWaiverClick("minorWaiver")}
-              darbeButtonType="postButton"
-              buttonText="Upload"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return null;
 };

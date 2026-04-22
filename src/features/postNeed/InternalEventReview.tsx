@@ -27,6 +27,7 @@ interface InternalEventReviewProps {
 
 const defaultProfilePicture = assetUrl("/images/defaultProfilePicture.jpg");
 const defaultCoverPhoto = assetUrl("/images/defaultCoverPhoto.jpg");
+const hasText = (value?: string | number) => Boolean(value?.toString().trim());
 
 export const InternalEventReview = ({
   data,
@@ -54,7 +55,8 @@ export const InternalEventReview = ({
   const impactText = hasIndividualImpact
     ? data.volunteerImpact.individualImpact
     : data.volunteerImpact.groupImpact;
-  const impactDisplay = `${impactHours || "2"} hr ${impactText || "Office work"}`;
+  const hasImpact = hasText(impactHours) && hasText(impactText);
+  const impactDisplay = `${impactHours} hr ${impactText}`;
   const eventDate = data.eventDate ? new Date(data.eventDate) : null;
   const formattedDate = eventDate
     ? eventDate.toLocaleDateString("en-US", {
@@ -67,6 +69,15 @@ export const InternalEventReview = ({
     data.startTime && data.endTime
       ? `${Math.max(data.endTime - data.startTime, 0)} Hours`
       : "4 Hours";
+  const hasLocation =
+    hasText(data.eventAddress.locationName) ||
+    hasText(data.eventAddress.streetName) ||
+    hasText(data.eventAddress.city);
+  const hasRequirements =
+    hasText(data.eventRequirements.supplies) ||
+    hasText(data.eventRequirements.liftRequirements);
+  const hasAttire = hasText(data.eventRequirements.attire);
+  const hasAnyRequirements = hasRequirements || hasAttire;
 
   return (
     <div className={styles.internalReviewPage}>
@@ -104,7 +115,7 @@ export const InternalEventReview = ({
           <Close sx={{ color: "#000", fontSize: 24 }} />
         </div>
 
-        <h1>{data.eventName || "Organization Meeting - Members Only"}</h1>
+        <h1>{data.eventName}</h1>
 
         <div className={styles.internalReviewHeroBody}>
           <img
@@ -136,53 +147,76 @@ export const InternalEventReview = ({
         </div>
       </section>
 
-      <section className={styles.internalReviewWideCard}>
-        <h2>Description</h2>
-        <p>
-          {data.eventDescription ||
-            "Weekly organization meeting to welcome new members, review fundraising endeavors and potential opportunities, review current budget and plans, discuss updates about ongoing programs, and plans for upcoming programs."}
-        </p>
-      </section>
+      {hasText(data.eventDescription) && (
+        <section className={styles.internalReviewWideCard}>
+          <h2>Description</h2>
+          <p>{data.eventDescription}</p>
+        </section>
+      )}
 
       <section className={styles.internalReviewInlineCard}>
         <h2>Occurance:</h2>
         <p>{data.isRepeating ? "Every week" : "One time"}</p>
       </section>
 
-      <section className={styles.internalReviewInlineCard}>
-        <h2>Volunteer Impact:</h2>
-        <p>{impactDisplay}</p>
-      </section>
+      {hasImpact && (
+        <section className={styles.internalReviewInlineCard}>
+          <h2>Volunteer Impact:</h2>
+          <p>{impactDisplay}</p>
+        </section>
+      )}
 
-      <div className={styles.internalReviewTwoColumn}>
-        <section>
-          <h2>Location</h2>
-          <p>{data.eventAddress.locationName || "Two Tower Place"}</p>
-          <a>{data.eventAddress.streetName || "123 Highway Street"}</a>
-          <a>{data.eventAddress.city || "Dallas, TX 01234"}</a>
-        </section>
-        <section>
-          <h2>Parking Detail</h2>
-          <p>
-            {data.eventParkingInfo ||
-              "Parking is available in front of the building."}
-          </p>
-          <strong>{data.eventAddress.locationName || "Building number 21A"}</strong>
-        </section>
-      </div>
+      {(hasLocation || hasText(data.eventParkingInfo)) && (
+        <div className={styles.internalReviewTwoColumn}>
+          {hasLocation && (
+            <section>
+              <h2>Location</h2>
+              {hasText(data.eventAddress.locationName) && (
+                <p>{data.eventAddress.locationName}</p>
+              )}
+              {hasText(data.eventAddress.streetName) && (
+                <a>{data.eventAddress.streetName}</a>
+              )}
+              {hasText(data.eventAddress.city) && (
+                <a>{data.eventAddress.city}</a>
+              )}
+            </section>
+          )}
+          {hasText(data.eventParkingInfo) && (
+            <section>
+              <h2>Parking Detail</h2>
+              <p>{data.eventParkingInfo}</p>
+            </section>
+          )}
+        </div>
+      )}
 
-      <div className={styles.internalReviewTwoColumn}>
-        <section>
-          <h2>Requirements</h2>
-          <p>{data.eventRequirements.supplies || "Pen\nPaper"}</p>
-          <h2>Lift Requirements</h2>
-          <p>{data.eventRequirements.liftRequirements || "None"}</p>
-        </section>
-        <section>
-          <h2>Attire</h2>
-          <p>{data.eventRequirements.attire || "Casual Clothes"}</p>
-        </section>
-      </div>
+      {hasAnyRequirements && (
+        <div className={styles.internalReviewTwoColumn}>
+          {hasRequirements && (
+            <section>
+              {hasText(data.eventRequirements.supplies) && (
+                <>
+                  <h2>Requirements</h2>
+                  <p>{data.eventRequirements.supplies}</p>
+                </>
+              )}
+              {hasText(data.eventRequirements.liftRequirements) && (
+                <>
+                  <h2>Lift Requirements</h2>
+                  <p>{data.eventRequirements.liftRequirements}</p>
+                </>
+              )}
+            </section>
+          )}
+          {hasAttire && (
+            <section>
+              <h2>Attire</h2>
+              <p>{data.eventRequirements.attire}</p>
+            </section>
+          )}
+        </div>
+      )}
 
       <section className={styles.internalReviewCoordinator}>
         <h2>Coordinator:</h2>
@@ -199,20 +233,16 @@ export const InternalEventReview = ({
 
       <section className={styles.internalReviewWaivers}>
         <label>
-          <input type="checkbox" />
+          <input type="checkbox" checked={hasText(data.adultWaiver)} readOnly />
           <span>Adult waiver</span>
         </label>
         <label>
-          <input type="checkbox" />
+          <input type="checkbox" checked={hasText(data.minorWaiver)} readOnly />
           <span>Minor waiver</span>
         </label>
       </section>
 
       <div className={styles.internalReviewFooter}>
-        <div className={styles.internalReviewLink}>
-          <strong>Event Link:</strong>
-          <span>https://t.ly/brJXE</span>
-        </div>
         <div className={styles.internalReviewActions}>
           <DarbeButton
             buttonText="Cancel"

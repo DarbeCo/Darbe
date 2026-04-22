@@ -91,6 +91,8 @@ export const EventInfo = ({
 
   const hours = DropdownTypes({ type: "hours" });
   const isInternalEvent = eventType === "internalEvent";
+  const useStepPanelLayout =
+    eventType === "internalEvent" || eventType === "externalEvent";
   const hasValidInternalTime = data.startTime !== 0 && data.endTime !== 0;
   const formatDateInputValue = (value: string | Date | undefined) => {
     if (!value) {
@@ -130,12 +132,12 @@ export const EventInfo = ({
   return (
     <div
       className={`${styles.eventFormArea} ${
-        isInternalEvent ? styles.internalEventDetailsForm : ""
+        useStepPanelLayout ? styles.internalEventDetailsForm : ""
       }`}
     >
       <div
         className={
-          isInternalEvent
+          useStepPanelLayout
             ? getInternalFieldClassName(
                 styles.internalEventNameField,
                 Boolean(data.eventName)
@@ -152,9 +154,9 @@ export const EventInfo = ({
           value={data.eventName}
           error={!!errors.eventName}
           handleChange={handleChange}
-          placeholder={isInternalEvent ? "Event Name" : "Enter Event Name"}
+          placeholder={useStepPanelLayout ? "Event Name" : "Enter Event Name"}
         />
-        {isInternalEvent && (
+        {useStepPanelLayout && (
           <span className={styles.internalCharacterCount}>
             {data.eventName.length}/50
           </span>
@@ -163,7 +165,7 @@ export const EventInfo = ({
 
       <div
         className={
-          isInternalEvent
+          useStepPanelLayout
             ? getInternalFieldClassName(
                 styles.internalDateField,
                 Boolean(data.eventDate)
@@ -187,7 +189,7 @@ export const EventInfo = ({
 
       <div
         className={
-          isInternalEvent
+          useStepPanelLayout
             ? getInternalFieldClassName(
                 styles.internalDescriptionField,
                 Boolean(data.eventDescription)
@@ -204,12 +206,12 @@ export const EventInfo = ({
           handleChange={handleChange}
           name="eventDescription"
           placeholder={
-            isInternalEvent
+            useStepPanelLayout
               ? "Description of the event..."
               : "Enter Event Description"
           }
         />
-        {isInternalEvent && (
+        {useStepPanelLayout && (
           <span className={styles.internalCharacterCount}>
             {data.eventDescription.length}/50
           </span>
@@ -217,42 +219,55 @@ export const EventInfo = ({
       </div>
 
       {!isInternalEvent && (
-        <Inputs
-          label="# of Volunteers Needed"
-          darbeInputType="standardInput"
-          isRequired
-          errorHelperText={errors.maxVolunteerCount}
-          value={data.maxVolunteerCount}
-          error={!!errors.maxVolunteerCount}
-          handleChange={handleChange}
-          name="maxVolunteerCount"
-          placeholder="Enter # of Volunteers"
-        />
+        <div
+          className={
+            useStepPanelLayout
+              ? getInternalFieldClassName(
+                  styles.internalMaxVolunteerField,
+                  Boolean(data.maxVolunteerCount)
+                )
+              : ""
+          }
+        >
+          <Inputs
+            label="# of Volunteers Needed"
+            darbeInputType="standardInput"
+            isRequired
+            errorHelperText={errors.maxVolunteerCount}
+            value={data.maxVolunteerCount}
+            error={!!errors.maxVolunteerCount}
+            handleChange={handleChange}
+            name="maxVolunteerCount"
+            placeholder={
+              useStepPanelLayout ? "# of Volunteers Needed" : "Enter # of Volunteers"
+            }
+          />
+        </div>
       )}
 
       <div
         className={
-          isInternalEvent
+          useStepPanelLayout
             ? `${styles.internalTimeArea} ${
                 hasValidInternalTime ? styles.internalValidTimeArea : ""
               }`
             : styles.dropdownInputsArea
         }
       >
-        {isInternalEvent && (
+        {useStepPanelLayout && (
           <span className={styles.internalFieldLabel}>
             Time<span className={styles.requiredIndicator}>*</span>
           </span>
         )}
         <Dropdown
           name="startTime"
-          label={isInternalEvent ? "" : "Start Time"}
+          label={useStepPanelLayout ? "" : "Start Time"}
           error={!!errors.startTime}
           errorHelperText={errors.startTime}
           initialValue={data.startTime.toString()}
           onChange={handleDropdownChange}
-          variant={isInternalEvent ? "internalEventTime" : "default"}
-          isValid={isInternalEvent && hasValidInternalTime}
+          variant={useStepPanelLayout ? "internalEventTime" : "default"}
+          isValid={useStepPanelLayout && hasValidInternalTime}
         >
           {hours()}
         </Dropdown>
@@ -263,11 +278,11 @@ export const EventInfo = ({
         />
         <Dropdown
           name="endTime"
-          label={isInternalEvent ? "" : "End Time"}
+          label={useStepPanelLayout ? "" : "End Time"}
           initialValue={data?.endTime ? data?.endTime.toString() : ""}
           onChange={handleDropdownChange}
-          variant={isInternalEvent ? "internalEventTime" : "default"}
-          isValid={isInternalEvent && hasValidInternalTime}
+          variant={useStepPanelLayout ? "internalEventTime" : "default"}
+          isValid={useStepPanelLayout && hasValidInternalTime}
         >
           {hours()}
         </Dropdown>
@@ -275,7 +290,7 @@ export const EventInfo = ({
 
       <div
         className={
-          isInternalEvent
+          useStepPanelLayout
             ? styles.internalRepeatingEvent
             : styles.checkBoxInputsArea
         }

@@ -2,8 +2,9 @@ import {
   isValidDate,
   isValidName,
   isValidNumber,
-  isValidStreetName,
 } from "../../utils/formUtils/formUtils";
+
+const isBlank = (value?: unknown) => !value?.toString().trim();
 
 // TODO: Update types, value could be anything honestly
 export const validateField = (name: string, value?: any) => {
@@ -12,6 +13,11 @@ export const validateField = (name: string, value?: any) => {
   switch (name) {
     case "city":
     case "locationName":
+    case "streetName":
+      if (isBlank(value)) {
+        error = "This field is required";
+      }
+      break;
     case "eventName":
       if (!isValidName(value)) {
         error = "Please enter a valid event name";
@@ -31,11 +37,6 @@ export const validateField = (name: string, value?: any) => {
     case "startTime":
       if (value === "") {
         error = "Start time required";
-      }
-      break;
-    case "streetName":
-      if (!isValidStreetName(value)) {
-        error = "Please enter a valid street name";
       }
       break;
     default:

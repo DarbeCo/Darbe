@@ -2,10 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { IconButton } from "@mui/material";
 
-import { SimpleHeader } from "../../components/simpleHeader/SimpleHeader";
 import { DarbeButton } from "../../components/buttons/DarbeButton";
-import { SimpleSubHeader } from "../../components/simpleHeader/SimpleSubHeader";
-import { EventDetailCard } from "../../components/events/EventDetailCard";
 import { CreateEvent } from "../../services/api/endpoints/types/events.api.types";
 import { FormSteps } from "../../components/formSteps/FormSteps";
 import { useCreateEventMutation } from "../../services/api/endpoints/events/events.api";
@@ -18,6 +15,7 @@ import { EventLocation } from "./forms/EventLocation";
 import { EventRequirements } from "./forms/EventRequirements";
 import { EventType } from "./EventType";
 import { InternalEventReview } from "./InternalEventReview";
+import { validateField } from "./utils";
 import { ClosingIcon } from "../../components/closingIcon/ClosingIcon";
 import { Typography } from "../../components/typography/Typography";
 import { CustomSvgs } from "../../components/customSvgs/CustomSvgs";
@@ -89,10 +87,12 @@ const toNumber = (value: number | string | undefined, fallback = 0) => {
   return Number.isFinite(numberValue) ? numberValue : fallback;
 };
 
+const hasValue = (value?: unknown) => Boolean(value?.toString().trim());
+
 export const PostNeed = () => {
   const navigate = useNavigate();
   const userId = useAppSelector(selectCurrentUserId);
-  const [errorFound, setErrorFound] = useState(false);
+  const [, setErrorFound] = useState(false);
   const [currentStep, setCurrentStep] = useState(-1);
   const [eventType, setEventType] = useState("");
   const [eventData, setEventData] = useState<CreateEvent>(INITIAL_EVENT_STATE);
@@ -128,12 +128,14 @@ export const PostNeed = () => {
   };
 
   const handleEventSelection = (selectedEventType: string) => {
+    const isChangingEventType =
+      Boolean(eventType) && eventType !== selectedEventType;
     setEventType(selectedEventType);
 
     const isInternalEvent = selectedEventType === "internalEvent";
 
     setEventData((prevState) => ({
-      ...prevState,
+      ...(isChangingEventType ? INITIAL_EVENT_STATE : prevState),
       isFollowersOnly: isInternalEvent,
     }));
   };
@@ -148,6 +150,10 @@ export const PostNeed = () => {
   };
 
   const handleGoForward = () => {
+    if (isCurrentStepInvalid) {
+      return;
+    }
+
     if (currentStep === -1) {
       if (!eventType) {
         return;
@@ -164,34 +170,8 @@ export const PostNeed = () => {
     }
   };
 
-  const figureOutEventHeader = () => {
-    if (eventType) {
-      return eventType === "internalEvent"
-        ? "Internal Event"
-        : "External Event";
-    } else {
-      return "Create Event";
-    }
-  };
-
-  const figureOutSubHeaderText = () => {
-    if (currentStep === 0) {
-      return "Event Details";
-    }
-    if (currentStep === 1) {
-      return "Location";
-    }
-    if (currentStep === 2) {
-      return "Requirements";
-    }
-    if (currentStep === 3) {
-      return "Admin Details";
-    }
-    if (currentStep === 4) {
-      return "Preview";
-    }
-    return "";
-  };
+  const eventStepTitle =
+    eventType === "internalEvent" ? "Internal Event" : "Community Event";
 
   const figureOutStringFromStep = (step: number) => {
     if (step === 0) {
@@ -213,6 +193,43 @@ export const PostNeed = () => {
   const markError = (hasError: boolean) => {
     setErrorFound(hasError);
   };
+
+  const isInternalEvent = eventType === "internalEvent";
+  const hasValidEventInfo =
+    !validateField("eventName", eventData.eventName) &&
+    !validateField("eventDate", eventData.eventDate) &&
+    toNumber(eventData.startTime) > 0 &&
+    toNumber(eventData.endTime) > 0 &&
+    toNumber(eventData.endTime) > toNumber(eventData.startTime) &&
+    (isInternalEvent
+      ? hasValue(eventData.eventDescription)
+      : !validateField("maxVolunteerCount", eventData.maxVolunteerCount));
+  const hasValidEventLocation =
+    !validateField("locationName", eventData.eventAddress.locationName) &&
+    !validateField("streetName", eventData.eventAddress.streetName) &&
+    !validateField("city", eventData.eventAddress.city) &&
+    (isInternalEvent
+      ? true
+      : !validateField("zipCode", eventData.eventAddress.zipCode)) &&
+    (eventData.isIndoor || eventData.isOutdoor);
+  const hasValidEventDetails =
+    hasValue(eventData.eventCoordinator) &&
+    ((eventData.volunteerImpact.isIndividualImpact &&
+      hasValue(eventData.volunteerImpact.individualImpactPerHour) &&
+      hasValue(eventData.volunteerImpact.individualImpact)) ||
+      (eventData.volunteerImpact.isGroupImpact &&
+        hasValue(eventData.volunteerImpact.groupImpactPerHour) &&
+        hasValue(eventData.volunteerImpact.groupImpact)));
+  const isCurrentStepInvalid =
+    currentStep === -1
+      ? !eventType
+      : currentStep === 0
+        ? !hasValidEventInfo
+        : currentStep === 1
+          ? !hasValidEventLocation
+          : currentStep === 3
+            ? !hasValidEventDetails
+            : false;
 
   const EventForms = [
     <EventInfo
@@ -239,46 +256,50 @@ export const PostNeed = () => {
       onChange={setEventData}
       markError={markError}
     />,
-    <EventDetailCard previewEventData={eventData} isPreview />,
+    <InternalEventReview
+      data={eventData}
+      onCancel={handleGoBack}
+      onSubmit={handlePostEvent}
+    />,
   ];
 
   const previousButtonText =
     currentStep === EventForms.length - 1 ? "Cancel" : "Back";
   const nextButtonText =
     currentStep === EventForms.length - 1 ? "Post" : "Next";
-  const notEditingForm =
-    currentStep === -1 || currentStep === EventForms.length - 1;
   const isSelectionStep = currentStep === -1;
-  const isInternalEventDetailsStep =
-    eventType === "internalEvent" && currentStep === 0;
-  const isInternalEventLocationStep =
-    eventType === "internalEvent" && currentStep === 1;
-  const isInternalEventRequirementsStep =
-    eventType === "internalEvent" && currentStep === 2;
-  const isInternalEventOtherStep =
-    eventType === "internalEvent" && currentStep === 3;
-  const isInternalEventReviewStep =
-    eventType === "internalEvent" && currentStep === 4;
-  const isInternalEventPanelStep =
-    isInternalEventDetailsStep ||
-    isInternalEventLocationStep ||
-    isInternalEventRequirementsStep ||
-    isInternalEventOtherStep;
+  const isReviewStep = currentStep === EventForms.length - 1;
+  const isEventPanelStep =
+    !isSelectionStep && !isReviewStep;
   const isInternalEventLocationValid =
     Boolean(eventData.eventAddress.locationName) &&
     Boolean(eventData.eventAddress.streetName) &&
     Boolean(eventData.eventAddress.city) &&
     Boolean(eventData.eventParkingInfo) &&
     (eventData.isIndoor || eventData.isOutdoor);
-  const internalEventSectionHeader = isInternalEventDetailsStep
-    ? "Event Details"
-    : isInternalEventRequirementsStep
-      ? "Requirements"
-      : isInternalEventOtherStep
-        ? "Other"
-        : isInternalEventLocationValid
-          ? "Location"
-          : "Physical Location";
+  const eventStepSectionHeader = (() => {
+    if (currentStep === 0) {
+      return "Event Details";
+    }
+
+    if (currentStep === 1) {
+      if (!isInternalEvent) {
+        return "Location";
+      }
+
+      return isInternalEventLocationValid ? "Location" : "Physical Location";
+    }
+
+    if (currentStep === 2) {
+      return "Requirements";
+    }
+
+    if (currentStep === 3) {
+      return isInternalEvent ? "Other" : "Admin Details";
+    }
+
+    return "Preview";
+  })();
 
   return (
     <div className={styles.postNeed}>
@@ -296,22 +317,22 @@ export const PostNeed = () => {
           <div className={styles.selectionButtonArea}>
             <DarbeButton
               onClick={handleGoForward}
-              isDisabled={!eventType}
+              isDisabled={isCurrentStepInvalid}
               buttonText="Next"
               darbeButtonType="nextButton"
             />
           </div>
         </div>
-      ) : isInternalEventReviewStep ? (
+      ) : isReviewStep ? (
         <InternalEventReview
           data={eventData}
           onCancel={handleGoBack}
           onSubmit={handlePostEvent}
         />
-      ) : isInternalEventPanelStep ? (
+      ) : isEventPanelStep ? (
         <div
           className={`${styles.createEventPanel} ${styles.eventStepPanel} ${
-            isInternalEventOtherStep ? styles.internalOtherPanel : ""
+            currentStep === 3 ? styles.internalOtherPanel : ""
           }`}
         >
           <div className={styles.eventStepHeader}>
@@ -330,7 +351,7 @@ export const PostNeed = () => {
               )}
             </div>
             <div className={styles.eventStepTitleArea}>
-              <Typography variant="header" textToDisplay="Internal Event" />
+              <Typography variant="header" textToDisplay={eventStepTitle} />
               <FormSteps step={formStep} entityType="entity" formName="signup" />
             </div>
             <ClosingIcon useNoSx onClick={handleExit} />
@@ -339,57 +360,25 @@ export const PostNeed = () => {
             <Typography
               variant="whiteBoldText"
               extraClass={styles.eventStepSectionTitle}
-              textToDisplay={internalEventSectionHeader}
+              textToDisplay={eventStepSectionHeader}
             />
           </div>
           {EventForms[currentStep]}
           <div className={styles.eventStepButtonArea}>
             <DarbeButton
               onClick={handleGoBack}
-              isDisabled={errorFound}
-              buttonText="Previous"
+              buttonText={previousButtonText}
               darbeButtonType="secondaryNextButton"
             />
             <DarbeButton
               onClick={handleGoForward}
-              isDisabled={errorFound}
+              isDisabled={isCurrentStepInvalid}
               buttonText={nextButtonText}
               darbeButtonType="nextButton"
             />
           </div>
         </div>
-      ) : (
-        <>
-          {!notEditingForm && (
-            <FormSteps step={formStep} entityType="entity" formName="signup" />
-          )}
-          <SimpleHeader
-            headerText={figureOutEventHeader()}
-            textVariant="header"
-          />
-          <SimpleSubHeader
-            headerText={figureOutSubHeaderText()}
-            variants="formHeader"
-          />
-          {EventForms[currentStep]}
-        </>
-      )}
-      {!isSelectionStep && !isInternalEventPanelStep && !isInternalEventReviewStep && (
-        <div className={styles.buttonArea}>
-          <DarbeButton
-            onClick={handleGoBack}
-            isDisabled={errorFound}
-            buttonText={previousButtonText}
-            darbeButtonType="secondaryNextButton"
-          />
-          <DarbeButton
-            onClick={handleGoForward}
-            isDisabled={errorFound}
-            buttonText={nextButtonText}
-            darbeButtonType="nextButton"
-          />
-        </div>
-      )}
+      ) : null}
     </div>
   );
 };
