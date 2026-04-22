@@ -57,6 +57,7 @@ export interface EventsState {
   eventDate: Date | string;
   startTime: number;
   endTime?: number;
+  eventHoursNeeded?: string;
   maxVolunteerCount: number;
   isRepeating?: boolean;
   /** This is for internal events, aka not public outside the entity follower list or roster members */

@@ -29,6 +29,7 @@ const INITIAL_EVENT_STATE: CreateEvent = {
   eventDate: "",
   startTime: 0,
   endTime: 0,
+  eventHoursNeeded: "",
   isRepeating: false,
   isFollowersOnly: false,
   maxVolunteerCount: 0,
@@ -111,7 +112,7 @@ export const PostNeed = () => {
           isInternalEvent && !toNumber(eventData.maxVolunteerCount)
             ? 15
             : toNumber(eventData.maxVolunteerCount),
-        isFollowersOnly: isInternalEvent,
+        isFollowersOnly: isInternalEvent || Boolean(eventData.isFollowersOnly),
         // set the event owner to the current user
         eventOwner: userId,
       };
@@ -170,8 +171,14 @@ export const PostNeed = () => {
     }
   };
 
+  const handleEditStep = (step: number) => {
+    setCurrentStep(step);
+  };
+
   const eventStepTitle =
-    eventType === "internalEvent" ? "Internal Event" : "Community Event";
+    eventType === "internalEvent"
+      ? "Internal Event"
+      : "Create Community Event";
 
   const figureOutStringFromStep = (step: number) => {
     if (step === 0) {
@@ -195,6 +202,7 @@ export const PostNeed = () => {
   };
 
   const isInternalEvent = eventType === "internalEvent";
+  const isCommunityEvent = eventType === "externalEvent";
   const hasValidEventInfo =
     !validateField("eventName", eventData.eventName) &&
     !validateField("eventDate", eventData.eventDate) &&
@@ -203,15 +211,20 @@ export const PostNeed = () => {
     toNumber(eventData.endTime) > toNumber(eventData.startTime) &&
     (isInternalEvent
       ? hasValue(eventData.eventDescription)
-      : !validateField("maxVolunteerCount", eventData.maxVolunteerCount));
+      : !validateField("maxVolunteerCount", eventData.maxVolunteerCount) &&
+        hasValue(eventData.eventDescription) &&
+        hasValue(eventData.eventHoursNeeded));
   const hasValidEventLocation =
     !validateField("locationName", eventData.eventAddress.locationName) &&
     !validateField("streetName", eventData.eventAddress.streetName) &&
     !validateField("city", eventData.eventAddress.city) &&
-    (isInternalEvent
+    (isInternalEvent || isCommunityEvent
       ? true
       : !validateField("zipCode", eventData.eventAddress.zipCode)) &&
-    (eventData.isIndoor || eventData.isOutdoor);
+    (eventData.isIndoor || eventData.isOutdoor) &&
+    (isInternalEvent || isCommunityEvent
+      ? hasValue(eventData.eventInternalLocation)
+      : true);
   const hasValidEventDetails =
     hasValue(eventData.eventCoordinator) &&
     ((eventData.volunteerImpact.isIndividualImpact &&
@@ -258,7 +271,9 @@ export const PostNeed = () => {
     />,
     <InternalEventReview
       data={eventData}
+      eventType={eventType}
       onCancel={handleGoBack}
+      onEditStep={handleEditStep}
       onSubmit={handlePostEvent}
     />,
   ];
@@ -266,28 +281,22 @@ export const PostNeed = () => {
   const previousButtonText =
     currentStep === EventForms.length - 1 ? "Cancel" : "Back";
   const nextButtonText =
-    currentStep === EventForms.length - 1 ? "Post" : "Next";
+    currentStep === EventForms.length - 1
+      ? "Post"
+      : !isInternalEvent && currentStep === 3
+        ? "Preview"
+        : "Next";
   const isSelectionStep = currentStep === -1;
   const isReviewStep = currentStep === EventForms.length - 1;
   const isEventPanelStep =
     !isSelectionStep && !isReviewStep;
-  const isInternalEventLocationValid =
-    Boolean(eventData.eventAddress.locationName) &&
-    Boolean(eventData.eventAddress.streetName) &&
-    Boolean(eventData.eventAddress.city) &&
-    Boolean(eventData.eventParkingInfo) &&
-    (eventData.isIndoor || eventData.isOutdoor);
   const eventStepSectionHeader = (() => {
     if (currentStep === 0) {
       return "Event Details";
     }
 
     if (currentStep === 1) {
-      if (!isInternalEvent) {
-        return "Location";
-      }
-
-      return isInternalEventLocationValid ? "Location" : "Physical Location";
+      return "Location";
     }
 
     if (currentStep === 2) {
@@ -295,7 +304,7 @@ export const PostNeed = () => {
     }
 
     if (currentStep === 3) {
-      return isInternalEvent ? "Other" : "Admin Details";
+      return "Other";
     }
 
     return "Preview";
@@ -326,13 +335,19 @@ export const PostNeed = () => {
       ) : isReviewStep ? (
         <InternalEventReview
           data={eventData}
+          eventType={eventType}
           onCancel={handleGoBack}
+          onEditStep={handleEditStep}
           onSubmit={handlePostEvent}
         />
       ) : isEventPanelStep ? (
         <div
           className={`${styles.createEventPanel} ${styles.eventStepPanel} ${
             currentStep === 3 ? styles.internalOtherPanel : ""
+          } ${!isInternalEvent ? styles.communityEventStepPanel : ""} ${
+            !isInternalEvent && currentStep === 0
+              ? styles.communityEventDetailsPanel
+              : ""
           }`}
         >
           <div className={styles.eventStepHeader}>

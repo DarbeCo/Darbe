@@ -5,6 +5,7 @@ import { Inputs } from "../../../components/inputs/Inputs";
 
 export const EventRequirements = ({
   data,
+  eventType,
   onChange,
 }: EventFormCommonProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -21,6 +22,7 @@ export const EventRequirements = ({
   };
 
   const { eventRequirements } = data;
+  const isCommunityEvent = eventType === "externalEvent";
   const fieldClass = (value: string, extraClass: string) =>
     [
       styles.internalRequirementField,
@@ -31,11 +33,15 @@ export const EventRequirements = ({
       .join(" ");
 
   return (
-    <div className={styles.internalRequirementsForm}>
+    <div
+      className={`${styles.internalRequirementsForm} ${
+        isCommunityEvent ? styles.communityRequirementsForm : ""
+      }`}
+    >
       <label
         className={fieldClass(
           eventRequirements.supplies,
-          styles.internalRequirementLargeField,
+          `${styles.internalRequirementLargeField} ${styles.requirementSuppliesField}`,
         )}
       >
         <span className={styles.internalRequirementLabel}>What to Bring</span>
@@ -53,7 +59,7 @@ export const EventRequirements = ({
       <label
         className={fieldClass(
           eventRequirements.attire,
-          styles.internalRequirementLargeField,
+          `${styles.internalRequirementLargeField} ${styles.requirementAttireField}`,
         )}
       >
         <span className={styles.internalRequirementLabel}>Attire</span>
@@ -71,7 +77,7 @@ export const EventRequirements = ({
       <label
         className={fieldClass(
           eventRequirements.ageRestrictions,
-          styles.internalRequirementSmallField,
+          `${styles.internalRequirementSmallField} ${styles.requirementAgeField}`,
         )}
       >
         <span className={styles.internalRequirementLabel}>Age Restriction</span>
@@ -81,14 +87,16 @@ export const EventRequirements = ({
           name="ageRestrictions"
           value={eventRequirements.ageRestrictions}
           handleChange={handleChange}
-          placeholder="Must be 18 to participate."
+          placeholder={
+            isCommunityEvent ? "Over 5 years old" : "Must be 18 to participate."
+          }
         />
       </label>
 
       <label
         className={fieldClass(
           eventRequirements.liftRequirements,
-          styles.internalRequirementSmallField,
+          `${styles.internalRequirementSmallField} ${styles.requirementLiftField}`,
         )}
       >
         <span className={styles.internalRequirementLabel}>

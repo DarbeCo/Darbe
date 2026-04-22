@@ -317,12 +317,201 @@ export const EventDetails = ({
     );
   };
 
-  if (eventType === "internalEvent" || eventType === "externalEvent") {
-    const internalPreviewSrc =
-      hasImagePreview && imagePreviewUrl
-        ? URL.createObjectURL(imagePreviewUrl)
-        : "";
+  const internalPreviewSrc =
+    hasImagePreview && imagePreviewUrl ? URL.createObjectURL(imagePreviewUrl) : "";
 
+  if (eventType === "externalEvent") {
+    return (
+      <div className={`${styles.internalOtherForm} ${styles.communityOtherForm}`}>
+        {renderWaiverFileInputs()}
+        <section
+          className={`${styles.internalCoverSection} ${styles.communityCoverSection}`}
+        >
+          <span className={styles.internalOtherLabel}>Cover photo</span>
+          <div className={styles.internalCoverPhoto}>
+            {internalPreviewSrc ? (
+              <img src={internalPreviewSrc} alt="Event cover preview" />
+            ) : (
+              <button
+                aria-label="Upload cover photo"
+                className={styles.internalCoverUploadButton}
+                type="button"
+                onClick={handleInternalPhotoClick}
+              >
+                <AddCircleOutline sx={{ color: "#000", fontSize: 36 }} />
+              </button>
+            )}
+            <input
+              ref={internalPhotoInputRef}
+              type="file"
+              accept=".jpg,.png"
+              hidden
+              onChange={handleInternalPhotoChange}
+            />
+          </div>
+        </section>
+
+        <section className={styles.communityCoordinatorFields}>
+          <div className={styles.internalCoordinatorSection}>
+            <span className={styles.internalOtherLabel}>
+              Assign Coordinator<span className={styles.requiredIndicator}>*</span>
+            </span>
+            {isLoading ? (
+              <CircularProgress size={24} sx={{ marginTop: "8px" }} />
+            ) : (
+              <button
+                aria-expanded={isCoordinatorDropdownOpen}
+                className={`${styles.communityCoordinatorSelect} ${
+                  data.eventCoordinator ? styles.communityOtherValidField : ""
+                }`}
+                type="button"
+                onClick={() =>
+                  setIsCoordinatorDropdownOpen((isOpen) => !isOpen)
+                }
+              >
+                {selectedCoordinatorName}
+              </button>
+            )}
+            {isCoordinatorDropdownOpen && (
+              <div className={styles.internalCoordinatorDropdown}>
+                {rosterMembers?.length ? (
+                  rosterMembers.map((member) => (
+                    <button
+                      className={styles.internalCoordinatorDropdownOption}
+                      key={member.id}
+                      type="button"
+                      onClick={() => handleCoordinatorSelect(member.id)}
+                    >
+                      {member.fullName ||
+                        member.organizationName ||
+                        member.nonprofitName ||
+                        "Roster admin"}
+                    </button>
+                  ))
+                ) : (
+                  <span className={styles.internalCoordinatorDropdownEmpty}>
+                    No roster admins available
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+          <div
+            className={`${styles.communityCoordinatorPosition} ${
+              data.eventCoordinator ? styles.communityOtherValidField : ""
+            }`}
+          >
+            <span>Volunteer Lead</span>
+          </div>
+        </section>
+
+        <section className={styles.communityWaiverSection}>
+          <span className={styles.internalWaiverTitle}>
+            Attach Waivers (if applicable)
+          </span>
+          <div className={styles.communityWaiverFileRow}>
+            <button
+              className={styles.communityChooseFileButton}
+              onClick={() => handleWaiverClick("adultWaiver")}
+              type="button"
+            >
+              {data.adultWaiver ? "Replace File" : "Choose File"}
+            </button>
+            {data.adultWaiver && (
+              <>
+                <span className={styles.waiverUploadedStatus}>Uploaded</span>
+                <button
+                  className={styles.waiverRemoveButton}
+                  type="button"
+                  onClick={() => handleRemoveWaiver("adultWaiver")}
+                >
+                  Remove
+                </button>
+              </>
+            )}
+          </div>
+        </section>
+
+        <section className={styles.internalImpactSection}>
+          <div className={styles.internalImpactHeading}>
+            <span>
+              Volunteer Impact<span className={styles.requiredIndicator}>*</span>
+            </span>
+            <InfoOutlined sx={{ color: "#2C77E7", fontSize: 12 }} />
+          </div>
+          <div className={styles.internalImpactOptions}>
+            {renderInternalImpactOption({
+              amountName: "individualImpactPerHour",
+              amountPlaceholder: "1",
+              checked: !!data.volunteerImpact.isIndividualImpact,
+              impactName: "individualImpact",
+              label: "Individual Goal (per hour)",
+              textPlaceholder: "Dog washed",
+              toggleName: "isIndividualImpact",
+            })}
+            {renderInternalImpactOption({
+              amountName: "groupImpactPerHour",
+              amountPlaceholder: "10",
+              checked: !!data.volunteerImpact.isGroupImpact,
+              impactName: "groupImpact",
+              label: "Group Goal (total)",
+              textPlaceholder: "Dogs washed",
+              toggleName: "isGroupImpact",
+            })}
+          </div>
+        </section>
+
+        <section className={styles.internalInviteSection}>
+          <span className={styles.internalOtherLabel}>Invite Roster Members</span>
+          <button
+            aria-expanded={isInviteDropdownOpen}
+            className={[
+              styles.internalRosterSelect,
+              isInviteDropdownOpen ? styles.internalRosterSelectOpen : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            type="button"
+            onClick={() =>
+              setIsInviteDropdownOpen((isDropdownOpen) => !isDropdownOpen)
+            }
+          >
+            <span>{selectedRosterDisplayText}</span>
+            <KeyboardArrowDown sx={{ color: "#263238", fontSize: 24 }} />
+          </button>
+          {isInviteDropdownOpen && (
+            <div className={styles.internalRosterDropdown}>
+              <button
+                className={styles.internalRosterDropdownOption}
+                type="button"
+                onClick={() => handleInviteRosterSelect("")}
+              >
+                <span>&nbsp;</span>
+              </button>
+              {inviteRosterGroups.length ? (
+                inviteRosterGroups.map((roster) => (
+                  <button
+                    className={styles.internalRosterDropdownOption}
+                    key={roster.id}
+                    type="button"
+                    onClick={() => handleInviteRosterSelect(roster.id)}
+                  >
+                    <span>{roster.rosterName}</span>
+                  </button>
+                ))
+              ) : (
+                <span className={styles.internalRosterDropdownEmpty}>
+                  No roster groups available
+                </span>
+              )}
+            </div>
+          )}
+        </section>
+      </div>
+    );
+  }
+
+  if (eventType === "internalEvent") {
     return (
       <div className={styles.internalOtherForm}>
         {renderWaiverFileInputs()}
@@ -491,54 +680,52 @@ export const EventDetails = ({
           </div>
         </section>
 
-        {eventType === "internalEvent" && (
-          <section className={styles.internalInviteSection}>
-            <span className={styles.internalOtherLabel}>Invite Roster Members</span>
-            <button
-              aria-expanded={isInviteDropdownOpen}
-              className={[
-                styles.internalRosterSelect,
-                isInviteDropdownOpen ? styles.internalRosterSelectOpen : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              type="button"
-              onClick={() =>
-                setIsInviteDropdownOpen((isDropdownOpen) => !isDropdownOpen)
-              }
-            >
-              <span>{selectedRosterDisplayText}</span>
-              <KeyboardArrowDown sx={{ color: "#263238", fontSize: 24 }} />
-            </button>
-            {isInviteDropdownOpen && (
-              <div className={styles.internalRosterDropdown}>
-                <button
-                  className={styles.internalRosterDropdownOption}
-                  type="button"
-                  onClick={() => handleInviteRosterSelect("")}
-                >
-                  <span>&nbsp;</span>
-                </button>
-                {inviteRosterGroups.length ? (
-                  inviteRosterGroups.map((roster) => (
-                    <button
-                      className={styles.internalRosterDropdownOption}
-                      key={roster.id}
-                      type="button"
-                      onClick={() => handleInviteRosterSelect(roster.id)}
-                    >
-                      <span>{roster.rosterName}</span>
-                    </button>
-                  ))
-                ) : (
-                  <span className={styles.internalRosterDropdownEmpty}>
-                    No roster groups available
-                  </span>
-                )}
-              </div>
-            )}
-          </section>
-        )}
+        <section className={styles.internalInviteSection}>
+          <span className={styles.internalOtherLabel}>Invite Roster Members</span>
+          <button
+            aria-expanded={isInviteDropdownOpen}
+            className={[
+              styles.internalRosterSelect,
+              isInviteDropdownOpen ? styles.internalRosterSelectOpen : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            type="button"
+            onClick={() =>
+              setIsInviteDropdownOpen((isDropdownOpen) => !isDropdownOpen)
+            }
+          >
+            <span>{selectedRosterDisplayText}</span>
+            <KeyboardArrowDown sx={{ color: "#263238", fontSize: 24 }} />
+          </button>
+          {isInviteDropdownOpen && (
+            <div className={styles.internalRosterDropdown}>
+              <button
+                className={styles.internalRosterDropdownOption}
+                type="button"
+                onClick={() => handleInviteRosterSelect("")}
+              >
+                <span>&nbsp;</span>
+              </button>
+              {inviteRosterGroups.length ? (
+                inviteRosterGroups.map((roster) => (
+                  <button
+                    className={styles.internalRosterDropdownOption}
+                    key={roster.id}
+                    type="button"
+                    onClick={() => handleInviteRosterSelect(roster.id)}
+                  >
+                    <span>{roster.rosterName}</span>
+                  </button>
+                ))
+              ) : (
+                <span className={styles.internalRosterDropdownEmpty}>
+                  No roster groups available
+                </span>
+              )}
+            </div>
+          )}
+        </section>
       </div>
     );
   }

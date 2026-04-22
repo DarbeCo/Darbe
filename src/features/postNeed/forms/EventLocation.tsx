@@ -92,6 +92,7 @@ export const EventLocation = ({
   };
 
   const isInternalEvent = eventType === "internalEvent";
+  const isCommunityEvent = eventType === "externalEvent";
   const selectedRadioStyles: SvgIconProps["sx"] = { color: "#088F26" };
   const isLocationNameValid = Boolean(data.eventAddress.locationName);
   const isStreetNameValid = Boolean(data.eventAddress.streetName);
@@ -102,18 +103,24 @@ export const EventLocation = ({
     isLocationNameValid &&
     isStreetNameValid &&
     isCityValid &&
-    (isInternalEvent || isZipCodeValid);
+    (isInternalEvent || isCommunityEvent || isZipCodeValid);
   const getInternalLocationFieldClassName = (isValid: boolean) =>
     `${styles.internalLocationInputField} ${
       isValid ? styles.internalLocationValidField : ""
     }`;
 
   return (
-    <div className={`${styles.eventFormArea} ${styles.internalLocationForm}`}>
+    <div
+      className={`${styles.eventFormArea} ${styles.internalLocationForm} ${
+        isCommunityEvent ? styles.communityLocationForm : ""
+      }`}
+    >
       <div className={styles.internalLocationAddressGroup}>
         <span className={styles.internalLocationLabel}>
           Event Address
-          {isAddressValid && <span className={styles.requiredIndicator}>*</span>}
+          {(isCommunityEvent || isAddressValid) && (
+            <span className={styles.requiredIndicator}>*</span>
+          )}
         </span>
         <div className={getInternalLocationFieldClassName(isLocationNameValid)}>
           <Inputs
@@ -151,7 +158,7 @@ export const EventLocation = ({
             placeholder="Houston, TX 77001"
           />
         </div>
-        {!isInternalEvent && (
+        {!isInternalEvent && !isCommunityEvent && (
           <div className={getInternalLocationFieldClassName(isZipCodeValid)}>
             <Inputs
               label=""
@@ -172,7 +179,10 @@ export const EventLocation = ({
           isParkingValid ? styles.internalLocationValidField : ""
         }`}
       >
-        <span className={styles.internalLocationLabel}>Parking Details</span>
+        <span className={styles.internalLocationLabel}>
+          Parking Details
+          {isCommunityEvent && <span className={styles.requiredIndicator}>*</span>}
+        </span>
         <Inputs
           label=""
           isTextArea
@@ -180,29 +190,11 @@ export const EventLocation = ({
           value={data.eventParkingInfo}
           handleChange={handleUnnestedChange}
           name="eventParkingInfo"
-          placeholder="In front of Building A..."
+          placeholder={
+            isCommunityEvent ? "Infront of Building A..." : "In front of Building A..."
+          }
         />
       </div>
-
-      {!isInternalEvent && (
-        <div className={styles.internalLocationAssignmentField}>
-          <span className={styles.internalLocationLabel}>Assignment Location</span>
-          <div
-            className={getInternalLocationFieldClassName(
-              Boolean(data.eventInternalLocation)
-            )}
-          >
-            <Inputs
-              label=""
-              darbeInputType="standardInput"
-              value={data.eventInternalLocation}
-              handleChange={handleUnnestedChange}
-              name="eventInternalLocation"
-              placeholder="Floor 2"
-            />
-          </div>
-        </div>
-      )}
 
       <div className={styles.internalLocationTypeOptions}>
         <CheckBox
@@ -226,6 +218,31 @@ export const EventLocation = ({
           onChange={handleCheckboxChange}
         />
       </div>
+
+      {(isInternalEvent || isCommunityEvent) && (
+        <div className={styles.internalLocationAssignmentField}>
+          <span className={styles.internalLocationLabel}>
+            Assignment Location
+            {(isInternalEvent || isCommunityEvent) && (
+              <span className={styles.requiredIndicator}>*</span>
+            )}
+          </span>
+          <div
+            className={getInternalLocationFieldClassName(
+              Boolean(data.eventInternalLocation)
+            )}
+          >
+            <Inputs
+              label=""
+              darbeInputType="standardInput"
+              value={data.eventInternalLocation}
+              handleChange={handleUnnestedChange}
+              name="eventInternalLocation"
+              placeholder="Indoor Main Hall"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -232,36 +232,49 @@ export const saveButton = {
 };
 
 export const nextButton = {
-  width: "123px",
-  minWidth: "123px",
-  height: "38px",
+  width: "fit-content",
+  minWidth: "104px",
+  height: "44px",
   borderRadius: "4px",
   backgroundColor: "#2C77E7",
   color: "#fff",
-  fontSize: "14px",
+  fontSize: "16px",
   fontWeight: "600",
+  lineHeight: "22px",
   textTransform: "none",
   gap: "8px",
-  padding: "8px 16px",
+  padding: "12px 40px",
   "&:hover": {
     backgroundColor: "#2C77E7",
     color: "#fff",
   },
+  "@media (max-width: 699px)": {
+    minWidth: "86px",
+    height: "38px",
+    padding: "8px 24px",
+  },
 };
 
 export const secondaryNextButton = {
-  width: "135px",
-  height: "40px",
+  width: "144px",
+  height: "44px",
   border: "1px solid #2C77E7",
   borderRadius: "4px",
   backgroundColor: "#fff",
   color: "#2C77E7",
-  fontSize: "14px",
+  fontSize: "16px",
   fontWeight: "600",
+  lineHeight: "22px",
   textTransform: "none",
+  padding: "12px 40px",
   "&:hover": {
     backgroundColor: "#2C77E7",
     color: "#fff",
+  },
+  "@media (max-width: 699px)": {
+    width: "88px",
+    height: "38px",
+    padding: "8px 16px",
   },
 };
 

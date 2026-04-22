@@ -26,7 +26,12 @@ interface DropdownProps {
   errorHelperText?: string;
   isValid?: boolean;
   showClearOption?: boolean;
-  variant?: "rosterDropdown" | "availabilityModal" | "internalEventTime" | "default";
+  variant?:
+    | "rosterDropdown"
+    | "availabilityModal"
+    | "internalEventTime"
+    | "communityEventTime"
+    | "default";
 }
 
 export const Dropdown = ({
@@ -72,6 +77,7 @@ export const Dropdown = ({
   const hasValue = currentValue !== "";
   const isAvailabilityModal = variant === "availabilityModal";
   const isInternalEventTime = variant === "internalEventTime";
+  const isCommunityEventTime = variant === "communityEventTime";
 
   return (
     <div className={className}>
@@ -89,7 +95,7 @@ export const Dropdown = ({
         <Select
           MenuProps={{
             PaperProps: {
-              sx: isInternalEventTime
+              sx: isInternalEventTime || isCommunityEventTime
                 ? {
                     maxHeight: 170,
                     mt: 0.5,
@@ -140,11 +146,11 @@ export const Dropdown = ({
           label={label}
           id={id}
           sx={
-            isInternalEventTime
+            isInternalEventTime || isCommunityEventTime
               ? {
                   ...DropdownSx,
-                  height: "30px",
-                  borderRadius: "4px",
+                  height: isCommunityEventTime ? "40px" : "30px",
+                  borderRadius: isCommunityEventTime ? "8px" : "4px",
                   color: "#717070",
                   backgroundColor: "#fff",
                   "& .MuiOutlinedInput-notchedOutline": {
@@ -160,7 +166,7 @@ export const Dropdown = ({
                   "& .MuiSelect-select": {
                     padding: "4px 32px 4px 16px",
                     color: isValid ? "#000" : "#717070",
-                    fontSize: "14px",
+                    fontSize: isCommunityEventTime ? "16px" : "14px",
                     lineHeight: "20px",
                   },
                   "& .MuiSelect-icon": {

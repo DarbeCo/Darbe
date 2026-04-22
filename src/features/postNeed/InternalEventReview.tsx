@@ -21,7 +21,9 @@ import styles from "./styles/postNeed.module.css";
 
 interface InternalEventReviewProps {
   data: CreateEvent;
+  eventType?: string;
   onCancel: () => void;
+  onEditStep: (step: number) => void;
   onSubmit: () => void;
 }
 
@@ -31,7 +33,9 @@ const hasText = (value?: string | number) => Boolean(value?.toString().trim());
 
 export const InternalEventReview = ({
   data,
+  eventType,
   onCancel,
+  onEditStep,
   onSubmit,
 }: InternalEventReviewProps) => {
   const { user } = useAppSelector(selectUser);
@@ -78,6 +82,17 @@ export const InternalEventReview = ({
     hasText(data.eventRequirements.liftRequirements);
   const hasAttire = hasText(data.eventRequirements.attire);
   const hasAnyRequirements = hasRequirements || hasAttire;
+  const isCommunityEvent = eventType === "externalEvent";
+  const renderEditButton = (step: number, label: string) => (
+    <button
+      aria-label={`Edit ${label}`}
+      className={styles.internalReviewEditButton}
+      type="button"
+      onClick={() => onEditStep(step)}
+    >
+      <Edit sx={{ fontSize: 16 }} />
+    </button>
+  );
 
   return (
     <div className={styles.internalReviewPage}>
@@ -114,6 +129,7 @@ export const InternalEventReview = ({
           <button type="button">Share</button>
           <Close sx={{ color: "#000", fontSize: 24 }} />
         </div>
+        {renderEditButton(0, "event details")}
 
         <h1>{data.eventName}</h1>
 
@@ -149,18 +165,23 @@ export const InternalEventReview = ({
 
       {hasText(data.eventDescription) && (
         <section className={styles.internalReviewWideCard}>
+          {renderEditButton(0, "description")}
           <h2>Description</h2>
           <p>{data.eventDescription}</p>
         </section>
       )}
 
-      <section className={styles.internalReviewInlineCard}>
-        <h2>Occurance:</h2>
-        <p>{data.isRepeating ? "Every week" : "One time"}</p>
-      </section>
+      {!isCommunityEvent && (
+        <section className={styles.internalReviewInlineCard}>
+          {renderEditButton(0, "occurrence")}
+          <h2>Occurance:</h2>
+          <p>{data.isRepeating ? "Every week" : "One time"}</p>
+        </section>
+      )}
 
       {hasImpact && (
         <section className={styles.internalReviewInlineCard}>
+          {renderEditButton(3, "volunteer impact")}
           <h2>Volunteer Impact:</h2>
           <p>{impactDisplay}</p>
         </section>
@@ -170,6 +191,7 @@ export const InternalEventReview = ({
         <div className={styles.internalReviewTwoColumn}>
           {hasLocation && (
             <section>
+              {renderEditButton(1, "location")}
               <h2>Location</h2>
               {hasText(data.eventAddress.locationName) && (
                 <p>{data.eventAddress.locationName}</p>
@@ -180,10 +202,17 @@ export const InternalEventReview = ({
               {hasText(data.eventAddress.city) && (
                 <a>{data.eventAddress.city}</a>
               )}
+              {hasText(data.eventInternalLocation) && (
+                <>
+                  <h3>Assignment Location:</h3>
+                  <strong>{data.eventInternalLocation}</strong>
+                </>
+              )}
             </section>
           )}
           {hasText(data.eventParkingInfo) && (
             <section>
+              {renderEditButton(1, "parking detail")}
               <h2>Parking Detail</h2>
               <p>{data.eventParkingInfo}</p>
             </section>
@@ -195,6 +224,7 @@ export const InternalEventReview = ({
         <div className={styles.internalReviewTwoColumn}>
           {hasRequirements && (
             <section>
+              {renderEditButton(2, "requirements")}
               {hasText(data.eventRequirements.supplies) && (
                 <>
                   <h2>Requirements</h2>
@@ -211,6 +241,7 @@ export const InternalEventReview = ({
           )}
           {hasAttire && (
             <section>
+              {renderEditButton(2, "attire")}
               <h2>Attire</h2>
               <p>{data.eventRequirements.attire}</p>
             </section>
@@ -219,6 +250,7 @@ export const InternalEventReview = ({
       )}
 
       <section className={styles.internalReviewCoordinator}>
+        {renderEditButton(3, "coordinator")}
         <h2>Coordinator:</h2>
         <img
           src={coordinatorPhoto}
@@ -228,10 +260,10 @@ export const InternalEventReview = ({
           }}
         />
         <span>{coordinatorName}</span>
-        <Edit sx={{ fontSize: 16 }} />
       </section>
 
       <section className={styles.internalReviewWaivers}>
+        {renderEditButton(3, "waivers")}
         <label>
           <input type="checkbox" checked={hasText(data.adultWaiver)} readOnly />
           <span>Adult waiver</span>

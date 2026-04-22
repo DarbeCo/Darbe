@@ -102,7 +102,15 @@
 
 .eventStepPanel {
   min-height: 616px;
-  padding: 18px 18px 14px;
+  padding: 18px 23px 14px;
+}
+
+.communityEventStepPanel {
+  min-height: 868px;
+}
+
+.communityEventDetailsPanel {
+  padding-top: 14px;
 }
 
 .internalOtherPanel {
@@ -243,13 +251,127 @@
   grid-column: 2;
 }
 
+.communityHoursNeededField {
+  grid-column: 2;
+}
+
+.communityEventDetailsForm {
+  position: relative;
+  display: block;
+  width: 702px;
+  height: 510px;
+  padding: 32px 0 0;
+}
+
+.communityEventDetailsForm .internalEventNameField {
+  position: absolute;
+  top: 32px;
+  left: 0;
+  width: 343px;
+}
+
+.communityEventDetailsForm .internalDateField {
+  position: absolute;
+  top: 32px;
+  left: 359px;
+  width: 343px;
+}
+
+.communityEventDetailsForm .internalDescriptionField {
+  position: absolute;
+  top: 133px;
+  left: 0;
+  width: 343px;
+}
+
+.communityEventDetailsForm .internalMaxVolunteerField {
+  position: absolute;
+  top: 229px;
+  left: 359px;
+  width: 343px;
+}
+
+.communityEventDetailsForm .communityHoursNeededField {
+  position: absolute;
+  top: 330px;
+  left: 359px;
+  width: 343px;
+}
+
+.communityEventDetailsForm .internalTimeArea {
+  position: absolute;
+  top: 133px;
+  left: 359px;
+  grid-template-columns: 128px 18px 128px;
+  column-gap: 18px;
+  align-items: start;
+  width: 343px;
+}
+
+.communityEventDetailsForm .internalTimeArea :global(.MuiOutlinedInput-root) {
+  height: 40px;
+  border-radius: 8px;
+}
+
+.communityEventDetailsForm .internalTimeArea :global(.MuiSelect-select) {
+  padding: 8px 32px 8px 16px;
+  font-size: 16px;
+}
+
+.communityEventDetailsForm .internalFieldLabel {
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.communityEventDetailsForm .internalRepeatingEvent {
+  position: absolute;
+  top: 430px;
+  left: 0;
+  margin-top: 0;
+}
+
+.communityMembersOnlyEvent {
+  position: absolute;
+  top: 470px;
+  left: 0;
+  margin-top: 0;
+}
+
+.communityMembersOnlyEvent :global(.MuiCheckbox-root) {
+  padding: 0 8px 0 0;
+  color: #2c77e7;
+}
+
+.communityMembersOnlyEvent :global(.MuiInputLabel-root) {
+  color: #000;
+  font-size: 16px;
+  font-weight: 600;
+}
+
 .internalDescriptionField :global(.MuiInputBase-root) {
   min-height: 170px;
   align-items: flex-start;
 }
 
+.communityEventDetailsForm
+  .internalDescriptionField
+  :global(.MuiInputBase-root) {
+  height: 240px;
+  min-height: 240px;
+  max-height: 240px;
+}
+
 .internalDescriptionField :global(.MuiInputBase-input) {
   padding-top: 11px;
+}
+
+.communityEventDetailsForm
+  .internalDescriptionField
+  :global(.MuiInputBase-input) {
+  height: 218px !important;
+  min-height: 218px !important;
+  max-height: 218px !important;
+  box-sizing: border-box;
 }
 
 .internalDescriptionField.internalValidField :global(.MuiInputBase-input) {
@@ -312,7 +434,11 @@
 }
 
 .requiredIndicator {
-  color: red;
+  color: #ff0000 !important;
+}
+
+.postNeed :global(.MuiFormLabel-asterisk) {
+  color: #ff0000 !important;
 }
 
 .internalRepeatingEvent {
@@ -467,6 +593,37 @@
   width: 100%;
 }
 
+.communityLocationForm {
+  grid-template-columns: 343px 343px;
+  grid-template-areas:
+    "address parking"
+    "assignment type";
+  column-gap: 16px;
+  row-gap: 24px;
+  width: 702px;
+  padding: 32px 0 0;
+}
+
+.communityLocationForm .internalLocationAddressGroup {
+  grid-area: address;
+}
+
+.communityLocationForm .internalLocationParkingField {
+  grid-area: parking;
+}
+
+.communityLocationForm .internalLocationTypeOptions {
+  grid-area: type;
+  grid-column: auto;
+  margin-top: 1px;
+}
+
+.communityLocationForm .internalLocationAssignmentField {
+  grid-area: assignment;
+  grid-column: auto;
+  margin-top: 1px;
+}
+
 .internalRequirementsForm {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -541,6 +698,32 @@
 
 .internalRequirementValidField:focus-within :global(.MuiInputBase-root) {
   border-color: #263238;
+}
+
+.communityRequirementsForm {
+  grid-template-columns: 343px 343px;
+  column-gap: 16px;
+  row-gap: 32px;
+  width: 702px;
+}
+
+.communityRequirementsForm .internalRequirementField {
+  width: 343px;
+}
+
+.communityRequirementsForm .internalRequirementLargeField :global(.MuiInputBase-root) {
+  height: 96px;
+}
+
+.communityRequirementsForm
+  .internalRequirementLargeField
+  :global(.MuiInputBase-input) {
+  height: 74px !important;
+  box-sizing: border-box;
+}
+
+.communityRequirementsForm .internalRequirementSmallField :global(.MuiInputBase-root) {
+  height: 44px;
 }
 
 .internalOtherForm {
@@ -983,6 +1166,121 @@
   line-height: 22px;
 }
 
+.communityOtherForm {
+  grid-template-areas:
+    "cover coordinator"
+    "cover waiver"
+    "impact impact"
+    "invite .";
+  row-gap: 0;
+  padding-top: 11px;
+}
+
+.communityCoverSection {
+  grid-area: cover;
+}
+
+.communityOtherForm .internalCoverPhoto {
+  width: 342px;
+  margin-top: 8px;
+}
+
+.communityCoordinatorFields {
+  display: flex;
+  flex-direction: column;
+  grid-area: coordinator;
+  width: 343px;
+}
+
+.communityCoordinatorSelect,
+.communityCoordinatorPosition {
+  display: flex;
+  align-items: center;
+  width: 343px;
+  height: 44px;
+  padding: 0 16px;
+  border: 2px solid #d8d8d8;
+  border-radius: 8px;
+  background-color: #fff;
+  box-sizing: border-box;
+  color: #000;
+  font-family: "Roboto", sans-serif;
+  font-size: 16px;
+  line-height: 22px;
+  text-align: left;
+}
+
+.communityCoordinatorSelect {
+  margin-top: 8px;
+  cursor: pointer;
+}
+
+.communityCoordinatorSelect:hover,
+.communityCoordinatorSelect:focus-visible {
+  border-color: #263238;
+  outline: none;
+}
+
+.communityCoordinatorPosition {
+  margin-top: 8px;
+}
+
+.communityOtherValidField {
+  border-color: #088f26;
+}
+
+.communityWaiverSection {
+  display: flex;
+  flex-direction: column;
+  grid-area: waiver;
+  align-items: flex-start;
+  margin-top: 21px;
+}
+
+.communityWaiverFileRow {
+  display: flex;
+  align-items: center;
+  column-gap: 8px;
+  margin-top: 13px;
+}
+
+.communityChooseFileButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 103px;
+  height: 40px;
+  padding: 0;
+  border: 2px solid #d8d8d8;
+  border-radius: 16px;
+  background-color: #fff;
+  color: #717070;
+  cursor: pointer;
+  font-family: "Roboto", sans-serif;
+  font-size: 12px;
+  line-height: 21px;
+}
+
+.communityChooseFileButton:hover,
+.communityChooseFileButton:focus-visible {
+  border-color: #263238;
+  outline: none;
+}
+
+.communityOtherForm .internalImpactSection {
+  grid-area: impact;
+  margin-top: 13px;
+}
+
+.communityOtherForm .internalInviteSection {
+  grid-area: invite;
+  margin-top: 10px;
+}
+
+.communityOtherForm .internalImpactHeading span {
+  line-height: 25px;
+}
+
 .internalReviewPage {
   display: flex;
   flex-direction: column;
@@ -1051,6 +1349,7 @@
 }
 
 .internalReviewHero {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 378px;
@@ -1155,6 +1454,7 @@
 }
 
 .internalReviewWideCard {
+  position: relative;
   min-height: 109px;
   padding: 16px;
 }
@@ -1193,6 +1493,7 @@
 }
 
 .internalReviewInlineCard {
+  position: relative;
   display: flex;
   align-items: center;
   column-gap: 8px;
@@ -1214,6 +1515,7 @@
 }
 
 .internalReviewTwoColumn > section {
+  position: relative;
   min-height: 215px;
   padding: 16px;
 }
@@ -1232,6 +1534,7 @@
 }
 
 .internalReviewCoordinator {
+  position: relative;
   height: 65px;
   column-gap: 8px;
   padding: 0 16px;
@@ -1241,14 +1544,39 @@
   margin-right: 8px;
 }
 
-.internalReviewCoordinator svg {
+.internalReviewCoordinator > svg {
   margin-left: auto;
 }
 
 .internalReviewWaivers {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 124px;
+}
+
+.internalReviewEditButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background-color: transparent;
+  color: #263238;
+  cursor: pointer;
+}
+
+.internalReviewEditButton:hover,
+.internalReviewEditButton:focus-visible {
+  background-color: #eaeaea;
+  outline: none;
 }
 
 .internalReviewWaivers label {
@@ -1377,4 +1705,1174 @@
   align-items: center;
   justify-content: center;
   width: 100%;
+}
+
+@media (min-width: 700px) and (max-width: 1024px) {
+  .postNeed {
+    padding-top: 24px;
+  }
+
+  .createEventPanel {
+    max-width: 672px;
+    min-height: 501px;
+    padding: 18px 15px 33px;
+  }
+
+  .createEventHeader {
+    grid-template-columns: 48px 1fr 48px;
+    margin-bottom: 14px;
+  }
+
+  .createEventHeader span {
+    font-size: 32px;
+    line-height: 44px;
+  }
+
+  .eventTypeCards {
+    row-gap: 24px;
+  }
+
+  .eventTypeCard {
+    width: 640px;
+    min-height: 135px;
+    padding: 24px 20px;
+    column-gap: 26px;
+  }
+
+  .eventTypeCardTitle {
+    font-size: 20px;
+    line-height: 27px;
+  }
+
+  .eventTypeCardDescription {
+    font-size: 18px;
+    line-height: 21px;
+  }
+
+  .selectionButtonArea {
+    margin-top: 40px;
+  }
+
+  .eventStepPanel {
+    max-width: 672px;
+    min-height: 783px;
+    padding: 18px 15px 33px;
+  }
+
+  .communityEventStepPanel {
+    min-height: 783px;
+    padding-right: 23px;
+    padding-left: 23px;
+  }
+
+  .communityEventDetailsPanel {
+    padding-top: 24px;
+  }
+
+  .internalOtherPanel {
+    min-height: 764px;
+    padding: 18px 15px 42px;
+  }
+
+  .eventStepHeader {
+    margin-bottom: 18px;
+  }
+
+  .eventStepTitleArea {
+    row-gap: 8px;
+  }
+
+  .eventStepTitleArea span {
+    font-size: 32px;
+    line-height: 44px;
+  }
+
+  .eventStepSectionHeader {
+    height: 43px;
+    padding: 8px;
+  }
+
+  .eventStepSectionTitle {
+    font-size: 20px;
+    line-height: 27px;
+  }
+
+  .internalOtherPanel .eventStepSectionHeader {
+    height: 50px;
+    margin-top: 13px;
+  }
+
+  .internalOtherPanel .eventStepSectionTitle {
+    font-size: 24px;
+    line-height: 33px;
+  }
+
+  .eventStepButtonArea {
+    column-gap: 16px;
+  }
+
+  .eventStepButtonArea > button:first-child:not(:last-child) {
+    display: none;
+  }
+
+  .internalEventDetailsForm {
+    grid-template-columns: 312px 312px;
+    column-gap: 16px;
+    row-gap: 24px;
+    width: 640px;
+    padding: 24px 0 0;
+  }
+
+  .internalFormField :global(.MuiInputLabel-root),
+  .internalTimeArea :global(.MuiInputLabel-root),
+  .internalFieldLabel {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .internalFormField :global(.MuiInputBase-root) {
+    height: 44px;
+    border-radius: 8px;
+  }
+
+  .internalDescriptionField :global(.MuiInputBase-root),
+  .communityEventDetailsForm
+    .internalDescriptionField
+    :global(.MuiInputBase-root) {
+    height: 240px;
+    min-height: 240px;
+    max-height: 240px;
+  }
+
+  .internalDescriptionField :global(.MuiInputBase-input),
+  .communityEventDetailsForm
+    .internalDescriptionField
+    :global(.MuiInputBase-input) {
+    height: 218px !important;
+    min-height: 218px !important;
+    max-height: 218px !important;
+    box-sizing: border-box;
+  }
+
+  .internalTimeArea {
+    grid-template-columns: 132px 18px 132px;
+    column-gap: 15px;
+    align-items: start;
+  }
+
+  .internalTimeArea :global(.MuiOutlinedInput-root) {
+    height: 40px;
+    border-radius: 8px;
+  }
+
+  .internalTimeArea :global(.MuiSelect-select) {
+    padding: 8px 32px 8px 16px;
+    font-size: 16px;
+    line-height: 24px;
+  }
+
+  .communityEventDetailsForm {
+    width: 624px;
+    height: 520px;
+    padding: 0;
+  }
+
+  .communityEventDetailsForm .internalEventNameField,
+  .communityEventDetailsForm .internalDateField,
+  .communityEventDetailsForm .internalDescriptionField {
+    width: 304px;
+  }
+
+  .communityEventDetailsForm .internalMaxVolunteerField,
+  .communityEventDetailsForm .communityHoursNeededField {
+    width: 312px;
+  }
+
+  .communityEventDetailsForm .internalEventNameField {
+    top: 24px;
+    left: 0;
+  }
+
+  .communityEventDetailsForm .internalDateField {
+    top: 24px;
+    left: 320px;
+  }
+
+  .communityEventDetailsForm .internalDescriptionField {
+    top: 133px;
+    left: 0;
+  }
+
+  .communityEventDetailsForm .internalTimeArea {
+    top: 117px;
+    left: 320px;
+    grid-template-columns: 128px 18px 128px;
+    column-gap: 15px;
+    width: 304px;
+  }
+
+  .communityEventDetailsForm .internalMaxVolunteerField {
+    top: 205px;
+    left: 320px;
+  }
+
+  .communityEventDetailsForm .communityHoursNeededField {
+    top: 298px;
+    left: 320px;
+  }
+
+  .communityEventDetailsForm .internalRepeatingEvent {
+    top: 438px;
+  }
+
+  .communityMembersOnlyEvent {
+    top: 478px;
+  }
+
+  .internalLocationForm {
+    grid-template-columns: 312px 312px;
+    column-gap: 16px;
+    row-gap: 24px;
+    width: 640px;
+    padding: 24px 0 0;
+  }
+
+  .internalLocationLabel {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .internalLocationInputField + .internalLocationInputField {
+    margin-top: 8px;
+  }
+
+  .internalLocationParkingField {
+    height: 173px;
+  }
+
+  .internalLocationParkingField > div {
+    height: 148px !important;
+    flex-basis: 148px;
+  }
+
+  .internalLocationParkingField :global(.MuiInputBase-root) {
+    height: 148px !important;
+    min-height: 148px !important;
+    max-height: 148px !important;
+  }
+
+  .internalLocationParkingField :global(.MuiInputBase-input) {
+    height: 126px !important;
+    min-height: 126px !important;
+    max-height: 126px !important;
+  }
+
+  .internalLocationTypeOptions {
+    grid-column: 1;
+    row-gap: 16px;
+    margin-top: 0;
+  }
+
+  .internalLocationAssignmentField {
+    grid-column: 2;
+    margin-top: 0;
+  }
+
+  .communityLocationForm {
+    grid-template-columns: 304px 304px;
+    grid-template-areas:
+      "address parking"
+      "assignment type";
+    column-gap: 16px;
+    row-gap: 24px;
+    width: 624px;
+    padding: 24px 0 0;
+  }
+
+  .communityLocationForm .internalLocationParkingField {
+    height: 173px;
+  }
+
+  .communityLocationForm .internalLocationAssignmentField {
+    grid-column: auto;
+  }
+
+  .communityLocationForm .internalLocationTypeOptions {
+    grid-column: auto;
+  }
+
+  .internalRequirementsForm {
+    grid-template-columns: 312px 312px;
+    column-gap: 16px;
+    row-gap: 24px;
+    width: 640px;
+    padding: 24px 0 0;
+  }
+
+  .internalRequirementLabel {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .internalRequirementLargeField :global(.MuiInputBase-root) {
+    height: 148px;
+    min-height: 148px;
+  }
+
+  .internalRequirementLargeField :global(.MuiInputBase-input) {
+    height: 126px !important;
+    box-sizing: border-box;
+  }
+
+  .communityRequirementsForm {
+    grid-template-columns: 304px 304px;
+    column-gap: 16px;
+    row-gap: 24px;
+    width: 624px;
+  }
+
+  .communityRequirementsForm .internalRequirementField {
+    width: 304px;
+  }
+
+  .communityRequirementsForm .internalRequirementLargeField :global(.MuiInputBase-root) {
+    height: 148px;
+  }
+
+  .communityRequirementsForm
+    .internalRequirementLargeField
+    :global(.MuiInputBase-input) {
+    height: 126px !important;
+  }
+
+  .internalOtherForm {
+    grid-template-columns: 312px 312px;
+    column-gap: 16px;
+    width: 640px;
+    padding: 14px 0 0;
+  }
+
+  .internalOtherLabel,
+  .internalWaiverTitle,
+  .internalImpactHeading {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .internalCoverPhoto,
+  .communityOtherForm .internalCoverPhoto {
+    width: 312px;
+    height: 232px;
+  }
+
+  .internalWaiverBlock {
+    margin-top: 26px;
+  }
+
+  .internalWaiverOptions {
+    column-gap: 64px;
+  }
+
+  .internalImpactSection {
+    margin-top: 17px;
+  }
+
+  .internalImpactOptions {
+    grid-template-columns: 312px 312px;
+    column-gap: 16px;
+    width: 640px;
+  }
+
+  .internalImpactInputs {
+    grid-template-columns: 48px 256px;
+    column-gap: 8px;
+    width: 312px;
+  }
+
+  .internalInviteSection,
+  .internalRosterSelect,
+  .internalRosterDropdown {
+    width: 304px;
+  }
+
+  .communityOtherForm {
+    grid-template-columns: 304px 304px;
+    width: 624px;
+  }
+
+  .communityCoordinatorFields,
+  .communityCoordinatorSelect,
+  .communityCoordinatorPosition {
+    width: 304px;
+  }
+
+  .communityChooseFileButton {
+    width: 103px;
+    height: 40px;
+  }
+
+  .internalReviewPage {
+    width: 672px;
+    row-gap: 16px;
+    padding-bottom: 24px;
+  }
+
+  .internalReviewSearch,
+  .internalReviewFilter {
+    display: none;
+  }
+
+  .internalReviewHero {
+    height: 378px;
+  }
+
+  .internalReviewHero h1 {
+    margin: 16px 16px 10px;
+    font-size: 24px;
+    line-height: 33px;
+  }
+
+  .internalReviewHeroBody {
+    grid-template-columns: 312px 312px;
+    column-gap: 16px;
+    padding: 0 16px 16px;
+  }
+
+  .internalReviewCover,
+  .internalReviewStats {
+    width: 312px;
+    height: 232px;
+  }
+
+  .internalReviewOwner span {
+    font-size: 24px;
+    line-height: 33px;
+  }
+
+  .internalReviewWideCard {
+    min-height: 109px;
+  }
+
+  .internalReviewWideCard h2,
+  .internalReviewInlineCard h2,
+  .internalReviewTwoColumn h2,
+  .internalReviewCoordinator h2 {
+    font-size: 20px;
+    line-height: 27px;
+  }
+
+  .internalReviewWideCard p,
+  .internalReviewTwoColumn p,
+  .internalReviewTwoColumn a,
+  .internalReviewTwoColumn strong {
+    font-size: 16px;
+    line-height: 24px;
+  }
+
+  .internalReviewInlineCard {
+    min-height: 59px;
+  }
+
+  .internalReviewInlineCard p {
+    font-size: 20px;
+    line-height: 27px;
+  }
+
+  .internalReviewTwoColumn {
+    grid-template-columns: 328px 328px;
+    column-gap: 16px;
+  }
+
+  .internalReviewTwoColumn > section {
+    min-height: 199px;
+  }
+
+  .internalReviewTwoColumn + .internalReviewTwoColumn > section {
+    min-height: 212px;
+  }
+
+  .internalReviewTwoColumn h3 {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .internalReviewCoordinator {
+    height: 59px;
+  }
+
+  .internalReviewCoordinator span {
+    font-size: 20px;
+    line-height: 27px;
+  }
+
+  .internalReviewWaivers {
+    height: 112px;
+  }
+
+  .internalReviewWaivers label {
+    height: 56px;
+  }
+
+  .internalReviewWaivers span {
+    font-size: 20px;
+    line-height: 27px;
+  }
+
+  .internalReviewFooter {
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 699px) {
+  .postNeed {
+    --post-need-mobile-width: min(343px, calc(100vw - 32px));
+    row-gap: 0;
+    align-items: center;
+    width: 100%;
+    padding: 16px 16px 96px;
+    background-color: #fff;
+    box-sizing: border-box;
+  }
+
+  .createEventPanel {
+    width: var(--post-need-mobile-width);
+    max-width: var(--post-need-mobile-width);
+    min-height: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .createEventHeader {
+    grid-template-columns: 24px 1fr 24px;
+    margin-bottom: 33px;
+  }
+
+  .createEventHeader span,
+  .eventStepTitleArea span {
+    color: #000;
+    font-size: 24px;
+    line-height: 33px;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .eventTypeCards {
+    row-gap: 14px;
+  }
+
+  .eventTypeCard {
+    width: var(--post-need-mobile-width);
+    min-height: 127px;
+    padding: 16px 16px 16px 14px;
+    column-gap: 16px;
+  }
+
+  .eventTypeCardText {
+    row-gap: 18px;
+    padding-right: 0;
+  }
+
+  .eventTypeCardTitle {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .eventTypeCardDescription {
+    width: calc(var(--post-need-mobile-width) - 72px);
+    font-size: 16px;
+    line-height: 18px;
+  }
+
+  .selectionButtonArea {
+    margin-top: 14px;
+  }
+
+  .eventStepPanel,
+  .communityEventStepPanel,
+  .internalOtherPanel {
+    width: var(--post-need-mobile-width);
+    max-width: var(--post-need-mobile-width);
+    min-height: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .eventStepHeader {
+    grid-template-columns: 24px 1fr 24px;
+    align-items: start;
+    margin-bottom: 24px;
+  }
+
+  .eventStepTitleArea {
+    row-gap: 16px;
+    width: 230px;
+    justify-self: center;
+  }
+
+  .eventStepTitleArea img {
+    width: 136px;
+    height: 16px;
+  }
+
+  .eventStepSectionHeader,
+  .internalOtherPanel .eventStepSectionHeader {
+    width: var(--post-need-mobile-width);
+    height: 37px;
+    margin-top: 0;
+    padding: 8px;
+  }
+
+  .eventStepSectionTitle,
+  .internalOtherPanel .eventStepSectionTitle {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .eventStepButtonArea {
+    width: var(--post-need-mobile-width);
+    margin-top: 24px;
+    column-gap: 0;
+  }
+
+  .eventStepButtonArea > button:first-child:not(:last-child) {
+    display: none;
+  }
+
+  .eventStepButtonArea > button:last-child {
+    min-width: 86px;
+    height: 38px;
+    padding: 8px 24px;
+  }
+
+  .eventFormArea,
+  .internalEventDetailsForm,
+  .communityEventDetailsForm,
+  .internalLocationForm,
+  .communityLocationForm,
+  .internalRequirementsForm,
+  .communityRequirementsForm,
+  .internalOtherForm,
+  .communityOtherForm {
+    position: static;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    width: var(--post-need-mobile-width);
+    height: auto;
+    padding: 16px 0 0;
+    row-gap: 16px;
+  }
+
+  .internalFormField,
+  .communityEventDetailsForm .internalEventNameField,
+  .communityEventDetailsForm .internalDateField,
+  .communityEventDetailsForm .internalDescriptionField,
+  .communityEventDetailsForm .internalMaxVolunteerField,
+  .communityEventDetailsForm .communityHoursNeededField,
+  .internalLocationAddressGroup,
+  .internalLocationParkingField,
+  .internalLocationAssignmentField,
+  .internalRequirementField,
+  .communityRequirementsForm .internalRequirementField,
+  .internalCoverSection,
+  .internalOtherMetaSection,
+  .internalCoordinatorSection,
+  .communityCoordinatorFields,
+  .internalImpactSection,
+  .internalInviteSection {
+    position: static;
+    width: var(--post-need-mobile-width);
+    margin-top: 0;
+  }
+
+  .communityEventDetailsForm .internalEventNameField,
+  .communityEventDetailsForm .internalDateField,
+  .communityEventDetailsForm .internalDescriptionField,
+  .communityEventDetailsForm .internalMaxVolunteerField,
+  .communityEventDetailsForm .communityHoursNeededField,
+  .communityEventDetailsForm .internalTimeArea,
+  .communityEventDetailsForm .internalRepeatingEvent,
+  .communityMembersOnlyEvent {
+    position: static;
+    top: auto;
+    left: auto;
+  }
+
+  .internalEventNameField {
+    order: 1;
+  }
+
+  .internalDescriptionField {
+    order: 2;
+  }
+
+  .internalDateField {
+    order: 3;
+  }
+
+  .internalTimeArea {
+    order: 4;
+  }
+
+  .internalMaxVolunteerField {
+    order: 5;
+  }
+
+  .communityHoursNeededField {
+    order: 6;
+  }
+
+  .internalRepeatingEvent {
+    order: 7;
+  }
+
+  .communityEventDetailsForm .internalEventNameField {
+    order: 1;
+  }
+
+  .communityEventDetailsForm .internalDescriptionField {
+    order: 2;
+  }
+
+  .communityEventDetailsForm .internalDateField {
+    order: 3;
+  }
+
+  .communityEventDetailsForm .internalTimeArea {
+    order: 4;
+  }
+
+  .communityEventDetailsForm .internalMaxVolunteerField {
+    order: 5;
+  }
+
+  .communityEventDetailsForm .communityHoursNeededField {
+    order: 6;
+  }
+
+  .communityEventDetailsForm .internalRepeatingEvent {
+    order: 7;
+  }
+
+  .communityMembersOnlyEvent {
+    order: 8;
+  }
+
+  .internalFormField :global(.MuiInputLabel-root),
+  .internalTimeArea :global(.MuiInputLabel-root),
+  .internalFieldLabel,
+  .internalLocationLabel,
+  .internalRequirementLabel,
+  .internalOtherLabel,
+  .internalWaiverTitle,
+  .internalImpactHeading {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .internalFormField :global(.MuiInputBase-root),
+  .internalLocationInputField :global(.MuiInputBase-root),
+  .internalRequirementSmallField :global(.MuiInputBase-root),
+  .communityCoordinatorSelect,
+  .communityCoordinatorPosition,
+  .internalRosterSelect {
+    height: 44px;
+    border-radius: 8px;
+  }
+
+  .internalDescriptionField :global(.MuiInputBase-root),
+  .communityEventDetailsForm
+    .internalDescriptionField
+    :global(.MuiInputBase-root) {
+    height: 124px;
+    min-height: 124px;
+    max-height: 124px;
+  }
+
+  .internalDescriptionField :global(.MuiInputBase-input),
+  .communityEventDetailsForm
+    .internalDescriptionField
+    :global(.MuiInputBase-input) {
+    height: 102px !important;
+    min-height: 102px !important;
+    max-height: 102px !important;
+    box-sizing: border-box;
+  }
+
+  .internalCharacterCount {
+    margin-top: -1px;
+  }
+
+  .internalTimeArea,
+  .communityEventDetailsForm .internalTimeArea {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr);
+    column-gap: clamp(8px, 3.733vw, 14px);
+    row-gap: 4px;
+    align-items: start;
+    width: var(--post-need-mobile-width);
+  }
+
+  .internalTimeArea :global(.MuiOutlinedInput-root),
+  .communityEventDetailsForm .internalTimeArea :global(.MuiOutlinedInput-root) {
+    height: 40px;
+    border-radius: 8px;
+  }
+
+  .internalTimeArea :global(.MuiSelect-select),
+  .communityEventDetailsForm .internalTimeArea :global(.MuiSelect-select) {
+    padding: 8px 32px 8px 16px;
+    font-size: 16px;
+    line-height: 20px;
+  }
+
+  .internalRepeatingEvent,
+  .communityMembersOnlyEvent {
+    margin-top: 0;
+  }
+
+  .internalRepeatingEvent :global(.MuiCheckbox-root),
+  .communityMembersOnlyEvent :global(.MuiCheckbox-root),
+  .internalLocationTypeOptions :global(.MuiCheckbox-root) {
+    padding: 0 12px 0 0;
+  }
+
+  .internalLocationForm,
+  .communityLocationForm {
+    row-gap: 16px;
+  }
+
+  .internalLocationAddressGroup {
+    row-gap: 0;
+  }
+
+  .internalLocationParkingField {
+    height: 162px;
+    order: 2;
+  }
+
+  .internalLocationParkingField > div {
+    height: 140px !important;
+    flex-basis: 140px;
+  }
+
+  .internalLocationParkingField :global(.MuiInputBase-root) {
+    height: 140px !important;
+    min-height: 140px !important;
+    max-height: 140px !important;
+  }
+
+  .internalLocationParkingField :global(.MuiInputBase-input) {
+    height: 118px !important;
+    min-height: 118px !important;
+    max-height: 118px !important;
+  }
+
+  .internalLocationTypeOptions {
+    grid-column: auto;
+    row-gap: 16px;
+    margin-top: 0;
+    order: 4;
+  }
+
+  .internalLocationAddressGroup {
+    order: 1;
+  }
+
+  .internalLocationAssignmentField {
+    order: 3;
+  }
+
+  .requirementSuppliesField {
+    order: 1;
+  }
+
+  .requirementAgeField {
+    order: 2;
+  }
+
+  .requirementAttireField {
+    order: 3;
+  }
+
+  .requirementLiftField {
+    order: 4;
+  }
+
+  .internalRequirementLargeField :global(.MuiInputBase-root),
+  .communityRequirementsForm .internalRequirementLargeField :global(.MuiInputBase-root) {
+    height: 124px;
+    min-height: 124px;
+  }
+
+  .internalRequirementLargeField :global(.MuiInputBase-input),
+  .communityRequirementsForm
+    .internalRequirementLargeField
+    :global(.MuiInputBase-input) {
+    height: 102px !important;
+    box-sizing: border-box;
+  }
+
+  .internalCoverPhoto,
+  .communityOtherForm .internalCoverPhoto {
+    width: var(--post-need-mobile-width);
+    height: auto;
+    aspect-ratio: 343 / 204;
+  }
+
+  .internalOtherForm,
+  .communityOtherForm {
+    row-gap: 16px;
+  }
+
+  .internalCoverSection {
+    order: 1;
+  }
+
+  .internalOtherMetaSection {
+    display: contents;
+  }
+
+  .internalCoordinatorSection,
+  .communityCoordinatorFields {
+    order: 2;
+  }
+
+  .internalImpactSection {
+    order: 3;
+  }
+
+  .internalWaiverBlock,
+  .communityWaiverSection {
+    margin-top: 0;
+    order: 4;
+  }
+
+  .internalWaiverOptions {
+    column-gap: 33px;
+    margin-top: 13px;
+  }
+
+  .internalWaiverUploadButton {
+    width: 88px;
+    height: 38px;
+  }
+
+  .communityWaiverFileRow {
+    margin-top: 13px;
+  }
+
+  .communityChooseFileButton {
+    width: 88px;
+    height: 38px;
+    border: 1px solid #717070;
+    border-radius: 4px;
+    font-family: "Open Sans", sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 22px;
+  }
+
+  .internalCoordinatorProfile {
+    column-gap: 16px;
+    margin-top: 12px;
+  }
+
+  .internalCoordinatorProfile strong,
+  .internalCoordinatorProfile span {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .internalCoordinatorDropdown {
+    width: var(--post-need-mobile-width);
+  }
+
+  .communityCoordinatorFields,
+  .communityCoordinatorSelect,
+  .communityCoordinatorPosition {
+    width: var(--post-need-mobile-width);
+  }
+
+  .internalImpactSection {
+    margin-top: 0;
+  }
+
+  .internalImpactOptions {
+    display: flex;
+    flex-direction: column;
+    row-gap: 16px;
+    width: var(--post-need-mobile-width);
+    margin-top: 8px;
+  }
+
+  .internalImpactRadio {
+    column-gap: 8px;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 19px;
+  }
+
+  .internalImpactInputs {
+    grid-template-columns: 36px minmax(0, 1fr);
+    column-gap: 12px;
+    width: var(--post-need-mobile-width);
+    margin-top: 8px;
+  }
+
+  .internalImpactInputs :global(.MuiInputBase-root) {
+    height: 44px;
+  }
+
+  .internalImpactTextInput span {
+    font-weight: 400;
+  }
+
+  .internalInviteSection,
+  .internalRosterSelect,
+  .internalRosterDropdown {
+    width: var(--post-need-mobile-width);
+  }
+
+  .internalInviteSection {
+    order: 5;
+  }
+
+  .internalReviewPage {
+    width: var(--post-need-mobile-width);
+    row-gap: 16px;
+    padding-bottom: 24px;
+  }
+
+  .internalReviewSearch,
+  .internalReviewFilter {
+    display: none;
+  }
+
+  .internalReviewHero {
+    height: auto;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .internalReviewHeroHeader {
+    height: auto;
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  .internalReviewHeroHeader button,
+  .internalReviewHeroHeader > svg {
+    display: none;
+  }
+
+  .internalReviewOwner span {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .internalReviewHero h1 {
+    margin: 12px 0 8px;
+    font-size: 20px;
+    line-height: 27px;
+  }
+
+  .internalReviewHeroBody {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+    padding: 0;
+  }
+
+  .internalReviewCover {
+    width: var(--post-need-mobile-width);
+    height: auto;
+    aspect-ratio: 343 / 204;
+  }
+
+  .internalReviewStats {
+    width: var(--post-need-mobile-width);
+    height: 120px;
+  }
+
+  .internalReviewStats strong {
+    font-size: 16px;
+    line-height: 20px;
+  }
+
+  .internalReviewWideCard,
+  .internalReviewInlineCard,
+  .internalReviewTwoColumn > section,
+  .internalReviewCoordinator,
+  .internalReviewWaivers {
+    width: var(--post-need-mobile-width);
+    min-height: auto;
+    padding: 12px;
+  }
+
+  .internalReviewWideCard h2,
+  .internalReviewInlineCard h2,
+  .internalReviewTwoColumn h2,
+  .internalReviewCoordinator h2 {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .internalReviewWideCard p,
+  .internalReviewTwoColumn p,
+  .internalReviewTwoColumn a,
+  .internalReviewTwoColumn strong,
+  .internalReviewInlineCard p {
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .internalReviewInlineCard {
+    align-items: flex-start;
+    flex-direction: column;
+    row-gap: 4px;
+  }
+
+  .internalReviewTwoColumn {
+    display: flex;
+    flex-direction: column;
+    row-gap: 16px;
+    width: var(--post-need-mobile-width);
+  }
+
+  .internalReviewCoordinator {
+    height: auto;
+    column-gap: 8px;
+  }
+
+  .internalReviewCoordinator span {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .internalReviewWaivers {
+    height: auto;
+    padding: 0;
+  }
+
+  .internalReviewWaivers label {
+    height: 48px;
+    padding: 0 12px;
+  }
+
+  .internalReviewWaivers span {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .internalReviewFooter {
+    justify-content: flex-end;
+  }
+
+  .internalReviewActions {
+    column-gap: 12px;
+  }
 }

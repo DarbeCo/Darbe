@@ -21,6 +21,7 @@ export const EventInfo = ({
     eventName: "",
     eventDate: "",
     maxVolunteerCount: "",
+    eventHoursNeeded: "",
     startTime: "",
   });
 
@@ -91,6 +92,7 @@ export const EventInfo = ({
 
   const hours = DropdownTypes({ type: "hours" });
   const isInternalEvent = eventType === "internalEvent";
+  const isCommunityEvent = eventType === "externalEvent";
   const useStepPanelLayout =
     eventType === "internalEvent" || eventType === "externalEvent";
   const hasValidInternalTime = data.startTime !== 0 && data.endTime !== 0;
@@ -133,7 +135,7 @@ export const EventInfo = ({
     <div
       className={`${styles.eventFormArea} ${
         useStepPanelLayout ? styles.internalEventDetailsForm : ""
-      }`}
+      } ${isCommunityEvent ? styles.communityEventDetailsForm : ""}`}
     >
       <div
         className={
@@ -199,7 +201,7 @@ export const EventInfo = ({
       >
         <Inputs
           label="Description"
-          isRequired={isInternalEvent}
+          isRequired={isInternalEvent || isCommunityEvent}
           isTextArea
           darbeInputType="textAreaInput"
           value={data.eventDescription}
@@ -230,7 +232,7 @@ export const EventInfo = ({
           }
         >
           <Inputs
-            label="# of Volunteers Needed"
+            label="# Of Volunteers Needed"
             darbeInputType="standardInput"
             isRequired
             errorHelperText={errors.maxVolunteerCount}
@@ -239,8 +241,33 @@ export const EventInfo = ({
             handleChange={handleChange}
             name="maxVolunteerCount"
             placeholder={
-              useStepPanelLayout ? "# of Volunteers Needed" : "Enter # of Volunteers"
+              isCommunityEvent
+                ? "Volunteers"
+                : useStepPanelLayout
+                  ? "# of Volunteers Needed"
+                  : "Enter # of Volunteers"
             }
+          />
+        </div>
+      )}
+
+      {isCommunityEvent && (
+        <div
+          className={getInternalFieldClassName(
+            styles.communityHoursNeededField,
+            Boolean(data.eventHoursNeeded)
+          )}
+        >
+          <Inputs
+            label="# Of Hours Needed"
+            darbeInputType="standardInput"
+            isRequired
+            errorHelperText={errors.eventHoursNeeded}
+            value={data.eventHoursNeeded || ""}
+            error={!!errors.eventHoursNeeded}
+            handleChange={handleChange}
+            name="eventHoursNeeded"
+            placeholder="Hours"
           />
         </div>
       )}
@@ -264,9 +291,19 @@ export const EventInfo = ({
           label={useStepPanelLayout ? "" : "Start Time"}
           error={!!errors.startTime}
           errorHelperText={errors.startTime}
-          initialValue={data.startTime.toString()}
+          initialValue={
+            useStepPanelLayout && !data.startTime
+              ? "9"
+              : data.startTime.toString()
+          }
           onChange={handleDropdownChange}
-          variant={useStepPanelLayout ? "internalEventTime" : "default"}
+          variant={
+            isCommunityEvent
+              ? "communityEventTime"
+              : useStepPanelLayout
+                ? "internalEventTime"
+                : "default"
+          }
           isValid={useStepPanelLayout && hasValidInternalTime}
         >
           {hours()}
@@ -279,9 +316,21 @@ export const EventInfo = ({
         <Dropdown
           name="endTime"
           label={useStepPanelLayout ? "" : "End Time"}
-          initialValue={data?.endTime ? data?.endTime.toString() : ""}
+          initialValue={
+            useStepPanelLayout && !data.endTime
+              ? "21"
+              : data?.endTime
+                ? data?.endTime.toString()
+                : ""
+          }
           onChange={handleDropdownChange}
-          variant={useStepPanelLayout ? "internalEventTime" : "default"}
+          variant={
+            isCommunityEvent
+              ? "communityEventTime"
+              : useStepPanelLayout
+                ? "internalEventTime"
+                : "default"
+          }
           isValid={useStepPanelLayout && hasValidInternalTime}
         >
           {hours()}
@@ -304,6 +353,19 @@ export const EventInfo = ({
           onChange={handleCheckboxChange}
         />
       </div>
+
+      {isCommunityEvent && (
+        <div className={styles.communityMembersOnlyEvent}>
+          <CheckBox
+            name="isFollowersOnly"
+            label="Members Only Event"
+            labelPlacement="right"
+            textVariant="bold"
+            checked={!!data.isFollowersOnly}
+            onChange={handleCheckboxChange}
+          />
+        </div>
+      )}
     </div>
   );
 };
