@@ -1,22 +1,46 @@
 .profileEdit {
-  --profile-dialog-inline-padding: clamp(14px, 3vw, 32px);
-  --profile-dialog-column-gap: clamp(10px, 1.5vw, 16px);
+  --profile-dialog-inline-padding: 24px;
+  --profile-dialog-column-gap: 16px;
+  --profile-control-height: 53px;
+  --profile-select-height: 56px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: start;
-  row-gap: 10px;
   width: 100%;
-  height: 100vh;
-  row-gap: 10px;
+  min-height: 100vh;
+  padding-top: 32px;
+  background-color: #faf9f9;
+  box-sizing: border-box;
 }
 
 .profileEditFrame {
-  width: min(768px, calc(100vw - 24px));
+  width: min(750px, calc(100vw - 24px));
   max-width: 100%;
-  height: 100%;
+  height: calc(100vh - 32px);
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+@media (min-width: 1260px) {
+  .profileEdit {
+    align-items: flex-start;
+    min-height: 100vh;
+    padding-top: 32px;
+  }
+
+  .profileEditFrame {
+    height: 868px;
+  }
+
+  .profileEditFrameTall {
+    height: 1118px;
+  }
 }
 
 .editEntityUserHeader {
@@ -57,13 +81,42 @@
   grid-template-columns: 32px minmax(0, 1fr) 32px;
   column-gap: var(--profile-dialog-column-gap);
   align-items: center;
-  width: calc(100% - (2 * var(--profile-dialog-inline-padding)));
-  max-width: calc(100% - (2 * var(--profile-dialog-inline-padding)));
-  margin: 0 auto;
-  height: 90px;
+  width: 100%;
+  max-width: 100%;
+  height: 73px;
   background-color: #fff;
-  padding: 10px 0;
+  padding: 16px 24px;
+  border-bottom: 8px solid #d8d8d8;
   box-sizing: border-box;
+}
+
+.profileEditHeaderNoBack {
+  position: relative;
+  display: block;
+  padding: 0;
+}
+
+.profileEditHeaderNoBack .backIconContainer {
+  display: none;
+}
+
+.profileEditHeaderNoBack .headerTitleContainer {
+  position: absolute;
+  left: 370px;
+  top: 16px;
+  display: block;
+  width: max-content;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.profileEditHeaderNoBack .closeIconContainer {
+  position: absolute;
+  left: 702px;
+  top: 20.5px;
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
 }
 
 .backIconContainer,
@@ -86,6 +139,16 @@
   text-align: center;
 }
 
+.profileEditHeaderTitle {
+  color: #263238;
+  font-family: "Open Sans", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 33px;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
 .closeIconContainer {
   justify-content: flex-end;
 }
@@ -95,6 +158,11 @@
   width: 24px;
   height: 24px;
   padding: 0;
+}
+
+.profileEditHeaderNoBack .closeIconContainer :global(.MuiSvgIcon-root) {
+  width: 24px;
+  height: 24px;
 }
 
 .profileEditContent {
@@ -241,16 +309,23 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  row-gap: 8px;
-  width: 95%;
+  row-gap: 14px;
+  width: min(702px, 100%);
+  margin: 0 auto;
 }
 
 .profileQualifications {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  row-gap: 8px;
+  row-gap: 4px;
   width: 100%;
+}
+
+.profileQualifications + .profileQualifications {
+  border-top: 1px solid #d8d8d8;
+  margin-top: 4px;
+  padding-top: 12px;
 }
 
 .profileQualificationsHeader {
@@ -259,6 +334,12 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
+}
+
+.profileQualificationsHeader :global(.MuiIconButton-root) {
+  width: 32px;
+  height: 32px;
+  padding: 0;
 }
 
 .approveDenyButtons {
@@ -317,10 +398,10 @@
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
-  gap: clamp(14px, 2vw, 24px);
+  gap: 0;
   width: 100%;
-  padding: clamp(12px, 2vw, 18px) clamp(14px, 3vw, 32px) clamp(18px, 3vw, 28px);
-  background: #FAF9F9;
+  padding: 16px 24px 24px;
+  background: #fff;
   overflow: hidden;
   box-sizing: border-box;
   max-width: 100%;
@@ -331,7 +412,7 @@
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 4px;
+  padding-right: 0;
   box-sizing: border-box;
   max-width: 100%;
 }
@@ -349,7 +430,7 @@
 .profileDialogField {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
   min-width: 0;
   max-width: 100%;
@@ -361,6 +442,83 @@
   min-width: 0;
 }
 
+.profileAboutForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(702px, 100%);
+  margin: 0 auto;
+}
+
+.profileAboutExactForm {
+  gap: 0;
+}
+
+.profileAboutExactForm .profileEditSectionTitle {
+  height: 33px;
+  padding-bottom: 0;
+  line-height: 33px;
+}
+
+.profileAboutExactForm .profileEditSectionTitle:first-child {
+  margin-bottom: 16px;
+}
+
+.profileAboutExactForm .profileEditSectionTitle:not(:first-child) {
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.profileAboutField {
+  gap: 4px;
+  min-height: 96px;
+  margin-bottom: 8px;
+}
+
+.profileAboutField:nth-of-type(2) {
+  margin-bottom: 16px;
+}
+
+.profileAboutDateField {
+  gap: 5px;
+  min-height: 83px;
+  margin-bottom: 8px;
+}
+
+.profileAboutDateField:last-child {
+  margin-bottom: 0;
+}
+
+.profileAboutDateField .profileDateSelectRow {
+  column-gap: 26px;
+}
+
+.profileAboutDateField .profileDialogSelect {
+  min-height: var(--profile-select-height);
+}
+
+.profileEditSectionTitle {
+  margin: 0;
+  padding-top: 0;
+  padding-bottom: 2px;
+  color: #000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.375;
+}
+
+.profileEditSectionTitle:not(:first-child) {
+  margin-top: 18px;
+}
+
+.profileOccupationFirstRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 24px;
+  width: 100%;
+}
+
 .profileDialogCompactField {
   gap: 0;
 }
@@ -369,13 +527,13 @@
   font-family: "Open Sans", sans-serif;
   font-size: 18px;
   font-weight: 600;
-  line-height: 1;
+  line-height: 1.2;
   letter-spacing: 0;
-  color: #313131;
+  color: #000;
 }
 
 .profileDialogRequired {
-  color: #d9534f;
+  color: #ff0000;
 }
 
 .profileDialogInput,
@@ -384,11 +542,12 @@
   width: 100%;
   border: 2px solid #D8D8D8;
   border-radius: 8px;
-  min-height: 42px;
-  padding: clamp(8px, 1.1vw, 10px) clamp(10px, 1.4vw, 12px);
-  font-size: clamp(13px, 1.5vw, 15px);
-  line-height: 1.2;
-  color: #2f3941;
+  min-height: var(--profile-control-height);
+  padding: 14px 14px;
+  font-family: "Roboto", sans-serif;
+  font-size: 18px;
+  line-height: 21px;
+  color: #000;
   background: #fff;
   outline: none;
   box-sizing: border-box;
@@ -396,14 +555,14 @@
 
 .profileDialogInput::placeholder,
 .profileDialogTextarea::placeholder {
-  color: #8b8f94;
+  color: #717070;
 }
 
 .profileDialogInput:focus,
 .profileDialogTextarea:focus,
 .profileDialogSelect:focus {
-  border-color: #263238;
-  box-shadow: 0 0 0 3px rgb(38 50 56 / 12%);
+  border-color: #000;
+  box-shadow: none;
 }
 
 .profileDialogInput[readonly] {
@@ -412,12 +571,19 @@
 }
 
 .profileDialogTextarea {
-  min-height: clamp(56px, 8vh, 68px);
+  min-height: var(--profile-control-height);
   resize: vertical;
+}
+
+.profileAboutTextarea {
+  min-height: var(--profile-control-height);
+  overflow: hidden;
+  resize: none;
 }
 
 .profileDialogSelect {
   appearance: none;
+  color: #717070;
   background-image:
     linear-gradient(45deg, transparent 50%, #5f6770 50%),
     linear-gradient(135deg, #5f6770 50%, transparent 50%);
@@ -429,9 +595,66 @@
   padding-right: 34px;
 }
 
+.profileDialogSelect.profileDialogFieldFilled {
+  color: #000;
+}
+
+.profileDateSelectRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  width: 100%;
+}
+
+.profileDateSelectField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.profileDateSelectLabel {
+  color: #000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.profileAboutForm :global(.MuiInputLabel-root) {
+  color: #000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+  transform: translateX(0) translateY(-22px);
+}
+
+.profileAboutForm :global(.MuiFormControl-root) {
+  width: 100%;
+}
+
+.profileAboutForm :global(.MuiSelect-select) {
+  min-height: 22px;
+}
+
+.profileAboutForm .profileDialogInput,
+.profileAboutForm .profileDialogTextarea,
+.profileAboutForm .profileDialogSelect {
+  min-height: var(--profile-control-height);
+  padding: 14px 14px;
+  font-size: 18px;
+  line-height: 21px;
+}
+
+.profileAboutForm :global(.MuiOutlinedInput-root) {
+  min-height: var(--profile-select-height);
+  border-radius: 8px;
+}
+
 .profileDialogMuiSelect {
   width: 100%;
-  min-height: 42px;
+  min-height: var(--profile-select-height);
   background: #fff;
   border-radius: 8px;
 }
@@ -445,10 +668,9 @@
 }
 
 .profileDialogMuiSelect :global(.MuiSelect-select) {
-  padding: clamp(8px, 1.1vw, 10px) 40px clamp(8px, 1.1vw, 10px)
-    clamp(10px, 1.4vw, 12px);
-  font-size: clamp(13px, 1.5vw, 15px);
-  line-height: 1.2;
+  padding: 15px 40px 15px 14px;
+  font-size: 18px;
+  line-height: 22px;
   color: #2f3941;
   box-sizing: border-box;
 }
@@ -509,10 +731,12 @@
 .profileDialogCounter {
   align-self: flex-end;
   min-height: 12px;
-  font-size: 11px;
-  line-height: 1;
-  color: #8b8f94;
-  margin-top: -4px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 12px;
+  color: #263238;
+  margin-top: -2px;
 }
 
 .profileDialogDobRow {
@@ -568,14 +792,55 @@
 .profileDialogFooter {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 16px;
   width: 100%;
   flex-shrink: 0;
-  padding-top: 10px;
+  padding-top: 16px;
   background: #fff;
-  border-top: 1px solid #eef1f4;
+  border-top: 0;
   box-sizing: border-box;
   max-width: 100%;
+}
+
+.profileAboutFooter {
+  gap: 16px;
+  padding-top: 0;
+}
+
+.profileAboutFooter :global(.MuiButton-root) {
+  height: 38px !important;
+  padding: 8px 16px !important;
+  font-family: "Open Sans", sans-serif !important;
+  font-size: 16px !important;
+  line-height: 22px !important;
+}
+
+.profileAboutFooter :global(.MuiButton-root:first-child) {
+  width: 70px !important;
+  min-width: 70px !important;
+}
+
+.profileAboutFooter :global(.MuiButton-root:last-child) {
+  width: 191px !important;
+  min-width: 191px !important;
+  background-color: #2c77e7 !important;
+  border-radius: 4px !important;
+  color: #fff !important;
+  gap: 8px !important;
+}
+
+.profileAboutFooter :global(.MuiButton-root:last-child .MuiButton-endIcon) {
+  width: 16px;
+  height: 16px;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.profileAboutFooter :global(.MuiButton-root:last-child .MuiButton-endIcon img),
+.profileAboutFooter :global(.MuiButton-root:last-child .MuiButton-endIcon svg) {
+  width: 16px;
+  height: 16px;
+  display: block;
 }
 
 .profileDialogFooterActions {
@@ -590,14 +855,20 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 16px;
-  line-height: 1.2;
-  color: #263238;
+  width: fit-content;
+  font-family: "Roboto", sans-serif;
+  font-size: 18px;
+  line-height: 21px;
+  color: #000;
   cursor: pointer;
 }
 
 .profileDialogCheckbox {
   flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  accent-color: #2c77e7;
 }
 
 .profileDialogFooter :global(.MuiButton-root) {
@@ -676,6 +947,16 @@
     gap: 6px;
   }
 
+  .profileOccupationFirstRow {
+    grid-template-columns: 1fr;
+    row-gap: 8px;
+  }
+
+  .profileDateSelectRow {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
   .profileDialogDobRow {
     grid-template-columns: 1fr;
     gap: 10px;
@@ -728,11 +1009,7 @@
 
 @media (max-height: 820px) {
   .profileDialogContent {
-    gap: 12px;
-  }
-
-  .profileDialogTextarea {
-    min-height: 54px;
+    gap: 0;
   }
 }
 
@@ -741,27 +1018,10 @@
     padding-bottom: 12px;
   }
 
-  .profileDialogLabel {
-    font-size: 12px;
-  }
-
-  .profileDialogInput,
-  .profileDialogTextarea,
-  .profileDialogSelect {
-    min-height: 38px;
-    padding-top: 7px;
-    padding-bottom: 7px;
-    font-size: 13px;
-  }
-
-  .profileDialogMuiSelect {
-    min-height: 38px;
-  }
-
   .profileDialogMuiSelect :global(.MuiSelect-select) {
-    padding-top: 7px;
-    padding-bottom: 7px;
-    font-size: 13px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    font-size: 18px;
   }
 
   .profileDialogGrid {

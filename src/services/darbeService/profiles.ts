@@ -640,6 +640,8 @@ export const removeUserSkill = async (skillName: string) => {
     .eq("user_id", userId)
     .eq("skill_name", skillName);
   if (error) throw error;
+
+  return getUserProfile(userId);
 };
 
 export const removeUserLicense = async (licenseId: string) => {
@@ -650,6 +652,8 @@ export const removeUserLicense = async (licenseId: string) => {
     .eq("id", licenseId)
     .eq("user_id", userId);
   if (error) throw error;
+
+  return getUserProfile(userId);
 };
 
 export const removeUserOrganization = async (organizationId: string) => {

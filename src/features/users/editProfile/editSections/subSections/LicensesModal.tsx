@@ -18,12 +18,14 @@ import styles from "./styles/subSections.module.css";
 
 interface LicensesProps {
   closeModal: () => void;
+  inline?: boolean;
   userId: string | undefined;
   licenseId?: string;
 }
 
 export const LicensesModal = ({
   closeModal,
+  inline = false,
   userId,
   licenseId,
 }: LicensesProps) => {
@@ -74,18 +76,18 @@ export const LicensesModal = ({
   const prepareSumission = () => {
     const { issueDate, expirationDate } = prepareLicenseDates(licenseDates);
 
-    setLicenseInfo({
+    return {
       ...licenseInfo,
       issueDate,
-      expirationDate,
-    });
+      expirationDate: licenseInfo.doesNotExpire ? undefined : expirationDate,
+    };
   };
 
   const handleSaveLicense = async () => {
-    prepareSumission();
+    const preparedLicense = prepareSumission();
 
     const payload = {
-      licenses: [licenseInfo],
+      licenses: [preparedLicense],
       user: { id: userId },
     };
 
@@ -98,78 +100,92 @@ export const LicensesModal = ({
     closeModal();
   };
 
-  return (
-    <div className={styles.modalContainer}>
-      <div className={styles.modalContent}>
+  const content = (
+    <>
+      {!inline && (
         <div className={styles.modalContentHeader}>
           <ClosingIcon onClick={closeModal} horizontalPlacement="right" />
           <span className={styles.modalHeaderText}>Add Licenses</span>
         </div>
-        <div className={styles.modalContentForm}>
-          <Inputs
-            label="License Name"
-            placeholder="Enter license name"
-            type="text"
-            name="licenseName"
-            darbeInputType="standardInput"
-            value={licenseInfo.licenseName}
-            handleChange={handleChange}
-          />
-          <Inputs
-            label="License Issuer"
-            placeholder="Enter license issuer"
-            type="text"
-            name="licenseIssuer"
-            darbeInputType="standardInput"
-            value={licenseInfo.licenseIssuer}
-            handleChange={handleChange}
-          />
-          <div className={styles.modalContentFormDates}>
-            <div className={styles.modalContentDropdowns}>
-              <Dropdown
-                name="issueMonth"
-                label="Issue Month"
-                initialValue={licenseDates.issueMonth}
-                onChange={handleDropdownChange}
-              >
-                {Months()}
-              </Dropdown>
-              <Dropdown
-                name="issueYear"
-                label="Issue Year"
-                initialValue={licenseDates.issueYear}
-                onChange={handleDropdownChange}
-              >
-                {Years()}
-              </Dropdown>
-            </div>
-            <div className={styles.modalContentDropdowns}>
-              <Dropdown
-                name="expirationMonth"
-                label="Expiration Month"
-                initialValue={licenseDates.expirationMonth}
-                onChange={handleDropdownChange}
-              >
-                {Months()}
-              </Dropdown>
-              <Dropdown
-                name="expirationYear"
-                label="Expiration Year"
-                initialValue={licenseDates.expirationYear}
-                onChange={handleDropdownChange}
-              >
-                {Years()}
-              </Dropdown>
-            </div>
+      )}
+      {inline && (
+        <h2 className={styles.inlineQualificationTitle}>
+          {licenseId ? "Edit Licenses" : "Add Licenses"}
+        </h2>
+      )}
+      <div className={styles.modalContentForm}>
+        <Inputs
+          label="License Name"
+          placeholder="Enter license name"
+          type="text"
+          name="licenseName"
+          darbeInputType="standardInput"
+          value={licenseInfo.licenseName}
+          handleChange={handleChange}
+        />
+        <Inputs
+          label="License Issuer"
+          placeholder="Enter license issuer"
+          type="text"
+          name="licenseIssuer"
+          darbeInputType="standardInput"
+          value={licenseInfo.licenseIssuer}
+          handleChange={handleChange}
+        />
+        <div className={styles.modalContentFormDates}>
+          <div className={styles.modalContentDropdowns}>
+            <Dropdown
+              name="issueMonth"
+              label="Issue Month"
+              initialValue={licenseDates.issueMonth}
+              onChange={handleDropdownChange}
+            >
+              {Months()}
+            </Dropdown>
+            <Dropdown
+              name="issueYear"
+              label="Issue Year"
+              initialValue={licenseDates.issueYear}
+              onChange={handleDropdownChange}
+            >
+              {Years()}
+            </Dropdown>
           </div>
-          <CheckBox
-            name="doesNotExpire"
-            label="This credential does not expire"
-            labelPlacement="right"
-            defaultChecked={licenseInfo.doesNotExpire}
-            onChange={handleCheckboxChange}
-          />
+          <div className={styles.modalContentDropdowns}>
+            <Dropdown
+              name="expirationMonth"
+              label="Expiration Month"
+              initialValue={licenseDates.expirationMonth}
+              onChange={handleDropdownChange}
+            >
+              {Months()}
+            </Dropdown>
+            <Dropdown
+              name="expirationYear"
+              label="Expiration Year"
+              initialValue={licenseDates.expirationYear}
+              onChange={handleDropdownChange}
+            >
+              {Years()}
+            </Dropdown>
+          </div>
         </div>
+        <CheckBox
+          name="doesNotExpire"
+          label="This credential does not expire"
+          labelPlacement="right"
+          defaultChecked={licenseInfo.doesNotExpire}
+          onChange={handleCheckboxChange}
+        />
+      </div>
+      <div className={styles.inlineQualificationFooter}>
+        {inline && (
+          <DarbeButton
+            buttonText="Cancel"
+            darbeButtonType="secondaryButton"
+            onClick={closeModal}
+          />
+        )}
         <DarbeButton
           buttonText="Save"
           isDisabled={!licenseInfo.licenseName}
@@ -177,6 +193,20 @@ export const LicensesModal = ({
           onClick={handleSaveLicense}
         />
       </div>
+    </>
+  );
+
+  if (inline) {
+    return (
+      <div className={styles.inlineQualificationFrame}>
+        <div className={styles.inlineQualificationScrollArea}>{content}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.modalContainer}>
+      <div className={styles.modalContent}>{content}</div>
     </div>
   );
 };

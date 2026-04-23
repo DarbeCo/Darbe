@@ -23,9 +23,10 @@ export const Home = () => {
   const pathName = location.pathname.split("/");
   const isHomePage = pathName.length === 2;
   const isPostNeedPage = location.pathname === POST_A_NEED;
-  const hideSearchBar = pathName.includes("profile_edit") || isPostNeedPage;
-  const hideNavBar = pathName.includes("profile_edit");
-  const hideBottomNavBar = pathName.includes("profile_edit");
+  const isProfileEditPage = pathName.includes("profile_edit");
+  const hideSearchBar = isProfileEditPage || isPostNeedPage;
+  const hideNavBar = isProfileEditPage;
+  const hideBottomNavBar = isProfileEditPage;
   const hideDesktopMessagingDrawer = location.pathname.startsWith(MESSAGING_ROUTE);
   const showSuggestedFriends =
     isPostNeedPage || (pathName.length > 2 && user.user?.userType === "individual");
@@ -56,11 +57,19 @@ export const Home = () => {
         </>
       )}
       {isDesktop && (
-        <div className={styles.desktopLayout}>
+        <div
+          className={`${styles.desktopLayout} ${
+            isProfileEditPage ? styles.profileEditDesktopLayout : ""
+          }`}
+        >
           <div className={styles.leftSide}>
             <LeftPanel />
           </div>
-          <div className={styles.centerContent}>
+          <div
+            className={`${styles.centerContent} ${
+              isProfileEditPage ? styles.profileEditCenterContent : ""
+            }`}
+          >
             {!hideSearchBar && (
               <SearchBar showMessageIcon={false} showAvatar={false} />
             )}
@@ -68,7 +77,11 @@ export const Home = () => {
             <Outlet />
           </div>
 
-          <div className={styles.rightSide}>
+          <div
+            className={`${styles.rightSide} ${
+              isProfileEditPage ? styles.profileEditRightSide : ""
+            }`}
+          >
             <RightPanel showSuggestedFriends={showSuggestedFriends} />
           </div>
           {!hideDesktopMessagingDrawer && <DesktopMessagingDrawer />}

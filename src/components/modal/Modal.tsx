@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { IconButton } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../../services/hooks";
 import { createPortal } from "react-dom";
-import { hideModal, MODAL_TYPE } from "./modalSlice";
+import { hideModal, MODAL_TYPE, setModalType } from "./modalSlice";
 import {
   getExternalData,
   getModalStatus,
@@ -10,6 +11,7 @@ import {
   getModalUserId,
 } from "./selectors";
 import { ClosingIcon } from "../closingIcon/ClosingIcon";
+import { CustomSvgs } from "../customSvgs/CustomSvgs";
 import { CreatePost } from "../createPost/CreatePost";
 import { EditProfileInfo } from "../../features/users/editProfile/editSections/EditProfileInfo";
 import { EditAbout } from "../../features/users/editProfile/editSections/EditAbout";
@@ -81,8 +83,27 @@ export const Modal = () => {
 
   const isProfileModal =
     modalType === MODAL_TYPE.profile ||
+    modalType === MODAL_TYPE.about ||
+    modalType === MODAL_TYPE.background ||
+    modalType === MODAL_TYPE.military ||
+    modalType === MODAL_TYPE.qualifications ||
+    modalType === MODAL_TYPE.friends ||
+    modalType === MODAL_TYPE.organizations ||
+    modalType === MODAL_TYPE.activity ||
     modalType === MODAL_TYPE.causes ||
     modalType === MODAL_TYPE.availability;
+  const profileBackTargets: Partial<Record<string, string>> = {
+    [MODAL_TYPE.background]: MODAL_TYPE.about,
+    [MODAL_TYPE.military]: MODAL_TYPE.background,
+    [MODAL_TYPE.qualifications]: MODAL_TYPE.military,
+  };
+  const profileBackTarget = profileBackTargets[modalType];
+
+  const handleProfileBack = () => {
+    if (profileBackTarget) {
+      dispatch(setModalType(profileBackTarget));
+    }
+  };
 
   // TODO: This is getting messy, use children instead of switch statement
   const modalContent = (
@@ -99,10 +120,16 @@ export const Modal = () => {
         >
           <div className={isProfileModal ? styles.profileModalHeaderInner : ""}>
             {isProfileModal && (
-              <div
-                className={styles.profileModalHeaderSpacer}
-                aria-hidden="true"
-              />
+              <div className={styles.profileModalHeaderSpacer}>
+                {profileBackTarget && (
+                  <IconButton onClick={handleProfileBack}>
+                    <CustomSvgs
+                      svgPath="/svgs/common/goBackIcon.svg"
+                      altText="Go back"
+                    />
+                  </IconButton>
+                )}
+              </div>
             )}
             <div
               className={`${styles.modalHeaderText} ${
@@ -120,7 +147,7 @@ export const Modal = () => {
                   case MODAL_TYPE.availability:
                     return "Edit Availability";
                   case MODAL_TYPE.background:
-                    return "Edit Background";
+                    return "Edit About";
                   case MODAL_TYPE.causes:
                     return "Edit Causes";
                   case MODAL_TYPE.friends:
@@ -130,7 +157,7 @@ export const Modal = () => {
                   case MODAL_TYPE.organizations:
                     return "Edit Organizations";
                   case MODAL_TYPE.qualifications:
-                    return "Edit Qualifications";
+                    return "Edit About";
                   case MODAL_TYPE.activity:
                     return "Edit Activity";
                   case MODAL_TYPE.mutualFriends:

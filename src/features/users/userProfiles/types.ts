@@ -1,6 +1,4 @@
 import { EntityDocument } from "../../../services/api/endpoints/types/user.api.types";
-import { MilitaryBranch } from "./constants";
-
 export type VolunteerExperienceState = {
   entityName: string;
   startDate?: string | Date;
@@ -28,7 +26,7 @@ export type EducationState = {
 };
 
 export type MilitaryServiceState = {
-  branch: MilitaryBranch | undefined;
+  branch: string | undefined;
   startDate?: string | Date;
   endDate?: string | Date;
   rank: string;

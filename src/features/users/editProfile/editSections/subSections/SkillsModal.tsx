@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { ClosingIcon } from "../../../../../components/closingIcon/ClosingIcon";
-import { Inputs } from "../../../../../components/inputs/Inputs";
 import { DarbeButton } from "../../../../../components/buttons/DarbeButton";
 import { useUpdateUserProfileMutation } from "../../../../../services/api/endpoints/profiles/profiles.api";
 import { useEditSkillsInformation } from "../../hooks";
@@ -12,12 +11,14 @@ import styles from "./styles/subSections.module.css";
 
 interface SkillsModalProps {
   closeModal: () => void;
+  inline?: boolean;
   userId: string | undefined;
   skillId?: string;
 }
 
 export const SkillsModal = ({
   closeModal,
+  inline = false,
   userId,
   skillId,
 }: SkillsModalProps) => {
@@ -50,30 +51,62 @@ export const SkillsModal = ({
     closeModal();
   };
 
-  return (
-    <div className={styles.modalContainer}>
-      <div className={styles.modalContent}>
+  const content = (
+    <>
+      {!inline && (
         <div className={styles.modalContentHeader}>
           <ClosingIcon onClick={closeModal} horizontalPlacement="right" />
           <span className={styles.modalHeaderText}>Add Skills</span>
         </div>
-        <div className={styles.modalContentForm}>
-          <Inputs
-            label="Skill Name"
-            placeholder="Enter skill name"
-            type="text"
-            name="skillName"
-            darbeInputType="standardInput"
-            value={skill?.skillName}
-            handleChange={handleChange}
+      )}
+      {inline && (
+        <h2 className={styles.inlineQualificationTitle}>
+          {skillId ? "Edit Skills" : "Add Skills"}
+        </h2>
+      )}
+      <div className={styles.skillSearchField}>
+        <span aria-hidden="true" className={styles.skillSearchIcon} />
+        <input
+          className={styles.skillSearchInput}
+          name="skillName"
+          onChange={handleChange}
+          placeholder="Search for a skill (ex: Adobe)"
+          value={skill?.skillName ?? ""}
+        />
+      </div>
+      <span className={styles.emptyQualificationsText}>
+        {skill?.skillName ? skill.skillName : "No skills to display"}
+      </span>
+      <div className={styles.inlineQualificationFooter}>
+        {inline && (
+          <DarbeButton
+            buttonText="Cancel"
+            darbeButtonType="secondaryButton"
+            onClick={closeModal}
           />
-        </div>
+        )}
         <DarbeButton
           buttonText="Save"
           isDisabled={!skill?.skillName}
           darbeButtonType="saveButton"
           onClick={handleSaveSkill}
         />
+      </div>
+    </>
+  );
+
+  if (inline) {
+    return (
+      <div className={styles.inlineQualificationFrame}>
+        <div className={styles.inlineQualificationScrollArea}>{content}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.modalContainer}>
+      <div className={styles.modalContent}>
+        {content}
       </div>
     </div>
   );

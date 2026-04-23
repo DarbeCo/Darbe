@@ -81,7 +81,14 @@
     justify-content: space-between;
     column-gap: 10px;
     width: 100%;
+    min-height: 100vh;
     background-color: #faf9f9;
+  }
+
+  .profileEditDesktopLayout {
+    justify-content: flex-start;
+    column-gap: 24px;
+    align-items: stretch;
   }
 
   .leftDesktopPanel {
@@ -100,6 +107,11 @@
     background-color: #fff;
   }
 
+  .profileEditDesktopLayout .leftSide {
+    width: 276px;
+    flex: 0 0 276px;
+  }
+
   .centerContent {
     display: flex;
     flex-direction: column;
@@ -107,17 +119,35 @@
     align-items: start;
     justify-content: flex-start;
     width: 900px;
+    min-height: 100vh;
     padding-top: 18px;
     background-color: #faf9f9;
+    box-sizing: border-box;
+  }
+
+  .profileEditCenterContent {
+    width: 750px;
+    flex: 0 0 750px;
+    row-gap: 0;
+    padding-top: 0;
   }
 
   .rightSide {
     width: 350px;
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    justify-content: space-between;
+    min-height: 100vh;
+    height: auto;
+    justify-content: flex-start;
     padding-top: 15px;
+    box-sizing: border-box;
+  }
+
+  .profileEditRightSide {
+    width: 318px;
+    flex: 0 0 318px;
+    padding-top: 88px;
+    min-height: auto;
   }
 
   .leftDesktopPanelAvatarMenu {

@@ -1,4 +1,4 @@
-import { useAppDispatch } from "../../../../services/hooks";
+import { useNavigate } from "react-router-dom";
 
 import {
   EducationState,
@@ -10,15 +10,12 @@ import { CustomSvgs } from "../../../../components/customSvgs/CustomSvgs";
 import { EDIT_SECTIONS, PROFILE_SECTIONS } from "../constants";
 import { EditProfileIcon } from "./EditProfileIcon";
 import { Typography } from "../../../../components/typography/Typography";
+import { EDIT_PROFILE_ROUTE } from "../../../../routes/route.constants";
 import {
   capitalizeFirstLetter,
   formatDateTime,
 } from "../../../../utils/CommonFunctions";
 import { DATE_CONSTANTS } from "../../../../utils/CommonConstants";
-import {
-  showModal,
-  setModalType,
-} from "../../../../components/modal/modalSlice";
 
 import styles from "../styles/userProfiles.module.css";
 
@@ -66,7 +63,7 @@ export const ProfileSection = ({
 }: ProfileSectionProps) => {
   const svgPath = `/svgs/common/${sectionType}Icon.svg`;
   const sectionTittle = PROFILE_SECTIONS[sectionType];
-  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   const sectionToEdit = () => {
     if (
@@ -92,8 +89,10 @@ export const ProfileSection = ({
 
   const handleEditProfile = () => {
     const sectionRoute = sectionToEdit();
-    dispatch(setModalType(sectionRoute));
-    dispatch(showModal());
+
+    if (sectionRoute) {
+      navigate(`${EDIT_PROFILE_ROUTE}?section=${sectionRoute}`);
+    }
   };
 
   // TODO: Simplify these or move them out to a new file, same for the isComplexData check

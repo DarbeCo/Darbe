@@ -11,8 +11,6 @@ import { EditQualifications } from "./editSections/EditQualifications";
 import { EditProfileProps } from "./editSections/types";
 import { EditActivity } from "./editSections/EditActivity";
 
-import styles from "./styles/profileEdit.module.css";
-
 interface UserEditSectionsProps extends EditProfileProps {
   section: string;
 }
@@ -25,26 +23,28 @@ export const UserEditSections = ({
     return null;
   }
 
+  const activeSection = section || EDIT_SECTIONS.about;
+
   return (
-    <div className={styles.profileEditContent}>
-      {section === EDIT_SECTIONS.about && <EditAbout />}
-      {section === EDIT_SECTIONS.background && (
+    <>
+      {activeSection === EDIT_SECTIONS.about && <EditAbout />}
+      {activeSection === EDIT_SECTIONS.background && (
         <EditBackground />
       )}
-      {section === EDIT_SECTIONS.military && <EditMilitary />}
-      {section === EDIT_SECTIONS.qualifications && (
+      {activeSection === EDIT_SECTIONS.military && <EditMilitary />}
+      {activeSection === EDIT_SECTIONS.qualifications && (
         <EditQualifications />
       )}
-      {section === EDIT_SECTIONS.causes && <EditCauses />}
-      {section === EDIT_SECTIONS.availability && (
+      {activeSection === EDIT_SECTIONS.causes && <EditCauses />}
+      {activeSection === EDIT_SECTIONS.availability && (
         <EditAvailability />
       )}
-      {section === EDIT_SECTIONS.organizations && (
+      {activeSection === EDIT_SECTIONS.organizations && (
         <EditOrganizations />
       )}
-      {section === EDIT_SECTIONS.profile && <EditProfileInfo />}
-      {section === EDIT_SECTIONS.friends && <EditFriends />}
-      {section === EDIT_SECTIONS.activity && <EditActivity />}
-    </div>
+      {activeSection === EDIT_SECTIONS.profile && <EditProfileInfo />}
+      {activeSection === EDIT_SECTIONS.friends && <EditFriends />}
+      {activeSection === EDIT_SECTIONS.activity && <EditActivity />}
+    </>
   );
 };

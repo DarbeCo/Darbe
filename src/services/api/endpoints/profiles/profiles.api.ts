@@ -102,8 +102,8 @@ const profilesApi = darbeBaseApi.injectEndpoints({
     >({
       async queryFn(skillName) {
         try {
-          await removeUserSkill(skillName);
-          return { data: {} };
+          const data = await removeUserSkill(skillName);
+          return { data };
         } catch (error) {
           return {
             error: {
@@ -121,8 +121,8 @@ const profilesApi = darbeBaseApi.injectEndpoints({
     >({
       async queryFn(licenseId) {
         try {
-          await removeUserLicense(licenseId);
-          return { data: {} };
+          const data = await removeUserLicense(licenseId);
+          return { data };
         } catch (error) {
           return {
             error: {

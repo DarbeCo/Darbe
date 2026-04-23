@@ -1,9 +1,8 @@
-import {  AddCircleTwoTone, RefreshTwoTone } from "@mui/icons-material";
-import { Card, CardContent, CardHeader } from "@mui/material";
+import { AddCircleTwoTone } from "@mui/icons-material";
+import { Avatar, Card, CardContent, CardHeader } from "@mui/material";
 
 import { SuggestedFriendState } from "../../features/friends/types";
 import { useSendFriendRequestMutation } from "../../services/api/endpoints/friends/friends.api";
-import { UserAvatars } from "../avatars/UserAvatars";
 import { Typography } from "../typography/Typography";
 
 import styles from "./styles/friendSuggestions.module.css";
@@ -30,15 +29,18 @@ const FriendSuggestion = ({
       : suggestedFriend.firstName;
   return (
     <div className={styles.suggestedFriendCard} >
-      <div>
-        <UserAvatars
-          key={suggestedFriend.id}
-          userId={suggestedFriend.id}
-          profilePicture={suggestedFriend.profilePicture}
-          fullName={nameToUse}
-          city={suggestedFriend.city}
-          zip={suggestedFriend.zip}
+      <div className={styles.friendSuggestionIdentity}>
+        <Avatar
+          className={styles.friendSuggestionAvatar}
+          alt={nameToUse}
+          src={suggestedFriend.profilePicture}
         />
+        <div className={styles.friendSuggestionText}>
+          <span className={styles.friendSuggestionName}>{nameToUse}</span>
+          <span className={styles.friendSuggestionLocation}>
+            {suggestedFriend.city}, {suggestedFriend.zip}
+          </span>
+        </div>
       </div>
       <div
         onClick={() => {
@@ -94,27 +96,15 @@ export const DesktopFriendSuggestions = ({
 
   const suggestions = useMemo(() => {
     if (!suggestedFriends) return []
-    return suggestedFriends.slice(0,20)
+    return suggestedFriends.slice(0, 4)
   }, [suggestedFriends])
 
   return (
-    <Card>
-      <CardHeader className={styles.friendSuggestionCardHeader} title={
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between'
-        }}>
-          <div>
-            Friend Suggestions
-          </div>
-          <div className={styles.refreshTwoTone}>
-            <RefreshTwoTone className={styles.refreshTwoTone} onClick={() => {
-              if (!suggestions) return 
-              handleFriendSuggestionRefresh(suggestions.map(el => el.id))
-            }}/>
-          </div>
-        </div>
-      }/>
+    <Card className={styles.desktopFriendSuggestionsCard}>
+      <CardHeader
+        className={styles.friendSuggestionCardHeader}
+        title="Friend Suggestions"
+      />
       <CardContent className={styles.friendSuggestionsCard} >
         {showSuggestedFriends ? (
           <>
@@ -129,6 +119,17 @@ export const DesktopFriendSuggestions = ({
                   />
               );
             })}
+            {suggestedFriends && suggestedFriends.length > 4 && (
+              <button
+                type="button"
+                className={styles.friendSuggestionsShowMore}
+                onClick={() =>
+                  handleFriendSuggestionRefresh(suggestions.map((el) => el.id))
+                }
+              >
+                Show more
+              </button>
+            )}
           </>
         ) : (
           <Typography

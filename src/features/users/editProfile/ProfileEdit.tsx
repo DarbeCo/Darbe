@@ -2,13 +2,13 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { IconButton } from "@mui/material";
 
 import { ClosingIcon } from "../../../components/closingIcon/ClosingIcon";
-import { Typography } from "../../../components/typography/Typography";
 import { CustomSvgs } from "../../../components/customSvgs/CustomSvgs";
-import { HOME_ROUTE } from "../../../routes/route.constants";
+import { EDIT_PROFILE_ROUTE, PROFILE_ROUTE } from "../../../routes/route.constants";
 import { useAppSelector } from "../../../services/hooks";
 import { selectCurrentUserId, selectUser } from "../selectors";
 import { UserEditSections } from "./UserEditSections";
 import { EntityEditSections } from "./EntityEditSections";
+import { EDIT_SECTIONS } from "../userProfiles/constants";
 
 import styles from "./styles/profileEdit.module.css";
 
@@ -19,32 +19,59 @@ export const ProfileEdit = () => {
   const [editParams] = useSearchParams();
   const section = editParams.get("section") ?? "";
   const isEntityProfile = user?.userType !== "individual";
+  const shouldShowBackButton =
+    isEntityProfile || section !== EDIT_SECTIONS.about;
+  const isTallEditStep = !isEntityProfile && section === EDIT_SECTIONS.background;
 
   const handleGoBack = () => {
+    if (!isEntityProfile) {
+      if (section === EDIT_SECTIONS.background) {
+        navigate(`${EDIT_PROFILE_ROUTE}?section=${EDIT_SECTIONS.about}`);
+        return;
+      }
+
+      if (section === EDIT_SECTIONS.military) {
+        navigate(`${EDIT_PROFILE_ROUTE}?section=${EDIT_SECTIONS.background}`);
+        return;
+      }
+
+      if (section === EDIT_SECTIONS.qualifications) {
+        navigate(`${EDIT_PROFILE_ROUTE}?section=${EDIT_SECTIONS.military}`);
+        return;
+      }
+    }
+
     navigate(-1);
   };
 
   const handleExitEdit = () => {
-    navigate(`${HOME_ROUTE}`);
+    navigate(`${PROFILE_ROUTE}/${userId}`);
   };
 
   return (
     <div className={styles.profileEdit}>
-      <div className={styles.profileEditFrame}>
-        <div className={styles.profileEditHeader}>
+      <div
+        className={`${styles.profileEditFrame} ${
+          isTallEditStep ? styles.profileEditFrameTall : ""
+        }`}
+      >
+        <div
+          className={`${styles.profileEditHeader} ${
+            !shouldShowBackButton ? styles.profileEditHeaderNoBack : ""
+          }`}
+        >
           <div className={styles.backIconContainer}>
-            <IconButton onClick={handleGoBack}>
-              <CustomSvgs
-                svgPath="/svgs/common/goBackIcon.svg"
-                altText="Go back"
-              />
-            </IconButton>
+            {shouldShowBackButton && (
+              <IconButton onClick={handleGoBack}>
+                <CustomSvgs
+                  svgPath="/svgs/common/goBackIcon.svg"
+                  altText="Go back"
+                />
+              </IconButton>
+            )}
           </div>
           <div className={styles.headerTitleContainer}>
-            <Typography
-              variant="sectionTitle"
-              textToDisplay={`Edit Profile Info`}
-            />
+            <span className={styles.profileEditHeaderTitle}>Edit About</span>
           </div>
           <div className={styles.closeIconContainer}>
             <ClosingIcon useNoSx onClick={handleExitEdit} />

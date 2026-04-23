@@ -1,13 +1,9 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../../services/hooks";
 import { selectCurrentUserId } from "../../selectors";
 
-import { Typography } from "../../../../components/typography/Typography";
 import { DarbeButton } from "../../../../components/buttons/DarbeButton";
-import { Inputs } from "../../../../components/inputs/Inputs";
-import { Dropdown } from "../../../../components/dropdowns/Dropdown";
-import { Months } from "../../../../components/dropdowns/dropdownTypes/Months";
-import { Years } from "../../../../components/dropdowns/dropdownTypes/Years";
 import { useUpdateUserProfileMutation } from "../../../../services/api/endpoints/profiles/profiles.api";
 import { EDIT_SECTIONS } from "../../userProfiles/constants";
 import { DarbeProfileSharedState } from "../../userSlice";
@@ -15,16 +11,152 @@ import { VolunteerExperienceState } from "../../userProfiles/types";
 import { prepareData } from "../util";
 import { UseDateParser } from "../../../../utils/commonHooks/UseDateParser";
 import { useEditAboutInformation } from "../hooks";
-import {
-  hideModal,
-  showModal,
-  setModalType,
-} from "../../../../components/modal/modalSlice";
+import { hideModal } from "../../../../components/modal/modalSlice";
+import { EDIT_PROFILE_ROUTE } from "../../../../routes/route.constants";
 
 import styles from "../styles/profileEdit.module.css";
 
+const MONTH_OPTIONS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+const YEAR_OPTIONS = Array.from({ length: 101 }, (_, index) =>
+  `${new Date().getFullYear() - index}`
+);
+
+const ABOUT_MAX_LENGTH = 300;
+
+type AutoGrowFieldProps = {
+  label: string;
+  value?: string | number;
+  placeholder: string;
+  name: string;
+  required?: boolean;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+};
+
+const AutoGrowField = ({
+  label,
+  value,
+  placeholder,
+  name,
+  required = false,
+  onChange,
+}: AutoGrowFieldProps) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const textValue = value?.toString() ?? "";
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+
+    if (!textarea) {
+      return;
+    }
+
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }, [textValue]);
+
+  const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onChange(event as unknown as React.ChangeEvent<HTMLInputElement>);
+  };
+
+  return (
+    <div className={`${styles.profileDialogField} ${styles.profileAboutField}`}>
+      <label className={styles.profileDialogLabel}>
+        {label}
+        {required && <span className={styles.profileDialogRequired}>*</span>}
+      </label>
+      <textarea
+        ref={textareaRef}
+        className={`${styles.profileDialogTextarea} ${styles.profileAboutTextarea} ${
+          textValue ? styles.profileDialogFieldFilled : ""
+        }`.trim()}
+        maxLength={ABOUT_MAX_LENGTH}
+        name={name}
+        onChange={handleChange}
+        placeholder={placeholder}
+        rows={1}
+        value={textValue}
+      />
+      <div className={styles.profileDialogCounter}>
+        {textValue.length}/{ABOUT_MAX_LENGTH}
+      </div>
+    </div>
+  );
+};
+
+type DateRowProps = {
+  label: string;
+  monthName: string;
+  monthValue?: string;
+  yearName: string;
+  yearValue?: string;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+};
+
+const DateRow = ({
+  label,
+  monthName,
+  monthValue = "",
+  yearName,
+  yearValue = "",
+  onChange,
+}: DateRowProps) => (
+  <div className={`${styles.profileDialogField} ${styles.profileAboutDateField}`}>
+    <span className={styles.profileDialogLabel}>
+      {label}
+      <span className={styles.profileDialogRequired}>*</span>
+    </span>
+    <div className={styles.profileDateSelectRow}>
+      <select
+        className={`${styles.profileDialogSelect} ${
+          monthValue ? styles.profileDialogFieldFilled : ""
+        }`.trim()}
+        name={monthName}
+        onChange={onChange}
+        value={monthValue}
+      >
+        <option value="">Month</option>
+        {MONTH_OPTIONS.map((month) => (
+          <option key={month} value={month}>
+            {month}
+          </option>
+        ))}
+      </select>
+      <select
+        className={`${styles.profileDialogSelect} ${
+          yearValue ? styles.profileDialogFieldFilled : ""
+        }`.trim()}
+        name={yearName}
+        onChange={onChange}
+        value={yearValue}
+      >
+        <option value="">Year</option>
+        {YEAR_OPTIONS.map((year) => (
+          <option key={year} value={year}>
+            {year}
+          </option>
+        ))}
+      </select>
+    </div>
+  </div>
+);
+
 export const EditAbout = () => {
   const userId = useAppSelector(selectCurrentUserId);
+  const navigate = useNavigate();
 
   const { editUserAboutState, editUserVolunteerExperiencesState } =
     useEditAboutInformation();
@@ -88,8 +220,7 @@ export const EditAbout = () => {
     if (isFormDirty()) {
       handleSave();
     }
-    dispatch(setModalType(EDIT_SECTIONS.background));
-    dispatch(showModal());
+    navigate(`${EDIT_PROFILE_ROUTE}?section=${EDIT_SECTIONS.background}`);
   };
 
   const handleDropdownChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -99,19 +230,15 @@ export const EditAbout = () => {
     setDates({ ...dates, [name]: value });
   };
 
-  const prepareSubmission = () => {
-    setVolunteerExperiences({
-      ...volunteerExperiences,
-      ...prepareData(dates, volunteerExperiences),
-    });
-  };
-
   const handleSave = () => {
-    prepareSubmission();
+    const preparedVolunteerExperience = prepareData(
+      dates,
+      { ...volunteerExperiences }
+    ) as VolunteerExperienceState;
 
     const payload = {
       ...formData,
-      volunteerExperiences: [volunteerExperiences],
+      volunteerExperiences: [preparedVolunteerExperience],
       user: { id: userId },
     };
 
@@ -120,101 +247,74 @@ export const EditAbout = () => {
   };
 
   return (
-    <div className={styles.profileEditContent}>
-      <div className={styles.editInputs}>
-        <Typography variant="sectionTitle" textToDisplay="About Yourself" />
-        <Inputs
-          label="About"
-          isRequired
-          placeholder="Describe Yourself..."
-          value={formData.aboutMe}
-          name="aboutMe"
-          handleChange={handleChange}
-          darbeInputType="standardInput"
-        />
-        <Inputs
-          label="Reason I Volunteer"
-          value={formData.volunteerReason}
-          isRequired
-          placeholder="Why do you volunteer?"
-          name="volunteerReason"
-          handleChange={handleChange}
-          darbeInputType="standardInput"
-        />
-      </div>
+    <div className={styles.profileDialogContent}>
+      <div className={styles.profileDialogScrollArea}>
+        <div className={`${styles.profileAboutForm} ${styles.profileAboutExactForm}`}>
+          <h2 className={styles.profileEditSectionTitle}>About yourself</h2>
+          <AutoGrowField
+            label="About"
+            required
+            placeholder="Describe yourself..."
+            value={formData.aboutMe}
+            name="aboutMe"
+            onChange={handleChange}
+          />
+          <AutoGrowField
+            label="Why I volunteer"
+            required
+            value={formData.volunteerReason}
+            placeholder="Why do you volunteer?"
+            name="volunteerReason"
+            onChange={handleChange}
+          />
 
-      <div className={styles.editInputs}>
-        <Typography
-          variant="sectionTitle"
-          textToDisplay="Previous NP Experience"
-        />
-        <Inputs
-          label="Non-Profit Name"
-          isRequired
-          value={volunteerExperiences.entityName}
-          placeholder="Where did you volunteer?"
-          name="volunteerExperiences entityName"
-          handleChange={handleChange}
-          darbeInputType="standardInput"
-        />
-        <Inputs
-          label="Estimated Hours Volunteered"
-          isRequired
-          value={volunteerExperiences.totalHours}
-          placeholder="How many hours?"
-          name="volunteerExperiences totalHours"
-          handleChange={handleChange}
-          darbeInputType="standardInput"
-        />
-      </div>
+          <h2 className={styles.profileEditSectionTitle}>
+            Previous NP Experience
+          </h2>
+          <AutoGrowField
+            label="Non-Profit Name"
+            required
+            value={volunteerExperiences.entityName}
+            placeholder="Where do you work?"
+            name="volunteerExperiences entityName"
+            onChange={handleChange}
+          />
+          <AutoGrowField
+            label="Estimated Hours Volunteered"
+            required
+            value={volunteerExperiences.totalHours}
+            placeholder="Hours Volunteer?"
+            name="volunteerExperiences totalHours"
+            onChange={handleChange}
+          />
 
-      <div className={styles.editDropdowns}>
-        <div className={styles.editProfileDropdownArea}>
-          <Dropdown
+          <DateRow
             label="Start Date"
-            name="startMonth"
-            initialValue={startMonth}
-            autoWidth
+            monthName="startMonth"
+            monthValue={dates.startMonth}
+            yearName="startYear"
+            yearValue={dates.startYear}
             onChange={handleDropdownChange}
-          >
-            {Months()}
-          </Dropdown>
-          <Dropdown
-            name="startYear"
-            initialValue={startYear}
-            autoWidth
-            onChange={handleDropdownChange}
-          >
-            {Years()}
-          </Dropdown>
-        </div>
-        <div className={styles.editProfileDropdownArea}>
-          <Dropdown
+          />
+          <DateRow
             label="End Date"
-            name="endMonth"
-            initialValue={endMonth}
+            monthName="endMonth"
+            monthValue={dates.endMonth}
+            yearName="endYear"
+            yearValue={dates.endYear}
             onChange={handleDropdownChange}
-          >
-            {Months()}
-          </Dropdown>
-          <Dropdown
-            name="endYear"
-            initialValue={endYear}
-            onChange={handleDropdownChange}
-          >
-            {Years()}
-          </Dropdown>
+          />
         </div>
       </div>
 
-      <div className={styles.editProfileButtons}>
+      <div className={`${styles.profileDialogFooter} ${styles.profileAboutFooter}`}>
         <DarbeButton
           buttonText="Save"
           darbeButtonType="saveButton"
           onClick={handleSave}
         />
         <DarbeButton
-          buttonText="Occupation"
+          buttonText="Add Occupation"
           darbeButtonType="nextButton"
           endingIconPath="/svgs/common/goForwardIconWhite.svg"
           onClick={handleNextSection}
