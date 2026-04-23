@@ -92,31 +92,55 @@
 
 .profileEditHeaderNoBack {
   position: relative;
-  display: block;
-  padding: 0;
 }
 
 .profileEditHeaderNoBack .backIconContainer {
-  display: none;
+  visibility: hidden;
 }
 
 .profileEditHeaderNoBack .headerTitleContainer {
-  position: absolute;
-  left: 370px;
-  top: 16px;
-  display: block;
-  width: max-content;
-  transform: translateX(-50%);
+  position: static;
+  display: flex;
+  width: auto;
+  transform: none;
   text-align: center;
 }
 
 .profileEditHeaderNoBack .closeIconContainer {
-  position: absolute;
-  left: 702px;
-  top: 20.5px;
-  width: 24px;
-  min-width: 24px;
-  height: 24px;
+  position: static;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+}
+
+@media (min-width: 1260px) {
+  .profileEditHeaderNoBack {
+    display: block;
+    padding: 0;
+  }
+
+  .profileEditHeaderNoBack .backIconContainer {
+    display: none;
+  }
+
+  .profileEditHeaderNoBack .headerTitleContainer {
+    position: absolute;
+    left: 370px;
+    top: 16px;
+    display: block;
+    width: max-content;
+    transform: translateX(-50%);
+  }
+
+  .profileEditHeaderNoBack .closeIconContainer {
+    position: absolute;
+    right: auto;
+    left: 702px;
+    top: 20.5px;
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+  }
 }
 
 .backIconContainer,
