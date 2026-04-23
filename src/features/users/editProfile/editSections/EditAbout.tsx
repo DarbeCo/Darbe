@@ -12,7 +12,11 @@ import { prepareData } from "../util";
 import { UseDateParser } from "../../../../utils/commonHooks/UseDateParser";
 import { useEditAboutInformation } from "../hooks";
 import { hideModal } from "../../../../components/modal/modalSlice";
-import { EDIT_PROFILE_ROUTE } from "../../../../routes/route.constants";
+import {
+  EDIT_PROFILE_ROUTE,
+  PROFILE_ROUTE,
+} from "../../../../routes/route.constants";
+import { setUserProfile } from "../../userSlice";
 
 import styles from "../styles/profileEdit.module.css";
 
@@ -181,6 +185,7 @@ export const EditAbout = () => {
   });
 
   const [updateUserProfile] = useUpdateUserProfileMutation();
+  const [saveError, setSaveError] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.name;
@@ -216,9 +221,13 @@ export const EditAbout = () => {
     );
   };
 
-  const handleNextSection = () => {
+  const handleNextSection = async () => {
     if (isFormDirty()) {
-      handleSave();
+      const didSave = await handleSave();
+
+      if (!didSave) {
+        return;
+      }
     }
     navigate(`${EDIT_PROFILE_ROUTE}?section=${EDIT_SECTIONS.background}`);
   };
@@ -230,10 +239,55 @@ export const EditAbout = () => {
     setDates({ ...dates, [name]: value });
   };
 
-  const handleSave = () => {
+  const validateForm = () => {
+    if (!formData.aboutMe?.trim()) {
+      return "About is required.";
+    }
+
+    if (!formData.volunteerReason?.trim()) {
+      return "Why I volunteer is required.";
+    }
+
+    if (!volunteerExperiences.entityName?.trim()) {
+      return "Non-Profit Name is required.";
+    }
+
+    if (
+      volunteerExperiences.totalHours === undefined ||
+      volunteerExperiences.totalHours === null ||
+      volunteerExperiences.totalHours.toString().trim() === "" ||
+      Number.isNaN(Number(volunteerExperiences.totalHours))
+    ) {
+      return "Estimated Hours Volunteered must be a number.";
+    }
+
+    if (!dates.startMonth || !dates.startYear) {
+      return "Start Date is required.";
+    }
+
+    if (!dates.endMonth || !dates.endYear) {
+      return "End Date is required.";
+    }
+
+    return "";
+  };
+
+  const handleSave = async () => {
+    const error = validateForm();
+
+    if (error) {
+      setSaveError(error);
+      return false;
+    }
+
+    setSaveError("");
+
     const preparedVolunteerExperience = prepareData(
       dates,
-      { ...volunteerExperiences }
+      {
+        ...volunteerExperiences,
+        totalHours: Number(volunteerExperiences.totalHours),
+      }
     ) as VolunteerExperienceState;
 
     const payload = {
@@ -242,8 +296,24 @@ export const EditAbout = () => {
       user: { id: userId },
     };
 
-    updateUserProfile(payload);
-    dispatch(hideModal());
+    try {
+      const updatedUser = await updateUserProfile(payload).unwrap();
+      dispatch(setUserProfile(updatedUser));
+      dispatch(hideModal());
+      return true;
+    } catch (error) {
+      console.error("Error saving Edit About", error);
+      setSaveError("Unable to save Edit About. Please try again.");
+      return false;
+    }
+  };
+
+  const handleSaveAndReturnToProfile = async () => {
+    const didSave = await handleSave();
+
+    if (didSave) {
+      navigate(`${PROFILE_ROUTE}/${userId}`);
+    }
   };
 
   return (
@@ -307,11 +377,13 @@ export const EditAbout = () => {
         </div>
       </div>
 
+      {saveError && <p className={styles.profileDialogError}>{saveError}</p>}
+
       <div className={`${styles.profileDialogFooter} ${styles.profileAboutFooter}`}>
         <DarbeButton
           buttonText="Save"
           darbeButtonType="saveButton"
-          onClick={handleSave}
+          onClick={handleSaveAndReturnToProfile}
         />
         <DarbeButton
           buttonText="Add Occupation"

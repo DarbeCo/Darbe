@@ -12,7 +12,11 @@ import { useEditBackgroundInformation } from "../hooks";
 import { UseDateParser } from "../../../../utils/commonHooks/UseDateParser";
 import { hideModal } from "../../../../components/modal/modalSlice";
 import { selectCurrentUserId } from "../../selectors";
-import { EDIT_PROFILE_ROUTE } from "../../../../routes/route.constants";
+import {
+  EDIT_PROFILE_ROUTE,
+  PROFILE_ROUTE,
+} from "../../../../routes/route.constants";
+import { setUserProfile } from "../../userSlice";
 
 import styles from "../styles/profileEdit.module.css";
 
@@ -282,9 +286,9 @@ export const EditBackground = () => {
     return isJobDirty || isEducationDirty;
   };
 
-  const handleNextSection = () => {
+  const handleNextSection = async () => {
     if (isFormDirty()) {
-      handleSave();
+      await handleSave();
     }
     navigate(`${EDIT_PROFILE_ROUTE}?section=${EDIT_SECTIONS.military}`);
   };
@@ -314,7 +318,7 @@ export const EditBackground = () => {
   //   setFormData({ ...formData, [e.target.name]: e.target.checked });
   // };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const preparedJobExperience = prepareData(
       jobDates,
       { ...jobExperience }
@@ -330,8 +334,14 @@ export const EditBackground = () => {
       user: { id: userId },
     };
 
-    updateUserProfile(payload);
+    const updatedUser = await updateUserProfile(payload).unwrap();
+    dispatch(setUserProfile(updatedUser));
     dispatch(hideModal());
+  };
+
+  const handleSaveAndReturnToProfile = async () => {
+    await handleSave();
+    navigate(`${PROFILE_ROUTE}/${userId}`);
   };
 
   return (
@@ -441,7 +451,7 @@ export const EditBackground = () => {
         <DarbeButton
           buttonText="Save"
           darbeButtonType="saveButton"
-          onClick={handleSave}
+          onClick={handleSaveAndReturnToProfile}
         />
         <DarbeButton
           buttonText="Military"

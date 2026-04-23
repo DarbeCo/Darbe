@@ -1,5 +1,6 @@
 import { IconButton } from "@mui/material";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { DarbeButton } from "../../../../components/buttons/DarbeButton";
 import { CustomSvgs } from "../../../../components/customSvgs/CustomSvgs";
@@ -11,6 +12,7 @@ import { useAppDispatch, useAppSelector } from "../../../../services/hooks";
 import { selectQualifications, selectCurrentUserId } from "../../selectors";
 import { isValidArray } from "../../../../utils/CommonFunctions";
 import { hideModal } from "../../../../components/modal/modalSlice";
+import { PROFILE_ROUTE } from "../../../../routes/route.constants";
 
 
 import styles from "../styles/profileEdit.module.css";
@@ -21,6 +23,7 @@ type QualificationPanel = "list" | "license" | "skill";
 // TODO: The modals here should be combined with the create a post modal to be more generic
 export const EditQualifications = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const userId = useAppSelector(selectCurrentUserId);
   const { licenses, skills } = useAppSelector(selectQualifications);
   const [activePanel, setActivePanel] = useState<QualificationPanel>("list");
@@ -55,12 +58,18 @@ export const EditQualifications = () => {
     setActivePanel("skill");
   };
 
+  const handleSaveAndReturnToProfile = () => {
+    dispatch(hideModal());
+    navigate(`${PROFILE_ROUTE}/${userId}`);
+  };
+
   if (activePanel === "license") {
     return (
       <LicensesModal
         closeModal={closeInlinePanel}
         inline
         licenseId={licenseIdToEdit}
+        existingLicenses={licenses}
         userId={userId}
       />
     );
@@ -72,6 +81,7 @@ export const EditQualifications = () => {
         closeModal={closeInlinePanel}
         inline
         skillId={skillIdToEdit}
+        existingSkills={skills}
         userId={userId}
       />
     );
@@ -134,7 +144,7 @@ export const EditQualifications = () => {
         <DarbeButton
           buttonText="Save"
           darbeButtonType="saveButton"
-          onClick={() => dispatch(hideModal())}
+          onClick={handleSaveAndReturnToProfile}
         />
       </div>
     </div>

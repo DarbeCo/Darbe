@@ -41,7 +41,7 @@ const profilesApi = darbeBaseApi.injectEndpoints({
       keepUnusedDataFor: 30,
     }),
     updateUserProfile: builder.mutation<
-      Partial<DarbeProfileSharedState>,
+      DarbeProfileSharedState,
       Partial<DarbeProfileSharedState>
     >({
       async queryFn(profile) {
@@ -60,7 +60,7 @@ const profilesApi = darbeBaseApi.injectEndpoints({
       invalidatesTags: ["Users", "Profile"],
     }),
     updateEntityProfile: builder.mutation<
-      Partial<DarbeProfileSharedState>,
+      DarbeProfileSharedState,
       Partial<DarbeProfileSharedState>
     >({
       async queryFn(profile) {

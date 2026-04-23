@@ -18,6 +18,7 @@ import styles from "./styles/subSections.module.css";
 
 interface LicensesProps {
   closeModal: () => void;
+  existingLicenses?: LicenseState[];
   inline?: boolean;
   userId: string | undefined;
   licenseId?: string;
@@ -25,6 +26,7 @@ interface LicensesProps {
 
 export const LicensesModal = ({
   closeModal,
+  existingLicenses = [],
   inline = false,
   userId,
   licenseId,
@@ -85,9 +87,14 @@ export const LicensesModal = ({
 
   const handleSaveLicense = async () => {
     const preparedLicense = prepareSumission();
+    const licenses = licenseId
+      ? existingLicenses.map((existingLicense) =>
+          existingLicense._id === licenseId ? preparedLicense : existingLicense
+        )
+      : [...existingLicenses, preparedLicense];
 
     const payload = {
-      licenses: [preparedLicense],
+      licenses,
       user: { id: userId },
     };
 

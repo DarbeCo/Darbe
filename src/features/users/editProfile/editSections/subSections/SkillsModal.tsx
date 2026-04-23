@@ -11,6 +11,7 @@ import styles from "./styles/subSections.module.css";
 
 interface SkillsModalProps {
   closeModal: () => void;
+  existingSkills?: SkillState[];
   inline?: boolean;
   userId: string | undefined;
   skillId?: string;
@@ -18,6 +19,7 @@ interface SkillsModalProps {
 
 export const SkillsModal = ({
   closeModal,
+  existingSkills = [],
   inline = false,
   userId,
   skillId,
@@ -37,8 +39,20 @@ export const SkillsModal = ({
   const [updateUserProfile] = useUpdateUserProfileMutation();
 
   const handleSaveSkill = async () => {
+    if (!skill?.skillName?.trim()) return;
+
+    const preparedSkill = {
+      ...skill,
+      skillName: skill.skillName.trim(),
+    };
+    const skills = skillId
+      ? existingSkills.map((existingSkill) =>
+          existingSkill._id === skillId ? preparedSkill : existingSkill
+        )
+      : [...existingSkills, preparedSkill];
+
     const payload = {
-      skills: skill ? [skill] : [],
+      skills,
       user: { id: userId },
     };
 

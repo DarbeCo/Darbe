@@ -763,6 +763,16 @@
   margin-top: -2px;
 }
 
+.profileDialogError {
+  margin: 0 0 8px;
+  color: #b00020;
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 18px;
+  text-align: right;
+}
+
 .profileDialogDobRow {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

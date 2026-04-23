@@ -9,7 +9,11 @@ import { useUpdateUserProfileMutation } from "../../../../services/api/endpoints
 import { useEditMilitaryInformation } from "../hooks";
 import { hideModal } from "../../../../components/modal/modalSlice";
 import { selectCurrentUserId } from "../../selectors";
-import { EDIT_PROFILE_ROUTE } from "../../../../routes/route.constants";
+import {
+  EDIT_PROFILE_ROUTE,
+  PROFILE_ROUTE,
+} from "../../../../routes/route.constants";
+import { setUserProfile } from "../../userSlice";
 
 import styles from "../styles/profileEdit.module.css";
 
@@ -116,6 +120,7 @@ export const EditMilitary = () => {
   const [formData, setFormData] =
     useState<MilitaryServiceState>(editMilitaryState);
   const [updateUserProfile] = useUpdateUserProfileMutation();
+  const [saveError, setSaveError] = useState("");
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -135,14 +140,52 @@ export const EditMilitary = () => {
     });
   };
 
-  const handleSave = () => {
+  const validateForm = () => {
+    if (!formData.branch?.trim()) {
+      return "Branch Name is required.";
+    }
+
+    if (!formData.rank?.trim()) {
+      return "Rank is required.";
+    }
+
+    if (!formData.status?.trim()) {
+      return "Status is required.";
+    }
+
+    return "";
+  };
+
+  const handleSave = async () => {
+    const error = validateForm();
+
+    if (error) {
+      setSaveError(error);
+      return false;
+    }
+
+    setSaveError("");
+
     const payload = {
-      militaryService: [formData],
+      militaryService: [
+        {
+          ...formData,
+          startDate: formData.startDate ?? new Date().toISOString(),
+        },
+      ],
       user: { id: userId },
     };
 
-    updateUserProfile(payload);
-    dispatch(hideModal());
+    try {
+      const updatedUser = await updateUserProfile(payload).unwrap();
+      dispatch(setUserProfile(updatedUser));
+      dispatch(hideModal());
+      return true;
+    } catch (error) {
+      console.error("Error saving Military", error);
+      setSaveError("Unable to save Military. Please try again.");
+      return false;
+    }
   };
 
   const isFormDirty = () => {
@@ -153,9 +196,21 @@ export const EditMilitary = () => {
     );
   };
 
-  const handleNextSection = () => {
+  const handleSaveAndReturnToProfile = async () => {
+    const didSave = await handleSave();
+
+    if (didSave) {
+      navigate(`${PROFILE_ROUTE}/${userId}`);
+    }
+  };
+
+  const handleNextSection = async () => {
     if (isFormDirty()) {
-      handleSave();
+      const didSave = await handleSave();
+
+      if (!didSave) {
+        return;
+      }
     }
     navigate(`${EDIT_PROFILE_ROUTE}?section=${EDIT_SECTIONS.qualifications}`);
   };
@@ -196,11 +251,13 @@ export const EditMilitary = () => {
         </div>
       </div>
 
+      {saveError && <p className={styles.profileDialogError}>{saveError}</p>}
+
       <div className={styles.profileDialogFooter}>
         <DarbeButton
           buttonText="Save"
           darbeButtonType="saveButton"
-          onClick={handleSave}
+          onClick={handleSaveAndReturnToProfile}
         />
         <DarbeButton
           buttonText="Licenses"

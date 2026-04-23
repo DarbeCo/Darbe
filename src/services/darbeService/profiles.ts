@@ -505,25 +505,28 @@ export const updateUserProfile = async (
 
   const { error: detailsError } = await supabase
     .from("user_details")
-    .update({
-      about_me: profile.aboutMe ?? undefined,
-      volunteer_reason: profile.volunteerReason ?? undefined,
-      tag_line: profile.tagLine ?? undefined,
-      gender: profile.gender ?? undefined,
-      race: profile.race ?? undefined,
-      phone_number: profile.phoneNumber ?? undefined,
-      allergies: profile.allergies ?? undefined,
-      address: profile.address ?? undefined,
-      state: profile.state ?? undefined,
-      nonprofit_type: profile.nonprofitType ?? undefined,
-      website: profile.website ?? undefined,
-      motto: profile.motto ?? undefined,
-      mission: profile.mission ?? undefined,
-      values: profile.values ?? undefined,
-      about_us: profile.aboutUs ?? undefined,
-      programs: profile.programs ?? undefined,
-    })
-    .eq("user_id", userId);
+    .upsert(
+      {
+        user_id: userId,
+        about_me: profile.aboutMe ?? undefined,
+        volunteer_reason: profile.volunteerReason ?? undefined,
+        tag_line: profile.tagLine ?? undefined,
+        gender: profile.gender ?? undefined,
+        race: profile.race ?? undefined,
+        phone_number: profile.phoneNumber ?? undefined,
+        allergies: profile.allergies ?? undefined,
+        address: profile.address ?? undefined,
+        state: profile.state ?? undefined,
+        nonprofit_type: profile.nonprofitType ?? undefined,
+        website: profile.website ?? undefined,
+        motto: profile.motto ?? undefined,
+        mission: profile.mission ?? undefined,
+        values: profile.values ?? undefined,
+        about_us: profile.aboutUs ?? undefined,
+        programs: profile.programs ?? undefined,
+      },
+      { onConflict: "user_id" }
+    );
 
   if (detailsError) throw detailsError;
 
