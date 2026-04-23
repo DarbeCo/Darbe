@@ -577,6 +577,7 @@ export const updateUserProfile = async (
       user_id: userId,
       job_title: job.jobTitle,
       entity_name: job.entityName,
+      occupation_type: job.occupationType,
       start_date: job.startDate,
       end_date: job.endDate,
       description: job.description,
@@ -711,7 +712,7 @@ export const getUserProfile = async (userId: string): Promise<DarbeProfileShared
         .eq("user_id", userId),
       supabase
         .from("user_job_experiences")
-        .select("id, job_title, entity_name, start_date, end_date, description")
+        .select("id, job_title, entity_name, occupation_type, start_date, end_date, description")
         .eq("user_id", userId),
       supabase
         .from("user_volunteer_experiences")
@@ -759,10 +760,21 @@ export const getUserProfile = async (userId: string): Promise<DarbeProfileShared
     description: edu.description ?? "",
   }));
 
-  const jobExperiences: JobExperienceState[] = (jobRes.data ?? []).map((job) => ({
+  const jobRows = ((jobRes.data ?? []) as unknown) as Array<{
+    id: string;
+    job_title: string;
+    entity_name: string;
+    occupation_type?: string | null;
+    start_date?: string | null;
+    end_date?: string | null;
+    description?: string | null;
+  }>;
+
+  const jobExperiences: JobExperienceState[] = jobRows.map((job) => ({
     _id: job.id,
     jobTitle: job.job_title,
     entityName: job.entity_name,
+    occupationType: job.occupation_type ?? "",
     startDate: job.start_date ?? undefined,
     endDate: job.end_date ?? undefined,
     description: job.description ?? "",

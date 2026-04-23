@@ -10,6 +10,7 @@ export type VolunteerExperienceState = {
 export type JobExperienceState = {
   jobTitle: string;
   entityName: string;
+  occupationType?: string;
   startDate?: string | Date;
   endDate?: string | Date;
   description?: string;

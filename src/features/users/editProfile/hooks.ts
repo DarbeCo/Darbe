@@ -87,11 +87,15 @@ export const useEditBackgroundInformation = () => {
   const companyName = emptyJobExperiences
     ? ""
     : profileInformation?.jobExperiences?.[0].entityName;
+  const occupationType = emptyJobExperiences
+    ? ""
+    : profileInformation?.jobExperiences?.[0].occupationType;
 
   // same as volunteer experiences, maybe brittle?
   const editJobExperienceState = {
     jobTitle: jobTitle ? jobTitle : "",
     entityName: companyName ? companyName : "",
+    occupationType: occupationType ? occupationType : "",
     startDate: emptyJobExperiences
       ? undefined
       : profileInformation?.jobExperiences?.[0].startDate,

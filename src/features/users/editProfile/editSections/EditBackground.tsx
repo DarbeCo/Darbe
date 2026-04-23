@@ -208,7 +208,6 @@ export const EditBackground = () => {
   const navigate = useNavigate();
   const { editJobExperienceState, editEducationExperienceState } =
     useEditBackgroundInformation();
-  const [occupationType, setOccupationType] = useState("");
   const [currentlyWorking, setCurrentlyWorking] = useState(false);
   const [currentlyAttending, setCurrentlyAttending] = useState(false);
 
@@ -272,6 +271,7 @@ export const EditBackground = () => {
     const isJobDirty =
       jobExperience.jobTitle !== editJobExperienceState.jobTitle ||
       jobExperience.entityName !== editJobExperienceState.entityName ||
+      jobExperience.occupationType !== editJobExperienceState.occupationType ||
       jobExperience.startDate !== editJobExperienceState.startDate ||
       jobExperience.endDate !== editJobExperienceState.endDate;
 
@@ -299,7 +299,10 @@ export const EditBackground = () => {
     const [key, subKey] = name.split(" ");
 
     if (name === "occupationType") {
-      setOccupationType(value);
+      setJobExperience({
+        ...jobExperience,
+        occupationType: value,
+      });
     } else if (key === "job") {
       setJobDates({
         ...jobDates,
@@ -355,7 +358,7 @@ export const EditBackground = () => {
               required
               placeholder="Type"
               name="occupationType"
-              value={occupationType}
+              value={jobExperience.occupationType}
               options={["Full-time", "Part-time", "Contract", "Volunteer"]}
               onChange={handleDropdownChange}
             />
