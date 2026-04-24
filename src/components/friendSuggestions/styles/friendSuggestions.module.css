@@ -113,6 +113,7 @@
     flex-direction: column;
     justify-content: center;
     min-width: 0;
+    overflow: hidden;
   }
 
   .friendSuggestionName {
@@ -121,7 +122,8 @@
     font-size: 18px;
     font-weight: 700;
     line-height: normal;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .friendSuggestionLocation {
@@ -130,7 +132,8 @@
     font-size: 16px;
     font-weight: 400;
     line-height: normal;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .addFriendCardAddIcon {
