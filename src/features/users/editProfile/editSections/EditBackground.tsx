@@ -208,8 +208,6 @@ export const EditBackground = () => {
   const navigate = useNavigate();
   const { editJobExperienceState, editEducationExperienceState } =
     useEditBackgroundInformation();
-  const [currentlyWorking, setCurrentlyWorking] = useState(false);
-  const [currentlyAttending, setCurrentlyAttending] = useState(false);
 
   const [jobExperience, setJobExperience] = useState<JobExperienceState>(
     editJobExperienceState
@@ -221,6 +219,9 @@ export const EditBackground = () => {
   const { month: jobEndMonth, year: jobEndYear } = UseDateParser(
     jobExperience.endDate
   );
+  const [currentlyWorking, setCurrentlyWorking] = useState(
+    Boolean(jobExperience.startDate && !jobExperience.endDate)
+  );
 
   const [educationExperience, setEducationExperience] =
     useState<EducationState>(editEducationExperienceState);
@@ -229,6 +230,9 @@ export const EditBackground = () => {
     UseDateParser(educationExperience.startDate);
   const { month: educationEndMonth, year: educationEndYear } = UseDateParser(
     educationExperience.endDate
+  );
+  const [currentlyAttending, setCurrentlyAttending] = useState(
+    Boolean(educationExperience.startDate && !educationExperience.endDate)
   );
 
   const [jobDates, setJobDates] = useState({
@@ -273,7 +277,11 @@ export const EditBackground = () => {
       jobExperience.entityName !== editJobExperienceState.entityName ||
       jobExperience.occupationType !== editJobExperienceState.occupationType ||
       jobExperience.startDate !== editJobExperienceState.startDate ||
-      jobExperience.endDate !== editJobExperienceState.endDate;
+      jobExperience.endDate !== editJobExperienceState.endDate ||
+      currentlyWorking !==
+        Boolean(
+          editJobExperienceState.startDate && !editJobExperienceState.endDate
+        );
 
     const isEducationDirty =
       educationExperience.schoolName !==
@@ -281,7 +289,12 @@ export const EditBackground = () => {
       educationExperience.degree !== editEducationExperienceState.degree ||
       educationExperience.startDate !==
         editEducationExperienceState.startDate ||
-      educationExperience.endDate !== editEducationExperienceState.endDate;
+      educationExperience.endDate !== editEducationExperienceState.endDate ||
+      currentlyAttending !==
+        Boolean(
+          editEducationExperienceState.startDate &&
+            !editEducationExperienceState.endDate
+        );
 
     return isJobDirty || isEducationDirty;
   };
@@ -331,9 +344,20 @@ export const EditBackground = () => {
       { ...educationExperience }
     ) as EducationState;
 
+    const normalizedJobExperience = {
+      ...preparedJobExperience,
+      endDate: currentlyWorking ? undefined : preparedJobExperience.endDate,
+    };
+    const normalizedEducationExperience = {
+      ...preparedEducationExperience,
+      endDate: currentlyAttending
+        ? undefined
+        : preparedEducationExperience.endDate,
+    };
+
     const payload = {
-      jobExperiences: [preparedJobExperience],
-      education: [preparedEducationExperience],
+      jobExperiences: [normalizedJobExperience],
+      education: [normalizedEducationExperience],
       user: { id: userId },
     };
 
