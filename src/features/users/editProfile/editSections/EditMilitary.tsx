@@ -25,6 +25,7 @@ type MilitaryTextFieldProps = {
   name: string;
   value?: string;
   placeholder: string;
+  error?: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
@@ -35,6 +36,7 @@ type MilitarySelectFieldProps = {
   placeholder: string;
   options: { value: string; label: string }[];
   showCounter?: boolean;
+  error?: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 };
 
@@ -43,6 +45,7 @@ const MilitaryTextField = ({
   name,
   value = "",
   placeholder,
+  error,
   onChange,
 }: MilitaryTextFieldProps) => {
   const textValue = value?.toString() ?? "";
@@ -55,6 +58,8 @@ const MilitaryTextField = ({
       </label>
       <input
         className={`${styles.profileDialogInput} ${
+          error ? styles.profileDialogFieldError : ""
+        } ${
           textValue ? styles.profileDialogFieldFilled : ""
         }`.trim()}
         maxLength={MILITARY_TEXT_MAX_LENGTH}
@@ -63,6 +68,9 @@ const MilitaryTextField = ({
         placeholder={placeholder}
         value={textValue}
       />
+      {error ? (
+        <p className={styles.profileDialogFieldMessage}>{error}</p>
+      ) : null}
       <div className={styles.profileDialogCounter}>
         {textValue.length}/{MILITARY_TEXT_MAX_LENGTH}
       </div>
@@ -77,6 +85,7 @@ const MilitarySelectField = ({
   placeholder,
   options,
   showCounter = false,
+  error,
   onChange,
 }: MilitarySelectFieldProps) => {
   const textValue = value?.toString() ?? "";
@@ -89,6 +98,8 @@ const MilitarySelectField = ({
       </label>
       <select
         className={`${styles.profileDialogSelect} ${
+          error ? styles.profileDialogFieldError : ""
+        } ${
           textValue ? styles.profileDialogFieldFilled : ""
         }`.trim()}
         name={name}
@@ -102,6 +113,9 @@ const MilitarySelectField = ({
           </option>
         ))}
       </select>
+      {error ? (
+        <p className={styles.profileDialogFieldMessage}>{error}</p>
+      ) : null}
       {showCounter && (
         <div className={styles.profileDialogCounter}>
           {textValue.length}/{MILITARY_TEXT_MAX_LENGTH}
@@ -121,9 +135,18 @@ export const EditMilitary = () => {
     useState<MilitaryServiceState>(editMilitaryState);
   const [updateUserProfile] = useUpdateUserProfileMutation();
   const [saveError, setSaveError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+
+    if (fieldErrors[name]) {
+      setFieldErrors((previous) => {
+        const next = { ...previous };
+        delete next[name];
+        return next;
+      });
+    }
 
     setFormData({
       ...formData,
@@ -134,6 +157,14 @@ export const EditMilitary = () => {
   const handleDropdownChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
 
+    if (fieldErrors[name]) {
+      setFieldErrors((previous) => {
+        const next = { ...previous };
+        delete next[name];
+        return next;
+      });
+    }
+
     setFormData({
       ...formData,
       [name]: value,
@@ -141,29 +172,33 @@ export const EditMilitary = () => {
   };
 
   const validateForm = () => {
+    const errors: Record<string, string> = {};
+
     if (!formData.branch?.trim()) {
-      return "Branch Name is required.";
+      errors.branch = "Branch Name is required.";
     }
 
     if (!formData.rank?.trim()) {
-      return "Rank is required.";
+      errors.rank = "Rank is required.";
     }
 
     if (!formData.status?.trim()) {
-      return "Status is required.";
+      errors.status = "Status is required.";
     }
 
-    return "";
+    return errors;
   };
 
   const handleSave = async () => {
-    const error = validateForm();
+    const errors = validateForm();
 
-    if (error) {
-      setSaveError(error);
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setSaveError("Please fix the required fields.");
       return false;
     }
 
+    setFieldErrors({});
     setSaveError("");
 
     const payload = {
@@ -205,6 +240,14 @@ export const EditMilitary = () => {
   };
 
   const handleNextSection = async () => {
+    const errors = validateForm();
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setSaveError("Please fix the required fields.");
+      return;
+    }
+
     if (isFormDirty()) {
       const didSave = await handleSave();
 
@@ -228,6 +271,7 @@ export const EditMilitary = () => {
             label="Branch Name"
             value={branchValue}
             placeholder="Where did you serve?"
+            error={fieldErrors.branch}
             onChange={handleTextChange}
           />
           <MilitaryTextField
@@ -235,6 +279,7 @@ export const EditMilitary = () => {
             label="Rank"
             value={formData.rank}
             placeholder="What did you serve?"
+            error={fieldErrors.rank}
             onChange={handleTextChange}
           />
           <MilitarySelectField
@@ -246,6 +291,7 @@ export const EditMilitary = () => {
               value: status,
               label: status,
             }))}
+            error={fieldErrors.status}
             onChange={handleDropdownChange}
           />
         </div>

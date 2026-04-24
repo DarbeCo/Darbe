@@ -703,6 +703,19 @@
   border-color: #088F26;
 }
 
+.profileDialogFieldError {
+  border-color: #b00020 !important;
+}
+
+.profileDialogFieldMessage {
+  margin: 0;
+  color: #b00020;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
 .profileDialogMuiSelect.profileDialogFieldFilled :global(.MuiOutlinedInput-notchedOutline) {
   border-color: #088F26;
 }

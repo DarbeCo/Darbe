@@ -248,6 +248,11 @@ export const nextButton = {
     backgroundColor: "#2C77E7",
     color: "#fff",
   },
+  "&.Mui-disabled": {
+    backgroundColor: "#C9CED6",
+    color: "#FFFFFF",
+    opacity: 1,
+  },
   "@media (max-width: 699px)": {
     minWidth: "86px",
     height: "38px",
@@ -270,6 +275,12 @@ export const secondaryNextButton = {
   "&:hover": {
     backgroundColor: "#2C77E7",
     color: "#fff",
+  },
+  "&.Mui-disabled": {
+    backgroundColor: "#F3F5F7",
+    color: "#9AA3AF",
+    borderColor: "#D8D8D8",
+    opacity: 1,
   },
   "@media (max-width: 699px)": {
     width: "88px",

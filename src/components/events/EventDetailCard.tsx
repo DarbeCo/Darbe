@@ -14,6 +14,7 @@ import { Typography } from "../typography/Typography";
 import { formatDarbeTimeToString } from "../../utils/CommonFunctions";
 import { UserAvatars } from "../avatars/UserAvatars";
 import { useGetSimpleUserInfoQuery } from "../../services/api/endpoints/profiles/profiles.api";
+import { PROFILE_ROUTE } from "../../routes/route.constants";
 
 import styles from "./styles/eventCards.module.css";
 
@@ -157,6 +158,12 @@ export const EventDetailCard = ({
     navigate(-1);
   };
 
+  const handleOwnerProfileClick = () => {
+    if (!isPreview && event?.eventOwner?.id) {
+      navigate(`${PROFILE_ROUTE}/${event.eventOwner.id}`);
+    }
+  };
+
   return (
     <div className={styles.eventCard}>
       <div className={styles.eventCardHeader}>
@@ -167,8 +174,16 @@ export const EventDetailCard = ({
               altText="Go back"
             />
           </IconButton>
-          <UserAvatars profilePicture={eventOwnerProfilePicture} />
-          <Typography variant="blueTextNormal" textToDisplay={eventOwnerName} />
+          <UserAvatars
+            profilePicture={eventOwnerProfilePicture}
+            onClick={handleOwnerProfileClick}
+          />
+          <Typography
+            variant="blueTextNormal"
+            textToDisplay={eventOwnerName}
+            onClick={handleOwnerProfileClick}
+            extraClass={!isPreview ? "clickable" : ""}
+          />
         </div>
       </div>
       <div className={styles.eventCardDetails}>

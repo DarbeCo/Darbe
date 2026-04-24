@@ -46,6 +46,7 @@ type TextFieldProps = {
   value?: string;
   placeholder: string;
   required?: boolean;
+  error?: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
@@ -55,6 +56,7 @@ type SelectFieldProps = {
   value?: string;
   placeholder: string;
   required?: boolean;
+  error?: string;
   options: string[];
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 };
@@ -65,6 +67,7 @@ const TextField = ({
   value = "",
   placeholder,
   required = false,
+  error = "",
   onChange,
 }: TextFieldProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -94,7 +97,9 @@ const TextField = ({
       <textarea
         className={`${styles.profileDialogTextarea} ${
           styles.profileAboutTextarea
-        } ${textValue ? styles.profileDialogFieldFilled : ""}`.trim()}
+        } ${textValue ? styles.profileDialogFieldFilled : ""} ${
+          error ? styles.profileDialogFieldError : ""
+        }`.trim()}
         maxLength={PROFILE_TEXT_MAX_LENGTH}
         name={name}
         onChange={handleTextChange}
@@ -103,6 +108,7 @@ const TextField = ({
         rows={1}
         value={textValue}
       />
+      {error && <p className={styles.profileDialogFieldMessage}>{error}</p>}
       <div className={styles.profileDialogCounter}>
         {textValue.length}/{PROFILE_TEXT_MAX_LENGTH}
       </div>
@@ -116,6 +122,7 @@ const SelectField = ({
   value = "",
   placeholder,
   required = false,
+  error = "",
   options,
   onChange,
 }: SelectFieldProps) => (
@@ -127,7 +134,8 @@ const SelectField = ({
     <select
       className={`${styles.profileDialogSelect} ${
         value ? styles.profileDialogFieldFilled : ""
-      }`.trim()}
+      } ${error ? styles.profileDialogFieldError : ""}
+      `.trim()}
       name={name}
       onChange={onChange}
       value={value}
@@ -139,6 +147,7 @@ const SelectField = ({
         </option>
       ))}
     </select>
+    {error && <p className={styles.profileDialogFieldMessage}>{error}</p>}
   </div>
 );
 
@@ -149,6 +158,7 @@ type DateFieldProps = {
   yearName: string;
   yearValue?: string;
   required?: boolean;
+  error?: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 };
 
@@ -159,6 +169,7 @@ const DateField = ({
   yearName,
   yearValue = "",
   required = true,
+  error = "",
   onChange,
 }: DateFieldProps) => (
   <div className={styles.profileDialogField}>
@@ -170,7 +181,8 @@ const DateField = ({
       <select
         className={`${styles.profileDialogSelect} ${
           monthValue ? styles.profileDialogFieldFilled : ""
-        }`.trim()}
+        } ${error ? styles.profileDialogFieldError : ""}
+        `.trim()}
         name={monthName}
         onChange={onChange}
         value={monthValue}
@@ -185,7 +197,8 @@ const DateField = ({
       <select
         className={`${styles.profileDialogSelect} ${
           yearValue ? styles.profileDialogFieldFilled : ""
-        }`.trim()}
+        } ${error ? styles.profileDialogFieldError : ""}
+        `.trim()}
         name={yearName}
         onChange={onChange}
         value={yearValue}
@@ -198,6 +211,7 @@ const DateField = ({
         ))}
       </select>
     </div>
+    {error && <p className={styles.profileDialogFieldMessage}>{error}</p>}
   </div>
 );
 
@@ -252,6 +266,7 @@ export const EditBackground = () => {
   const dispatch = useAppDispatch();
 
   const [updateUserProfile] = useUpdateUserProfileMutation();
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.name;
@@ -263,11 +278,13 @@ export const EditBackground = () => {
         ...jobExperience,
         [subKey]: value,
       });
+      setFieldErrors((prev) => ({ ...prev, [subKey]: "" }));
     } else {
       setEducationExperience({
         ...educationExperience,
         [subKey]: value,
       });
+      setFieldErrors((prev) => ({ ...prev, [subKey]: "" }));
     }
   };
 
@@ -299,7 +316,49 @@ export const EditBackground = () => {
     return isJobDirty || isEducationDirty;
   };
 
+  const getStepErrors = () => {
+    const errors: Record<string, string> = {};
+
+    if (!jobExperience.occupationType?.trim()) {
+      errors.occupationType = "Occupational Type is required.";
+    }
+    if (!jobExperience.jobTitle?.trim()) {
+      errors.jobTitle = "Title is required.";
+    }
+    if (!jobExperience.entityName?.trim()) {
+      errors.entityName = "Company is required.";
+    }
+    if (!jobDates.startMonth || !jobDates.startYear) {
+      errors.jobStartDate = "Start Date is required.";
+    }
+    if (!currentlyWorking && (!jobDates.endMonth || !jobDates.endYear)) {
+      errors.jobEndDate = "End Date is required.";
+    }
+
+    if (!educationExperience.schoolName?.trim()) {
+      errors.schoolName = "Institution Name is required.";
+    }
+    if (!educationExperience.degree?.trim()) {
+      errors.degree = "Institution Major is required.";
+    }
+    if (!educationDates.startMonth || !educationDates.startYear) {
+      errors.educationStartDate = "Start Date is required.";
+    }
+    if (!currentlyAttending && (!educationDates.endMonth || !educationDates.endYear)) {
+      errors.educationEndDate = "End Date is required.";
+    }
+
+    return errors;
+  };
+
   const handleNextSection = async () => {
+    const errors = getStepErrors();
+
+    if (Object.keys(errors).length) {
+      setFieldErrors(errors);
+      return;
+    }
+
     if (isFormDirty()) {
       await handleSave();
     }
@@ -316,16 +375,29 @@ export const EditBackground = () => {
         ...jobExperience,
         occupationType: value,
       });
+      setFieldErrors((prev) => ({ ...prev, occupationType: "" }));
     } else if (key === "job") {
       setJobDates({
         ...jobDates,
         [subKey]: value,
       });
+      if (subKey === "startMonth" || subKey === "startYear") {
+        setFieldErrors((prev) => ({ ...prev, jobStartDate: "" }));
+      }
+      if (subKey === "endMonth" || subKey === "endYear") {
+        setFieldErrors((prev) => ({ ...prev, jobEndDate: "" }));
+      }
     } else {
       setEducationDates({
         ...educationDates,
         [subKey]: value,
       });
+      if (subKey === "startMonth" || subKey === "startYear") {
+        setFieldErrors((prev) => ({ ...prev, educationStartDate: "" }));
+      }
+      if (subKey === "endMonth" || subKey === "endYear") {
+        setFieldErrors((prev) => ({ ...prev, educationEndDate: "" }));
+      }
     }
   };
 
@@ -383,6 +455,7 @@ export const EditBackground = () => {
               placeholder="Type"
               name="occupationType"
               value={jobExperience.occupationType}
+              error={fieldErrors.occupationType}
               options={["Full-time", "Part-time", "Contract", "Volunteer"]}
               onChange={handleDropdownChange}
             />
@@ -392,6 +465,7 @@ export const EditBackground = () => {
               placeholder="What do you do?"
               name="job jobTitle"
               value={jobExperience.jobTitle}
+              error={fieldErrors.jobTitle}
               onChange={handleChange}
             />
           </div>
@@ -401,6 +475,7 @@ export const EditBackground = () => {
             placeholder="Where do you work?"
             name="job entityName"
             value={jobExperience.entityName}
+            error={fieldErrors.entityName}
             onChange={handleChange}
           />
           <DateField
@@ -409,6 +484,7 @@ export const EditBackground = () => {
             monthValue={jobDates.startMonth}
             yearName="job startYear"
             yearValue={jobDates.startYear}
+            error={fieldErrors.jobStartDate}
             onChange={handleDropdownChange}
           />
           <DateField
@@ -417,13 +493,17 @@ export const EditBackground = () => {
             monthValue={jobDates.endMonth}
             yearName="job endYear"
             yearValue={jobDates.endYear}
+            error={fieldErrors.jobEndDate}
             onChange={handleDropdownChange}
           />
           <label className={styles.profileDialogCheckboxLabel}>
             <input
               className={styles.profileDialogCheckbox}
               checked={currentlyWorking}
-              onChange={(event) => setCurrentlyWorking(event.target.checked)}
+              onChange={(event) => {
+                setCurrentlyWorking(event.target.checked);
+                setFieldErrors((prev) => ({ ...prev, jobEndDate: "" }));
+              }}
               type="checkbox"
             />
             Currently Working
@@ -436,6 +516,7 @@ export const EditBackground = () => {
             placeholder="Where did you study?"
             name="education schoolName"
             value={educationExperience.schoolName}
+            error={fieldErrors.schoolName}
             onChange={handleChange}
           />
           <TextField
@@ -444,6 +525,7 @@ export const EditBackground = () => {
             placeholder="What did you study?"
             name="education degree"
             value={educationExperience.degree}
+            error={fieldErrors.degree}
             onChange={handleChange}
           />
           <DateField
@@ -452,6 +534,7 @@ export const EditBackground = () => {
             monthValue={educationDates.startMonth}
             yearName="education startYear"
             yearValue={educationDates.startYear}
+            error={fieldErrors.educationStartDate}
             onChange={handleDropdownChange}
           />
           <DateField
@@ -460,13 +543,17 @@ export const EditBackground = () => {
             monthValue={educationDates.endMonth}
             yearName="education endYear"
             yearValue={educationDates.endYear}
+            error={fieldErrors.educationEndDate}
             onChange={handleDropdownChange}
           />
           <label className={styles.profileDialogCheckboxLabel}>
             <input
               className={styles.profileDialogCheckbox}
               checked={currentlyAttending}
-              onChange={(event) => setCurrentlyAttending(event.target.checked)}
+              onChange={(event) => {
+                setCurrentlyAttending(event.target.checked);
+                setFieldErrors((prev) => ({ ...prev, educationEndDate: "" }));
+              }}
               type="checkbox"
             />
             Currently Attending

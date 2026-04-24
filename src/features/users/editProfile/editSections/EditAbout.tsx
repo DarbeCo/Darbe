@@ -47,6 +47,7 @@ type AutoGrowFieldProps = {
   placeholder: string;
   name: string;
   required?: boolean;
+  error?: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
@@ -56,6 +57,7 @@ const AutoGrowField = ({
   placeholder,
   name,
   required = false,
+  error = "",
   onChange,
 }: AutoGrowFieldProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -86,7 +88,8 @@ const AutoGrowField = ({
         ref={textareaRef}
         className={`${styles.profileDialogTextarea} ${styles.profileAboutTextarea} ${
           textValue ? styles.profileDialogFieldFilled : ""
-        }`.trim()}
+        } ${error ? styles.profileDialogFieldError : ""}
+        `.trim()}
         maxLength={ABOUT_MAX_LENGTH}
         name={name}
         onChange={handleChange}
@@ -94,6 +97,7 @@ const AutoGrowField = ({
         rows={1}
         value={textValue}
       />
+      {error && <p className={styles.profileDialogFieldMessage}>{error}</p>}
       <div className={styles.profileDialogCounter}>
         {textValue.length}/{ABOUT_MAX_LENGTH}
       </div>
@@ -107,6 +111,7 @@ type DateRowProps = {
   monthValue?: string;
   yearName: string;
   yearValue?: string;
+  error?: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 };
 
@@ -116,6 +121,7 @@ const DateRow = ({
   monthValue = "",
   yearName,
   yearValue = "",
+  error = "",
   onChange,
 }: DateRowProps) => (
   <div className={`${styles.profileDialogField} ${styles.profileAboutDateField}`}>
@@ -127,7 +133,8 @@ const DateRow = ({
       <select
         className={`${styles.profileDialogSelect} ${
           monthValue ? styles.profileDialogFieldFilled : ""
-        }`.trim()}
+        } ${error ? styles.profileDialogFieldError : ""}
+        `.trim()}
         name={monthName}
         onChange={onChange}
         value={monthValue}
@@ -142,7 +149,8 @@ const DateRow = ({
       <select
         className={`${styles.profileDialogSelect} ${
           yearValue ? styles.profileDialogFieldFilled : ""
-        }`.trim()}
+        } ${error ? styles.profileDialogFieldError : ""}
+        `.trim()}
         name={yearName}
         onChange={onChange}
         value={yearValue}
@@ -155,6 +163,7 @@ const DateRow = ({
         ))}
       </select>
     </div>
+    {error && <p className={styles.profileDialogFieldMessage}>{error}</p>}
   </div>
 );
 
@@ -186,6 +195,7 @@ export const EditAbout = () => {
 
   const [updateUserProfile] = useUpdateUserProfileMutation();
   const [saveError, setSaveError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.name;
@@ -197,8 +207,10 @@ export const EditAbout = () => {
         ...volunteerExperiences,
         [subKey]: value,
       });
+      setFieldErrors((prev) => ({ ...prev, [subKey]: "" }));
     } else {
       setFormData({ ...formData, [name]: value });
+      setFieldErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
@@ -222,6 +234,14 @@ export const EditAbout = () => {
   };
 
   const handleNextSection = async () => {
+    const errors = validateForm();
+
+    if (Object.keys(errors).length) {
+      setFieldErrors(errors);
+      setSaveError("Please fix the required fields.");
+      return;
+    }
+
     if (isFormDirty()) {
       const didSave = await handleSave();
 
@@ -237,19 +257,27 @@ export const EditAbout = () => {
     const value = e.target.value;
 
     setDates({ ...dates, [name]: value });
+    if (name === "startMonth" || name === "startYear") {
+      setFieldErrors((prev) => ({ ...prev, startDate: "" }));
+    }
+    if (name === "endMonth" || name === "endYear") {
+      setFieldErrors((prev) => ({ ...prev, endDate: "" }));
+    }
   };
 
   const validateForm = () => {
+    const errors: Record<string, string> = {};
+
     if (!formData.aboutMe?.trim()) {
-      return "About is required.";
+      errors.aboutMe = "About is required.";
     }
 
     if (!formData.volunteerReason?.trim()) {
-      return "Why I volunteer is required.";
+      errors.volunteerReason = "Why I volunteer is required.";
     }
 
     if (!volunteerExperiences.entityName?.trim()) {
-      return "Non-Profit Name is required.";
+      errors.entityName = "Non-Profit Name is required.";
     }
 
     if (
@@ -258,28 +286,30 @@ export const EditAbout = () => {
       volunteerExperiences.totalHours.toString().trim() === "" ||
       Number.isNaN(Number(volunteerExperiences.totalHours))
     ) {
-      return "Estimated Hours Volunteered must be a number.";
+      errors.totalHours = "Estimated Hours Volunteered is required.";
     }
 
     if (!dates.startMonth || !dates.startYear) {
-      return "Start Date is required.";
+      errors.startDate = "Start Date is required.";
     }
 
     if (!dates.endMonth || !dates.endYear) {
-      return "End Date is required.";
+      errors.endDate = "End Date is required.";
     }
 
-    return "";
+    return errors;
   };
 
   const handleSave = async () => {
-    const error = validateForm();
+    const errors = validateForm();
 
-    if (error) {
-      setSaveError(error);
+    if (Object.keys(errors).length) {
+      setFieldErrors(errors);
+      setSaveError("Please fix the required fields.");
       return false;
     }
 
+    setFieldErrors({});
     setSaveError("");
 
     const preparedVolunteerExperience = prepareData(
@@ -327,6 +357,7 @@ export const EditAbout = () => {
             placeholder="Describe yourself..."
             value={formData.aboutMe}
             name="aboutMe"
+            error={fieldErrors.aboutMe}
             onChange={handleChange}
           />
           <AutoGrowField
@@ -335,6 +366,7 @@ export const EditAbout = () => {
             value={formData.volunteerReason}
             placeholder="Why do you volunteer?"
             name="volunteerReason"
+            error={fieldErrors.volunteerReason}
             onChange={handleChange}
           />
 
@@ -347,6 +379,7 @@ export const EditAbout = () => {
             value={volunteerExperiences.entityName}
             placeholder="Where do you work?"
             name="volunteerExperiences entityName"
+            error={fieldErrors.entityName}
             onChange={handleChange}
           />
           <AutoGrowField
@@ -355,6 +388,7 @@ export const EditAbout = () => {
             value={volunteerExperiences.totalHours}
             placeholder="Hours Volunteer?"
             name="volunteerExperiences totalHours"
+            error={fieldErrors.totalHours}
             onChange={handleChange}
           />
 
@@ -364,6 +398,7 @@ export const EditAbout = () => {
             monthValue={dates.startMonth}
             yearName="startYear"
             yearValue={dates.startYear}
+            error={fieldErrors.startDate}
             onChange={handleDropdownChange}
           />
           <DateRow
@@ -372,6 +407,7 @@ export const EditAbout = () => {
             monthValue={dates.endMonth}
             yearName="endYear"
             yearValue={dates.endYear}
+            error={fieldErrors.endDate}
             onChange={handleDropdownChange}
           />
         </div>

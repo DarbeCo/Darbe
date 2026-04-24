@@ -140,7 +140,12 @@ export const EventCard = ({
             profilePicture={event.eventOwner.profilePicture}
             onClick={() => handleAvatarClick(event.eventOwner.id)}
           />
-          <Typography variant="blueTextNormal" textToDisplay={displayName} />
+          <Typography
+            variant="blueTextNormal"
+            textToDisplay={displayName}
+            onClick={() => handleAvatarClick(event.eventOwner.id)}
+            extraClass="clickable"
+          />
         </div>
         <div className={styles.eventMatchHeaderDetails}>
           <IconButton onClick={handleCopyLink}>
