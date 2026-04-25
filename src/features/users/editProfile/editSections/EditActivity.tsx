@@ -12,9 +12,13 @@ export const EditActivity = () => {
   const { data, isLoading } = useGetUserActivityQuery(userId);
 
   return (
-    <div className={styles.profileEditContent}>
-      {isLoading && <CircularProgress />}
-      {!isLoading && <RecentActivityCard activity={data} userId={userId} />}
+    <div className={styles.profileDialogContent}>
+      <div className={styles.profileDialogScrollArea}>
+        <div className={styles.profileDialogActivityContent}>
+          {isLoading && <CircularProgress />}
+          {!isLoading && <RecentActivityCard activity={data} userId={userId} />}
+        </div>
+      </div>
     </div>
   );
 };
