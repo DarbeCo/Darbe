@@ -23,10 +23,12 @@ export const Footer = () => {
       <div className={styles.footerClosingTextArea}>
         <span className={styles.footerClosingText}>
           Still have questions?&nbsp;
-          <span className={styles.boldClosingText}>Contact Us.</span>
+          <Link className={styles.boldClosingText} to="/contact">
+            Contact Us.
+          </Link>
         </span>
         <span>
-          <a href="mailto: info@darbe.co">info@darbe.co</a>
+          <a href="mailto:info@darbe.co">info@darbe.co</a>
         </span>
       </div>
       <div className={styles.footerLegalLinks}>
@@ -34,6 +36,9 @@ export const Footer = () => {
         <span className={styles.footerLegalText}>All Rights Reserved</span>
         <span className={styles.footerLegalText}>
           <Link to="/privacyPolicy">Privacy Policy</Link>
+        </span>
+        <span className={styles.footerLegalText}>
+          <Link to="/contact">Contact Us</Link>
         </span>
       </div>
     </div>
