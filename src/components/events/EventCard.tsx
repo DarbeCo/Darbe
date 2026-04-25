@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { IconButton } from "@mui/material";
 import { ContentCopy } from "@mui/icons-material";
+import { useState } from "react";
 
 import { EVENTS_ROUTE, PROFILE_ROUTE } from "../../routes/route.constants";
 import { ShortEventState } from "../../services/api/endpoints/types/events.api.types";
@@ -18,6 +19,7 @@ import { selectCurrentUserId } from "../../features/users/selectors";
 import styles from "./styles/eventCards.module.css";
 import {
   usePassOnEventMutation,
+  useUnvolunteerFromEventMutation,
   useVolunteerForEventMutation,
 } from "../../services/api/endpoints/events/events.api";
 
@@ -26,6 +28,8 @@ interface EventCardProps {
   isSignedUp?: boolean;
   signupCount?: number;
   impactView?: boolean;
+  onUnvolunteerSuccess?: (eventId: string) => void;
+  canUnvolunteer?: boolean;
 }
 
 export const EventCard = ({
@@ -33,11 +37,18 @@ export const EventCard = ({
   isSignedUp,
   signupCount = 0,
   impactView = false,
+  onUnvolunteerSuccess,
+  canUnvolunteer = true,
 }: EventCardProps) => {
   const navigate = useNavigate();
   const currentUserId = useAppSelector(selectCurrentUserId);
   const [passOnEvent] = usePassOnEventMutation();
-  const [volunteerForEvent] = useVolunteerForEventMutation();
+  const [unvolunteerFromEvent, { isLoading: isUnvolunteering }] =
+    useUnvolunteerFromEventMutation();
+  const [volunteerForEvent, { isLoading: isVolunteering }] =
+    useVolunteerForEventMutation();
+  const [hasVolunteered, setHasVolunteered] = useState(Boolean(isSignedUp));
+  const [showVolunteerDialog, setShowVolunteerDialog] = useState(false);
 
   const handleAvatarClick = (userId: string) => {
     navigate(`${PROFILE_ROUTE}/${userId}`);
@@ -48,9 +59,34 @@ export const EventCard = ({
     passOnEvent(eventId);
   };
 
-  const handleVolunteerEvent = () => {
+  const handleVolunteerEvent = async () => {
     const eventId = event.id;
-    volunteerForEvent(eventId);
+
+    try {
+      await volunteerForEvent(eventId).unwrap();
+      setHasVolunteered(true);
+      setShowVolunteerDialog(true);
+    } catch (error) {
+      const errorMessage =
+        (error as { data?: { message?: string } })?.data?.message ??
+        "Unable to volunteer for this event right now.";
+
+      if (errorMessage.includes("already volunteered")) {
+        setHasVolunteered(true);
+      } else {
+        console.error("Error volunteering for event", error);
+      }
+    }
+  };
+
+  const handleUnvolunteerEvent = async () => {
+    try {
+      await unvolunteerFromEvent(event.id).unwrap();
+      setHasVolunteered(false);
+      onUnvolunteerSuccess?.(event.id);
+    } catch (error) {
+      console.error("Error unvolunteering from event", error);
+    }
   };
 
   const handleCopyLink = () => {
@@ -83,6 +119,8 @@ export const EventCard = ({
     signupCount > 0 ? signupCount : event.signups?.length || 0;
   const signedUpVolunteers = `${signupValueToUse}/${event.maxVolunteerCount} Signed Up`;
   const isEventPoster = currentUserId === event.eventOwner.id;
+  const isVolunteerLocked = hasVolunteered || isVolunteering;
+  const isSignedUpCard = Boolean(isSignedUp);
 
   // TODO: Move out to a hook/util?
   const calculateEventImpact = () => {
@@ -212,26 +250,64 @@ export const EventCard = ({
           <Typography variant="text" textToDisplay={eventImpactText} />
         </div>
       </div>
-      {isSignedUp && (
+      {hasVolunteered && canUnvolunteer && (
         <Typography
           variant="text"
           textToDisplay="You are signed up for this event."
         />
       )}
-      {!isEventPoster && !isSignedUp && !impactView && (
+      {!isEventPoster && !impactView && (
         <div className={styles.eventMatchFooter}>
-          <DarbeButton
-            buttonText="Pass"
-            onClick={handlePassEvent}
-            darbeButtonType="secondaryNextButton"
-          />
-          <DarbeButton
-            buttonText="Volunteer"
-            onClick={handleVolunteerEvent}
-            darbeButtonType="nextButton"
-          />
+          {!hasVolunteered && !isSignedUpCard && (
+            <DarbeButton
+              buttonText="Pass"
+              onClick={handlePassEvent}
+              darbeButtonType="secondaryNextButton"
+            />
+          )}
+          {isSignedUpCard && canUnvolunteer ? (
+            <DarbeButton
+              buttonText="Unvolunteer"
+              onClick={handleUnvolunteerEvent}
+              darbeButtonType="secondaryNextButton"
+              isDisabled={isUnvolunteering}
+            />
+          ) : !isSignedUpCard ? (
+            <DarbeButton
+              buttonText={hasVolunteered ? "Volunteered" : "Volunteer"}
+              onClick={handleVolunteerEvent}
+              darbeButtonType="nextButton"
+              isDisabled={isVolunteerLocked}
+            />
+          ) : null}
         </div>
       )}
+      {showVolunteerDialog ? (
+        <div className={styles.eventVolunteerDialogOverlay}>
+          <div
+            className={styles.eventVolunteerDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={`volunteer-dialog-title-${event.id}`}
+          >
+            <h2
+              className={styles.eventVolunteerDialogTitle}
+              id={`volunteer-dialog-title-${event.id}`}
+            >
+              You are now volunteered for this event.
+            </h2>
+            <div className={styles.eventVolunteerDialogActions}>
+              <button
+                type="button"
+                className={styles.eventVolunteerDialogButton}
+                onClick={() => setShowVolunteerDialog(false)}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

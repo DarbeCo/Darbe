@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CircularProgress } from "@mui/material";
 
 import {
@@ -19,9 +19,57 @@ export const EventSignup = () => {
   const [whenFilter, setWhenFilter] = useState<"upcoming" | "past" | undefined>(
     undefined
   );
+  const [hiddenEventIds, setHiddenEventIds] = useState<string[]>([]);
 
   const { data, isLoading } = useGetSignedUpEventsQuery({ when: whenFilter });
   const { data: entityEvents } = useGetEventsQuery();
+  const visibleSignedUpEvents = useMemo(
+    () =>
+      (data ?? []).filter(({ event }) => !hiddenEventIds.includes(event.id)),
+    [data, hiddenEventIds]
+  );
+
+  const handleUnvolunteerSuccess = (eventId: string) => {
+    setHiddenEventIds((previous) =>
+      previous.includes(eventId) ? previous : [...previous, eventId]
+    );
+  };
+
+  const canUnvolunteerEvent = (eventDate: string) => {
+    if (whenFilter === "past") {
+      return false;
+    }
+
+    const today = new Date();
+    const startOfToday = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+    const nextEventDate = new Date(eventDate);
+
+    return nextEventDate >= startOfToday;
+  };
+
+  const sortedSignedUpEvents = useMemo(() => {
+    if (whenFilter) {
+      return visibleSignedUpEvents;
+    }
+
+    return [...visibleSignedUpEvents].sort((first, second) => {
+      const firstIsCurrent = canUnvolunteerEvent(first.event.eventDate);
+      const secondIsCurrent = canUnvolunteerEvent(second.event.eventDate);
+
+      if (firstIsCurrent !== secondIsCurrent) {
+        return firstIsCurrent ? -1 : 1;
+      }
+
+      return (
+        new Date(second.event.eventDate).getTime() -
+        new Date(first.event.eventDate).getTime()
+      );
+    });
+  }, [visibleSignedUpEvents, whenFilter]);
 
   // if we are an individual, we show the events signed up for
   if (userType === "individual") {
@@ -49,7 +97,7 @@ export const EventSignup = () => {
         </div>
         {isLoading && <CircularProgress />}
         {!isLoading &&
-          data?.map(
+          sortedSignedUpEvents.map(
             ({
               event,
               signupCount,
@@ -57,7 +105,13 @@ export const EventSignup = () => {
               event: ShortEventState;
               signupCount: number;
             }) => (
-              <EventCard event={event} isSignedUp signupCount={signupCount} />
+              <EventCard
+                event={event}
+                isSignedUp
+                signupCount={signupCount}
+                onUnvolunteerSuccess={handleUnvolunteerSuccess}
+                canUnvolunteer={canUnvolunteerEvent(event.eventDate)}
+              />
             )
           )}
       </div>

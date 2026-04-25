@@ -261,11 +261,17 @@ const incrementImpact = async (
   }
 
   const updated = {
-    events_created: existing.events_created + (fields.events_created ?? 0),
-    events_attended: existing.events_attended + (fields.events_attended ?? 0),
-    events_passed: existing.events_passed + (fields.events_passed ?? 0),
-    events_coordinated: existing.events_coordinated + (fields.events_coordinated ?? 0),
-    hours_volunteered: Number(existing.hours_volunteered ?? 0) + (fields.hours_volunteered ?? 0),
+    events_created: Math.max(0, existing.events_created + (fields.events_created ?? 0)),
+    events_attended: Math.max(0, existing.events_attended + (fields.events_attended ?? 0)),
+    events_passed: Math.max(0, existing.events_passed + (fields.events_passed ?? 0)),
+    events_coordinated: Math.max(
+      0,
+      existing.events_coordinated + (fields.events_coordinated ?? 0)
+    ),
+    hours_volunteered: Math.max(
+      0,
+      Number(existing.hours_volunteered ?? 0) + (fields.hours_volunteered ?? 0)
+    ),
   };
 
   const { error } = await supabase
@@ -484,13 +490,15 @@ export const deleteEvent = async (eventId: string): Promise<void> => {
 export const volunteerForEvent = async (eventId: string): Promise<void> => {
   const userId = await ensureUserId();
 
-  const { data: existing } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from("event_signups")
-    .select("id")
-    .match({ event_id: eventId, user_id: userId })
-    .maybeSingle();
+    .select("id, status")
+    .eq("event_id", eventId)
+    .eq("user_id", userId);
 
-  if (existing) {
+  if (existingError) throw existingError;
+
+  if ((existing ?? []).length > 0) {
     throw new Error("You have already volunteered for this event");
   }
 
@@ -539,6 +547,44 @@ export const passOnEvent = async (eventId: string): Promise<void> => {
   if (error) throw error;
 
   await incrementImpact(userId, { events_passed: 1 });
+};
+
+export const unvolunteerFromEvent = async (eventId: string): Promise<void> => {
+  const userId = await ensureUserId();
+
+  const [{ data: existingSignups, error: signupError }, { data: event, error: eventError }] =
+    await Promise.all([
+      supabase
+        .from("event_signups")
+        .select("id, status")
+        .eq("event_id", eventId)
+        .eq("user_id", userId)
+        .in("status", ["volunteered", "confirmed"]),
+      supabase
+        .from("events")
+        .select("start_time, end_time")
+        .eq("id", eventId)
+        .single(),
+    ]);
+
+  if (signupError) throw signupError;
+  if (eventError || !event) throw eventError ?? new Error("Event not found");
+
+  const signupIds = (existingSignups ?? []).map((signup) => signup.id);
+
+  if (!signupIds.length) {
+    return;
+  }
+
+  const { error } = await supabase.from("event_signups").delete().in("id", signupIds);
+
+  if (error) throw error;
+
+  const start = timeToDecimal(event.start_time) ?? 0;
+  const end = timeToDecimal(event.end_time);
+  const hours = end ? Math.max(end - start, 0) : 0;
+
+  await incrementImpact(userId, { events_attended: -1, hours_volunteered: -hours });
 };
 
 export const getSignedUpEvents = async (
@@ -591,15 +637,38 @@ export const getSignedUpEvents = async (
   const signedUpUser = toSimpleUser(profile, userId);
   const signupCountMap = await getSignupCounts(filteredEvents.map((event) => event.id));
 
-  return (signups ?? [])
-    .filter((signup) => eventMap.has(signup.event_id))
-    .map((signup) => ({
-      event: eventMap.get(signup.event_id) as ShortEventState,
-      signedUpUser,
-      eventActionTimeStamp: signup.event_action_timestamp,
-      status: signup.status as "volunteered" | "confirmed" | "passed",
-      signupCount: signupCountMap.get(signup.event_id) ?? 0,
-    }));
+  const latestSignupByEvent = new Map<
+    string,
+    {
+      event_id: string;
+      status: string;
+      event_action_timestamp: string;
+    }
+  >();
+
+  (signups ?? []).forEach((signup) => {
+    if (!eventMap.has(signup.event_id)) {
+      return;
+    }
+
+    const existingSignup = latestSignupByEvent.get(signup.event_id);
+
+    if (
+      !existingSignup ||
+      new Date(signup.event_action_timestamp).getTime() >
+        new Date(existingSignup.event_action_timestamp).getTime()
+    ) {
+      latestSignupByEvent.set(signup.event_id, signup);
+    }
+  });
+
+  return Array.from(latestSignupByEvent.values()).map((signup) => ({
+    event: eventMap.get(signup.event_id) as ShortEventState,
+    signedUpUser,
+    eventActionTimeStamp: signup.event_action_timestamp,
+    status: signup.status as "volunteered" | "confirmed" | "passed",
+    signupCount: signupCountMap.get(signup.event_id) ?? 0,
+  }));
 };
 
 export const getVolunteerMatches = async (): Promise<VolunteerMatch[]> => {

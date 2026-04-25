@@ -51,6 +51,7 @@ export {
   getSignedUpEvents,
   getVolunteerMatches,
   passOnEvent,
+  unvolunteerFromEvent,
   volunteerForEvent,
 } from "./events";
 export {

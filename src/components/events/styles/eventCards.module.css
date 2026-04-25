@@ -118,3 +118,52 @@
   column-gap: 8px;
   align-items: center;
 }
+
+.eventVolunteerDialogOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.eventVolunteerDialog {
+  width: min(250px, calc(100% - 32px));
+  padding: 18px 16px 14px;
+  border-radius: 4px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+.eventVolunteerDialogTitle {
+  margin: 0;
+  color: #2b2b2b;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  text-align: center;
+}
+
+.eventVolunteerDialogActions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.eventVolunteerDialogButton {
+  min-width: 68px;
+  border: none;
+  border-radius: 4px;
+  background: #23a455;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  padding: 7px 16px;
+  cursor: pointer;
+}

@@ -15,6 +15,7 @@ import {
   getSignedUpEvents,
   getVolunteerMatches,
   passOnEvent,
+  unvolunteerFromEvent,
   volunteerForEvent,
 } from "../../../darbeService";
 
@@ -117,6 +118,22 @@ const eventsApi = darbeBaseApi.injectEndpoints({
       },
       invalidatesTags: ["Events"],
     }),
+    unvolunteerFromEvent: builder.mutation<void, string>({
+      async queryFn(eventId) {
+        try {
+          await unvolunteerFromEvent(eventId);
+          return { data: undefined };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      invalidatesTags: ["Events"],
+    }),
     // Accept an optional filter argument to request upcoming or past signups
     getSignedUpEvents: builder.query<
       UserEventSignups[],
@@ -165,6 +182,7 @@ export const {
   useDeleteEventMutation,
   useVolunteerForEventMutation,
   usePassOnEventMutation,
+  useUnvolunteerFromEventMutation,
   useGetSignedUpEventsQuery,
   useGetVolunteerMatchesQuery,
 } = eventsApi;
