@@ -8,7 +8,9 @@ export const EventRequirements = ({
   eventType,
   onChange,
 }: EventFormCommonProps) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
     if (onChange) {
       const { name, value } = e.target;
       onChange((prevState) => ({
@@ -23,6 +25,10 @@ export const EventRequirements = ({
 
   const { eventRequirements } = data;
   const isCommunityEvent = eventType === "externalEvent";
+  const ageRestrictionOptions = Array.from({ length: 9 }, (_, index) => {
+    const age = index + 10;
+    return `Volunteer must be at least ${age} Yrs Old`;
+  });
   const fieldClass = (value: string, extraClass: string) =>
     [
       styles.internalRequirementField,
@@ -81,16 +87,23 @@ export const EventRequirements = ({
         )}
       >
         <span className={styles.internalRequirementLabel}>Age Restriction</span>
-        <Inputs
-          label=""
-          darbeInputType="standardInput"
+        <select
+          className={`${styles.internalRequirementSelect} ${
+            eventRequirements.ageRestrictions
+              ? styles.internalRequirementSelectFilled
+              : ""
+          }`.trim()}
           name="ageRestrictions"
           value={eventRequirements.ageRestrictions}
-          handleChange={handleChange}
-          placeholder={
-            isCommunityEvent ? "Over 5 years old" : "Must be 18 to participate."
-          }
-        />
+          onChange={handleChange}
+        >
+          <option value="">Select age restriction</option>
+          {ageRestrictionOptions.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
       </label>
 
       <label

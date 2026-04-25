@@ -666,6 +666,38 @@
   border-radius: 8px;
 }
 
+.internalRequirementSelect {
+  width: 100%;
+  height: 44px;
+  padding: 0 40px 0 16px;
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  background-color: #fff;
+  color: #717070;
+  font-size: 16px;
+  line-height: 22px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #4b5563 50%),
+    linear-gradient(135deg, #4b5563 50%, transparent 50%);
+  background-position:
+    calc(100% - 20px) calc(50% - 1px),
+    calc(100% - 14px) calc(50% - 1px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.internalRequirementSelect:focus {
+  border-color: #263238;
+}
+
+.internalRequirementSelectFilled {
+  color: #000;
+}
+
 .internalRequirementLargeField :global(.MuiInputBase-root) {
   min-height: 96px;
   align-items: flex-start;
@@ -698,7 +730,16 @@
   border-color: #088f26;
 }
 
+.internalRequirementValidField .internalRequirementSelect {
+  border-color: #088f26;
+}
+
 .internalRequirementValidField:focus-within :global(.MuiInputBase-root) {
+  border-color: #263238;
+}
+
+.internalRequirementValidField:focus-within .internalRequirementSelect,
+.internalRequirementSelect:focus {
   border-color: #263238;
 }
 
