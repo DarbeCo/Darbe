@@ -31,6 +31,63 @@
   line-height: 30px;
 }
 
+.currentMatchesList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  padding: 0 10px 10px;
+  box-sizing: border-box;
+}
+
+.currentMatchesItem {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.currentMatchesText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.currentMatchesName {
+  color: #000;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+.currentMatchesSubtitle {
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.currentMatchesMeta {
+  color: #2c77e7;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.currentMatchesEmpty {
+  color: #4b5563;
+  font-size: 13px;
+  line-height: 18px;
+}
+
 @media (min-width: 560px) and (max-width: 1260px) {
   .volunteerCarouselCards {
     height: 180px;

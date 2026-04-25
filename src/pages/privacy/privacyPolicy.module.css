@@ -1,0 +1,135 @@
+.privacyPage {
+  min-height: 100vh;
+  background: #f6f9fe;
+}
+
+.privacyMain {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 40px 0 64px;
+}
+
+.privacyHero {
+  padding: 56px 32px 32px;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(44, 119, 231, 0.08) 0%, rgba(44, 119, 231, 0) 100%),
+    #ffffff;
+  border-left: 4px solid #2c77e7;
+  box-shadow: 8px 8px rgba(0, 0, 0, 0.08);
+}
+
+.privacyEyebrow {
+  margin: 0 0 12px;
+  color: #2c77e7;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.privacyTitle {
+  margin: 0;
+  color: #111827;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 58px;
+}
+
+.privacySubtitle {
+  margin: 16px 0 0;
+  color: #4b5563;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.privacySummary {
+  max-width: 760px;
+  margin: 20px 0 0;
+  color: #1f2937;
+  font-size: 18px;
+  line-height: 30px;
+}
+
+.privacySectionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.privacyCard {
+  padding: 28px 24px;
+  border-radius: 8px;
+  background: #ffffff;
+  border-left: 4px solid #2c77e7;
+  box-shadow: 8px 8px rgba(0, 0, 0, 0.08);
+  margin-top: 20px;
+}
+
+.privacyCard h2 {
+  margin: 0 0 12px;
+  color: #111827;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+}
+
+.privacyCard p {
+  margin: 0;
+  color: #374151;
+  font-size: 16px;
+  line-height: 28px;
+}
+
+.privacyCard p + p {
+  margin-top: 12px;
+}
+
+.privacyCard a {
+  color: #2c77e7;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 900px) {
+  .privacySectionGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .privacyTitle {
+    font-size: 38px;
+    line-height: 46px;
+  }
+}
+
+@media (max-width: 560px) {
+  .privacyMain {
+    width: min(100%, calc(100% - 20px));
+    padding: 24px 0 40px;
+  }
+
+  .privacyHero {
+    padding: 32px 18px 24px;
+    box-shadow: 6px 6px rgba(0, 0, 0, 0.08);
+  }
+
+  .privacyTitle {
+    font-size: 32px;
+    line-height: 40px;
+  }
+
+  .privacySummary {
+    font-size: 16px;
+    line-height: 26px;
+  }
+
+  .privacyCard {
+    padding: 22px 18px;
+    box-shadow: 6px 6px rgba(0, 0, 0, 0.08);
+  }
+
+  .privacyCard h2 {
+    font-size: 22px;
+    line-height: 30px;
+  }
+}

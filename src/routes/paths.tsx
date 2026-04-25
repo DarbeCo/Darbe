@@ -20,12 +20,17 @@ import { Matches } from "../features/matches/Matches";
 import { Roster } from "../features/roster/Roster";
 import { FriendsList } from "../features/friends/Friends";
 import ImpactPage from "../features/impact/Impact";
+import { PrivacyPolicy } from "../pages/privacy/PrivacyPolicy";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <LandingPage />,
     errorElement: <Error />,
+  },
+  {
+    path: "/privacyPolicy",
+    element: <PrivacyPolicy />,
   },
   {
     path: "/signup",
@@ -111,6 +116,10 @@ export const router = createBrowserRouter([
       {
         path: "friends",
         element: <FriendsList />,
+      },
+      {
+        path: "privacy",
+        element: <PrivacyPolicy />,
       },
     ],
   },
