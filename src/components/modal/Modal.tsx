@@ -90,8 +90,12 @@ export const Modal = () => {
     modalType === MODAL_TYPE.friends ||
     modalType === MODAL_TYPE.organizations ||
     modalType === MODAL_TYPE.activity ||
+    modalType === MODAL_TYPE.mutualFriends ||
+    modalType === MODAL_TYPE.mutualCauses ||
     modalType === MODAL_TYPE.causes ||
-    modalType === MODAL_TYPE.availability;
+    modalType === MODAL_TYPE.availability ||
+    modalType === MODAL_TYPE.profileCauses ||
+    modalType === MODAL_TYPE.profileFriends;
   const profileBackTargets: Partial<Record<string, string>> = {
     [MODAL_TYPE.background]: MODAL_TYPE.about,
     [MODAL_TYPE.military]: MODAL_TYPE.background,

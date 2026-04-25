@@ -72,10 +72,14 @@ export const SimpleCauseDisplay = ({
   };
 
   return (
-    <div className={styles.causesDisplay}>
+    <div
+      className={
+        canEdit ? styles.causesDisplay : styles.userCausesDialogContainer
+      }
+    >
       {isLoading ? (
         <CircularProgress />
-      ) : (
+      ) : canEdit ? (
         <>
           <div className={styles.causesContainer}>
             {visibleCauses.map((cause) => {
@@ -98,6 +102,23 @@ export const SimpleCauseDisplay = ({
             />
           )}
         </>
+      ) : (
+        <div className={styles.userCausesScrollArea}>
+          {visibleCauses.length > 0 ? (
+            <div className={styles.userCausesGrid}>
+              {visibleCauses.map((cause) => (
+                <DarbeButton
+                  key={cause.id}
+                  buttonText={cause.name}
+                  darbeButtonType="causesButtonBlue"
+                  isDisabled
+                />
+              ))}
+            </div>
+          ) : (
+            <div className={styles.noMutualCauses}>No causes selected</div>
+          )}
+        </div>
       )}
     </div>
   );

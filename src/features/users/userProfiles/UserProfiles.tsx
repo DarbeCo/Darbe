@@ -15,6 +15,7 @@ import { UserProfileConnectionButtons } from "./sections/UserProfileConnectionBu
 import useScreenWidthHook from "../../../utils/commonHooks/UseScreenWidth";
 import {
   useGetFriendRequestsQuery,
+  useGetMutualFriendsQuery,
   useGetSentFriendRequestsQuery,
   useLazyGetFriendsQuery,
   useLazyGetUserFollowersQuery,
@@ -57,6 +58,9 @@ export const UserProfiles = () => {
   const { data: sentFriendRequests } = useGetSentFriendRequestsQuery();
   // This gets the currently logged in user received friend requests
   const { data: receivedFriendRequests } = useGetFriendRequestsQuery();
+  const { data: mutualFriendsData } = useGetMutualFriendsQuery(userId ?? "", {
+    skip: !userId || canEdit,
+  });
 
   // save logged in user profile info for faster access/edit purposes
   useEffect(() => {
@@ -92,11 +96,7 @@ export const UserProfiles = () => {
         user?.causes?.includes(cause)
       )?.length;
 
-  const mutualFriends = canEdit
-    ? 0
-    : userInformation?.friends?.filter((friend) =>
-        currentFriends?.find((currentFriend) => currentFriend.id === friend.id)
-      )?.length;
+  const mutualFriends = canEdit ? 0 : mutualFriendsData?.length ?? 0;
 
   const { isMobile, isDesktop } = useScreenWidthHook();
 

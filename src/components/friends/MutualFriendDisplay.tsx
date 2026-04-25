@@ -10,21 +10,24 @@ interface MutualFriendDisplayProps {
 export const MutualFriendDisplay = ({ userId }: MutualFriendDisplayProps) => {
   const { data: mutualFriends } = useGetMutualFriendsQuery(userId);
   const hasMutualFriends = mutualFriends && mutualFriends?.length > 0;
-  let content;
 
-  if (!hasMutualFriends) {
-    content = <div className={styles.noMutualFriends}>No mutual friends</div>;
-  }
-  if (hasMutualFriends) {
-    content = mutualFriends.map((friend) => (
-      <div key={friend.id} className={styles.mutualFriendCard}>
-        <UserAvatars
-          profilePicture={friend.profilePicture}
-          fullName={friend.fullName}
-        />
+  return (
+    <div className={styles.mutualFriendsContainer}>
+      <div className={styles.mutualFriendsScrollArea}>
+        {!hasMutualFriends && (
+          <div className={styles.noMutualFriends}>No mutual friends</div>
+        )}
+        {hasMutualFriends &&
+          mutualFriends.map((friend) => (
+            <div key={friend.id} className={styles.mutualFriendCard}>
+              <UserAvatars
+                userId={friend.id}
+                profilePicture={friend.profilePicture}
+                fullName={friend.fullName}
+              />
+            </div>
+          ))}
       </div>
-    ));
-  }
-
-  return <div className={styles.mutualFriendsContainer}>{content}</div>;
+    </div>
+  );
 };

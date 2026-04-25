@@ -30,3 +30,92 @@
 .blueText {
   color: #2c77e7;
 }
+
+.mutualCausesContainer {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  padding: 16px 24px 24px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.mutualCausesScrollArea {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.mutualCausesGrid {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+.userCausesDialogContainer {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  padding: 16px 24px 24px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.userCausesScrollArea {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.userCausesGrid {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+.noMutualCauses {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  color: #717070;
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  line-height: 22px;
+  text-align: center;
+  background: #fff;
+}
+
+@media (max-width: 560px) {
+  .mutualCausesContainer {
+    padding: 12px 12px 16px;
+  }
+
+  .userCausesDialogContainer {
+    padding: 12px 12px 16px;
+  }
+
+  .mutualCausesGrid {
+    gap: 10px;
+  }
+
+  .userCausesGrid {
+    gap: 10px;
+  }
+}

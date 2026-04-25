@@ -81,11 +81,13 @@ export const UserProfileButtons = ({
           onClick={handleFriendsClick}
           buttonText={`Friends ${friendCount}`}
         />
-        <DarbeButton
-          darbeButtonType="profileButtons"
-          onClick={handleMutualFriendsClick}
-          buttonText={`${mutualFriends} Mutuals`}
-        />
+        {!canEdit && (
+          <DarbeButton
+            darbeButtonType="profileButtons"
+            onClick={handleMutualFriendsClick}
+            buttonText={`${mutualFriends} Mutuals`}
+          />
+        )}
       </div>
 
       <div className={styles.userProfileCausesButtons}>
@@ -94,11 +96,13 @@ export const UserProfileButtons = ({
           onClick={handleCausesClick}
           buttonText={`Causes ${causesCount}`}
         />
-        <DarbeButton
-          darbeButtonType="profileButtons"
-          onClick={handleMutualCausesClick}
-          buttonText={`${mutualCauses} Mutuals`}
-        />
+        {!canEdit && (
+          <DarbeButton
+            darbeButtonType="profileButtons"
+            onClick={handleMutualCausesClick}
+            buttonText={`${mutualCauses} Mutuals`}
+          />
+        )}
       </div>
     </div>
   );

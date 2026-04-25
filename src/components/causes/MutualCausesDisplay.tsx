@@ -10,25 +10,26 @@ interface MutualCausesDisplayProps {
 export const MutualCausesDisplay = ({ userId }: MutualCausesDisplayProps) => {
   const { data: mutualCauses } = useGetMutualCausesQuery(userId);
   const hasMutualCauses = mutualCauses && mutualCauses?.length > 0;
-  let content;
 
-  if (!hasMutualCauses) {
-    content = <div className={styles.noMutualFriends}>No mutual friends</div>;
-  }
-  if (hasMutualCauses) {
-    content = (
-      <div className={styles.causesContainer}>
-        {mutualCauses.map((cause) => (
-          <DarbeButton
-            key={cause.id}
-            buttonText={cause.name}
-            darbeButtonType="causesButtonBlue"
-            isDisabled
-          />
-        ))}
+  return (
+    <div className={styles.mutualCausesContainer}>
+      <div className={styles.mutualCausesScrollArea}>
+        {!hasMutualCauses && (
+          <div className={styles.noMutualCauses}>No mutual causes</div>
+        )}
+        {hasMutualCauses && (
+          <div className={styles.mutualCausesGrid}>
+            {mutualCauses.map((cause) => (
+              <DarbeButton
+                key={cause.id}
+                buttonText={cause.name}
+                darbeButtonType="causesButtonBlue"
+                isDisabled
+              />
+            ))}
+          </div>
+        )}
       </div>
-    );
-  }
-
-  return <div className={styles.mutualFriendsContainer}>{content}</div>;
+    </div>
+  );
 };
