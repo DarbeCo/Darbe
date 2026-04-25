@@ -54,16 +54,18 @@ export const Inputs = ({
   return (
     <div className={styles.darbeInputs}>
       <FormControl error={!!error} sx={{ width: "100%" }} required={isRequired}>
-        <InputLabel
-          id={name}
-          shrink
-          sx={{
-            fontSize: "20px",
-            transform: "translateX(0px) translateY(-12px)",
-          }}
-        >
-          {label}
-        </InputLabel>
+        {label ? (
+          <InputLabel
+            id={name}
+            shrink
+            sx={{
+              fontSize: "20px",
+              transform: "translateX(0px) translateY(-12px)",
+            }}
+          >
+            {label}
+          </InputLabel>
+        ) : null}
         <Input
           error={!!error}
           value={value}

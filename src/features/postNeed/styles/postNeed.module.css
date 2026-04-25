@@ -653,6 +653,8 @@
 }
 
 .internalRequirementLabel {
+  display: block;
+  margin: 0;
   color: #000;
   font-size: 18px;
   font-weight: 600;
@@ -1608,6 +1610,62 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
+}
+
+.internalReviewError {
+  margin: 0 16px 0 0;
+  color: #b00020;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.postNeedSubmitDialogOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.postNeedSubmitDialog {
+  width: min(100%, 480px);
+  padding: 24px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+}
+
+.postNeedSubmitDialogTitle {
+  margin: 0 0 8px;
+  color: #000;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 33px;
+}
+
+.postNeedSubmitDialogText {
+  margin: 0 0 12px;
+  color: #263238;
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.postNeedSubmitDialogList {
+  margin: 0 0 20px;
+  padding-left: 20px;
+  color: #263238;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.postNeedSubmitDialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 .internalReviewLink {

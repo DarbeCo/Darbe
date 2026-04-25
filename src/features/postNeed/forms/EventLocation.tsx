@@ -6,44 +6,15 @@ import { Inputs } from "../../../components/inputs/Inputs";
 import { CheckBox } from "../../../components/checkbox/Checkbox";
 
 import styles from "../styles/postNeed.module.css";
-import { useCallback, useState } from "react";
-import debounce from "lodash.debounce";
-import { validateField } from "../utils";
 
 export const EventLocation = ({
   data,
   eventType,
   onChange,
-  markError,
 }: EventFormCommonProps) => {
-  const [errors, setErrors] = useState({
-    locationName: "",
-    streetName: "",
-    city: "",
-    zipCode: "",
-  });
-
-  const runErrorChecks = useCallback(
-    debounce((name: string, value: any) => {
-      const error = validateField(name, value);
-
-      setErrors((prevErrors) => ({
-        ...prevErrors,
-        [name]: error,
-      }));
-
-      const anyErrors = error !== "";
-
-      markError(anyErrors);
-    }, 300),
-    [errors, markError]
-  );
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (onChange) {
       const { name, value } = e.target;
-
-      runErrorChecks(name, value);
 
       onChange((prevState) => ({
         ...prevState,
@@ -58,8 +29,6 @@ export const EventLocation = ({
   const handleUnnestedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (onChange) {
       const { name, value } = e.target;
-
-      runErrorChecks(name, value);
 
       onChange((prevState) => ({
         ...prevState,
@@ -127,8 +96,6 @@ export const EventLocation = ({
             label=""
             darbeInputType="standardInput"
             value={data.eventAddress.locationName}
-            error={!!errors.locationName}
-            errorHelperText={errors.locationName}
             name="locationName"
             handleChange={handleChange}
             placeholder="Location Name"
@@ -140,8 +107,6 @@ export const EventLocation = ({
             darbeInputType="standardInput"
             name="streetName"
             value={data.eventAddress.streetName}
-            error={!!errors.streetName}
-            errorHelperText={errors.streetName}
             handleChange={handleChange}
             placeholder="123 Main St."
           />
@@ -152,8 +117,6 @@ export const EventLocation = ({
             darbeInputType="standardInput"
             name="city"
             value={data.eventAddress.city}
-            error={!!errors.city}
-            errorHelperText={errors.city}
             handleChange={handleChange}
             placeholder="Houston, TX 77001"
           />
@@ -164,8 +127,6 @@ export const EventLocation = ({
               label=""
               darbeInputType="standardInput"
               value={data.eventAddress.zipCode}
-              error={!!errors.zipCode}
-              errorHelperText={errors.zipCode}
               handleChange={handleChange}
               name="zipCode"
               placeholder="Zip Code"

@@ -1,13 +1,9 @@
-import { useCallback, useState } from "react";
-
 import { EventFormCommonProps } from "../types";
 import { Inputs } from "../../../components/inputs/Inputs";
 import { Dropdown } from "../../../components/dropdowns/Dropdown";
 import { CheckBox } from "../../../components/checkbox/Checkbox";
 import { DropdownTypes } from "../../../components/dropdowns/DropdownTypes";
 import { Typography } from "../../../components/typography/Typography";
-import { debounce } from "../../../utils/CommonFunctions";
-import { validateField } from "../utils";
 
 import styles from "../styles/postNeed.module.css";
 
@@ -15,38 +11,11 @@ export const EventInfo = ({
   data,
   eventType,
   onChange,
-  markError,
 }: EventFormCommonProps) => {
-  const [errors, setErrors] = useState({
-    eventName: "",
-    eventDate: "",
-    maxVolunteerCount: "",
-    eventHoursNeeded: "",
-    startTime: "",
-  });
-
-  const runErrorChecks = useCallback(
-    debounce((name: string, value: any) => {
-      const error = validateField(name, value);
-
-      setErrors((prevErrors) => ({
-        ...prevErrors,
-        [name]: error,
-      }));
-
-      const anyErrors = error !== "";
-
-      markError(anyErrors);
-    }, 300),
-    [errors, markError]
-  );
-
   const handleDropdownChange = (
     event: React.ChangeEvent<HTMLSelectElement>
   ) => {
     const { name, value } = event.target;
-
-    runErrorChecks(name, value);
 
     if (onChange) {
       onChange((prevState) => ({
@@ -59,8 +28,6 @@ export const EventInfo = ({
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
 
-    runErrorChecks(name, value);
-
     onChange?.((prevState) => ({
       ...prevState,
       [name]: value,
@@ -70,8 +37,6 @@ export const EventInfo = ({
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     const formattedValue = formatDateDisplayValue(value);
-
-    runErrorChecks(name, formattedValue);
 
     onChange?.((prevState) => ({
       ...prevState,
@@ -152,9 +117,7 @@ export const EventInfo = ({
           darbeInputType="standardInput"
           name="eventName"
           isRequired
-          errorHelperText={errors.eventName}
           value={data.eventName}
-          error={!!errors.eventName}
           handleChange={handleChange}
           placeholder={useStepPanelLayout ? "Event Name" : "Enter Event Name"}
         />
@@ -180,9 +143,7 @@ export const EventInfo = ({
           darbeInputType="standardInput"
           type="date"
           isRequired
-          errorHelperText={errors.eventDate}
           value={formatDateInputValue(data.eventDate)}
-          error={!!errors.eventDate}
           handleChange={handleDateChange}
           name="eventDate"
           placeholder="MM-DD-YYYY"
@@ -235,9 +196,7 @@ export const EventInfo = ({
             label="# Of Volunteers Needed"
             darbeInputType="standardInput"
             isRequired
-            errorHelperText={errors.maxVolunteerCount}
             value={data.maxVolunteerCount}
-            error={!!errors.maxVolunteerCount}
             handleChange={handleChange}
             name="maxVolunteerCount"
             placeholder={
@@ -262,9 +221,7 @@ export const EventInfo = ({
             label="# Of Hours Needed"
             darbeInputType="standardInput"
             isRequired
-            errorHelperText={errors.eventHoursNeeded}
             value={data.eventHoursNeeded || ""}
-            error={!!errors.eventHoursNeeded}
             handleChange={handleChange}
             name="eventHoursNeeded"
             placeholder="Hours"
@@ -289,8 +246,6 @@ export const EventInfo = ({
         <Dropdown
           name="startTime"
           label={useStepPanelLayout ? "" : "Start Time"}
-          error={!!errors.startTime}
-          errorHelperText={errors.startTime}
           initialValue={
             useStepPanelLayout && !data.startTime
               ? "9"

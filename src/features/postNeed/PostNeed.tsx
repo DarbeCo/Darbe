@@ -15,7 +15,6 @@ import { EventLocation } from "./forms/EventLocation";
 import { EventRequirements } from "./forms/EventRequirements";
 import { EventType } from "./EventType";
 import { InternalEventReview } from "./InternalEventReview";
-import { validateField } from "./utils";
 import { ClosingIcon } from "../../components/closingIcon/ClosingIcon";
 import { Typography } from "../../components/typography/Typography";
 import { CustomSvgs } from "../../components/customSvgs/CustomSvgs";
@@ -93,13 +92,23 @@ const hasValue = (value?: unknown) => Boolean(value?.toString().trim());
 export const PostNeed = () => {
   const navigate = useNavigate();
   const userId = useAppSelector(selectCurrentUserId);
-  const [, setErrorFound] = useState(false);
   const [currentStep, setCurrentStep] = useState(-1);
   const [eventType, setEventType] = useState("");
   const [eventData, setEventData] = useState<CreateEvent>(INITIAL_EVENT_STATE);
+  const [submitValidationDialog, setSubmitValidationDialog] = useState<{
+    missingFields: string[];
+    nextStep: number;
+  } | null>(null);
   const [createEvent] = useCreateEventMutation();
 
   const handlePostEvent = async () => {
+    const invalidStep = getInvalidStep();
+
+    if (invalidStep) {
+      setSubmitValidationDialog(invalidStep);
+      return;
+    }
+
     try {
       const isInternalEvent = eventType === "internalEvent";
       // build the payload with the current userId
@@ -118,6 +127,7 @@ export const PostNeed = () => {
       };
 
       await createEvent(payload).unwrap();
+      setSubmitValidationDialog(null);
       navigate(EVENTS_ROUTE);
     } catch (error) {
       console.error("Error posting event", error);
@@ -131,6 +141,7 @@ export const PostNeed = () => {
   const handleEventSelection = (selectedEventType: string) => {
     const isChangingEventType =
       Boolean(eventType) && eventType !== selectedEventType;
+    setSubmitValidationDialog(null);
     setEventType(selectedEventType);
 
     const isInternalEvent = selectedEventType === "internalEvent";
@@ -142,6 +153,8 @@ export const PostNeed = () => {
   };
 
   const handleGoBack = () => {
+    setSubmitValidationDialog(null);
+
     if (currentStep === 0) {
       setCurrentStep(-1);
       return;
@@ -151,10 +164,6 @@ export const PostNeed = () => {
   };
 
   const handleGoForward = () => {
-    if (isCurrentStepInvalid) {
-      return;
-    }
-
     if (currentStep === -1) {
       if (!eventType) {
         return;
@@ -164,6 +173,8 @@ export const PostNeed = () => {
       return;
     }
 
+    setSubmitValidationDialog(null);
+
     if (currentStep === EventForms.length - 1) {
       handlePostEvent();
     } else {
@@ -172,7 +183,21 @@ export const PostNeed = () => {
   };
 
   const handleEditStep = (step: number) => {
+    setSubmitValidationDialog(null);
     setCurrentStep(step);
+  };
+
+  const handleSubmitValidationCancel = () => {
+    setSubmitValidationDialog(null);
+  };
+
+  const handleSubmitValidationConfirm = () => {
+    if (!submitValidationDialog) {
+      return;
+    }
+
+    setCurrentStep(submitValidationDialog.nextStep);
+    setSubmitValidationDialog(null);
   };
 
   const eventStepTitle =
@@ -197,77 +222,113 @@ export const PostNeed = () => {
   };
 
   const formStep = figureOutStringFromStep(currentStep);
-  const markError = (hasError: boolean) => {
-    setErrorFound(hasError);
-  };
-
   const isInternalEvent = eventType === "internalEvent";
   const isCommunityEvent = eventType === "externalEvent";
-  const hasValidEventInfo =
-    !validateField("eventName", eventData.eventName) &&
-    !validateField("eventDate", eventData.eventDate) &&
-    toNumber(eventData.startTime) > 0 &&
-    toNumber(eventData.endTime) > 0 &&
-    toNumber(eventData.endTime) > toNumber(eventData.startTime) &&
-    (isInternalEvent
-      ? hasValue(eventData.eventDescription)
-      : !validateField("maxVolunteerCount", eventData.maxVolunteerCount) &&
-        hasValue(eventData.eventDescription) &&
-        hasValue(eventData.eventHoursNeeded));
-  const hasValidEventLocation =
-    !validateField("locationName", eventData.eventAddress.locationName) &&
-    !validateField("streetName", eventData.eventAddress.streetName) &&
-    !validateField("city", eventData.eventAddress.city) &&
-    (isInternalEvent || isCommunityEvent
-      ? true
-      : !validateField("zipCode", eventData.eventAddress.zipCode)) &&
-    (eventData.isIndoor || eventData.isOutdoor) &&
-    (isInternalEvent || isCommunityEvent
-      ? hasValue(eventData.eventInternalLocation)
-      : true);
-  const hasValidEventDetails =
-    hasValue(eventData.eventCoordinator) &&
-    ((eventData.volunteerImpact.isIndividualImpact &&
-      hasValue(eventData.volunteerImpact.individualImpactPerHour) &&
-      hasValue(eventData.volunteerImpact.individualImpact)) ||
-      (eventData.volunteerImpact.isGroupImpact &&
-        hasValue(eventData.volunteerImpact.groupImpactPerHour) &&
-        hasValue(eventData.volunteerImpact.groupImpact)));
-  const isCurrentStepInvalid =
-    currentStep === -1
-      ? !eventType
-      : currentStep === 0
-        ? !hasValidEventInfo
-        : currentStep === 1
-          ? !hasValidEventLocation
-          : currentStep === 3
-            ? !hasValidEventDetails
-            : false;
+  const hasText = (value?: unknown) => Boolean(value?.toString().trim());
+  const getInvalidStep = () => {
+    const eventInfoMissingFields = [
+      !hasText(eventData.eventName) ? "Event Name" : "",
+      !hasText(eventData.eventDate) ? "Date" : "",
+      toNumber(eventData.startTime) <= 0 ? "Start Time" : "",
+      toNumber(eventData.endTime) <= 0 ? "End Time" : "",
+      toNumber(eventData.endTime) > 0 &&
+      toNumber(eventData.startTime) > 0 &&
+      toNumber(eventData.endTime) <= toNumber(eventData.startTime)
+        ? "Valid Time Range"
+        : "",
+      !hasValue(eventData.eventDescription) ? "Description" : "",
+      !isInternalEvent && toNumber(eventData.maxVolunteerCount) <= 0
+        ? "# Of Volunteers Needed"
+        : "",
+      !isInternalEvent && !hasValue(eventData.eventHoursNeeded)
+        ? "# Of Hours Needed"
+        : "",
+    ].filter(Boolean);
+
+    if (eventInfoMissingFields.length > 0) {
+      return {
+        nextStep: 0,
+        missingFields: eventInfoMissingFields,
+      };
+    }
+
+    const eventLocationMissingFields = [
+      !hasText(eventData.eventAddress.locationName) ? "Location Name" : "",
+      !hasText(eventData.eventAddress.streetName) ? "Street Name" : "",
+      !hasText(eventData.eventAddress.city) ? "City" : "",
+      !isInternalEvent &&
+      !isCommunityEvent &&
+      !hasText(eventData.eventAddress.zipCode)
+        ? "Zip Code"
+        : "",
+      !eventData.isIndoor && !eventData.isOutdoor ? "Indoor or Outdoor" : "",
+      (isInternalEvent || isCommunityEvent) &&
+      !hasValue(eventData.eventInternalLocation)
+        ? "Assignment Location"
+        : "",
+    ].filter(Boolean);
+
+    if (eventLocationMissingFields.length > 0) {
+      return {
+        nextStep: 1,
+        missingFields: eventLocationMissingFields,
+      };
+    }
+
+    const eventDetailsMissingFields = [
+      !hasValue(eventData.eventCoordinator) ? "Coordinator" : "",
+      !eventData.volunteerImpact.isIndividualImpact &&
+      !eventData.volunteerImpact.isGroupImpact
+        ? "Volunteer Impact Type"
+        : "",
+      eventData.volunteerImpact.isIndividualImpact &&
+      !hasValue(eventData.volunteerImpact.individualImpactPerHour)
+        ? "Individual Impact Per Hour"
+        : "",
+      eventData.volunteerImpact.isIndividualImpact &&
+      !hasValue(eventData.volunteerImpact.individualImpact)
+        ? "Individual Impact"
+        : "",
+      eventData.volunteerImpact.isGroupImpact &&
+      !hasValue(eventData.volunteerImpact.groupImpactPerHour)
+        ? "Group Impact Total"
+        : "",
+      eventData.volunteerImpact.isGroupImpact &&
+      !hasValue(eventData.volunteerImpact.groupImpact)
+        ? "Group Impact"
+        : "",
+    ].filter(Boolean);
+
+    if (eventDetailsMissingFields.length > 0) {
+      return {
+        nextStep: 3,
+        missingFields: eventDetailsMissingFields,
+      };
+    }
+
+    return null;
+  };
 
   const EventForms = [
     <EventInfo
       data={eventData}
       eventType={eventType}
       onChange={setEventData}
-      markError={markError}
     />,
     <EventLocation
       data={eventData}
       eventType={eventType}
       onChange={setEventData}
-      markError={markError}
     />,
     <EventRequirements
       data={eventData}
       eventType={eventType}
       onChange={setEventData}
-      markError={markError}
     />,
     <EventDetails
       data={eventData}
       eventType={eventType}
       onChange={setEventData}
-      markError={markError}
     />,
     <InternalEventReview
       data={eventData}
@@ -326,7 +387,7 @@ export const PostNeed = () => {
           <div className={styles.selectionButtonArea}>
             <DarbeButton
               onClick={handleGoForward}
-              isDisabled={isCurrentStepInvalid}
+              isDisabled={!eventType}
               buttonText="Next"
               darbeButtonType="nextButton"
             />
@@ -387,10 +448,46 @@ export const PostNeed = () => {
             />
             <DarbeButton
               onClick={handleGoForward}
-              isDisabled={isCurrentStepInvalid}
               buttonText={nextButtonText}
               darbeButtonType="nextButton"
             />
+          </div>
+        </div>
+      ) : null}
+      {submitValidationDialog ? (
+        <div className={styles.postNeedSubmitDialogOverlay}>
+          <div
+            className={styles.postNeedSubmitDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="post-need-submit-dialog-title"
+          >
+            <h2
+              className={styles.postNeedSubmitDialogTitle}
+              id="post-need-submit-dialog-title"
+            >
+              Required fields are missing
+            </h2>
+            <p className={styles.postNeedSubmitDialogText}>
+              Please complete the following before submitting:
+            </p>
+            <ul className={styles.postNeedSubmitDialogList}>
+              {submitValidationDialog.missingFields.map((field) => (
+                <li key={field}>{field}</li>
+              ))}
+            </ul>
+            <div className={styles.postNeedSubmitDialogActions}>
+              <DarbeButton
+                buttonText="Cancel"
+                darbeButtonType="secondaryNextButton"
+                onClick={handleSubmitValidationCancel}
+              />
+              <DarbeButton
+                buttonText="Fix It"
+                darbeButtonType="nextButton"
+                onClick={handleSubmitValidationConfirm}
+              />
+            </div>
           </div>
         </div>
       ) : null}

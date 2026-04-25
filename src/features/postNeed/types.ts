@@ -6,5 +6,5 @@ export interface EventFormCommonProps {
   eventType: string;
   data: CreateEvent;
   onChange?: Dispatch<SetStateAction<CreateEvent>>;
-  markError: (hasError: boolean) => void;
+  markError?: (hasError: boolean) => void;
 }
