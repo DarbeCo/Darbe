@@ -12,6 +12,48 @@
   width: 100%;
 }
 
+.shareConfirmationDialog {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 202px;
+  height: 78px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-shadow: 0 0 18px rgba(0, 0, 0, 0.25);
+  color: #202020;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 21px;
+  transform: translate(-50%, -50%);
+}
+
+.shareConfirmationIcon {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #088f26;
+  flex: 0 0 auto;
+}
+
+.shareConfirmationIcon::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 5px;
+  width: 7px;
+  height: 12px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
 @media (min-width: 560px) {
   .createPostContainer {
     display: flex;

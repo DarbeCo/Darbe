@@ -22,6 +22,12 @@ export const ProfileEdit = () => {
   const shouldShowBackButton =
     isEntityProfile || section !== EDIT_SECTIONS.about;
   const isTallEditStep = !isEntityProfile && section === EDIT_SECTIONS.background;
+  const editHeaderTitle =
+    section === EDIT_SECTIONS.causes
+      ? "Edit Causes"
+      : section === EDIT_SECTIONS.availability
+        ? "Edit Availability"
+        : "Edit About";
 
   const handleGoBack = () => {
     if (!isEntityProfile) {
@@ -71,7 +77,9 @@ export const ProfileEdit = () => {
             )}
           </div>
           <div className={styles.headerTitleContainer}>
-            <span className={styles.profileEditHeaderTitle}>Edit About</span>
+            <span className={styles.profileEditHeaderTitle}>
+              {editHeaderTitle}
+            </span>
           </div>
           <div className={styles.closeIconContainer}>
             <ClosingIcon useNoSx onClick={handleExitEdit} />

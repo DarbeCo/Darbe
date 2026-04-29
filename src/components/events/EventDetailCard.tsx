@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { IconButton } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 import { selectUser } from "../../features/users/selectors";
@@ -7,63 +6,93 @@ import {
   CreateEvent,
   EventsState,
 } from "../../services/api/endpoints/types/events.api.types";
-import { useAppSelector } from "../../services/hooks";
-import { CheckBox } from "../checkbox/Checkbox";
+import {
+  usePassOnEventMutation,
+  useVolunteerForEventMutation,
+} from "../../services/api/endpoints/events/events.api";
+import { useAppDispatch, useAppSelector } from "../../services/hooks";
 import { CustomSvgs } from "../customSvgs/CustomSvgs";
-import { Typography } from "../typography/Typography";
-import { formatDarbeTimeToString } from "../../utils/CommonFunctions";
+import {
+  formatDarbeTimeToString,
+  getUserStateFromZip,
+} from "../../utils/CommonFunctions";
 import { UserAvatars } from "../avatars/UserAvatars";
 import { useGetSimpleUserInfoQuery } from "../../services/api/endpoints/profiles/profiles.api";
-import { PROFILE_ROUTE } from "../../routes/route.constants";
+import { NEW_MESSAGE_ROUTE, PROFILE_ROUTE } from "../../routes/route.constants";
+import { assetUrl } from "../../utils/assetUrl";
+import {
+  MODAL_TYPE,
+  setExternalData,
+  setModalType,
+  showModal,
+} from "../modal/modalSlice";
 
 import styles from "./styles/eventCards.module.css";
 
 interface EventDetailCardProps {
   event?: EventsState;
+  eventId?: string;
   previewEventData?: CreateEvent;
   isPreview?: boolean;
   isEventOwner?: boolean;
 }
-// TODO: Clean up, we use this for created events and for previewing a posted event
+
+interface DetailMetricProps {
+  icon: string;
+  label: string;
+  alt: string;
+}
+
+const DetailMetric = ({ icon, label, alt }: DetailMetricProps) => (
+  <div className={styles.eventDetailMetric}>
+    <CustomSvgs svgPath={icon} variant="small" altText={alt} />
+    <span>{label}</span>
+  </div>
+);
+
 export const EventDetailCard = ({
   event = undefined,
+  eventId = undefined,
   previewEventData = undefined,
   isPreview = false,
   isEventOwner = false,
 }: EventDetailCardProps) => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const { user } = useAppSelector(selectUser);
-  const [userAgreesToWaiver, setUseAgreesToWaiver] = useState({
+  const [passOnEvent, { isLoading: isPassing }] = usePassOnEventMutation();
+  const [volunteerForEvent, { isLoading: isVolunteering }] =
+    useVolunteerForEventMutation();
+  const [userAgreesToWaiver, setUserAgreesToWaiver] = useState({
     adultWaiver: false,
     minorWaiver: false,
   });
+  const [hasVolunteered, setHasVolunteered] = useState(false);
+  const [showVolunteerDialog, setShowVolunteerDialog] = useState(false);
+  const [showPassConfirmDialog, setShowPassConfirmDialog] = useState(false);
+  const [showPassRejectedDialog, setShowPassRejectedDialog] = useState(false);
+  const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
   const eventCoordinatorId = isPreview
     ? previewEventData?.eventCoordinator
     : event?.eventCoordinator.id;
-  console.log("event ", event);
   const { data: eventCoordinatorData } =
     useGetSimpleUserInfoQuery(eventCoordinatorId);
-  // TODO: Remove these when they are used
-  console.log(isEventOwner);
-  console.log(userAgreesToWaiver);
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
-    setUseAgreesToWaiver((prevState) => ({
+    setUserAgreesToWaiver((prevState) => ({
       ...prevState,
       [name]: checked,
     }));
   };
 
-  // TODO: These two might be redundant
-  const nameToUse =
-    user?.userType === "organization" ? "organizationName" : "nonprofitName";
   const eventOwnerName = isPreview
-    ? user?.[nameToUse]
-    : event?.eventOwner?.[nameToUse];
-  // end of TODO
-  console.log("the event owner name", eventCoordinatorData);
-
+    ? user?.userType === "organization"
+      ? user?.organizationName
+      : user?.nonprofitName
+    : event?.eventOwner?.userType === "organization"
+      ? event?.eventOwner?.organizationName
+      : event?.eventOwner?.nonprofitName;
   const eventCoordinatorName =
     eventCoordinatorData?.fullName ||
     eventCoordinatorData?.organizationName ||
@@ -84,24 +113,26 @@ export const EventDetailCard = ({
     hasEndTime && eventEndtimeToUse && eventStartTimeToUse
       ? `${eventEndtimeToUse - eventStartTimeToUse} Hours`
       : "? Hours";
-  const formattedDate = eventDateToUse
+  const compactDate = eventDateToUse
     ? new Date(eventDateToUse.toString()).toLocaleDateString("en-US", {
-        month: "long",
+        weekday: "short",
+        month: "short",
         day: "numeric",
-        year: "numeric",
       })
     : "?";
   const formattedStartTime = formatDarbeTimeToString(eventStartTimeToUse);
-  const signedUpVolunteers = isPreview
-    ? `0/${event?.maxVolunteerCount} Volunteers`
-    : `${event?.signups?.length}/${event?.maxVolunteerCount} Volunteers`;
-  const individualImpactPerHouToUse = isPreview
+  const signupCount = event?.signups?.length ?? 0;
+  const maxVolunteerCount = isPreview
+    ? previewEventData?.maxVolunteerCount ?? 0
+    : event?.maxVolunteerCount ?? 0;
+  const signedUpVolunteers = `${signupCount}/${maxVolunteerCount} Volunteers`;
+  const individualImpactPerHourToUse = isPreview
     ? previewEventData?.volunteerImpact?.individualImpactPerHour
     : event?.volunteerImpact?.individualImpactPerHour;
-  const groupImpactPerHouToUser = isPreview
+  const groupImpactPerHourToUse = isPreview
     ? previewEventData?.volunteerImpact?.groupImpactPerHour
     : event?.volunteerImpact?.groupImpactPerHour;
-  const invidualImpactToUse = isPreview
+  const individualImpactToUse = isPreview
     ? previewEventData?.volunteerImpact?.individualImpact
     : event?.volunteerImpact?.individualImpact;
   const groupImpactToUse = isPreview
@@ -111,14 +142,14 @@ export const EventDetailCard = ({
     ? previewEventData?.volunteerImpact?.isIndividualImpact
     : event?.volunteerImpact?.isIndividualImpact;
   const volunteerImpact = hasIndividualImpact
-    ? `${individualImpactPerHouToUse} ${invidualImpactToUse} `
-    : `${groupImpactPerHouToUser} ${groupImpactToUse}`;
+    ? `${individualImpactPerHourToUse ?? ""} ${individualImpactToUse ?? ""}`.trim()
+    : `${groupImpactPerHourToUse ?? ""} ${groupImpactToUse ?? ""}`.trim();
   const eventNameToUse = isPreview
     ? previewEventData?.eventName
     : event?.eventName;
-  const eventCoverPhotoToUse = isPreview
-    ? previewEventData?.eventCoverPhoto
-    : event?.eventCoverPhoto;
+  const eventCoverPhotoToUse =
+    (isPreview ? previewEventData?.eventCoverPhoto : event?.eventCoverPhoto) ||
+    assetUrl("/images/defaultCoverPhoto.jpg");
   const eventDescriptionToUse = isPreview
     ? previewEventData?.eventDescription
     : event?.eventDescription;
@@ -131,6 +162,18 @@ export const EventDetailCard = ({
   const eventCityToUse = isPreview
     ? previewEventData?.eventAddress?.city
     : event?.eventAddress?.city;
+  const eventZipToUse = isPreview
+    ? previewEventData?.eventAddress?.zipCode
+    : event?.eventAddress?.zipCode;
+  const eventStateToUse = eventZipToUse
+    ? getUserStateFromZip(eventZipToUse)?.st
+    : undefined;
+  const cityStateZip = [
+    [eventCityToUse, eventStateToUse].filter(Boolean).join(", "),
+    eventZipToUse,
+  ]
+    .filter(Boolean)
+    .join(" ");
   const eventParkingToUse = isPreview
     ? previewEventData?.eventParkingInfo
     : event?.eventParkingInfo;
@@ -153,6 +196,9 @@ export const EventDetailCard = ({
     ? user?.profilePicture
     : event?.eventOwner?.profilePicture;
   const eventCoordinatorProfilePicture = eventCoordinatorData?.profilePicture;
+  const eventShareUrl = eventId
+    ? `${window.location.origin}/home/events/${eventId}`
+    : "";
 
   const handleGoBack = () => {
     navigate(-1);
@@ -164,165 +210,341 @@ export const EventDetailCard = ({
     }
   };
 
+  const handleCoordinatorProfileClick = () => {
+    if (eventCoordinatorId) {
+      navigate(`${PROFILE_ROUTE}/${eventCoordinatorId}`);
+    }
+  };
+
+  const handleShare = () => {
+    if (eventShareUrl) {
+      navigator.clipboard.writeText(eventShareUrl);
+    }
+    setIsShareMenuOpen(false);
+  };
+
+  const handleShareToNewsFeed = () => {
+    dispatch(setExternalData(eventShareUrl));
+    dispatch(setModalType(MODAL_TYPE.createPost));
+    dispatch(showModal());
+    setIsShareMenuOpen(false);
+  };
+
+  const handleShareWithFriend = () => {
+    if (user?.id) {
+      navigate(NEW_MESSAGE_ROUTE(user.id), {
+        state: eventShareUrl ? { shareUrl: eventShareUrl } : undefined,
+      });
+    }
+    setIsShareMenuOpen(false);
+  };
+
+  const handlePassEvent = () => {
+    setShowPassConfirmDialog(true);
+  };
+
+  const handleConfirmPassEvent = async () => {
+    if (!eventId) return;
+
+    try {
+      await passOnEvent(eventId).unwrap();
+      setShowPassConfirmDialog(false);
+      setShowPassRejectedDialog(true);
+      setTimeout(() => setShowPassRejectedDialog(false), 1400);
+    } catch (error) {
+      console.error("Error passing on event", error);
+    }
+  };
+
+  const handleVolunteerEvent = async () => {
+    if (!eventId) return;
+
+    try {
+      await volunteerForEvent(eventId).unwrap();
+      setHasVolunteered(true);
+      setShowVolunteerDialog(true);
+      setTimeout(() => setShowVolunteerDialog(false), 1400);
+    } catch (error) {
+      const errorMessage =
+        (error as { data?: { message?: string } })?.data?.message ?? "";
+
+      if (errorMessage.includes("already volunteered")) {
+        setHasVolunteered(true);
+      } else {
+        console.error("Error volunteering for event", error);
+      }
+    }
+  };
+
   return (
-    <div className={styles.eventCard}>
-      <div className={styles.eventCardHeader}>
-        <div className={styles.eventCardGoBack}>
-          <IconButton onClick={handleGoBack}>
-            <CustomSvgs
-              svgPath="/svgs/common/goBackIcon.svg"
-              altText="Go back"
+    <div className={styles.eventDetailPage}>
+      <div className={styles.eventDetailHeroCard}>
+        <div className={styles.eventDetailHeader}>
+          <button
+            type="button"
+            className={styles.eventDetailOwner}
+            onClick={handleOwnerProfileClick}
+          >
+            <UserAvatars profilePicture={eventOwnerProfilePicture} />
+            <span>{eventOwnerName}</span>
+          </button>
+          <div className={styles.eventDetailHeaderActions}>
+            <div className={styles.eventShareMenuWrap}>
+              <button
+                type="button"
+                onClick={() => setIsShareMenuOpen((isOpen) => !isOpen)}
+                aria-expanded={isShareMenuOpen}
+              >
+                Share
+              </button>
+              {isShareMenuOpen && (
+                <div className={styles.eventShareMenu}>
+                  <button type="button" onClick={handleShareToNewsFeed}>
+                    <CustomSvgs
+                      svgPath="/svgs/common/addShareIcon.svg"
+                      variant="small"
+                      altText=""
+                    />
+                    Share to News Feed
+                  </button>
+                  <button type="button" onClick={handleShareWithFriend}>
+                    <CustomSvgs
+                      svgPath="/svgs/common/addShareIcon.svg"
+                      variant="small"
+                      altText=""
+                    />
+                    Share with Friend
+                  </button>
+                  <button type="button" onClick={handleShare}>
+                    <CustomSvgs
+                      svgPath="/svgs/common/copyLinkIcon.svg"
+                      variant="small"
+                      altText=""
+                    />
+                    Copy Link
+                  </button>
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              className={styles.eventDetailCloseButton}
+              onClick={handleGoBack}
+              aria-label="Close event details"
+            >
+              x
+            </button>
+          </div>
+        </div>
+
+        <div className={styles.eventDetailHeroBody}>
+          <h1>{eventNameToUse}</h1>
+          <div className={styles.eventDetailHeroGrid}>
+            <img
+              src={eventCoverPhotoToUse}
+              alt={`Event cover - ${eventNameToUse}`}
+              className={styles.eventDetailPhoto}
             />
-          </IconButton>
+            <div className={styles.eventDetailMetrics}>
+              <DetailMetric
+                icon="/svgs/common/hourglassIcon.svg"
+                label={eventDuration}
+                alt="Event duration"
+              />
+              <DetailMetric
+                icon="/svgs/common/whyVolunteerIcon.svg"
+                label={signedUpVolunteers}
+                alt="Volunteer count"
+              />
+              <DetailMetric
+                icon="/svgs/common/calendarIcon.svg"
+                label={compactDate}
+                alt="Event date"
+              />
+              <DetailMetric
+                icon="/svgs/common/clockIcon.svg"
+                label={formattedStartTime}
+                alt="Event time"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section className={styles.eventDetailSection}>
+        <h2>Description</h2>
+        <p>{eventDescriptionToUse}</p>
+      </section>
+
+      <section className={styles.eventDetailImpact}>
+        <strong>Volunteer Impact :</strong>
+        <span>{volunteerImpact || "None"}</span>
+      </section>
+
+      <div className={styles.eventDetailTwoColumn}>
+        <section className={styles.eventDetailSection}>
+          <h2>Location</h2>
+          <p>{eventLocationNameToUse}</p>
+          <p className={styles.eventDetailBlueText}>{eventStreetNameToUse}</p>
+          <p className={styles.eventDetailBlueText}>{cityStateZip}</p>
+          <p className={styles.eventDetailSmallBlock}>
+            <strong>Assignment Location:</strong>
+            <span>{eventInternalLocationToUse || "None"}</span>
+          </p>
+        </section>
+
+        <section className={styles.eventDetailSection}>
+          <h2>Parking Detail</h2>
+          <p>{eventParkingToUse || "None"}</p>
+          {eventInternalLocationToUse && (
+            <p className={styles.eventDetailBoldText}>
+              {eventInternalLocationToUse}
+            </p>
+          )}
+        </section>
+      </div>
+
+      <div className={styles.eventDetailTwoColumn}>
+        <section className={styles.eventDetailSection}>
+          <div>
+            <h2>Requirements</h2>
+            <p>{eventSuppliesToUse || "None"}</p>
+          </div>
+          
+          {eventAgeRestrictionsToUse && <p>{eventAgeRestrictionsToUse}</p>}
+          <div className={styles.eventLiftRequirementHeader}>
+            <h2>Lift Requirements</h2>
+            <p>{eventLiftRequirementsToUse || "None"}</p>
+          </div>
+        </section>
+
+        <section className={styles.eventDetailSection}>
+          <h2>Attire</h2>
+          <p>{eventAttireToUse || "None"}</p>
+        </section>
+      </div>
+
+      <section className={styles.eventDetailCoordinator}>
+        <strong>Event Coordinator:</strong>
+        <button type="button" onClick={handleCoordinatorProfileClick}>
           <UserAvatars
-            profilePicture={eventOwnerProfilePicture}
-            onClick={handleOwnerProfileClick}
+            profilePicture={eventCoordinatorProfilePicture}
+            fullName={eventCoordinatorName}
           />
-          <Typography
-            variant="blueTextNormal"
-            textToDisplay={eventOwnerName}
-            onClick={handleOwnerProfileClick}
-            extraClass={!isPreview ? "clickable" : ""}
+        </button>
+      </section>
+
+      <section className={styles.eventDetailWaivers}>
+        <label>
+          <input
+            type="checkbox"
+            name="adultWaiver"
+            checked={userAgreesToWaiver.adultWaiver}
+            disabled={!!isPreview}
+            onChange={handleCheckboxChange}
           />
+          Adult waiver
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            name="minorWaiver"
+            checked={userAgreesToWaiver.minorWaiver}
+            disabled={!!isPreview}
+            onChange={handleCheckboxChange}
+          />
+          Minor waiver
+        </label>
+      </section>
+
+      {!isEventOwner && !isPreview && (
+        <div className={styles.eventDetailActions}>
+          <button
+            type="button"
+            className={styles.eventDetailSecondaryButton}
+            onClick={handlePassEvent}
+            disabled={isPassing}
+          >
+            Pass
+          </button>
+          <button
+            type="button"
+            className={styles.eventDetailPrimaryButton}
+            onClick={handleVolunteerEvent}
+            disabled={hasVolunteered || isVolunteering}
+          >
+            {hasVolunteered ? "Volunteered" : "Volunteer"}
+          </button>
         </div>
-      </div>
-      <div className={styles.eventCardDetails}>
-        <Typography variant="nameHeader" textToDisplay={eventNameToUse} />
-        <img
-          src={eventCoverPhotoToUse ?? ""}
-          alt="Event cover"
-          className={styles.eventCardDetailsPhoto}
-        />
-        <div className={styles.eventCardKeyDetails}>
-          <div className={styles.eventCardSection}>
-            <div className={styles.eventCardRowInfo}>
-              <CustomSvgs
-                svgPath="/svgs/common/hourglassIcon.svg"
-                variant="small"
-                altText="Event Duration Icon"
+      )}
+      {showVolunteerDialog && (
+        <div className={styles.eventVolunteerDialogOverlay}>
+          <div
+            className={styles.eventVolunteerDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="volunteer-dialog-title-detail"
+          >
+            <h2
+              className={styles.eventVolunteerDialogTitle}
+              id="volunteer-dialog-title-detail"
+            >
+              <span
+                className={styles.eventVolunteerDialogIcon}
+                aria-hidden="true"
               />
-              <Typography variant="text" textToDisplay={eventDuration} />
-            </div>
-            <div className={styles.eventCardRowInfo}>
-              <CustomSvgs
-                svgPath="/svgs/common/calendarIcon.svg"
-                variant="small"
-                altText="Event Date Icon"
-              />
-              <Typography variant="text" textToDisplay={formattedDate} />
-            </div>
-            <div className={styles.eventCardRowInfo}>
-              <CustomSvgs
-                svgPath="/svgs/common/clockIcon.svg"
-                variant="small"
-                altText="Event Time Icon"
-              />
-              <Typography variant="text" textToDisplay={formattedStartTime} />
-            </div>
-            <div className={styles.eventCardRowInfo}>
-              <CustomSvgs
-                svgPath="/svgs/common/whyVolunteerIcon.svg"
-                variant="small"
-                altText="Event Location Icon"
-              />
-              <Typography variant="text" textToDisplay={signedUpVolunteers} />
-            </div>
+              <span>Event Accepted</span>
+            </h2>
           </div>
-
-          <div className={styles.eventCardSection}>
-            <Typography variant="sectionTitle" textToDisplay="Description" />
-            <Typography variant="text" textToDisplay={eventDescriptionToUse} />
-          </div>
-
-          <div className={styles.eventCardSection}>
-            <div className={styles.eventCardRowInfo}>
-              <Typography
-                variant="sectionTitle"
-                textToDisplay="Volunteer Impact"
-              />
-              <Typography variant="text" textToDisplay={volunteerImpact} />
-            </div>
-          </div>
-
-          <div className={styles.eventCardSection}>
-            <Typography variant="sectionTitle" textToDisplay="Location" />
-            <Typography variant="text" textToDisplay={eventLocationNameToUse} />
-            <Typography variant="text" textToDisplay={eventStreetNameToUse} />
-            <Typography variant="text" textToDisplay={eventCityToUse} />
-          </div>
-
-          <div className={styles.eventCardSection}>
-            <Typography variant="sectionTitle" textToDisplay="Parking Detail" />
-            <Typography variant="text" textToDisplay={eventParkingToUse} />
-            <Typography
-              variant="text"
-              textToDisplay={eventInternalLocationToUse}
-            />
-          </div>
-
-          <div className={styles.eventCardSection}>
-            <Typography variant="sectionTitle" textToDisplay="Requirements" />
-            <Typography variant="text" textToDisplay={eventSuppliesToUse} />
-            <Typography
-              variant="sectionTitle"
-              textToDisplay="Age Restrictions"
-            />
-            <Typography
-              variant="text"
-              textToDisplay={eventAgeRestrictionsToUse}
-            />
-            <div className={styles.eventCardRowInfo}>
-              <Typography
-                variant="sectionTitle"
-                textToDisplay="Lift Requirements"
-              />
-              <Typography
-                variant="text"
-                textToDisplay={eventLiftRequirementsToUse}
-              />
-            </div>
-          </div>
-
-          <div className={styles.eventCardSection}>
-            <Typography variant="sectionTitle" textToDisplay="Attire" />
-            <Typography variant="text" textToDisplay={eventAttireToUse} />
-          </div>
-
-          <div className={styles.eventCardSection}>
-            <div className={styles.eventCardRowInfo}>
-              <Typography
-                variant="sectionTitle"
-                textToDisplay="Event Coordinator:"
-              />
-              <UserAvatars
-                profilePicture={eventCoordinatorProfilePicture}
-                fullName={eventCoordinatorName}
-              />
-            </div>
-          </div>
-
-          <div className={styles.eventCardSection}>
-            <div className={styles.eventCardRowInfo}>
-              <CheckBox
-                disabled={!!isPreview}
-                label="I Agree to the terms of this Adult Waiver"
-                labelPlacement="right"
-                name="adultWaiver"
-                onChange={handleCheckboxChange}
-              />
-            </div>
-            <div className={styles.eventCardRowInfo}>
-              <CheckBox
-                disabled={!!isPreview}
-                onChange={handleCheckboxChange}
-                label="I Agree to the terms of this Minor Waiver"
-                name="minorWaiver"
-                labelPlacement="right"
-              />
+        </div>
+      )}
+      {showPassConfirmDialog && (
+        <div className={styles.eventVolunteerDialogOverlay}>
+          <div
+            className={styles.eventPassConfirmDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pass-dialog-title-detail"
+          >
+            <h2
+              className={styles.eventPassConfirmTitle}
+              id="pass-dialog-title-detail"
+            >
+              Are you sure you want to Pass?
+            </h2>
+            <div className={styles.eventPassConfirmActions}>
+              <button
+                type="button"
+                className={styles.eventPassYesButton}
+                onClick={handleConfirmPassEvent}
+                disabled={isPassing}
+              >
+                Yes
+              </button>
+              <button
+                type="button"
+                className={styles.eventPassCancelButton}
+                onClick={() => setShowPassConfirmDialog(false)}
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>
-      </div>
+      )}
+      {showPassRejectedDialog && (
+        <div className={styles.eventVolunteerDialogOverlay}>
+          <div className={styles.eventVolunteerDialog} role="status">
+            <h2 className={styles.eventVolunteerDialogTitle}>
+              <span
+                className={styles.eventVolunteerDialogIcon}
+                aria-hidden="true"
+              />
+              <span>Event Rejected</span>
+            </h2>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

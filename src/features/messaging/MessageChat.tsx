@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 
 import { selectCurrentFriends, selectCurrentUserId } from "../users/selectors";
 import { useAppSelector } from "../../services/hooks";
@@ -10,8 +10,16 @@ import styles from "./styles/messaging.module.css";
 
 export const MessageChat = () => {
   const { friendId } = useParams<{ friendId: string }>();
+  const location = useLocation();
   const myFriends = useAppSelector(selectCurrentFriends);
   const myUserId = useAppSelector(selectCurrentUserId);
+  const sharedUrl =
+    typeof location.state === "object" &&
+    location.state &&
+    "shareUrl" in location.state &&
+    typeof location.state.shareUrl === "string"
+      ? location.state.shareUrl
+      : "";
 
   const friendData = myFriends.find((friend) => friend.id === friendId);
 
@@ -30,7 +38,11 @@ export const MessageChat = () => {
           />
         }
       />
-      <MessagesDisplay currentUserId={myUserId} friendId={friendData?.id} />
+      <MessagesDisplay
+        currentUserId={myUserId}
+        friendId={friendData?.id}
+        initialMessage={sharedUrl}
+      />
     </div>
   );
 };

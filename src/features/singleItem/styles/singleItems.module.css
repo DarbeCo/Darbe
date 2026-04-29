@@ -1,15 +1,151 @@
 .singleItemView {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: flex-start;
   width: 100%;
-  background-color: #fff;
+  background-color: #faf9f9;
 }
 
 .renderSingleItem {
   display: flex;
   flex-direction: column;
-  width: 96%;
-  padding-inline: 5px;
+  row-gap: 16px;
+  width: min(750px, 100%);
+}
+
+.singleEventFilterBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 42px;
+  width: 100%;
+  padding: 0 20px;
+  background-color: #ffffff;
+  border: 1px solid #c4c4c4;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.singleEventFilterTitle {
+  color: #000000;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 25px;
+}
+
+.singleEventFilterControls {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.singleEventFilterDropdownWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.singleEventFilterControls button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0;
+  color: #717070;
+  background: transparent;
+  border: 0;
+  font-family: Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 21px;
+  cursor: pointer;
+}
+
+.singleEventFilterCaret {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #717070;
+  transform: translateY(1px);
+}
+
+.singleEventFilterMenu {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  width: 202px;
+  min-height: 132px;
+  padding: 20px 28px;
+  background-color: #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 0 18px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+}
+
+.singleEventFilterMenu::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  right: 12px;
+  width: 18px;
+  height: 18px;
+  background-color: #ffffff;
+  border-radius: 2px;
+  transform: rotate(45deg);
+}
+
+.singleEventRecentFilterMenu {
+  left: -34px;
+  right: auto;
+}
+
+.singleEventRecentFilterMenu::before {
+  left: 18px;
+  right: auto;
+}
+
+.singleEventFilterMenu button {
+  position: relative;
+  z-index: 1;
+  justify-content: center;
+  width: 100%;
+  padding: 0;
+  color: #202020;
+  background: transparent;
+  border: 0;
+  font-family: Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 22px;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.singleEventFilterMenuSelected {
+  font-weight: 700 !important;
+}
+
+@media (max-width: 699px) {
+  .renderSingleItem {
+    width: 100%;
+  }
+
+  .singleEventFilterBar,
+  .singleEventFilterControls {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .singleEventFilterBar {
+    height: auto;
+    padding: 10px 20px;
+    row-gap: 8px;
+  }
 }

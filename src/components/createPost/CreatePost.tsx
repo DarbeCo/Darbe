@@ -16,12 +16,14 @@ import styles from "./styles/createPost.module.css";
 
 interface CreatePostProps {
   handleSubmit: () => void;
+  initialText?: string;
 }
 
 // TODO: Move the file uploads into a singular component for better DRY-ness across Darbe
-export const CreatePost = ({ handleSubmit }: CreatePostProps) => {
+export const CreatePost = ({ handleSubmit, initialText = "" }: CreatePostProps) => {
   const { user } = useSelector(selectUser);
-  const [post, setPost] = useState("");
+  const [post, setPost] = useState(initialText);
+  const [showShareConfirmation, setShowShareConfirmation] = useState(false);
   const [submitPost, { isLoading, isSuccess, isError }] =
     useSubmitPostMutation();
   const [uploadedFiles, setUploadedFiles] = useState<File[] | null>(null);
@@ -46,9 +48,13 @@ export const CreatePost = ({ handleSubmit }: CreatePostProps) => {
 
       await submitPost(postBody).unwrap();
 
+      if (initialText) {
+        setShowShareConfirmation(true);
+      }
+
       setTimeout(() => {
         handleSubmit();
-      }, 500);
+      }, initialText ? 1400 : 500);
     } catch (error) {
       console.error("Error submitting post", error);
     }
@@ -77,6 +83,7 @@ export const CreatePost = ({ handleSubmit }: CreatePostProps) => {
         handleChange={handleChange}
         name="createPost"
         placeholder="Write something..."
+        value={post}
         isTextArea
       />
       <FilePreviews
@@ -98,6 +105,12 @@ export const CreatePost = ({ handleSubmit }: CreatePostProps) => {
           isError={isError}
           contentType="post"
         />
+      )}
+      {showShareConfirmation && (
+        <div className={styles.shareConfirmationDialog} role="status">
+          <span className={styles.shareConfirmationIcon} aria-hidden="true" />
+          <span>Event shared</span>
+        </div>
       )}
       {isLoading && <CircularProgress />}
     </div>

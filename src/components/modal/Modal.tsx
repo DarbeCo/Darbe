@@ -220,7 +220,12 @@ export const Modal = () => {
                     profilePicture={currentUser?.profilePicture}
                     organizationName={currentUser?.organizationName}
                   />
-                  <CreatePost handleSubmit={handleSubmit} />
+                  <CreatePost
+                    handleSubmit={handleSubmit}
+                    initialText={
+                      typeof externalData === "string" ? externalData : ""
+                    }
+                  />
                 </div>
               );
             case MODAL_TYPE.about:

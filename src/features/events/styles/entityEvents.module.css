@@ -11,7 +11,7 @@
   .darbeEventCards {
     display: flex;
     flex-direction: column;
-    row-gap: 20px;
+    row-gap: 16px;
     width: 100%;
     /* This is needed due to the bad design choice of a fixed bottom navbar on mobile */
     padding-bottom: 80px;
@@ -24,5 +24,13 @@
     background-color: #ffffff;
     padding-top: 10px;
     padding-bottom: 10px;
+  }
+
+  .noEventMatches {
+    margin: 0;
+    color: #717070;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 22px;
   }
 }

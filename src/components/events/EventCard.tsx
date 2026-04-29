@@ -3,7 +3,11 @@ import { IconButton } from "@mui/material";
 import { ContentCopy } from "@mui/icons-material";
 import { useState } from "react";
 
-import { EVENTS_ROUTE, PROFILE_ROUTE } from "../../routes/route.constants";
+import {
+  EVENTS_ROUTE,
+  NEW_MESSAGE_ROUTE,
+  PROFILE_ROUTE,
+} from "../../routes/route.constants";
 import { ShortEventState } from "../../services/api/endpoints/types/events.api.types";
 import { UserAvatars } from "../avatars/UserAvatars";
 import { Typography } from "../typography/Typography";
@@ -13,8 +17,15 @@ import {
   formatDarbeTimeToString,
   getUserStateFromZip,
 } from "../../utils/CommonFunctions";
-import { useAppSelector } from "../../services/hooks";
+import { useAppDispatch, useAppSelector } from "../../services/hooks";
 import { selectCurrentUserId } from "../../features/users/selectors";
+import { assetUrl } from "../../utils/assetUrl";
+import {
+  MODAL_TYPE,
+  setExternalData,
+  setModalType,
+  showModal,
+} from "../modal/modalSlice";
 
 import styles from "./styles/eventCards.module.css";
 import {
@@ -30,6 +41,7 @@ interface EventCardProps {
   impactView?: boolean;
   onUnvolunteerSuccess?: (eventId: string) => void;
   canUnvolunteer?: boolean;
+  variant?: "default" | "match";
 }
 
 export const EventCard = ({
@@ -39,24 +51,39 @@ export const EventCard = ({
   impactView = false,
   onUnvolunteerSuccess,
   canUnvolunteer = true,
+  variant = "default",
 }: EventCardProps) => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const currentUserId = useAppSelector(selectCurrentUserId);
-  const [passOnEvent] = usePassOnEventMutation();
+  const [passOnEvent, { isLoading: isPassing }] = usePassOnEventMutation();
   const [unvolunteerFromEvent, { isLoading: isUnvolunteering }] =
     useUnvolunteerFromEventMutation();
   const [volunteerForEvent, { isLoading: isVolunteering }] =
     useVolunteerForEventMutation();
   const [hasVolunteered, setHasVolunteered] = useState(Boolean(isSignedUp));
   const [showVolunteerDialog, setShowVolunteerDialog] = useState(false);
+  const [showPassConfirmDialog, setShowPassConfirmDialog] = useState(false);
+  const [showPassRejectedDialog, setShowPassRejectedDialog] = useState(false);
+  const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
 
   const handleAvatarClick = (userId: string) => {
     navigate(`${PROFILE_ROUTE}/${userId}`);
   };
 
   const handlePassEvent = () => {
-    const eventId = event.id;
-    passOnEvent(eventId);
+    setShowPassConfirmDialog(true);
+  };
+
+  const handleConfirmPassEvent = async () => {
+    try {
+      await passOnEvent(event.id).unwrap();
+      setShowPassConfirmDialog(false);
+      setShowPassRejectedDialog(true);
+      setTimeout(() => setShowPassRejectedDialog(false), 1400);
+    } catch (error) {
+      console.error("Error passing on event", error);
+    }
   };
 
   const handleVolunteerEvent = async () => {
@@ -66,6 +93,7 @@ export const EventCard = ({
       await volunteerForEvent(eventId).unwrap();
       setHasVolunteered(true);
       setShowVolunteerDialog(true);
+      setTimeout(() => setShowVolunteerDialog(false), 1400);
     } catch (error) {
       const errorMessage =
         (error as { data?: { message?: string } })?.data?.message ??
@@ -90,9 +118,24 @@ export const EventCard = ({
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(
-      `${window.location.origin}/home/events/${event.id}`
-    );
+    navigator.clipboard.writeText(eventShareUrl);
+    setIsShareMenuOpen(false);
+  };
+
+  const handleShareToNewsFeed = () => {
+    dispatch(setExternalData(eventShareUrl));
+    dispatch(setModalType(MODAL_TYPE.createPost));
+    dispatch(showModal());
+    setIsShareMenuOpen(false);
+  };
+
+  const handleShareWithFriend = () => {
+    if (currentUserId) {
+      navigate(NEW_MESSAGE_ROUTE(currentUserId), {
+        state: { shareUrl: eventShareUrl },
+      });
+    }
+    setIsShareMenuOpen(false);
   };
 
   const eventState = getUserStateFromZip(event.eventAddress.zipCode)?.st;
@@ -111,13 +154,21 @@ export const EventCard = ({
     day: "numeric",
     year: "numeric",
   });
+  const eventDate = new Date(event.eventDate);
+  const compactDate = eventDate.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
   const calculatedEventDuration = event.endTime
     ? event.endTime - event.startTime
     : undefined;
   const formattedStartTime = formatDarbeTimeToString(event.startTime);
   const signupValueToUse =
     signupCount > 0 ? signupCount : event.signups?.length || 0;
-  const signedUpVolunteers = `${signupValueToUse}/${event.maxVolunteerCount} Signed Up`;
+  const signedUpVolunteers = `${signupValueToUse}/${event.maxVolunteerCount} ${
+    variant === "match" ? "Volunteers" : "Signed Up"
+  }`;
   const isEventPoster = currentUserId === event.eventOwner.id;
   const isVolunteerLocked = hasVolunteered || isVolunteering;
   const isSignedUpCard = Boolean(isSignedUp);
@@ -169,9 +220,22 @@ export const EventCard = ({
   };
 
   const eventImpactText = calculateEventImpact();
+  const isMatchVariant = variant === "match";
+  const eventShareUrl = `${window.location.origin}/home/events/${event.id}`;
+  const eventCardClassName = `${styles.eventMatchPreview} ${
+    isMatchVariant ? styles.eventMatchPreviewCard : ""
+  }`;
+  const eventDateToDisplay = isMatchVariant ? compactDate : formattedDate;
+  const eventCoverPhoto =
+    event.eventCoverPhoto || assetUrl("/images/defaultCoverPhoto.jpg");
 
   return (
-    <div className={styles.eventMatchPreview}>
+    <div className={eventCardClassName}>
+      {isMatchVariant && (
+        <div className={styles.eventInvitationBanner}>
+          Invitation from: {displayName}
+        </div>
+      )}
       <div className={styles.eventMatchHeader}>
         <div className={styles.eventMatchHeaderUserInfo}>
           <UserAvatars
@@ -186,9 +250,50 @@ export const EventCard = ({
           />
         </div>
         <div className={styles.eventMatchHeaderDetails}>
-          <IconButton onClick={handleCopyLink}>
-            <ContentCopy />
-          </IconButton>
+          {isMatchVariant ? (
+            <div className={styles.eventShareMenuWrap}>
+              <button
+                type="button"
+                className={styles.eventMatchTextButton}
+                onClick={() => setIsShareMenuOpen((isOpen) => !isOpen)}
+                aria-expanded={isShareMenuOpen}
+              >
+                Share
+              </button>
+              {isShareMenuOpen && (
+                <div className={styles.eventShareMenu}>
+                  <button type="button" onClick={handleShareToNewsFeed}>
+                    <CustomSvgs
+                      svgPath="/svgs/common/addShareIcon.svg"
+                      variant="small"
+                      altText=""
+                    />
+                    Share to News Feed
+                  </button>
+                  <button type="button" onClick={handleShareWithFriend}>
+                    <CustomSvgs
+                      svgPath="/svgs/common/addShareIcon.svg"
+                      variant="small"
+                      altText=""
+                    />
+                    Share with Friend
+                  </button>
+                  <button type="button" onClick={handleCopyLink}>
+                    <CustomSvgs
+                      svgPath="/svgs/common/copyLinkIcon.svg"
+                      variant="small"
+                      altText=""
+                    />
+                    Copy Link
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <IconButton onClick={handleCopyLink}>
+              <ContentCopy />
+            </IconButton>
+          )}
           <Typography
             variant="blueTextNormal"
             textToDisplay={"Details"}
@@ -199,7 +304,7 @@ export const EventCard = ({
       </div>
       <div className={styles.eventMatchBodyQuickInfo}>
         <img
-          src={event.eventCoverPhoto}
+          src={eventCoverPhoto}
           className={styles.eventCardCover}
           alt={`event cover - ${event.eventName}`}
         />
@@ -218,7 +323,7 @@ export const EventCard = ({
               variant="small"
               altText="Event Date Icon"
             />
-            <Typography variant="text" textToDisplay={formattedDate} />
+            <Typography variant="text" textToDisplay={eventDateToDisplay} />
           </div>
           <div className={styles.eventCardRowInfo}>
             <CustomSvgs
@@ -263,6 +368,7 @@ export const EventCard = ({
               buttonText="Pass"
               onClick={handlePassEvent}
               darbeButtonType="secondaryNextButton"
+              isDisabled={isPassing}
             />
           )}
           {isSignedUpCard && canUnvolunteer ? (
@@ -294,17 +400,59 @@ export const EventCard = ({
               className={styles.eventVolunteerDialogTitle}
               id={`volunteer-dialog-title-${event.id}`}
             >
-              You are now volunteered for this event.
+              <span
+                className={styles.eventVolunteerDialogIcon}
+                aria-hidden="true"
+              />
+              <span>Event Accepted</span>
             </h2>
-            <div className={styles.eventVolunteerDialogActions}>
+          </div>
+        </div>
+      ) : null}
+      {showPassConfirmDialog ? (
+        <div className={styles.eventVolunteerDialogOverlay}>
+          <div
+            className={styles.eventPassConfirmDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={`pass-dialog-title-${event.id}`}
+          >
+            <h2
+              className={styles.eventPassConfirmTitle}
+              id={`pass-dialog-title-${event.id}`}
+            >
+              Are you sure you want to Pass?
+            </h2>
+            <div className={styles.eventPassConfirmActions}>
               <button
                 type="button"
-                className={styles.eventVolunteerDialogButton}
-                onClick={() => setShowVolunteerDialog(false)}
+                className={styles.eventPassYesButton}
+                onClick={handleConfirmPassEvent}
+                disabled={isPassing}
               >
-                OK
+                Yes
+              </button>
+              <button
+                type="button"
+                className={styles.eventPassCancelButton}
+                onClick={() => setShowPassConfirmDialog(false)}
+              >
+                Cancel
               </button>
             </div>
+          </div>
+        </div>
+      ) : null}
+      {showPassRejectedDialog ? (
+        <div className={styles.eventVolunteerDialogOverlay}>
+          <div className={styles.eventVolunteerDialog} role="status">
+            <h2 className={styles.eventVolunteerDialogTitle}>
+              <span
+                className={styles.eventVolunteerDialogIcon}
+                aria-hidden="true"
+              />
+              <span>Event Rejected</span>
+            </h2>
           </div>
         </div>
       ) : null}

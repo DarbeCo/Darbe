@@ -9,11 +9,13 @@ import styles from "./styles/messaging.module.css";
 interface MessagesDisplayProps {
   currentUserId?: string;
   friendId?: string;
+  initialMessage?: string;
 }
 
 export const MessagesDisplay = ({
   currentUserId,
   friendId,
+  initialMessage,
 }: MessagesDisplayProps) => {
   if (!currentUserId || !friendId) {
     return null;
@@ -57,7 +59,11 @@ export const MessagesDisplay = ({
           );
         })}
       </div>
-      <MessagingInput currentUserId={currentUserId} receiverId={friendId} />
+      <MessagingInput
+        currentUserId={currentUserId}
+        receiverId={friendId}
+        initialMessage={initialMessage}
+      />
     </>
   );
 };

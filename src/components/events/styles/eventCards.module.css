@@ -131,21 +131,48 @@
 }
 
 .eventVolunteerDialog {
-  width: min(250px, calc(100% - 32px));
-  padding: 18px 16px 14px;
-  border-radius: 4px;
+  width: 202px;
+  height: 78px;
+  border-radius: 8px;
   background: #fff;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 18px rgba(0, 0, 0, 0.25);
 }
 
 .eventVolunteerDialogTitle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   margin: 0;
-  color: #2b2b2b;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 18px;
+  color: #202020;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 21px;
   text-align: center;
+}
+
+.eventVolunteerDialogIcon {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #088f26;
+  flex: 0 0 auto;
+}
+
+.eventVolunteerDialogIcon::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 5px;
+  width: 7px;
+  height: 12px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
 }
 
 .eventVolunteerDialogActions {
@@ -166,4 +193,797 @@
   line-height: 16px;
   padding: 7px 16px;
   cursor: pointer;
+}
+
+.eventPassConfirmDialog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 302px;
+  min-height: 152px;
+  padding: 32px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-shadow: 0 0 18px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+}
+
+.eventPassConfirmTitle {
+  margin: 0;
+  color: #000000;
+  font-family: Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 20px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.eventPassConfirmActions {
+  display: flex;
+  gap: 25px;
+  margin-top: 26px;
+}
+
+.eventPassYesButton,
+.eventPassCancelButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 107px;
+  height: 47px;
+  padding: 12px 40px;
+  border-radius: 4px;
+  background-color: #ffffff;
+  border: 1px solid #c4c4c4;
+  color: #717070;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.eventPassYesButton:hover,
+.eventPassYesButton:focus-visible,
+.eventPassYesButton:active {
+  background-color: #088f26;
+  border-color: #088f26;
+  color: #ffffff;
+}
+
+.eventPassCancelButton:hover,
+.eventPassCancelButton:focus-visible,
+.eventPassCancelButton:active {
+  background-color: #ff0000;
+  border-color: #ff0000;
+  color: #ffffff;
+}
+
+.eventPassYesButton:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.eventMatchPreviewCard {
+  align-items: stretch;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 0 16px 16px;
+  border: 0;
+  border-radius: 8px;
+  background-color: #f5f5f5;
+  box-sizing: border-box;
+}
+
+.eventInvitationBanner {
+  margin: 0 -16px;
+  padding: 8px 16px;
+  border-radius: 8px 8px 0 0;
+  background-color: #088f26;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 25px;
+}
+
+.eventMatchPreviewCard .eventMatchHeader {
+  width: 100%;
+  min-height: 64px;
+  padding: 0;
+  border-bottom: 1px solid #d8d8d8;
+  box-sizing: border-box;
+}
+
+.eventMatchPreviewCard .eventMatchHeaderUserInfo {
+  gap: 8px;
+}
+
+.eventMatchPreviewCard .eventMatchHeaderUserInfo span {
+  color: #2c77e7;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 33px;
+}
+
+.eventMatchPreviewCard .eventMatchHeaderDetails {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.eventMatchPreviewCard .eventMatchHeaderDetails span,
+.eventMatchTextButton {
+  color: #2c77e7;
+  background: transparent;
+  border: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.eventMatchPreviewCard .eventMatchBodyQuickInfo {
+  display: grid;
+  grid-template-columns: 188px 1fr;
+  gap: 16px;
+  width: 100%;
+  padding: 16px 0 0;
+  box-sizing: border-box;
+}
+
+.eventMatchPreviewCard .eventCardCover {
+  width: 188px;
+  height: 188px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.eventMatchPreviewCard .eventCardSection {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, 94px);
+  row-gap: 0;
+  padding-bottom: 0;
+  border: 1px solid #d8d8d8;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.eventMatchPreviewCard .eventCardRowInfo {
+  justify-content: center;
+  column-gap: 12px;
+  padding: 0 12px;
+  border-right: 1px solid #d8d8d8;
+  border-bottom: 1px solid #d8d8d8;
+  box-sizing: border-box;
+}
+
+.eventMatchPreviewCard .eventCardRowInfo:nth-child(2n) {
+  border-right: 0;
+}
+
+.eventMatchPreviewCard .eventCardRowInfo:nth-child(n + 3) {
+  border-bottom: 0;
+}
+
+.eventMatchPreviewCard .eventCardRowInfo span {
+  color: #263238;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 21px;
+}
+
+.eventMatchPreviewCard .eventMatchBodyDescription {
+  width: 100%;
+  padding: 16px 0 0;
+  row-gap: 8px;
+  box-sizing: border-box;
+}
+
+.eventMatchPreviewCard .eventMatchBodyDescription > span:first-child {
+  color: #000000;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 33px;
+}
+
+.eventMatchPreviewCard .eventMatchBodyDescription > span:nth-child(2) {
+  color: #000000;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 25px;
+}
+
+.eventMatchPreviewCard .eventMatchBodyDescription > span:nth-child(3) {
+  max-width: 496px;
+  color: #000000;
+  font-size: 18px;
+  line-height: 25px;
+}
+
+.eventMatchPreviewCard .eventMatchBodyDescription > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.eventMatchPreviewCard .eventMatchFooter {
+  justify-content: flex-end;
+  column-gap: 16px;
+  width: 100%;
+  padding-top: 16px;
+  border-top: 0;
+}
+
+.eventShareMenuWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.eventShareMenu {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: -16px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 22px;
+  width: 294px;
+  min-height: 189px;
+  padding: 28px 32px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 0 18px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+}
+
+.eventShareMenu::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  right: 28px;
+  width: 18px;
+  height: 18px;
+  background-color: #ffffff;
+  border-radius: 2px;
+  transform: rotate(45deg);
+}
+
+.eventShareMenu button,
+.eventDetailHeaderActions .eventShareMenu button {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  color: #202020;
+  background: transparent;
+  border: 0;
+  font-family: Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 21px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+@media (min-width: 700px) and (max-width: 1259px) {
+  .eventMatchPreviewCard {
+    padding: 0 16px 16px;
+    border-radius: 0;
+  }
+
+  .eventInvitationBanner {
+    margin: 0 -16px;
+    border-radius: 0;
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .eventMatchPreviewCard .eventMatchHeader {
+    min-height: 64px;
+  }
+
+  .eventMatchPreviewCard .eventMatchHeaderUserInfo span {
+    font-size: 20px;
+    line-height: 27px;
+  }
+
+  .eventMatchPreviewCard .eventMatchBodyQuickInfo {
+    grid-template-columns: 150px 1fr;
+    gap: 16px;
+    padding-top: 16px;
+  }
+
+  .eventMatchPreviewCard .eventCardCover {
+    width: 150px;
+    height: 150px;
+  }
+
+  .eventMatchPreviewCard .eventCardSection {
+    grid-template-rows: repeat(2, 75px);
+  }
+
+  .eventMatchPreviewCard .eventCardRowInfo span {
+    font-size: 16px;
+  }
+
+  .eventMatchPreviewCard .eventMatchBodyDescription > span:first-child {
+    font-size: 20px;
+    line-height: 27px;
+  }
+
+  .eventMatchPreviewCard .eventMatchBodyDescription > span:nth-child(2),
+  .eventMatchPreviewCard .eventMatchBodyDescription > span:nth-child(3) {
+    font-size: 16px;
+    line-height: 22px;
+  }
+}
+
+@media (max-width: 699px) {
+  .eventMatchPreviewCard {
+    width: 100%;
+    padding: 0 16px 16px;
+    border-radius: 0;
+    background-color: #ffffff;
+  }
+
+  .eventInvitationBanner {
+    margin: 0 -16px;
+    padding: 8px 16px;
+    border-radius: 0;
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .eventMatchPreviewCard .eventMatchBodyQuickInfo {
+    grid-template-columns: 164px minmax(0, 1fr);
+    gap: 16px;
+    padding-top: 16px;
+  }
+
+  .eventMatchPreviewCard .eventCardCover {
+    width: 164px;
+    height: 164px;
+    aspect-ratio: auto;
+  }
+
+  .eventMatchPreviewCard .eventCardSection {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    row-gap: 0;
+    height: 164px;
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+  }
+
+  .eventMatchPreviewCard .eventCardRowInfo,
+  .eventMatchPreviewCard .eventCardRowInfo:nth-child(2n),
+  .eventMatchPreviewCard .eventCardRowInfo:nth-child(n + 3) {
+    justify-content: flex-start;
+    min-height: 24px;
+    padding: 0;
+    border: 0;
+    column-gap: 8px;
+  }
+
+  .eventMatchPreviewCard .eventCardRowInfo span {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 22px;
+    white-space: nowrap;
+  }
+
+  .eventMatchPreviewCard .eventMatchHeader {
+    min-height: 48px;
+    border-bottom: 1px solid #d8d8d8;
+  }
+
+  .eventMatchPreviewCard .eventMatchHeaderUserInfo span {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 22px;
+  }
+
+  .eventMatchPreviewCard .eventMatchHeaderDetails {
+    gap: 12px;
+  }
+
+  .eventMatchPreviewCard .eventMatchHeaderDetails span,
+  .eventMatchTextButton {
+    font-size: 14px;
+    line-height: 19px;
+  }
+
+  .eventMatchPreviewCard .eventMatchBodyDescription {
+    padding-top: 16px;
+    row-gap: 4px;
+  }
+
+  .eventMatchPreviewCard .eventMatchBodyDescription > span:first-child {
+    font-size: 24px;
+    line-height: 33px;
+  }
+
+  .eventMatchPreviewCard .eventMatchBodyDescription > span:nth-child(2) {
+    font-size: 12px;
+    line-height: 17px;
+  }
+
+  .eventMatchPreviewCard .eventMatchBodyDescription > span:nth-child(3) {
+    max-width: none;
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .eventMatchPreviewCard .eventMatchBodyDescription > div {
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .eventMatchPreviewCard .eventMatchBodyDescription > div span {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .eventMatchPreviewCard .eventMatchFooter {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding-top: 12px;
+  }
+
+  .eventMatchPreviewCard .eventMatchFooter button {
+    width: 100%;
+    min-width: 0;
+    height: 36px;
+    padding: 8px 24px;
+  }
+
+  .eventShareMenu {
+    right: -10px;
+    width: 270px;
+  }
+
+  .eventShareMenu::before {
+    right: 20px;
+  }
+}
+
+.eventDetailPage {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  padding-bottom: 32px;
+}
+
+.eventDetailHeroCard,
+.eventDetailSection,
+.eventDetailImpact,
+.eventDetailCoordinator,
+.eventDetailWaivers {
+  width: 100%;
+  background-color: #ffffff;
+  border: 1px solid #c4c4c4;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.eventDetailHeroCard {
+  overflow: hidden;
+}
+
+.eventDetailHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 64px;
+  padding: 0 16px;
+  border-bottom: 1px solid #d8d8d8;
+}
+
+.eventDetailOwner,
+.eventDetailHeaderActions,
+.eventDetailCoordinator button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eventDetailOwner,
+.eventDetailHeaderActions button,
+.eventDetailCoordinator button {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.eventDetailOwner span,
+.eventDetailHeaderActions button,
+.eventDetailCoordinator button span,
+.eventDetailWaivers label {
+  color: #2c77e7;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 33px;
+}
+
+.eventDetailHeaderActions {
+  gap: 18px;
+}
+
+.eventDetailHeaderActions button {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 27px;
+}
+
+.eventDetailCloseButton {
+  color: #000000 !important;
+  font-size: 24px !important;
+  font-weight: 400 !important;
+  line-height: 24px !important;
+}
+
+.eventDetailHeroBody {
+  padding: 16px;
+}
+
+.eventDetailHeroBody h1,
+.eventDetailSection h2 {
+  margin: 0;
+  color: #000000;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 33px;
+}
+
+.eventDetailHeroGrid {
+  display: grid;
+  grid-template-columns: 351px 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.eventDetailPhoto {
+  width: 100%;
+  height: 232px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.eventDetailMetrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, 116px);
+  border: 1px solid #c4c4c4;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.eventDetailMetric {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  border-right: 1px solid #d8d8d8;
+  border-bottom: 1px solid #d8d8d8;
+  box-sizing: border-box;
+}
+
+.eventDetailMetric:nth-child(2n) {
+  border-right: 0;
+}
+
+.eventDetailMetric:nth-child(n + 3) {
+  border-bottom: 0;
+}
+
+.eventDetailMetric span {
+  max-width: 90px;
+  color: #263238;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 21px;
+  white-space: normal;
+}
+
+.eventDetailSection {
+  padding: 16px;
+}
+
+.eventDetailPage > .eventDetailSection:first-of-type {
+  padding: 0;
+  overflow: hidden;
+}
+
+.eventDetailPage > .eventDetailSection:first-of-type h2 {
+  padding: 16px;
+  border-bottom: 1px solid #d8d8d8;
+}
+
+.eventDetailPage > .eventDetailSection:first-of-type p {
+  padding: 8px 16px 16px;
+}
+
+.eventLiftRequirementHeader{
+  margin-top: 16px;
+}
+
+.eventDetailSection p {
+  margin: 8px 0 0;
+  color: #000000;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 27px;
+}
+
+.eventDetailImpact {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 65px;
+  padding: 16px;
+  color: #000000;
+}
+
+.eventDetailImpact strong,
+.eventDetailImpact span {
+  font-size: 24px;
+  line-height: 33px;
+}
+
+.eventDetailImpact strong {
+  font-weight: 700;
+}
+
+.eventDetailImpact span {
+  font-weight: 400;
+}
+
+.eventDetailTwoColumn {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.eventDetailTwoColumn .eventDetailSection {
+  min-height: 215px;
+}
+
+.eventDetailBlueText {
+  color: #2c77e7 !important;
+}
+
+.eventDetailBoldText,
+.eventDetailSmallBlock strong {
+  font-weight: 700 !important;
+}
+
+.eventDetailSmallBlock {
+  display: flex;
+  flex-direction: column;
+  margin-top: 16px !important;
+}
+
+.eventDetailCoordinator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 65px;
+  padding: 16px;
+}
+
+.eventDetailCoordinator strong {
+  color: #000000;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 33px;
+}
+
+.eventDetailWaivers {
+  overflow: hidden;
+}
+
+.eventDetailWaivers label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 62px;
+  padding: 0 16px;
+  border-bottom: 1px solid #d8d8d8;
+  box-sizing: border-box;
+}
+
+.eventDetailWaivers label:last-child {
+  border-bottom: 0;
+}
+
+.eventDetailWaivers input {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  accent-color: #2c77e7;
+}
+
+.eventDetailActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  width: 100%;
+}
+
+.eventDetailPrimaryButton,
+.eventDetailSecondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 144px;
+  height: 44px;
+  padding: 12px 40px;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.eventDetailPrimaryButton {
+  color: #ffffff;
+  background-color: #2c77e7;
+  border: 1px solid #2c77e7;
+}
+
+.eventDetailSecondaryButton {
+  color: #2c77e7;
+  background-color: #ffffff;
+  border: 1px solid #2c77e7;
+}
+
+.eventDetailPrimaryButton:disabled {
+  background-color: #c9ced6;
+  border-color: #c9ced6;
+  cursor: default;
+}
+
+@media (max-width: 699px) {
+  .eventDetailHeader,
+  .eventDetailHeroGrid,
+  .eventDetailTwoColumn,
+  .eventDetailImpact,
+  .eventDetailCoordinator,
+  .eventDetailActions {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .eventDetailHeroGrid,
+  .eventDetailTwoColumn {
+    display: grid;
+  }
+
+  .eventDetailPhoto {
+    height: auto;
+    aspect-ratio: 351 / 232;
+  }
+
+  .eventDetailMetrics {
+    grid-template-rows: repeat(2, 88px);
+  }
+
+  .eventDetailActions {
+    display: flex;
+  }
 }
