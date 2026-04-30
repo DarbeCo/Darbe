@@ -1,32 +1,30 @@
 import { useState } from "react";
 
-import { ClosingIcon } from "../../../../../components/closingIcon/ClosingIcon";
-import { Inputs } from "../../../../../components/inputs/Inputs";
-import { Dropdown } from "../../../../../components/dropdowns/Dropdown";
-import { Months } from "../../../../../components/dropdowns/dropdownTypes/Months";
-import { Years } from "../../../../../components/dropdowns/dropdownTypes/Years";
-import { DarbeButton } from "../../../../../components/buttons/DarbeButton";
 import { useEditOrganizationInformation } from "../../hooks";
 import { OrganizationState } from "../../../userProfiles/types";
 import { UseDateParser } from "../../../../../utils/commonHooks/UseDateParser";
 import { useUpdateUserProfileMutation } from "../../../../../services/api/endpoints/profiles/profiles.api";
-import { useAppDispatch } from "../../../../../services/hooks";
+import { useAppDispatch, useAppSelector } from "../../../../../services/hooks";
 
 import styles from "./styles/subSections.module.css";
 import { updateUserOrganizations } from "../../../userSlice";
+import { selectUserOrganizations } from "../../../selectors";
 
 interface OrganizationsModalProps {
   closeModal: () => void;
   userId: string;
   organizationId?: string;
+  embedded?: boolean;
 }
 
 export const OrganizationsModal = ({
   closeModal,
   userId,
   organizationId,
+  embedded = false,
 }: OrganizationsModalProps) => {
   const dispatch = useAppDispatch();
+  const currentOrganizations = useAppSelector(selectUserOrganizations) ?? [];
   const { editOrganizationState } =
     useEditOrganizationInformation(organizationId);
 
@@ -48,8 +46,30 @@ export const OrganizationsModal = ({
     endMonth,
     endYear,
   });
+  const [openDateDropdown, setOpenDateDropdown] = useState<
+    keyof typeof organizationDates | undefined
+  >();
+  const [activeMember, setActiveMember] = useState(false);
 
   const [updateUserProfile] = useUpdateUserProfileMutation();
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 101 }, (_, index) =>
+    (currentYear - index).toString()
+  );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setOrganizationInfo({
@@ -58,11 +78,15 @@ export const OrganizationsModal = ({
     });
   };
 
-  const handleDropdownChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleDropdownChange = (
+    name: keyof typeof organizationDates,
+    value: string
+  ) => {
     setOrganizationDates({
       ...organizationDates,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+    setOpenDateDropdown(undefined);
   };
 
   // TODO: Util/generificize this
@@ -92,8 +116,26 @@ export const OrganizationsModal = ({
       endDate,
     };
 
+    const formattedOrganizationId =
+      formattedOrganizationInfo._id ??
+      (formattedOrganizationInfo as typeof formattedOrganizationInfo & {
+        id?: string;
+      }).id;
+    const updatedOrganizations = organizationId
+      ? currentOrganizations.map((organization) => {
+          const currentOrganizationId =
+            organization._id ??
+            (organization as typeof organization & { id?: string }).id;
+
+          return currentOrganizationId === organizationId ||
+            currentOrganizationId === formattedOrganizationId
+            ? formattedOrganizationInfo
+            : organization;
+        })
+      : [...currentOrganizations, formattedOrganizationInfo];
+
     const payload = {
-      organizations: [formattedOrganizationInfo],
+      organizations: updatedOrganizations,
       user: { id: userId },
     };
 
@@ -106,78 +148,182 @@ export const OrganizationsModal = ({
     closeModal();
   };
 
-  return (
-    <div className={styles.modalContainer}>
-      <div className={styles.modalContent}>
-        <div className={styles.modalContentHeader}>
-          <ClosingIcon onClick={closeModal} horizontalPlacement="right" />
-          <span className={styles.modalHeaderText}>Add Organizations</span>
+  const renderDateSelect = (
+    name: keyof typeof organizationDates,
+    value: string | undefined,
+    placeholder: string,
+    options: string[]
+  ) => (
+    <div
+      className={`${styles.organizationCompactDropdown} ${
+        openDateDropdown === name ? styles.organizationCompactDropdownOpen : ""
+      }`}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          setOpenDateDropdown(undefined);
+        }
+      }}
+    >
+      <button
+        type="button"
+        className={`${styles.organizationCompactDropdownButton} ${
+          value ? "" : styles.organizationCompactSelectEmpty
+        }`}
+        onClick={() =>
+          setOpenDateDropdown(openDateDropdown === name ? undefined : name)
+        }
+        aria-haspopup="listbox"
+        aria-expanded={openDateDropdown === name}
+      >
+        <span>{value || placeholder}</span>
+        <span
+          className={`${styles.organizationCompactDropdownArrow} ${
+            openDateDropdown === name
+              ? styles.organizationCompactDropdownArrowOpen
+              : ""
+          }`}
+          aria-hidden="true"
+        />
+      </button>
+      {openDateDropdown === name && (
+        <div className={styles.organizationCompactDropdownMenu} role="listbox">
+          {options.map((option) => (
+            <button
+              type="button"
+              role="option"
+              aria-selected={value === option}
+              className={`${styles.organizationCompactDropdownOption} ${
+                value === option
+                  ? styles.organizationCompactDropdownOptionSelected
+                  : ""
+              }`}
+              key={option}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => handleDropdownChange(name, option)}
+            >
+              {option}
+            </button>
+          ))}
         </div>
-        <div className={styles.modalContentForm}>
-          <Inputs
-            label="Organization Name"
-            placeholder="Enter organization name"
+      )}
+    </div>
+  );
+
+  const formContent = (
+    <div
+      className={
+        embedded ? styles.inlineOrganizationForm : styles.organizationDialog
+      }
+    >
+      <div className={styles.organizationFormHeader}>
+        <span>{organizationId ? "Edit Organization" : "Add Organization"}</span>
+        <button
+          type="button"
+          className={styles.organizationFormCloseButton}
+          onClick={closeModal}
+          aria-label="Close organization form"
+        >
+          &times;
+        </button>
+      </div>
+      <div className={styles.organizationCompactForm}>
+        <div className={styles.organizationCompactField}>
+          <label>
+            Organization Name<span>*</span>
+          </label>
+          <input
             type="text"
             name="organizationName"
-            value={organizationInfo.organizationName}
-            darbeInputType="standardInput"
-            handleChange={handleChange}
+            value={organizationInfo.organizationName ?? ""}
+            placeholder="Organization name"
+            className={styles.organizationCompactInput}
+            onChange={handleChange}
           />
-          <Inputs
-            label="Position"
-            placeholder="Enter organization position"
-            type="text"
-            name="position"
-            value={organizationInfo.position}
-            darbeInputType="standardInput"
-            handleChange={handleChange}
-          />
-          <div className={styles.modalContentFormDates}>
-            <div className={styles.modalContentDropdowns}>
-              <Dropdown
-                name="startMonth"
-                label="Start Date"
-                initialValue={startMonth}
-                onChange={handleDropdownChange}
-              >
-                {Months()}
-              </Dropdown>
-              <Dropdown
-                name="startYear"
-                label="Start Year"
-                initialValue={startYear}
-                onChange={handleDropdownChange}
-              >
-                {Years()}
-              </Dropdown>
-            </div>
-            <div className={styles.modalContentDropdowns}>
-              <Dropdown
-                name="endMonth"
-                label="End Date"
-                initialValue={endMonth}
-                onChange={handleDropdownChange}
-              >
-                {Months()}
-              </Dropdown>
-              <Dropdown
-                name="endYear"
-                label="End Year"
-                initialValue={endYear}
-                onChange={handleDropdownChange}
-              >
-                {Years()}
-              </Dropdown>
-            </div>
+        </div>
+        <div className={styles.organizationCompactField}>
+          <label>
+            Start Date<span>*</span>
+          </label>
+          <div className={styles.organizationCompactDateRow}>
+            {renderDateSelect(
+              "startMonth",
+              organizationDates.startMonth,
+              "Month",
+              months
+            )}
+            {renderDateSelect(
+              "startYear",
+              organizationDates.startYear,
+              "Year",
+              years
+            )}
           </div>
         </div>
-        <DarbeButton
-          buttonText="Save"
-          darbeButtonType="saveButton"
-          isDisabled={!organizationInfo.organizationName}
-          onClick={handleSaveOrganization}
-        />
+        <div className={styles.organizationCompactField}>
+          <label>
+            End Date<span>*</span>
+          </label>
+          <div className={styles.organizationCompactDateRow}>
+            {renderDateSelect(
+              "endMonth",
+              organizationDates.endMonth,
+              "Month",
+              months
+            )}
+            {renderDateSelect(
+              "endYear",
+              organizationDates.endYear,
+              "Year",
+              years
+            )}
+          </div>
+        </div>
+        <label className={styles.organizationActiveMember}>
+          <input
+            type="checkbox"
+            checked={activeMember}
+            onChange={(event) => setActiveMember(event.target.checked)}
+          />
+          <span>Active Member</span>
+        </label>
+        <div className={styles.organizationCompactField}>
+          <label>
+            Position<span>*</span>
+          </label>
+          <input
+            type="text"
+            name="position"
+            value={organizationInfo.position ?? ""}
+            placeholder="President"
+            maxLength={300}
+            className={styles.organizationCompactInput}
+            onChange={handleChange}
+          />
+          <span className={styles.organizationPositionCounter}>
+            {(organizationInfo.position ?? "").length}/300
+          </span>
+        </div>
       </div>
+      <div className={styles.organizationCompactFooter}>
+        <button
+          type="button"
+          className={styles.organizationCompactSave}
+          disabled={!organizationInfo.organizationName || !organizationInfo.position}
+          onClick={handleSaveOrganization}
+        >
+          Save
+        </button>
+      </div>
+    </div>
+  );
+
+  if (embedded) {
+    return formContent;
+  }
+
+  return (
+    <div className={styles.modalContainer}>
+      {formContent}
     </div>
   );
 };

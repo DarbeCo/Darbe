@@ -22,12 +22,15 @@ export const ProfileEdit = () => {
   const shouldShowBackButton =
     isEntityProfile || section !== EDIT_SECTIONS.about;
   const isTallEditStep = !isEntityProfile && section === EDIT_SECTIONS.background;
+  const shouldUseInlineOrganizationHeader = section === EDIT_SECTIONS.organizations;
   const editHeaderTitle =
     section === EDIT_SECTIONS.causes
       ? "Edit Causes"
       : section === EDIT_SECTIONS.availability
         ? "Edit Availability"
-        : "Edit About";
+        : section === EDIT_SECTIONS.organizations
+          ? "Edit Organizations"
+          : "Edit About";
 
   const handleGoBack = () => {
     if (!isEntityProfile) {
@@ -61,30 +64,32 @@ export const ProfileEdit = () => {
           isTallEditStep ? styles.profileEditFrameTall : ""
         }`}
       >
-        <div
-          className={`${styles.profileEditHeader} ${
-            !shouldShowBackButton ? styles.profileEditHeaderNoBack : ""
-          }`}
-        >
-          <div className={styles.backIconContainer}>
-            {shouldShowBackButton && (
-              <IconButton onClick={handleGoBack}>
-                <CustomSvgs
-                  svgPath="/svgs/common/goBackIcon.svg"
-                  altText="Go back"
-                />
-              </IconButton>
-            )}
+        {!shouldUseInlineOrganizationHeader && (
+          <div
+            className={`${styles.profileEditHeader} ${
+              !shouldShowBackButton ? styles.profileEditHeaderNoBack : ""
+            }`}
+          >
+            <div className={styles.backIconContainer}>
+              {shouldShowBackButton && (
+                <IconButton onClick={handleGoBack}>
+                  <CustomSvgs
+                    svgPath="/svgs/common/goBackIcon.svg"
+                    altText="Go back"
+                  />
+                </IconButton>
+              )}
+            </div>
+            <div className={styles.headerTitleContainer}>
+              <span className={styles.profileEditHeaderTitle}>
+                {editHeaderTitle}
+              </span>
+            </div>
+            <div className={styles.closeIconContainer}>
+              <ClosingIcon useNoSx onClick={handleExitEdit} />
+            </div>
           </div>
-          <div className={styles.headerTitleContainer}>
-            <span className={styles.profileEditHeaderTitle}>
-              {editHeaderTitle}
-            </span>
-          </div>
-          <div className={styles.closeIconContainer}>
-            <ClosingIcon useNoSx onClick={handleExitEdit} />
-          </div>
-        </div>
+        )}
         {!isEntityProfile && (
           <UserEditSections section={section} userId={userId} />
         )}

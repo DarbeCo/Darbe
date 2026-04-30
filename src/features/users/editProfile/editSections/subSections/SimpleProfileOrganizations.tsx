@@ -1,7 +1,6 @@
+import { Create } from "@mui/icons-material";
 import { IconButton } from "@mui/material";
-import { Create, RemoveCircleOutlineSharp } from "@mui/icons-material";
 
-import { Typography } from "../../../../../components/typography/Typography";
 import { OrganizationState } from "../../../userProfiles/types";
 
 import styles from "./styles/subSections.module.css";
@@ -20,44 +19,42 @@ export const SimpleProfileOrganizations = ({
   return (
     <div className={styles.simpleOrganizationsLayout}>
       {organizations.map((organization, idx) => {
-        const startDate = organization.startDate
-          ? new Date(organization.startDate).getFullYear()
-          : "";
-        const endDate = organization.endDate
-          ? new Date(organization.endDate).getFullYear()
-          : "Present";
+        const organizationId =
+          organization._id ??
+          (organization as typeof organization & { id?: string }).id;
+        const parentOrganizationName =
+          organization.parentOrganization?.organizationName;
 
         return (
           <div key={idx} className={styles.organizationInfo}>
-            <Typography
-              variant="grayText"
-              textToDisplay={organization.organizationName}
-            />
-            {organization.parentOrganization && (
-              <Typography
-                variant="grayText"
-                textToDisplay={organization.parentOrganization.organizationName}
-              />
-            )}
-            <div className={styles.organizationYears}>
-              <Typography variant="informational" textToDisplay={startDate} />
-              {" - "}
-              {organization.endDate ? (
-                <Typography variant="informational" textToDisplay={endDate} />
-              ) : (
-                <Typography variant="informational" textToDisplay="Present" />
+            <div className={styles.organizationText}>
+              <span className={styles.organizationName}>
+                {organization.organizationName}
+              </span>
+              {parentOrganizationName && (
+                <span className={styles.organizationParentName}>
+                  {parentOrganizationName}
+                </span>
               )}
+              <span className={styles.organizationPosition}>
+                {organization.position}
+              </span>
             </div>
-            <Typography
-              variant="informational"
-              textToDisplay={organization.position}
-            />
             <div className={styles.organizationEditIcons}>
-              <IconButton onClick={() => handleEdit(organization._id)}>
+              <IconButton
+                onClick={() => handleEdit(organizationId)}
+                aria-label="Edit organization"
+              >
                 <Create />
               </IconButton>
-              <IconButton onClick={() => handleDelete(organization._id)}>
-                <RemoveCircleOutlineSharp sx={{ color: "red" }} />
+              <IconButton
+                className={styles.organizationDeleteButton}
+                onClick={() => handleDelete(organizationId)}
+                aria-label="Delete organization"
+              >
+                <span className={styles.organizationDeleteIcon} aria-hidden="true">
+                  <span />
+                </span>
               </IconButton>
             </div>
           </div>

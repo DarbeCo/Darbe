@@ -27,6 +27,437 @@
   overflow-y: auto;
 }
 
+.organizationDialog {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  row-gap: 16px;
+  width: min(520px, calc(100vw - 32px));
+  max-height: min(680px, calc(100vh - 64px));
+  padding: 24px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-shadow: 0 0 18px rgba(0, 0, 0, 0.25);
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.inlineOrganizationForm {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background-color: #ffffff;
+  box-sizing: border-box;
+}
+
+.inlineOrganizationForm .organizationFormHeader {
+  height: 65px;
+  min-height: 65px;
+  border-bottom: 4px solid #d8d8d8;
+  font-size: 24px;
+  line-height: normal;
+}
+
+.inlineOrganizationForm .organizationFormCloseButton {
+  right: 19px;
+  top: 16px;
+  color: #263238;
+  font-family: Arial, sans-serif;
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 24px;
+}
+
+.inlineOrganizationForm .organizationCompactForm {
+  width: calc(100% - 48px);
+  max-width: 702px;
+  margin: 24px auto 0;
+  padding: 0;
+}
+
+.inlineOrganizationForm .organizationCompactField {
+  margin: 0 0 16px;
+}
+
+.inlineOrganizationForm .organizationCompactField label {
+  margin-bottom: 5px;
+  font-size: 18px;
+  line-height: normal;
+}
+
+.inlineOrganizationForm .organizationCompactDateRow {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 0;
+}
+
+.inlineOrganizationForm .organizationCompactSelect,
+.inlineOrganizationForm .organizationCompactInput {
+  height: 56px;
+  border: 2px solid #d8d8d8;
+  border-radius: 8px;
+  color: #000000;
+  font-size: 18px;
+  line-height: normal;
+}
+
+.inlineOrganizationForm .organizationCompactSelect {
+  appearance: none;
+  padding: 0 42px 0 14px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #000000 50%),
+    linear-gradient(135deg, #000000 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 2px),
+    calc(100% - 12px) calc(50% - 2px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.inlineOrganizationForm .organizationCompactDropdown {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.inlineOrganizationForm .organizationCompactDropdownButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 56px;
+  padding: 0 38px 0 14px;
+  border: 2px solid #d8d8d8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #000000;
+  font-family: Roboto, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: normal;
+  text-align: left;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.inlineOrganizationForm .organizationCompactDropdownOpen .organizationCompactDropdownButton {
+  border-color: #000000;
+  border-bottom-color: transparent;
+  border-radius: 8px 8px 0 0;
+}
+
+.inlineOrganizationForm .organizationCompactDropdownArrow {
+  position: absolute;
+  right: 34px;
+  top: 23px;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid #000000;
+}
+
+.inlineOrganizationForm .organizationCompactDropdownArrowOpen {
+  border-top: 0;
+  border-bottom: 5px solid #000000;
+}
+
+.inlineOrganizationForm .organizationCompactDropdownMenu {
+  position: absolute;
+  z-index: 4;
+  top: calc(100% - 2px);
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 210px;
+  padding: 0 8px 8px;
+  border: 2px solid #000000;
+  border-top: 0;
+  border-radius: 0 0 8px 8px;
+  background: #ffffff;
+  box-sizing: border-box;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.inlineOrganizationForm .organizationCompactDropdownMenu::-webkit-scrollbar {
+  display: none;
+}
+
+.inlineOrganizationForm .organizationCompactDropdownOption {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 37px;
+  padding: 8px;
+  border: 0;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #717070;
+  font-family: Roboto, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: normal;
+  text-align: left;
+  cursor: pointer;
+}
+
+.inlineOrganizationForm .organizationCompactDropdownOptionSelected {
+  background: #eaeaea;
+  color: #263238;
+  font-weight: 700;
+}
+
+.inlineOrganizationForm .organizationCompactDropdownOption:hover,
+.inlineOrganizationForm .organizationCompactDropdownOption:focus-visible {
+  background: #eaeaea;
+  color: #263238;
+  outline: none;
+}
+
+.inlineOrganizationForm .organizationCompactInput {
+  padding: 8px 12px;
+}
+
+.inlineOrganizationForm .organizationCompactSelect:invalid,
+.inlineOrganizationForm .organizationCompactSelectEmpty,
+.inlineOrganizationForm .organizationCompactInput::placeholder {
+  color: #717070;
+}
+
+.inlineOrganizationForm .organizationActiveMember {
+  gap: 6px;
+  margin: -3px 0 13px;
+  font-family: Roboto, sans-serif;
+  font-size: 18px;
+  line-height: normal;
+}
+
+.inlineOrganizationForm .organizationActiveMember input {
+  width: 24px;
+  height: 24px;
+}
+
+.inlineOrganizationForm .organizationPositionCounter {
+  margin-top: 2px;
+  color: #263238;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 12px;
+}
+
+.inlineOrganizationForm .organizationCompactFooter {
+  width: calc(100% - 48px);
+  max-width: 702px;
+  margin: 0 auto;
+  padding: 0 0 27px;
+}
+
+.inlineOrganizationForm .organizationCompactSave {
+  min-width: 49px;
+  height: 38px;
+  padding: 8px 12px;
+  border: 2px solid #088f26;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: normal;
+}
+
+.inlineOrganizationCancelButton {
+  min-width: 70px;
+  min-height: 38px;
+  padding: 8px 16px;
+  border: 1px solid #2c77e7;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #2c77e7;
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.organizationFormHeader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 36px;
+  min-height: 36px;
+  border-bottom: 4px solid #d8d8d8;
+  color: #263238;
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 22px;
+  box-sizing: border-box;
+}
+
+.organizationFormCloseButton {
+  position: absolute;
+  right: 8px;
+  top: 4px;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  background: transparent;
+  color: #263238;
+  font-size: 18px;
+  line-height: 24px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.organizationCompactForm {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 347px;
+  padding: 12px 10px 0;
+  box-sizing: border-box;
+}
+
+.organizationCompactField {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.organizationCompactField label {
+  margin-bottom: 3px;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.organizationCompactField label span {
+  color: #ff0000;
+}
+
+.organizationCompactDateRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 9px;
+}
+
+.organizationCompactSelect,
+.organizationCompactInput {
+  width: 100%;
+  height: 26px;
+  border: 1px solid #c4c4c4;
+  border-radius: 4px;
+  background-color: #ffffff;
+  color: #000000;
+  font-family: Roboto, sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  box-sizing: border-box;
+}
+
+.organizationCompactSelect {
+  padding: 0 26px 0 8px;
+}
+
+.organizationCompactInput {
+  padding: 5px 8px;
+}
+
+.organizationCompactSelect:invalid,
+.organizationCompactSelectEmpty,
+.organizationCompactInput::placeholder {
+  color: #717070;
+}
+
+.organizationActiveMember {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  margin-bottom: 8px;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  cursor: pointer;
+}
+
+.organizationActiveMember input {
+  width: 12px;
+  height: 12px;
+  margin: 0;
+  accent-color: #2c77e7;
+}
+
+.organizationPositionCounter {
+  align-self: flex-end;
+  margin-top: 2px;
+  color: #000000;
+  font-family: Roboto, sans-serif;
+  font-size: 8px;
+  line-height: 10px;
+}
+
+.organizationCompactFooter {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  max-width: 347px;
+  padding: 0 10px 10px;
+  box-sizing: border-box;
+}
+
+.organizationCompactSave {
+  min-width: 31px;
+  height: 20px;
+  padding: 0 7px;
+  border: 1px solid #088f26;
+  border-radius: 0;
+  background: #ffffff;
+  color: #088f26;
+  font-family: "Open Sans", sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 14px;
+  cursor: pointer;
+}
+
+.organizationCompactSave:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.organizationDialogFooter {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid #eef1f4;
+  background-color: #ffffff;
+  box-sizing: border-box;
+}
+
 .modalContentFooter {
   display: flex;
   flex-direction: row;
@@ -154,9 +585,8 @@
 .modalContentFormDates {
   display: flex;
   flex-direction: column;
-
   width: 100%;
-  row-gap: 18px;
+  row-gap: 16px;
 }
 
 .modalContentDropdowns {
@@ -170,20 +600,161 @@
   width: 100%;
 }
 
+.organizationDialogDateLabel {
+  margin: 0;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.inlineOrganizationForm .modalContentDropdowns {
+  column-gap: 24px;
+  margin-top: -8px;
+}
+
+.inlineOrganizationForm .modalContentDropdowns > div {
+  min-width: 0;
+}
+
+.inlineOrganizationForm .modalContentDropdowns :global(.MuiInputLabel-root) {
+  font-size: 14px;
+  line-height: 18px;
+  transform: translateX(0) translateY(-18px);
+}
+
+.inlineOrganizationForm .modalContentDropdowns :global(.MuiSelect-select) {
+  min-height: 21px;
+  padding: 14px 40px 14px 14px;
+  color: #2f3941;
+  font-family: Roboto, sans-serif;
+  font-size: 18px;
+  line-height: 21px;
+  box-sizing: border-box;
+}
+
 .simpleOrganizationsLayout {
   display: flex;
   flex-direction: column;
-  row-gap: 10px;
-  width: 100%;
+  row-gap: 0;
+  width: calc(100% - 48px);
+  max-width: 702px;
+  margin: 24px auto 0;
 }
 
 .organizationInfo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 24px;
+  align-items: flex-start;
+  width: 100%;
+  min-height: 85px;
+  padding: 0 0 13px;
+  margin-bottom: 13px;
+  border-bottom: 1px solid #d8d8d8;
+  box-sizing: border-box;
+}
+
+.organizationText {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  min-width: 0;
+}
+
+.organizationName {
+  color: #263238;
+  font-family: "Open Sans", sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: normal;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+
+.organizationParentName {
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: normal;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+
+.organizationPosition {
+  margin-top: 12px;
+  color: #000000;
+  font-family: Roboto, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: normal;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+
+.organizationEditIcons {
+  grid-column: 2;
+  display: flex;
   align-items: flex-start;
-  row-gap: 10px;
-  width: 100%;
+  column-gap: 24px;
+  padding-top: 0;
+}
+
+.organizationEditIcons :global(.MuiIconButton-root) {
+  width: 32px;
+  height: 32px;
+  padding: 4px;
+}
+
+.organizationEditIcons :global(.MuiSvgIcon-root) {
+  width: 24px;
+  height: 24px;
+  color: #000000;
+}
+
+.organizationEditIcons .organizationDeleteButton .organizationDeleteIcon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #000000;
+  border-radius: 50%;
+  background-color: #000000;
+  box-sizing: border-box;
+}
+
+.organizationEditIcons .organizationDeleteButton .organizationDeleteIcon::before,
+.organizationEditIcons .organizationDeleteButton .organizationDeleteIcon::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 2px;
+  border-radius: 2px;
+  background-color: #ffffff;
+}
+
+.organizationEditIcons .organizationDeleteButton .organizationDeleteIcon::before {
+  transform: rotate(45deg);
+}
+
+.organizationEditIcons .organizationDeleteButton .organizationDeleteIcon::after {
+  transform: rotate(-45deg);
+}
+
+.organizationEditIcons .organizationDeleteButton:hover .organizationDeleteIcon,
+.organizationEditIcons .organizationDeleteButton:focus-visible .organizationDeleteIcon {
+  border-color: #ff0000;
+  background-color: #ff0000;
+}
+
+.organizationEditIcons .organizationDeleteButton:hover .organizationDeleteIcon::before,
+.organizationEditIcons .organizationDeleteButton:hover .organizationDeleteIcon::after,
+.organizationEditIcons .organizationDeleteButton:focus-visible .organizationDeleteIcon::before,
+.organizationEditIcons .organizationDeleteButton:focus-visible .organizationDeleteIcon::after {
+  background-color: #ffffff;
 }
 
 @media (min-width: 560px) {

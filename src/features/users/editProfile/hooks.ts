@@ -226,7 +226,7 @@ export const useEditOrganizationInformation = (id: string | undefined) => {
 
   const emptyOrganizations = profileInformation?.organizations?.length === 0;
 
-  if (emptyOrganizations) {
+  if (emptyOrganizations || !id) {
     return {
       editOrganizationState: {
         organizationName: "",
@@ -239,7 +239,9 @@ export const useEditOrganizationInformation = (id: string | undefined) => {
   }
 
   const organizationEditing = profileInformation?.organizations?.find(
-    (organization) => organization._id === id
+    (organization) =>
+      organization._id === id ||
+      (organization as typeof organization & { id?: string }).id === id
   );
 
   const startDate = organizationEditing?.startDate;
