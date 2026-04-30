@@ -268,6 +268,29 @@ export const EditBackground = () => {
   const [updateUserProfile] = useUpdateUserProfileMutation();
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  const hasJobFields = () =>
+    Boolean(
+      jobExperience.occupationType?.trim() ||
+        jobExperience.jobTitle?.trim() ||
+        jobExperience.entityName?.trim() ||
+        jobDates.startMonth ||
+        jobDates.startYear ||
+        jobDates.endMonth ||
+        jobDates.endYear ||
+        currentlyWorking
+    );
+
+  const hasEducationFields = () =>
+    Boolean(
+      educationExperience.schoolName?.trim() ||
+        educationExperience.degree?.trim() ||
+        educationDates.startMonth ||
+        educationDates.startYear ||
+        educationDates.endMonth ||
+        educationDates.endYear ||
+        currentlyAttending
+    );
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.name;
     const value = e.target.value;
@@ -319,33 +342,40 @@ export const EditBackground = () => {
   const getStepErrors = () => {
     const errors: Record<string, string> = {};
 
-    if (!jobExperience.occupationType?.trim()) {
-      errors.occupationType = "Occupational Type is required.";
-    }
-    if (!jobExperience.jobTitle?.trim()) {
-      errors.jobTitle = "Title is required.";
-    }
-    if (!jobExperience.entityName?.trim()) {
-      errors.entityName = "Company is required.";
-    }
-    if (!jobDates.startMonth || !jobDates.startYear) {
-      errors.jobStartDate = "Start Date is required.";
-    }
-    if (!currentlyWorking && (!jobDates.endMonth || !jobDates.endYear)) {
-      errors.jobEndDate = "End Date is required.";
+    if (hasJobFields()) {
+      if (!jobExperience.occupationType?.trim()) {
+        errors.occupationType = "Occupational Type is required.";
+      }
+      if (!jobExperience.jobTitle?.trim()) {
+        errors.jobTitle = "Title is required.";
+      }
+      if (!jobExperience.entityName?.trim()) {
+        errors.entityName = "Company is required.";
+      }
+      if (!jobDates.startMonth || !jobDates.startYear) {
+        errors.jobStartDate = "Start Date is required.";
+      }
+      if (!currentlyWorking && (!jobDates.endMonth || !jobDates.endYear)) {
+        errors.jobEndDate = "End Date is required.";
+      }
     }
 
-    if (!educationExperience.schoolName?.trim()) {
-      errors.schoolName = "Institution Name is required.";
-    }
-    if (!educationExperience.degree?.trim()) {
-      errors.degree = "Institution Major is required.";
-    }
-    if (!educationDates.startMonth || !educationDates.startYear) {
-      errors.educationStartDate = "Start Date is required.";
-    }
-    if (!currentlyAttending && (!educationDates.endMonth || !educationDates.endYear)) {
-      errors.educationEndDate = "End Date is required.";
+    if (hasEducationFields()) {
+      if (!educationExperience.schoolName?.trim()) {
+        errors.schoolName = "Institution Name is required.";
+      }
+      if (!educationExperience.degree?.trim()) {
+        errors.degree = "Institution Major is required.";
+      }
+      if (!educationDates.startMonth || !educationDates.startYear) {
+        errors.educationStartDate = "Start Date is required.";
+      }
+      if (
+        !currentlyAttending &&
+        (!educationDates.endMonth || !educationDates.endYear)
+      ) {
+        errors.educationEndDate = "End Date is required.";
+      }
     }
 
     return errors;
@@ -428,8 +458,8 @@ export const EditBackground = () => {
     };
 
     const payload = {
-      jobExperiences: [normalizedJobExperience],
-      education: [normalizedEducationExperience],
+      jobExperiences: hasJobFields() ? [normalizedJobExperience] : [],
+      education: hasEducationFields() ? [normalizedEducationExperience] : [],
       user: { id: userId },
     };
 

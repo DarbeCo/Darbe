@@ -831,6 +831,81 @@
   color: #000;
 }
 
+.licenseDeleteOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.licenseDeleteDialog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 302px;
+  min-height: 152px;
+  padding: 32px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-shadow: 0 0 18px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+}
+
+.licenseDeleteTitle {
+  margin: 0;
+  color: #000000;
+  font-family: Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 20px;
+  text-align: center;
+}
+
+.licenseDeleteActions {
+  display: flex;
+  gap: 25px;
+  margin-top: 26px;
+}
+
+.licenseDeleteYesButton,
+.licenseDeleteCancelButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 107px;
+  height: 47px;
+  padding: 12px 40px;
+  border-radius: 4px;
+  background-color: #ffffff;
+  border: 1px solid #c4c4c4;
+  color: #717070;
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.licenseDeleteYesButton:hover,
+.licenseDeleteYesButton:focus-visible,
+.licenseDeleteYesButton:active {
+  background-color: #088f26;
+  border-color: #088f26;
+  color: #ffffff;
+}
+
+.licenseDeleteCancelButton:hover,
+.licenseDeleteCancelButton:focus-visible,
+.licenseDeleteCancelButton:active {
+  background-color: #ff0000;
+  border-color: #ff0000;
+  color: #ffffff;
+}
+
 .pictureModalContent {
   background: #ffffff;
   border-radius: 6px;

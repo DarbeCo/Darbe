@@ -1,5 +1,6 @@
 import { IconButton } from "@mui/material";
 import { Create, RemoveCircleOutlineSharp } from "@mui/icons-material";
+import { useState } from "react";
 
 import { LicenseState } from "../../../userProfiles/types";
 import { useRemoveUserLicenseMutationMutation } from "../../../../../services/api/endpoints/profiles/profiles.api";
@@ -20,6 +21,7 @@ export const UserLicenses = ({
 }: UserLicensesProps) => {
   const dispatch = useAppDispatch();
   const [removeLicense] = useRemoveUserLicenseMutationMutation();
+  const [licenseToDelete, setLicenseToDelete] = useState<string | undefined>();
 
   const deleteLicense = async (licenseId: string | undefined) => {
     if (!licenseId) return;
@@ -28,6 +30,7 @@ export const UserLicenses = ({
 
     if (updatedUser.licenses) {
       dispatch(updateUserLicenses(updatedUser.licenses));
+      setLicenseToDelete(undefined);
       return;
     }
 
@@ -36,6 +39,7 @@ export const UserLicenses = ({
         (licenses ?? []).filter((license) => license._id !== licenseId)
       )
     );
+    setLicenseToDelete(undefined);
   };
 
   // TODO: This could be another component for better readability and composability
@@ -74,13 +78,46 @@ export const UserLicenses = ({
               <IconButton onClick={() => onEditLicense(license?._id)}>
                 <Create />
               </IconButton>
-              <IconButton onClick={() => deleteLicense(license?._id)}>
+              <IconButton onClick={() => setLicenseToDelete(license?._id)}>
                 <RemoveCircleOutlineSharp sx={{ color: "red" }} />
               </IconButton>
             </div>
           </div>
         );
       })}
+      {licenseToDelete ? (
+        <div className={styles.licenseDeleteOverlay}>
+          <div
+            className={styles.licenseDeleteDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="license-delete-dialog-title"
+          >
+            <h2
+              className={styles.licenseDeleteTitle}
+              id="license-delete-dialog-title"
+            >
+              Are you sure you want to remove this license?
+            </h2>
+            <div className={styles.licenseDeleteActions}>
+              <button
+                type="button"
+                className={styles.licenseDeleteYesButton}
+                onClick={() => deleteLicense(licenseToDelete)}
+              >
+                Yes
+              </button>
+              <button
+                type="button"
+                className={styles.licenseDeleteCancelButton}
+                onClick={() => setLicenseToDelete(undefined)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 };

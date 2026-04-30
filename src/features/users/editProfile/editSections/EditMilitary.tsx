@@ -4,7 +4,11 @@ import { useAppDispatch, useAppSelector } from "../../../../services/hooks";
 
 import { DarbeButton } from "../../../../components/buttons/DarbeButton";
 import { MilitaryServiceState } from "../../userProfiles/types";
-import { EDIT_SECTIONS } from "../../userProfiles/constants";
+import {
+  EDIT_SECTIONS,
+  MILITARY_RANKS,
+  MilitaryBranch,
+} from "../../userProfiles/constants";
 import { useUpdateUserProfileMutation } from "../../../../services/api/endpoints/profiles/profiles.api";
 import { useEditMilitaryInformation } from "../hooks";
 import { hideModal } from "../../../../components/modal/modalSlice";
@@ -14,68 +18,28 @@ import {
   PROFILE_ROUTE,
 } from "../../../../routes/route.constants";
 import { setUserProfile } from "../../userSlice";
+import { splitStringndCapitalize } from "../../../../utils/CommonFunctions";
 
 import styles from "../styles/profileEdit.module.css";
 
 const MILITARY_STATUS_OPTIONS = ["Inactive", "Active", "Reserve", "Veteran"];
-const MILITARY_TEXT_MAX_LENGTH = 300;
-
-type MilitaryTextFieldProps = {
-  label: string;
-  name: string;
-  value?: string;
-  placeholder: string;
-  error?: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-};
-
+const MILITARY_BRANCH_OPTIONS: MilitaryBranch[] = [
+  "army",
+  "airForce",
+  "navy",
+  "marines",
+  "coastGuard",
+  "spaceForce",
+];
 type MilitarySelectFieldProps = {
   label: string;
   name: string;
   value?: string;
   placeholder: string;
   options: { value: string; label: string }[];
-  showCounter?: boolean;
+  required?: boolean;
   error?: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-};
-
-const MilitaryTextField = ({
-  label,
-  name,
-  value = "",
-  placeholder,
-  error,
-  onChange,
-}: MilitaryTextFieldProps) => {
-  const textValue = value?.toString() ?? "";
-
-  return (
-    <div className={styles.profileDialogField}>
-      <label className={styles.profileDialogLabel}>
-        {label}
-        <span className={styles.profileDialogRequired}>*</span>
-      </label>
-      <input
-        className={`${styles.profileDialogInput} ${
-          error ? styles.profileDialogFieldError : ""
-        } ${
-          textValue ? styles.profileDialogFieldFilled : ""
-        }`.trim()}
-        maxLength={MILITARY_TEXT_MAX_LENGTH}
-        name={name}
-        onChange={onChange}
-        placeholder={placeholder}
-        value={textValue}
-      />
-      {error ? (
-        <p className={styles.profileDialogFieldMessage}>{error}</p>
-      ) : null}
-      <div className={styles.profileDialogCounter}>
-        {textValue.length}/{MILITARY_TEXT_MAX_LENGTH}
-      </div>
-    </div>
-  );
 };
 
 const MilitarySelectField = ({
@@ -84,7 +48,7 @@ const MilitarySelectField = ({
   value = "",
   placeholder,
   options,
-  showCounter = false,
+  required = false,
   error,
   onChange,
 }: MilitarySelectFieldProps) => {
@@ -94,7 +58,7 @@ const MilitarySelectField = ({
     <div className={styles.profileDialogField}>
       <label className={styles.profileDialogLabel}>
         {label}
-        <span className={styles.profileDialogRequired}>*</span>
+        {required && <span className={styles.profileDialogRequired}>*</span>}
       </label>
       <select
         className={`${styles.profileDialogSelect} ${
@@ -106,7 +70,7 @@ const MilitarySelectField = ({
         onChange={onChange}
         value={textValue}
       >
-        <option value="">{placeholder}</option>
+        <option value="" aria-label={placeholder}></option>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
@@ -116,11 +80,6 @@ const MilitarySelectField = ({
       {error ? (
         <p className={styles.profileDialogFieldMessage}>{error}</p>
       ) : null}
-      {showCounter && (
-        <div className={styles.profileDialogCounter}>
-          {textValue.length}/{MILITARY_TEXT_MAX_LENGTH}
-        </div>
-      )}
     </div>
   );
 };
@@ -137,23 +96,6 @@ export const EditMilitary = () => {
   const [saveError, setSaveError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-
-    if (fieldErrors[name]) {
-      setFieldErrors((previous) => {
-        const next = { ...previous };
-        delete next[name];
-        return next;
-      });
-    }
-
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
-
   const handleDropdownChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
 
@@ -168,11 +110,23 @@ export const EditMilitary = () => {
     setFormData({
       ...formData,
       [name]: value,
+      ...(name === "branch" ? { rank: "" } : {}),
     });
   };
 
+  const hasMilitaryFields = () =>
+    Boolean(
+      formData.branch?.trim() ||
+        formData.rank?.trim() ||
+        formData.status?.trim()
+    );
+
   const validateForm = () => {
     const errors: Record<string, string> = {};
+
+    if (!hasMilitaryFields()) {
+      return errors;
+    }
 
     if (!formData.branch?.trim()) {
       errors.branch = "Branch Name is required.";
@@ -202,12 +156,14 @@ export const EditMilitary = () => {
     setSaveError("");
 
     const payload = {
-      militaryService: [
-        {
-          ...formData,
-          startDate: formData.startDate ?? new Date().toISOString(),
-        },
-      ],
+      militaryService: hasMilitaryFields()
+        ? [
+            {
+              ...formData,
+              startDate: formData.startDate ?? new Date().toISOString(),
+            },
+          ]
+        : [],
       user: { id: userId },
     };
 
@@ -260,33 +216,44 @@ export const EditMilitary = () => {
 
   const statusValue = formData.status ?? "";
   const branchValue = formData.branch ?? "";
+  const rankOptions = branchValue
+    ? MILITARY_RANKS[branchValue as MilitaryBranch].map((rank) => ({
+        value: rank,
+        label: rank,
+      }))
+    : [];
 
   return (
     <div className={styles.profileDialogContent}>
       <div className={styles.profileDialogScrollArea}>
         <div className={styles.profileAboutForm}>
           <h2 className={styles.profileEditSectionTitle}>Military</h2>
-          <MilitaryTextField
+          <MilitarySelectField
             name="branch"
             label="Branch Name"
             value={branchValue}
-            placeholder="Where did you serve?"
+            placeholder="Branch"
+            options={MILITARY_BRANCH_OPTIONS.map((branch) => ({
+              value: branch,
+              label: splitStringndCapitalize(branch, true),
+            }))}
             error={fieldErrors.branch}
-            onChange={handleTextChange}
+            onChange={handleDropdownChange}
           />
-          <MilitaryTextField
+          <MilitarySelectField
             name="rank"
             label="Rank"
             value={formData.rank}
-            placeholder="What did you serve?"
+            placeholder="Rank"
+            options={rankOptions}
             error={fieldErrors.rank}
-            onChange={handleTextChange}
+            onChange={handleDropdownChange}
           />
           <MilitarySelectField
             name="status"
             label="Status"
             value={statusValue}
-            placeholder="Inactive"
+            placeholder="Status"
             options={MILITARY_STATUS_OPTIONS.map((status) => ({
               value: status,
               label: status,
