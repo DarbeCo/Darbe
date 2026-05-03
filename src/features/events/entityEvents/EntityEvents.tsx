@@ -13,7 +13,9 @@ export const EntityEvents = () => {
     <div className={styles.darbeEventCards}>
       {isLoading && <CircularProgress />}
       {!isLoading &&
-        data?.map((event: ShortEventState) => <EventCard event={event} />)}
+        data?.map((event: ShortEventState) => (
+          <EventCard key={event.id} event={event} />
+        ))}
     </div>
   );
 };

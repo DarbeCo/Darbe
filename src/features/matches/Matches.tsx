@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAppSelector } from "../../services/hooks";
-import { EventMatches } from "../events/eventMatches/EventMatches";
+import {
+  EventMatches,
+  getUpcomingEventMatches,
+} from "../events/eventMatches/EventMatches";
 import { useGetEventsQuery, useGetVolunteerMatchesQuery } from "../../services/api/endpoints/events/events.api";
 import { selectUserType } from "../users/selectors";
 import { VolunteerMatches } from "../volunteerMatches/VolunteerMatches";
@@ -13,17 +16,6 @@ import styles from "./styles/matches.module.css";
 export const Matches = () => {
   const navigate = useNavigate();
   const userType = useAppSelector(selectUserType);
-  const [isMatchFilterOpen, setIsMatchFilterOpen] = useState(false);
-  const [isRecentFilterOpen, setIsRecentFilterOpen] = useState(false);
-  const [selectedRecentFilter, setSelectedRecentFilter] = useState<
-    "Most Recent" | "Least Recent" | "A - Z"
-  >("Most Recent");
-  const [selectedMatchFilter, setSelectedMatchFilter] = useState<
-    | "Event Matches"
-    | "Volunteer Matches"
-    | "Cause Matches"
-    | "Availability Matches"
-  >(userType === "individual" ? "Event Matches" : "Volunteer Matches");
 
   const { data: eventMatchesData } = useGetEventsQuery(undefined, {
     skip: userType !== "individual",
@@ -32,18 +24,16 @@ export const Matches = () => {
     skip: userType === "individual",
   });
 
+  const upcomingEventMatchCount = useMemo(
+    () => getUpcomingEventMatches(eventMatchesData).length,
+    [eventMatchesData]
+  );
   const matchCount =
     userType === "individual"
-      ? eventMatchesData?.length ?? 0
+      ? upcomingEventMatchCount
       : volunteerMatchesData?.length ?? 0;
   const defaultMatchFilter =
     userType === "individual" ? "Event Matches" : "Volunteer Matches";
-  const visibleMatchFilter =
-    selectedMatchFilter === "Volunteer Matches" && userType === "individual"
-      ? defaultMatchFilter
-      : selectedMatchFilter === "Event Matches" && userType !== "individual"
-        ? defaultMatchFilter
-        : selectedMatchFilter;
 
   const summaryCards = [
     {
@@ -74,7 +64,7 @@ export const Matches = () => {
 
   return (
     <div className={styles.matchesPage}>
-      <h1 className={styles.matchesResponsiveTitle}>{visibleMatchFilter}</h1>
+      <h1 className={styles.matchesResponsiveTitle}>{defaultMatchFilter}</h1>
       <div className={styles.matchesSummaryPanel}>
         <p className={styles.matchesTitle}>
           Matches based on your selected causes and availability
@@ -111,157 +101,23 @@ export const Matches = () => {
         </div>
       </div>
 
-      <div className={styles.matchesFilterBar}>
-        <span className={styles.matchesFilterTitle}>Filter</span>
-        <div className={styles.matchesFilterControls}>
-          <div className={styles.matchesFilterDropdownWrap}>
-            <button
-              type="button"
-              className={styles.matchesFilterButton}
-              onClick={() => {
-                setIsMatchFilterOpen(false);
-                setIsRecentFilterOpen((isOpen) => !isOpen);
-              }}
-              aria-expanded={isRecentFilterOpen}
-            >
-              {selectedRecentFilter}
-              <span className={styles.matchesFilterCaret} aria-hidden="true" />
-            </button>
-            {isRecentFilterOpen && (
-              <div
-                className={`${styles.matchesFilterMenu} ${styles.matchesRecentFilterMenu}`}
-              >
-                <button
-                  type="button"
-                  className={
-                    selectedRecentFilter === "Most Recent"
-                      ? styles.matchesFilterMenuSelected
-                      : ""
-                  }
-                  onClick={() => {
-                    setSelectedRecentFilter("Most Recent");
-                    setIsRecentFilterOpen(false);
-                  }}
-                >
-                  Most Recent
-                </button>
-                <button
-                  type="button"
-                  className={
-                    selectedRecentFilter === "Least Recent"
-                      ? styles.matchesFilterMenuSelected
-                      : ""
-                  }
-                  onClick={() => {
-                    setSelectedRecentFilter("Least Recent");
-                    setIsRecentFilterOpen(false);
-                  }}
-                >
-                  Least Recent
-                </button>
-                <button
-                  type="button"
-                  className={
-                    selectedRecentFilter === "A - Z"
-                      ? styles.matchesFilterMenuSelected
-                      : ""
-                  }
-                  onClick={() => {
-                    setSelectedRecentFilter("A - Z");
-                    setIsRecentFilterOpen(false);
-                  }}
-                >
-                  A - Z
-                </button>
-              </div>
-            )}
-          </div>
-          <div className={styles.matchesFilterDropdownWrap}>
-            <button
-              type="button"
-              className={styles.matchesFilterButton}
-              onClick={() => {
-                setIsRecentFilterOpen(false);
-                setIsMatchFilterOpen((isOpen) => !isOpen);
-              }}
-              aria-expanded={isMatchFilterOpen}
-            >
-              {selectedMatchFilter}
-              <span className={styles.matchesFilterCaret} aria-hidden="true" />
-            </button>
-            {isMatchFilterOpen && (
-              <div className={styles.matchesFilterMenu}>
-                <button
-                  type="button"
-                  className={
-                    selectedMatchFilter === defaultMatchFilter
-                      ? styles.matchesFilterMenuSelected
-                      : ""
-                  }
-                  onClick={() => {
-                    setSelectedMatchFilter(defaultMatchFilter);
-                    setIsMatchFilterOpen(false);
-                  }}
-                >
-                  {defaultMatchFilter}
-                </button>
-                <button
-                  type="button"
-                  className={
-                    selectedMatchFilter === "Cause Matches"
-                      ? styles.matchesFilterMenuSelected
-                      : ""
-                  }
-                  onClick={() => {
-                    setSelectedMatchFilter("Cause Matches");
-                    setIsMatchFilterOpen(false);
-                  }}
-                >
-                  Cause Matches
-                </button>
-                <button
-                  type="button"
-                  className={
-                    selectedMatchFilter === "Availability Matches"
-                      ? styles.matchesFilterMenuSelected
-                      : ""
-                  }
-                  onClick={() => {
-                    setSelectedMatchFilter("Availability Matches");
-                    setIsMatchFilterOpen(false);
-                  }}
-                >
-                  Availability Matches
-                </button>
-              </div>
-            )}
+      {userType === "individual" && (
+        <div className={styles.matchesFilterBar}>
+          <span className={styles.matchesFilterTitle}>Filter</span>
+          <div className={styles.matchesFilterControls}>
+            <span className={styles.matchesFilterButton}>Event Matches</span>
           </div>
         </div>
-      </div>
+      )}
 
       <div className={styles.matchesContent}>
-        <h1 className={styles.matchesSectionTitle}>
-          {visibleMatchFilter}
-        </h1>
+        <h1 className={styles.matchesSectionTitle}>{defaultMatchFilter}</h1>
         {userType === "individual" ? (
-          <EventMatches
-            matchFilter={
-              visibleMatchFilter as
-                | "Event Matches"
-                | "Cause Matches"
-                | "Availability Matches"
-            }
-            recentFilter={selectedRecentFilter}
-          />
+          <EventMatches />
         ) : (
           <VolunteerMatches
-            matchFilter={
-              visibleMatchFilter as
-                | "Volunteer Matches"
-                | "Cause Matches"
-                | "Availability Matches"
-            }
-            recentFilter={selectedRecentFilter}
+            matchFilter="Volunteer Matches"
+            recentFilter="Most Recent"
           />
         )}
         {matchCount > 0 && (

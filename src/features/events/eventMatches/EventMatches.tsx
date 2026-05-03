@@ -12,6 +12,29 @@ interface EventMatchesProps {
   recentFilter?: "Most Recent" | "Least Recent" | "A - Z";
 }
 
+const getDateOnlyTime = (date: Date) =>
+  new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+
+const getEventDateOnlyTime = (eventDate: string) => {
+  const [year, month, day] = eventDate.split("T")[0].split("-").map(Number);
+
+  if (year && month && day) {
+    return new Date(year, month - 1, day).getTime();
+  }
+
+  return getDateOnlyTime(new Date(eventDate));
+};
+
+const hasNotHappenedYet = (eventDate: string) => {
+  const todayTime = getDateOnlyTime(new Date());
+  const eventDateTime = getEventDateOnlyTime(eventDate);
+
+  return eventDateTime >= todayTime;
+};
+
+export const getUpcomingEventMatches = (events: ShortEventState[] = []) =>
+  events.filter((event) => hasNotHappenedYet(event.eventDate));
+
 export const EventMatches = ({
   matchFilter = "Event Matches",
   recentFilter = "Most Recent",
@@ -22,21 +45,21 @@ export const EventMatches = ({
       return [];
     }
 
-    const sortedEvents = [...data];
+    const sortedEvents = getUpcomingEventMatches(data);
 
     if (recentFilter === "Most Recent") {
       sortedEvents.sort(
         (first, second) =>
-          new Date(second.eventDate).getTime() -
-          new Date(first.eventDate).getTime()
+          getEventDateOnlyTime(second.eventDate) -
+          getEventDateOnlyTime(first.eventDate)
       );
     }
 
     if (recentFilter === "Least Recent") {
       sortedEvents.sort(
         (first, second) =>
-          new Date(first.eventDate).getTime() -
-          new Date(second.eventDate).getTime()
+          getEventDateOnlyTime(first.eventDate) -
+          getEventDateOnlyTime(second.eventDate)
       );
     }
 
@@ -52,10 +75,9 @@ export const EventMatches = ({
   return (
     <div className={styles.darbeEventCards}>
       {isLoading && <CircularProgress />}
-      {!isLoading &&
-        filteredEvents.length === 0 && (
-          <p className={styles.noEventMatches}>No matches found.</p>
-        )}
+      {!isLoading && filteredEvents.length === 0 && (
+        <p className={styles.noEventMatches}>No matches found.</p>
+      )}
       {!isLoading &&
         filteredEvents.map((event: ShortEventState) => (
           <EventCard key={event.id} event={event} variant="match" />

@@ -157,8 +157,16 @@ const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> 
 
   const eventIds = events.map((event) => event.id);
   const ownerIds = Array.from(new Set(events.map((event) => event.event_owner_id)));
+  const coordinatorIds = Array.from(
+    new Set(
+      events
+        .map((event) => event.event_coordinator_id)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
 
-  const [addressesRes, impactsRes, owners, signupCountMap] = await Promise.all([
+  const [addressesRes, impactsRes, owners, coordinators, signupCountMap] =
+    await Promise.all([
     supabase
       .from("event_addresses")
       .select("event_id, location_name, street_name, city, zip_code")
@@ -170,6 +178,7 @@ const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> 
       )
       .in("event_id", eventIds),
     getProfilesByIds(ownerIds),
+    getProfilesByIds(coordinatorIds),
     getSignupCounts(eventIds),
   ]);
 
@@ -183,13 +192,20 @@ const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> 
   (impactsRes.data ?? []).forEach((row) => impactMap.set(row.event_id, row));
 
   const ownerMap = new Map(owners.map((profile) => [profile.id, profile]));
+  const coordinatorMap = new Map(
+    coordinators.map((profile) => [profile.id, profile])
+  );
 
   return events.map((event) => {
     const signupCount = signupCountMap.get(event.id) ?? 0;
+    const coordinatorId = event.event_coordinator_id;
 
     return {
       id: event.id,
       eventOwner: toSimpleUser(ownerMap.get(event.event_owner_id), event.event_owner_id),
+      eventCoordinator: coordinatorId
+        ? toSimpleUser(coordinatorMap.get(coordinatorId), coordinatorId)
+        : undefined,
       eventName: event.event_name,
       eventDate: event.event_date,
       startTime: timeToDecimal(event.start_time) ?? 0,
@@ -209,7 +225,7 @@ export const getShortEventsByIds = async (eventIds: string[]): Promise<ShortEven
   const { data, error } = await supabase
     .from("events")
     .select(
-      "id, event_owner_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url"
+      "id, event_owner_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_coordinator_id"
     )
     .in("id", eventIds);
 
@@ -297,7 +313,7 @@ export const getEvents = async (): Promise<ShortEventState[]> => {
   const { data: events, error } = await supabase
     .from("events")
     .select(
-      "id, event_owner_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url"
+      "id, event_owner_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_coordinator_id"
     )
     .match(isIndividual ? {} : { event_owner_id: userId })
     .neq(isIndividual ? "event_owner_id" : "id", isIndividual ? userId : "")
@@ -606,7 +622,7 @@ export const getSignedUpEvents = async (
   const { data: events, error: eventsError } = await supabase
     .from("events")
     .select(
-      "id, event_owner_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url"
+      "id, event_owner_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_coordinator_id"
     )
     .in("id", eventIds);
 

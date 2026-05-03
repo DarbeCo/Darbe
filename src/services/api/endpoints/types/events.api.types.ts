@@ -80,6 +80,7 @@ export interface EventsState {
 export interface ShortEventState {
   id: string;
   eventOwner: SimpleUserInfo;
+  eventCoordinator?: SimpleUserInfo;
   eventName: string;
   eventDate: string;
   startTime: number;

@@ -33,4 +33,245 @@
     font-weight: 400;
     line-height: 22px;
   }
+
+  .volunteerEventsPanel {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 16px;
+    box-sizing: border-box;
+  }
+
+  .volunteerEventsTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .volunteerEventsTitle h1 {
+    margin: 0;
+    color: #000000;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 33px;
+  }
+
+  .volunteerEventsTabs {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    min-height: 33px;
+  }
+
+  .volunteerEventsTabs button {
+    min-width: 0;
+    height: 33px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #000000;
+    font-family: "Open Sans", sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 33px;
+    cursor: pointer;
+  }
+
+  .volunteerEventsTabs .volunteerEventsTabActive {
+    color: #2c77e7;
+  }
+
+  .volunteerEventsLoading {
+    display: flex;
+    justify-content: center;
+    padding: 32px;
+  }
+
+  .volunteerSummaryCard {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    border-radius: 8px;
+    background-color: #f5f5f5;
+    box-sizing: border-box;
+  }
+
+  .volunteerSummaryCard h2 {
+    margin: 0;
+    color: #000000;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 33px;
+  }
+
+  .volunteerSummaryRows {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .volunteerSummaryRowsExpanded {
+    max-height: 234px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  .volunteerSummaryRow {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) 128px 178px;
+    align-items: center;
+    gap: 24px;
+    width: 100%;
+    min-height: 39px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .volunteerSummaryRow:hover strong,
+  .volunteerSummaryRow:focus-visible strong {
+    text-decoration: underline;
+  }
+
+  .volunteerSummaryRow:focus-visible {
+    outline: 2px solid #2c77e7;
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  .volunteerEventCardAnchor {
+    scroll-margin-top: 88px;
+  }
+
+  .volunteerSummaryDate,
+  .volunteerSummaryMetric,
+  .volunteerSummaryVolunteerCount {
+    color: #000000;
+    font-family: Roboto, sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 19px;
+  }
+
+  .volunteerSummaryEvent {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .volunteerSummaryEvent strong {
+    overflow: hidden;
+    color: #2c77e7;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 25px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .volunteerSummaryEvent span {
+    overflow: hidden;
+    color: #000000;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 17px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .volunteerSummaryMetric {
+    display: flex;
+    justify-content: center;
+  }
+
+  .volunteerSummaryCoordinator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .volunteerSummaryCoordinator span {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    color: #000000;
+    font-family: Roboto, sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 19px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .volunteerSummaryCoordinator > div {
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+
+  .volunteerSummaryCoordinator > div > div:last-child {
+    display: none;
+  }
+
+  .volunteerSummarySeeMore {
+    align-self: flex-end;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #2c77e7;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 22px;
+    cursor: pointer;
+  }
+}
+
+@media (min-width: 1260px) {
+  .eventDisplay {
+    width: 750px;
+    padding-inline: 0;
+  }
+
+  .volunteerEventsPanel {
+    width: 750px;
+    padding: 16px;
+    border: 1px solid #d8d8d8;
+    border-radius: 8px;
+    background-color: #ffffff;
+  }
+
+  .darbeEventCards {
+    padding-bottom: 0;
+  }
+}
+
+@media (max-width: 699px) {
+  .volunteerEventsTabs {
+    gap: 24px;
+    overflow-x: auto;
+  }
+
+  .volunteerEventsTabs button {
+    min-width: max-content;
+    padding: 0 8px;
+    font-size: 18px;
+    line-height: 25px;
+  }
+
+  .volunteerSummaryCard {
+    padding: 12px;
+  }
+
+  .volunteerSummaryRow {
+    grid-template-columns: 48px minmax(0, 1fr) 58px;
+    gap: 8px;
+  }
+
+  .volunteerSummaryCoordinator {
+    display: none;
+  }
 }

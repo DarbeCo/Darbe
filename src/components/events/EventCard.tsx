@@ -3,11 +3,7 @@ import { IconButton } from "@mui/material";
 import { ContentCopy } from "@mui/icons-material";
 import { useState } from "react";
 
-import {
-  EVENTS_ROUTE,
-  NEW_MESSAGE_ROUTE,
-  PROFILE_ROUTE,
-} from "../../routes/route.constants";
+import { EVENTS_ROUTE, PROFILE_ROUTE } from "../../routes/route.constants";
 import { ShortEventState } from "../../services/api/endpoints/types/events.api.types";
 import { UserAvatars } from "../avatars/UserAvatars";
 import { Typography } from "../typography/Typography";
@@ -17,15 +13,9 @@ import {
   formatDarbeTimeToString,
   getUserStateFromZip,
 } from "../../utils/CommonFunctions";
-import { useAppDispatch, useAppSelector } from "../../services/hooks";
+import { useAppSelector } from "../../services/hooks";
 import { selectCurrentUserId } from "../../features/users/selectors";
 import { assetUrl } from "../../utils/assetUrl";
-import {
-  MODAL_TYPE,
-  setExternalData,
-  setModalType,
-  showModal,
-} from "../modal/modalSlice";
 
 import styles from "./styles/eventCards.module.css";
 import {
@@ -41,6 +31,8 @@ interface EventCardProps {
   impactView?: boolean;
   onUnvolunteerSuccess?: (eventId: string) => void;
   canUnvolunteer?: boolean;
+  hideVolunteerActions?: boolean;
+  returnToEventsTab?: string;
   variant?: "default" | "match";
 }
 
@@ -51,10 +43,11 @@ export const EventCard = ({
   impactView = false,
   onUnvolunteerSuccess,
   canUnvolunteer = true,
+  hideVolunteerActions = false,
+  returnToEventsTab,
   variant = "default",
 }: EventCardProps) => {
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
   const currentUserId = useAppSelector(selectCurrentUserId);
   const [passOnEvent, { isLoading: isPassing }] = usePassOnEventMutation();
   const [unvolunteerFromEvent, { isLoading: isUnvolunteering }] =
@@ -65,7 +58,6 @@ export const EventCard = ({
   const [showVolunteerDialog, setShowVolunteerDialog] = useState(false);
   const [showPassConfirmDialog, setShowPassConfirmDialog] = useState(false);
   const [showPassRejectedDialog, setShowPassRejectedDialog] = useState(false);
-  const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
 
   const handleAvatarClick = (userId: string) => {
     navigate(`${PROFILE_ROUTE}/${userId}`);
@@ -119,23 +111,6 @@ export const EventCard = ({
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(eventShareUrl);
-    setIsShareMenuOpen(false);
-  };
-
-  const handleShareToNewsFeed = () => {
-    dispatch(setExternalData(eventShareUrl));
-    dispatch(setModalType(MODAL_TYPE.createPost));
-    dispatch(showModal());
-    setIsShareMenuOpen(false);
-  };
-
-  const handleShareWithFriend = () => {
-    if (currentUserId) {
-      navigate(NEW_MESSAGE_ROUTE(currentUserId), {
-        state: { shareUrl: eventShareUrl },
-      });
-    }
-    setIsShareMenuOpen(false);
   };
 
   const eventState = getUserStateFromZip(event.eventAddress.zipCode)?.st;
@@ -216,7 +191,9 @@ export const EventCard = ({
   };
 
   const handleDetailsClick = () => {
-    navigate(`${EVENTS_ROUTE}/${event.id}`);
+    navigate(`${EVENTS_ROUTE}/${event.id}`, {
+      state: returnToEventsTab ? { returnToEventsTab } : undefined,
+    });
   };
 
   const eventImpactText = calculateEventImpact();
@@ -231,11 +208,6 @@ export const EventCard = ({
 
   return (
     <div className={eventCardClassName}>
-      {isMatchVariant && (
-        <div className={styles.eventInvitationBanner}>
-          Invitation from: {displayName}
-        </div>
-      )}
       <div className={styles.eventMatchHeader}>
         <div className={styles.eventMatchHeaderUserInfo}>
           <UserAvatars
@@ -250,46 +222,7 @@ export const EventCard = ({
           />
         </div>
         <div className={styles.eventMatchHeaderDetails}>
-          {isMatchVariant ? (
-            <div className={styles.eventShareMenuWrap}>
-              <button
-                type="button"
-                className={styles.eventMatchTextButton}
-                onClick={() => setIsShareMenuOpen((isOpen) => !isOpen)}
-                aria-expanded={isShareMenuOpen}
-              >
-                Share
-              </button>
-              {isShareMenuOpen && (
-                <div className={styles.eventShareMenu}>
-                  <button type="button" onClick={handleShareToNewsFeed}>
-                    <CustomSvgs
-                      svgPath="/svgs/common/addShareIcon.svg"
-                      variant="small"
-                      altText=""
-                    />
-                    Share to News Feed
-                  </button>
-                  <button type="button" onClick={handleShareWithFriend}>
-                    <CustomSvgs
-                      svgPath="/svgs/common/addShareIcon.svg"
-                      variant="small"
-                      altText=""
-                    />
-                    Share with Friend
-                  </button>
-                  <button type="button" onClick={handleCopyLink}>
-                    <CustomSvgs
-                      svgPath="/svgs/common/copyLinkIcon.svg"
-                      variant="small"
-                      altText=""
-                    />
-                    Copy Link
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
+          {!isMatchVariant && (
             <IconButton onClick={handleCopyLink}>
               <ContentCopy />
             </IconButton>
@@ -363,29 +296,55 @@ export const EventCard = ({
       )}
       {!isEventPoster && !impactView && (
         <div className={styles.eventMatchFooter}>
-          {!hasVolunteered && !isSignedUpCard && (
-            <DarbeButton
-              buttonText="Pass"
-              onClick={handlePassEvent}
-              darbeButtonType="secondaryNextButton"
-              isDisabled={isPassing}
-            />
+          {isMatchVariant && (
+            <button
+              type="button"
+              className={styles.eventSeeVolunteersButton}
+              onClick={handleDetailsClick}
+            >
+              See Volunteers
+              <CustomSvgs
+                svgPath="/svgs/common/goForwardIcon.svg"
+                variant="small"
+                altText=""
+              />
+            </button>
           )}
-          {isSignedUpCard && canUnvolunteer ? (
-            <DarbeButton
-              buttonText="Unvolunteer"
-              onClick={handleUnvolunteerEvent}
-              darbeButtonType="secondaryNextButton"
-              isDisabled={isUnvolunteering}
-            />
-          ) : !isSignedUpCard ? (
-            <DarbeButton
-              buttonText={hasVolunteered ? "Volunteered" : "Volunteer"}
-              onClick={handleVolunteerEvent}
-              darbeButtonType="nextButton"
-              isDisabled={isVolunteerLocked}
-            />
-          ) : null}
+          {!hideVolunteerActions && (
+            <div className={styles.eventMatchActions}>
+              {!hasVolunteered && !isSignedUpCard && (
+                <DarbeButton
+                  buttonText="Pass"
+                  onClick={handlePassEvent}
+                  darbeButtonType="secondaryNextButton"
+                  isDisabled={isPassing}
+                />
+              )}
+              {isSignedUpCard && canUnvolunteer ? (
+                <DarbeButton
+                  buttonText="Unvolunteer"
+                  onClick={handleUnvolunteerEvent}
+                  darbeButtonType="secondaryNextButton"
+                  isDisabled={isUnvolunteering}
+                />
+              ) : !isSignedUpCard ? (
+                <DarbeButton
+                  buttonText={
+                    isMatchVariant
+                      ? hasVolunteered
+                        ? "Checked In"
+                        : "Check In"
+                      : hasVolunteered
+                      ? "Volunteered"
+                      : "Volunteer"
+                  }
+                  onClick={handleVolunteerEvent}
+                  darbeButtonType="nextButton"
+                  isDisabled={isVolunteerLocked}
+                />
+              ) : null}
+            </div>
+          )}
         </div>
       )}
       {showVolunteerDialog ? (

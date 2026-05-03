@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { selectUser } from "../../features/users/selectors";
 import {
@@ -18,7 +18,11 @@ import {
 } from "../../utils/CommonFunctions";
 import { UserAvatars } from "../avatars/UserAvatars";
 import { useGetSimpleUserInfoQuery } from "../../services/api/endpoints/profiles/profiles.api";
-import { NEW_MESSAGE_ROUTE, PROFILE_ROUTE } from "../../routes/route.constants";
+import {
+  EVENTS_ROUTE,
+  NEW_MESSAGE_ROUTE,
+  PROFILE_ROUTE,
+} from "../../routes/route.constants";
 import { assetUrl } from "../../utils/assetUrl";
 import {
   MODAL_TYPE,
@@ -58,6 +62,7 @@ export const EventDetailCard = ({
   isEventOwner = false,
 }: EventDetailCardProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector(selectUser);
   const [passOnEvent, { isLoading: isPassing }] = usePassOnEventMutation();
@@ -199,8 +204,18 @@ export const EventDetailCard = ({
   const eventShareUrl = eventId
     ? `${window.location.origin}/home/events/${eventId}`
     : "";
+  const returnToEventsTab = (
+    location.state as { returnToEventsTab?: string } | null
+  )?.returnToEventsTab;
 
   const handleGoBack = () => {
+    if (returnToEventsTab) {
+      navigate(EVENTS_ROUTE, {
+        state: { activeEventsTab: returnToEventsTab },
+      });
+      return;
+    }
+
     navigate(-1);
   };
 
