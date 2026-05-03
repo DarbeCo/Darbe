@@ -437,6 +437,144 @@
   cursor: pointer;
 }
 
+.eventVolunteerList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  padding: 16px 0 0;
+  background-color: #ffffff;
+}
+
+.eventVolunteerRow,
+.eventVolunteerListFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 80px;
+  padding: 16px;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  background-color: #faf9f9;
+  box-sizing: border-box;
+}
+
+.eventVolunteerInfo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.eventVolunteerAvatarButton {
+  display: block;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.eventVolunteerAvatar {
+  display: block;
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+}
+
+.eventVolunteerText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.eventVolunteerText button {
+  overflow: hidden;
+  max-width: 240px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #2c77e7;
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: normal;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.eventVolunteerText span {
+  overflow: hidden;
+  max-width: 240px;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eventVolunteerCheckIn {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.eventVolunteerCheckIn strong,
+.eventVolunteerListFooter strong {
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.eventVolunteerCheckInButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 112px;
+  height: 38px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 4px;
+  background-color: #2c77e7;
+  color: #ffffff;
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+}
+
+.eventVolunteerCheckInButton:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.eventVolunteerListFooter button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #000000;
+  font-family: Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 21px;
+  cursor: pointer;
+}
+
 .eventShareMenuWrap {
   position: relative;
   display: inline-flex;

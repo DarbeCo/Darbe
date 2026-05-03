@@ -24,6 +24,7 @@ export interface SimpleUserInfo {
   organizationName?: string;
   profilePicture?: string;
   userType?: string;
+  jobTitle?: string;
 }
 
 export interface SimpleEntityInfo {

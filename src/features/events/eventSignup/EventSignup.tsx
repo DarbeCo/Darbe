@@ -261,6 +261,7 @@ export const EventSignup = () => {
                       signupCount={signupCount}
                       hideVolunteerActions={activeTab === "Past"}
                       returnToEventsTab={activeTab}
+                      canExpandVolunteers={activeTab === "Current"}
                     />
                   </div>
                 )

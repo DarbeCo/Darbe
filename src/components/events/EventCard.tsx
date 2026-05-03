@@ -14,7 +14,10 @@ import {
   getUserStateFromZip,
 } from "../../utils/CommonFunctions";
 import { useAppSelector } from "../../services/hooks";
-import { selectCurrentUserId } from "../../features/users/selectors";
+import {
+  selectCurrentUserId,
+  selectUserType,
+} from "../../features/users/selectors";
 import { assetUrl } from "../../utils/assetUrl";
 
 import styles from "./styles/eventCards.module.css";
@@ -33,6 +36,7 @@ interface EventCardProps {
   canUnvolunteer?: boolean;
   hideVolunteerActions?: boolean;
   returnToEventsTab?: string;
+  canExpandVolunteers?: boolean;
   variant?: "default" | "match";
 }
 
@@ -45,10 +49,12 @@ export const EventCard = ({
   canUnvolunteer = true,
   hideVolunteerActions = false,
   returnToEventsTab,
+  canExpandVolunteers = false,
   variant = "default",
 }: EventCardProps) => {
   const navigate = useNavigate();
   const currentUserId = useAppSelector(selectCurrentUserId);
+  const currentUserType = useAppSelector(selectUserType);
   const [passOnEvent, { isLoading: isPassing }] = usePassOnEventMutation();
   const [unvolunteerFromEvent, { isLoading: isUnvolunteering }] =
     useUnvolunteerFromEventMutation();
@@ -58,6 +64,7 @@ export const EventCard = ({
   const [showVolunteerDialog, setShowVolunteerDialog] = useState(false);
   const [showPassConfirmDialog, setShowPassConfirmDialog] = useState(false);
   const [showPassRejectedDialog, setShowPassRejectedDialog] = useState(false);
+  const [isVolunteerListOpen, setIsVolunteerListOpen] = useState(false);
 
   const handleAvatarClick = (userId: string) => {
     navigate(`${PROFILE_ROUTE}/${userId}`);
@@ -147,6 +154,9 @@ export const EventCard = ({
   const isEventPoster = currentUserId === event.eventOwner.id;
   const isVolunteerLocked = hasVolunteered || isVolunteering;
   const isSignedUpCard = Boolean(isSignedUp);
+  const canSelectVolunteers = currentUserType === "nonprofit";
+  const checkedInVolunteerCount =
+    event.signups?.filter((signup) => signup.status === "confirmed").length ?? 0;
 
   // TODO: Move out to a hook/util?
   const calculateEventImpact = () => {
@@ -288,23 +298,30 @@ export const EventCard = ({
           <Typography variant="text" textToDisplay={eventImpactText} />
         </div>
       </div>
-      {hasVolunteered && canUnvolunteer && (
-        <Typography
-          variant="text"
-          textToDisplay="You are signed up for this event."
-        />
-      )}
+
       {!isEventPoster && !impactView && (
         <div className={styles.eventMatchFooter}>
           {isMatchVariant && (
             <button
               type="button"
               className={styles.eventSeeVolunteersButton}
-              onClick={handleDetailsClick}
+              onClick={() => {
+                if (canExpandVolunteers) {
+                  setIsVolunteerListOpen((isOpen) => !isOpen);
+                  return;
+                }
+
+                handleDetailsClick();
+              }}
+              aria-expanded={canExpandVolunteers ? isVolunteerListOpen : undefined}
             >
               See Volunteers
               <CustomSvgs
-                svgPath="/svgs/common/goForwardIcon.svg"
+                svgPath={
+                  isVolunteerListOpen
+                    ? "/svgs/common/goUpIcon.svg"
+                    : "/svgs/common/goForwardIcon.svg"
+                }
                 variant="small"
                 altText=""
               />
@@ -345,6 +362,79 @@ export const EventCard = ({
               ) : null}
             </div>
           )}
+        </div>
+      )}
+      {canExpandVolunteers && isVolunteerListOpen && (
+        <div className={styles.eventVolunteerList}>
+          {event.signups?.map((signup) => {
+            const volunteerName =
+              signup.user.fullName ||
+              `${signup.user.firstName ?? ""} ${signup.user.lastName ?? ""}`.trim();
+            const isCurrentVolunteer = signup.user.id === currentUserId;
+            const isCheckedIn = signup.status === "confirmed";
+
+            return (
+              <div className={styles.eventVolunteerRow} key={signup.id}>
+                <div className={styles.eventVolunteerInfo}>
+                  <button
+                    type="button"
+                    className={styles.eventVolunteerAvatarButton}
+                    onClick={() => handleAvatarClick(signup.user.id)}
+                    aria-label={`Open ${volunteerName} profile`}
+                  >
+                    <img
+                      className={styles.eventVolunteerAvatar}
+                      src={
+                        signup.user.profilePicture ||
+                        assetUrl("/images/defaultProfilePicture.jpg")
+                      }
+                      alt=""
+                    />
+                  </button>
+                  <div className={styles.eventVolunteerText}>
+                    <button
+                      type="button"
+                      onClick={() => handleAvatarClick(signup.user.id)}
+                    >
+                      {volunteerName}
+                    </button>
+                    {signup.user.jobTitle && <span>{signup.user.jobTitle}</span>}
+                  </div>
+                </div>
+                {isCurrentVolunteer && (
+                  <div className={styles.eventVolunteerCheckIn}>
+                    <strong>{isCheckedIn ? "Checked In" : "Not Checked In"}</strong>
+                    {!isCheckedIn && (
+                      <button
+                        type="button"
+                        className={styles.eventVolunteerCheckInButton}
+                        onClick={handleVolunteerEvent}
+                        disabled={isVolunteerLocked}
+                      >
+                        Check In
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          <div className={styles.eventVolunteerListFooter}>
+            <strong>
+              Check in status: {checkedInVolunteerCount}/{event.maxVolunteerCount}{" "}
+              Volunteers Checked in
+            </strong>
+            {canSelectVolunteers && (
+              <button type="button">
+                Select Volunteers
+                <CustomSvgs
+                  svgPath="/svgs/common/goDownIcon.svg"
+                  variant="small"
+                  altText=""
+                />
+              </button>
+            )}
+          </div>
         </div>
       )}
       {showVolunteerDialog ? (

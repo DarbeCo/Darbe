@@ -116,6 +116,27 @@ const buildSignupPlaceholders = (count: number, eventId: string) =>
     eventActionTimeStamp: new Date(0).toISOString(),
   }));
 
+const getJobTitleMap = async (userIds: string[]) => {
+  if (!userIds.length) return new Map<string, string>();
+
+  const { data, error } = await supabase
+    .from("user_job_experiences")
+    .select("user_id, job_title, start_date")
+    .in("user_id", userIds)
+    .order("start_date", { ascending: false, nullsFirst: false });
+
+  if (error) throw error;
+
+  const jobTitleMap = new Map<string, string>();
+  (data ?? []).forEach((row) => {
+    if (!jobTitleMap.has(row.user_id) && row.job_title) {
+      jobTitleMap.set(row.user_id, row.job_title);
+    }
+  });
+
+  return jobTitleMap;
+};
+
 const mapAddressRow = (row?: EventAddressRow) => ({
   locationName: row?.location_name ?? "",
   streetName: row?.street_name ?? "",
@@ -165,7 +186,7 @@ const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> 
     )
   );
 
-  const [addressesRes, impactsRes, owners, coordinators, signupCountMap] =
+  const [addressesRes, impactsRes, signupRowsRes, owners, coordinators, signupCountMap] =
     await Promise.all([
     supabase
       .from("event_addresses")
@@ -177,6 +198,11 @@ const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> 
         "event_id, individual_impact, individual_impact_per_hour, group_impact, group_impact_per_hour, is_individual_impact, is_group_impact"
       )
       .in("event_id", eventIds),
+    supabase
+      .from("event_signups")
+      .select("id, event_id, user_id, status, event_action_timestamp")
+      .in("event_id", eventIds)
+      .neq("status", "passed"),
     getProfilesByIds(ownerIds),
     getProfilesByIds(coordinatorIds),
     getSignupCounts(eventIds),
@@ -184,6 +210,7 @@ const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> 
 
   if (addressesRes.error) throw addressesRes.error;
   if (impactsRes.error) throw impactsRes.error;
+  if (signupRowsRes.error) throw signupRowsRes.error;
 
   const addressMap = new Map<string, EventAddressRow>();
   (addressesRes.data ?? []).forEach((row) => addressMap.set(row.event_id, row));
@@ -195,6 +222,44 @@ const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> 
   const coordinatorMap = new Map(
     coordinators.map((profile) => [profile.id, profile])
   );
+  const signupUserIds = Array.from(
+    new Set((signupRowsRes.data ?? []).map((signup) => signup.user_id))
+  );
+  const [signupProfiles, signupJobTitleMap] = await Promise.all([
+    getProfilesByIds(signupUserIds),
+    getJobTitleMap(signupUserIds),
+  ]);
+  const signupProfileMap = new Map(
+    signupProfiles.map((profile) => [profile.id, profile])
+  );
+  const signupsByEvent = new Map<
+    string,
+    {
+      id: string;
+      user: SimpleUserInfo;
+      eventId: string;
+      status: "volunteered" | "confirmed" | "passed";
+      eventActionTimeStamp: string;
+    }[]
+  >();
+
+  (signupRowsRes.data ?? []).forEach((signup) => {
+    const signupUser = toSimpleUser(
+      signupProfileMap.get(signup.user_id),
+      signup.user_id
+    );
+    signupUser.jobTitle = signupJobTitleMap.get(signup.user_id);
+
+    const eventSignups = signupsByEvent.get(signup.event_id) ?? [];
+    eventSignups.push({
+      id: signup.id,
+      user: signupUser,
+      eventId: signup.event_id,
+      status: signup.status as "volunteered" | "confirmed" | "passed",
+      eventActionTimeStamp: signup.event_action_timestamp,
+    });
+    signupsByEvent.set(signup.event_id, eventSignups);
+  });
 
   return events.map((event) => {
     const signupCount = signupCountMap.get(event.id) ?? 0;
@@ -215,7 +280,8 @@ const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> 
       eventDescription: event.event_description ?? "",
       volunteerImpact: mapImpactRow(impactMap.get(event.id)),
       eventAddress: mapAddressRow(addressMap.get(event.id)),
-      signups: buildSignupPlaceholders(signupCount, event.id),
+      signups:
+        signupsByEvent.get(event.id) ?? buildSignupPlaceholders(signupCount, event.id),
     };
   });
 };
