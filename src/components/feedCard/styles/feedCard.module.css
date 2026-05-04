@@ -34,10 +34,19 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  width: 100%;
+  padding: 12px;
+  box-sizing: border-box;
 }
 
-/* Leave empty for now, images get full height and not full width idk */
 .postImage {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+  border-radius: 8px;
+  background-color: #faf9f9;
 }
 
 .postButtons {
@@ -99,21 +108,22 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    width: 100%;
   }
 
   .postImage {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    width: 100%;
+    max-height: 520px;
+    object-fit: contain;
   }
 }
 
 @media (min-width: 1260px) {
   .postImage {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    display: block;
+    width: 100%;
+    max-height: 520px;
+    object-fit: contain;
     border-radius: 10px;
   }
 

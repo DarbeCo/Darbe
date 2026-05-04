@@ -9,14 +9,15 @@ import {
 import { EventCard } from "../../../components/events/EventCard";
 import { ShortEventState } from "../../../services/api/endpoints/types/events.api.types";
 import { useAppSelector } from "../../../services/hooks";
-import { selectUserType } from "../../users/selectors";
+import { selectCurrentUserId, selectUserType } from "../../users/selectors";
 import { CustomSvgs } from "../../../components/customSvgs/CustomSvgs";
 import { UserAvatars } from "../../../components/avatars/UserAvatars";
 
 import styles from "../styles/entityEvents.module.css";
 
-const tabs = ["Past", "Current", "Recommendations"] as const;
-type EventsTab = (typeof tabs)[number];
+const adminTabs = ["Current", "Past", "Admin", "Incomplete"] as const;
+const nonAdminTabs = ["Current", "Past"] as const;
+type EventsTab = (typeof adminTabs)[number];
 const COLLAPSED_SUMMARY_COUNT = 3;
 
 const formatSummaryDate = (eventDate: string) =>
@@ -63,6 +64,20 @@ const isCurrentEvent = (eventDate: string) => {
   return eventDateTime >= todayTime;
 };
 
+const isIncompleteEvent = (event: ShortEventState) => {
+  const maybeEvent = event as ShortEventState & {
+    isComplete?: boolean;
+    status?: string;
+    projectStatus?: string;
+  };
+
+  return (
+    maybeEvent.isComplete === false ||
+    maybeEvent.status === "incomplete" ||
+    maybeEvent.projectStatus === "incomplete"
+  );
+};
+
 type VolunteerEventDisplay = {
   event: ShortEventState;
   isSignedUp?: boolean;
@@ -71,13 +86,18 @@ type VolunteerEventDisplay = {
 
 export const EventSignup = () => {
   const userType = useAppSelector(selectUserType);
+  const currentUserId = useAppSelector(selectCurrentUserId);
+  const isAdmin = userType === "organization" || userType === "nonprofit";
+  const availableTabs: readonly EventsTab[] = isAdmin
+    ? adminTabs
+    : nonAdminTabs;
   const location = useLocation();
   const restoredTab = (location.state as { activeEventsTab?: string } | null)
     ?.activeEventsTab;
   const [activeTab, setActiveTab] = useState<EventsTab>(
-    tabs.includes(restoredTab as EventsTab)
+    availableTabs.includes(restoredTab as EventsTab)
       ? (restoredTab as EventsTab)
-      : "Past"
+      : availableTabs[0]
   );
   const [showAllSummaryRows, setShowAllSummaryRows] = useState(false);
   const eventCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -90,9 +110,15 @@ export const EventSignup = () => {
 
   const volunteerEvents = useMemo<VolunteerEventDisplay[]>(() => {
     const eventsToDisplay = [...(events ?? [])];
+    const adminManagedEvents = eventsToDisplay.filter(
+      (event) =>
+        event.eventOwner.id === currentUserId ||
+        event.eventCoordinator?.id === currentUserId
+    );
+    const sourceEvents = isAdmin ? adminManagedEvents : eventsToDisplay;
 
     if (activeTab === "Past") {
-      return eventsToDisplay
+      return sourceEvents
         .filter((event) => isPastEvent(event.eventDate))
         .sort(
           (first, second) =>
@@ -103,6 +129,17 @@ export const EventSignup = () => {
     }
 
     if (activeTab === "Current") {
+      if (isAdmin) {
+        return sourceEvents
+          .filter((event) => isCurrentEvent(event.eventDate))
+          .sort(
+            (first, second) =>
+              getEventDateOnlyTime(first.eventDate) -
+              getEventDateOnlyTime(second.eventDate)
+          )
+          .map((event) => ({ event }));
+      }
+
       return [...(signedUpEvents ?? [])]
         .filter(
           ({ event, status }) =>
@@ -120,14 +157,25 @@ export const EventSignup = () => {
         }));
     }
 
-    return eventsToDisplay
+    if (activeTab === "Incomplete") {
+      return sourceEvents
+        .filter((event) => isIncompleteEvent(event))
+        .sort(
+          (first, second) =>
+            getEventDateOnlyTime(second.eventDate) -
+            getEventDateOnlyTime(first.eventDate)
+        )
+        .map((event) => ({ event }));
+    }
+
+    return sourceEvents
       .sort(
         (first, second) =>
           getEventDateOnlyTime(second.eventDate) -
           getEventDateOnlyTime(first.eventDate)
       )
       .map((event) => ({ event }));
-  }, [activeTab, events, signedUpEvents]);
+  }, [activeTab, currentUserId, events, isAdmin, signedUpEvents]);
 
   const isLoadingVolunteerEvents =
     isLoading || (activeTab === "Current" && isLoadingSignedUpEvents);
@@ -142,9 +190,8 @@ export const EventSignup = () => {
     });
   };
 
-  if (userType === "individual") {
-    return (
-      <section className={styles.volunteerEventsPanel}>
+  return (
+    <section className={styles.volunteerEventsPanel}>
         <div className={styles.volunteerEventsTitle}>
           <CustomSvgs
             svgPath="/svgs/common/eventsIcon.svg"
@@ -154,7 +201,7 @@ export const EventSignup = () => {
           <h1>Events</h1>
         </div>
         <div className={styles.volunteerEventsTabs} role="tablist">
-          {tabs.map((tab) => (
+          {availableTabs.map((tab) => (
             <button
               key={tab}
               type="button"
@@ -259,7 +306,7 @@ export const EventSignup = () => {
                       variant="match"
                       isSignedUp={isSignedUp}
                       signupCount={signupCount}
-                      hideVolunteerActions={activeTab === "Past"}
+                      hideVolunteerActions={isAdmin || activeTab === "Past"}
                       returnToEventsTab={activeTab}
                       canExpandVolunteers={activeTab === "Current"}
                     />
@@ -269,15 +316,6 @@ export const EventSignup = () => {
             </div>
           </>
         )}
-      </section>
-    );
-  }
-
-  return (
-    <div className={styles.darbeEventCards}>
-      {isLoading && <CircularProgress />}
-      {!isLoading &&
-        events?.map((event) => <EventCard key={event.id} event={event} />)}
-    </div>
+    </section>
   );
 };

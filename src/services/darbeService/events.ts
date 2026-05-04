@@ -376,14 +376,18 @@ export const getEvents = async (): Promise<ShortEventState[]> => {
 
   const isIndividual = profile.user_type === "individual";
 
-  const { data: events, error } = await supabase
+  let eventsQuery = supabase
     .from("events")
     .select(
       "id, event_owner_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_coordinator_id"
     )
-    .match(isIndividual ? {} : { event_owner_id: userId })
-    .neq(isIndividual ? "event_owner_id" : "id", isIndividual ? userId : "")
     .order("event_date", { ascending: true });
+
+  eventsQuery = isIndividual
+    ? eventsQuery.neq("event_owner_id", userId)
+    : eventsQuery.or(`event_owner_id.eq.${userId},event_coordinator_id.eq.${userId}`);
+
+  const { data: events, error } = await eventsQuery;
 
   if (error) throw error;
 
