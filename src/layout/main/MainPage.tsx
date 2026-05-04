@@ -23,11 +23,12 @@ export const Home = () => {
   const pathName = location.pathname.split("/");
   const isHomePage = pathName.length === 2;
   const isPostNeedPage = location.pathname === POST_A_NEED;
+  const isMessagingPage = location.pathname.startsWith(MESSAGING_ROUTE);
   const isProfileEditPage = pathName.includes("profile_edit");
-  const hideSearchBar = isProfileEditPage || isPostNeedPage;
+  const hideSearchBar = isProfileEditPage || isPostNeedPage || isMessagingPage;
   const hideNavBar = isProfileEditPage;
   const hideBottomNavBar = isProfileEditPage;
-  const hideDesktopMessagingDrawer = location.pathname.startsWith(MESSAGING_ROUTE);
+  const hideDesktopMessagingDrawer = isMessagingPage;
   const showSuggestedFriends =
     isPostNeedPage || (pathName.length > 2 && user.user?.userType === "individual");
 
@@ -68,7 +69,7 @@ export const Home = () => {
           <div
             className={`${styles.centerContent} ${
               isProfileEditPage ? styles.profileEditCenterContent : ""
-            }`}
+            } ${isMessagingPage ? styles.messagingCenterContent : ""}`}
           >
             {!hideSearchBar && (
               <SearchBar showMessageIcon={false} showAvatar={false} />
@@ -77,13 +78,15 @@ export const Home = () => {
             <Outlet />
           </div>
 
-          <div
-            className={`${styles.rightSide} ${
-              isProfileEditPage ? styles.profileEditRightSide : ""
-            }`}
-          >
-            <RightPanel showSuggestedFriends={showSuggestedFriends} />
-          </div>
+          {!isMessagingPage && (
+            <div
+              className={`${styles.rightSide} ${
+                isProfileEditPage ? styles.profileEditRightSide : ""
+              }`}
+            >
+              <RightPanel showSuggestedFriends={showSuggestedFriends} />
+            </div>
+          )}
           {!hideDesktopMessagingDrawer && <DesktopMessagingDrawer />}
           <Modal />
         </div>

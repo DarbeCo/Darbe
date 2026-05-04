@@ -69,3 +69,463 @@
   overflow-y: auto;
   background-color: #fff;
 }
+
+.messagingV2Page {
+  display: grid;
+  grid-template-columns: minmax(0, 637px) 432px;
+  width: min(100%, 1069px);
+  height: 100vh;
+  max-height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+  background-color: #faf9f9;
+}
+
+.messagingConversation,
+.messagingThreadPanel {
+  height: 100vh;
+  max-height: 100vh;
+  min-height: 0;
+  background-color: #ffffff;
+  border: 1px solid #eaeaea;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.messagingConversation {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding-bottom: 8px;
+}
+
+.messagingConversationHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 104px;
+  padding: 0 24px 0 16px;
+  border-bottom: 1px solid #eaeaea;
+  box-sizing: border-box;
+}
+
+.messagingConversationIdentity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.messagingHeaderAvatar {
+  width: 48px !important;
+  height: 48px !important;
+}
+
+.messagingConversationIdentity h1 {
+  overflow: hidden;
+  margin: 0;
+  color: #263238;
+  font-family: Roboto, sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.messagingMoreButton,
+.messagingCameraButton,
+.messagingComposeButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #263238;
+  cursor: pointer;
+}
+
+.messagingCameraButton {
+  align-self: center;
+}
+
+.messagingMoreButton svg {
+  font-size: 24px;
+}
+
+.messagingMessages {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 24px;
+  min-height: 0;
+  padding: 32px 24px 24px 32px;
+  overflow-y: auto;
+  background-color: #ffffff;
+  box-sizing: border-box;
+}
+
+.messagingMessageFriend,
+.messagingMessageMine {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+}
+
+.messagingMessageMine {
+  justify-content: flex-end;
+}
+
+.messagingTodayDivider {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  margin: 4px 0 12px;
+}
+
+.messagingTodayDivider::before,
+.messagingTodayDivider::after {
+  content: "";
+  height: 1px;
+  background-color: #717070;
+}
+
+.messagingTodayDivider span {
+  color: #263238;
+  font-family: Roboto, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.messagingMessageAvatar {
+  width: 24px !important;
+  height: 24px !important;
+  margin-top: 80px;
+}
+
+.messagingBubbleArea {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 392px;
+}
+
+.messagingMessageMine .messagingBubbleArea {
+  align-items: flex-end;
+}
+
+.messagingBubble {
+  width: 376px;
+  min-height: 110px;
+  padding: 8px;
+  border: 1px solid #eaeaea;
+  border-radius: 4px;
+  background-color: #faf9f9;
+  color: #263238;
+  font-family: Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: normal;
+  box-sizing: border-box;
+  white-space: pre-wrap;
+}
+
+.messagingTime {
+  color: #000000;
+  font-family: Roboto, sans-serif;
+  font-size: 12px;
+  line-height: normal;
+}
+
+.messagingMessageImage {
+  display: block;
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 4px;
+  object-fit: contain;
+}
+
+.messagingAttachmentPreview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px 0;
+}
+
+.messagingAttachmentPreview img {
+  width: 64px;
+  height: 64px;
+  border: 1px solid #eaeaea;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.messagingAttachmentPreview button {
+  border: 0;
+  background: transparent;
+  color: #2c77e7;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.messagingComposer {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px;
+  flex: 0 0 73px;
+  height: 73px;
+  padding: 8px 12px 8px;
+  border-top: 1px solid #eaeaea;
+  box-sizing: border-box;
+}
+
+.messagingCameraButton svg {
+  font-size: 24px;
+}
+
+.messagingComposerInput {
+  width: 100%;
+  height: 35px;
+  min-height: 35px;
+  max-height: 57px;
+  padding: 4px 8px;
+  border: 1px solid #263238;
+  border-radius: 0;
+  color: #263238;
+  background-color: #ffffff;
+  font-family: Roboto, sans-serif;
+  font-size: 16px;
+  line-height: normal;
+  resize: none;
+  box-sizing: border-box;
+  overflow-y: hidden;
+  outline: none;
+}
+
+.messagingComposerInput::placeholder {
+  color: #717070;
+}
+
+.messagingSendButton {
+  align-self: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #2c77e7;
+  cursor: pointer;
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.messagingSendButton:not(:disabled) {
+  color: #2c77e7;
+}
+
+.messagingSendButton:disabled {
+  cursor: default;
+}
+
+.messagingThreadPanel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.messagingThreadHeader {
+  display: flex;
+  align-items: center;
+  flex: 0 0 60px;
+  padding: 0 24px;
+  border-bottom: 1px solid #717070;
+  box-sizing: border-box;
+}
+
+.messagingThreadHeader h2 {
+  margin: 0;
+  color: #263238;
+  font-family: "Open Sans", sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.messagingSearchRow {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  flex: 0 0 48px;
+  padding: 12px 12px 12px 16px;
+  border-bottom: 1px solid #eaeaea;
+  box-sizing: border-box;
+}
+
+.messagingComposeButton svg {
+  font-size: 20px;
+}
+
+.messagingSearchBox {
+  display: flex;
+  align-items: center;
+  height: 26px;
+  min-width: 0;
+  padding: 0 8px;
+  border: 1px solid #eaeaea;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.messagingSearchBox svg {
+  flex: 0 0 auto;
+  color: #263238;
+  font-size: 18px;
+}
+
+.messagingSearchInput {
+  width: 100%;
+  min-width: 0;
+  color: #263238;
+  font-size: 12px;
+}
+
+.messagingThreads {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.messagingThreadRow {
+  position: relative;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 16px;
+  align-items: flex-start;
+  width: 100%;
+  min-height: 112px;
+  padding: 20px 20px 16px 24px;
+  border: 0;
+  border-bottom: 1px solid #eaeaea;
+  background-color: #ffffff;
+  cursor: pointer;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.messagingThreadRowActive {
+  background-color: #eaf1fd;
+}
+
+.messagingThreadRowActive::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 8px;
+  background-color: #2c77e7;
+}
+
+.messagingThreadAvatar {
+  width: 48px !important;
+  height: 48px !important;
+}
+
+.messagingThreadText {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.messagingThreadTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.messagingThreadTop strong {
+  overflow: hidden;
+  color: #000000;
+  font-family: Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.messagingThreadTop span {
+  flex: 0 0 auto;
+  color: #717070;
+  font-family: Roboto, sans-serif;
+  font-size: 16px;
+  line-height: normal;
+}
+
+.messagingThreadText p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: #000000;
+  font-family: Roboto, sans-serif;
+  font-size: 16px;
+  line-height: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.messagingState,
+.messagingEmptyConversation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  color: #717070;
+  font-size: 16px;
+}
+
+.messagingEmptyConversation {
+  flex: 1;
+}
+
+@media (max-width: 1259px) {
+  .messagingV2Page {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+    max-height: 100vh;
+    min-height: 0;
+  }
+
+  .messagingConversation,
+  .messagingThreadPanel {
+    min-height: 0;
+  }
+
+  .messagingThreadPanel {
+    order: -1;
+    height: 320px;
+    max-height: 320px;
+  }
+
+  .messagingConversation {
+    flex: 1;
+    height: auto;
+    max-height: none;
+  }
+
+  .messagingBubble {
+    width: min(376px, 76vw);
+  }
+}

@@ -83,6 +83,7 @@
 }
 
 .threadRow {
+  position: relative;
   display: grid;
   grid-template-columns: 42px 1fr;
   gap: 12px;
@@ -100,6 +101,12 @@
 .threadRowActive {
   background: #f7fafc;
   border-color: #6f8094;
+}
+
+.threadRowActive {
+  border-color: #2c77e7;
+  background: #eaf2ff;
+  box-shadow: inset 4px 0 0 #2c77e7;
 }
 
 .threadAvatar {
