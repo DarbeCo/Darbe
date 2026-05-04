@@ -1,79 +1,109 @@
-import { UserAvatars } from "../../components/avatars/UserAvatars";
-import { Typography } from "../../components/typography/Typography";
+import { assetUrl } from "../../utils/assetUrl";
 import { VolunteerMatch } from "../../services/api/endpoints/types/events.api.types";
 
 import styles from "./styles/volunteerMathces.module.css";
 
-export const VolunteerCard = ({ match }: { match: VolunteerMatch }) => {
-  const formattedDate = new Date(match.createdAt).toLocaleDateString("en-US", {
+interface VolunteerCardProps {
+  match: VolunteerMatch;
+}
+
+const formatMemberSince = (createdAt: string) =>
+  new Date(createdAt).toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
   });
-  const hasEmergencyContact =
-    match.emergencyContact && Object.keys(match.emergencyContact).length > 0;
-  const causeNames = match.causes?.map((cause: any) => cause?.name ?? cause).join(", ");
+
+const formatCurrency = (value?: number) =>
+  `$${Math.round(value ?? 0).toLocaleString("en-US")}`;
+
+const getCauseName = (cause: VolunteerMatch["causes"][number]) =>
+  typeof cause === "string" ? cause : cause.name;
+
+const getCauseImage = (cause: VolunteerMatch["causes"][number]) =>
+  typeof cause === "string" ? undefined : cause.imageUrl;
+
+export const VolunteerCard = ({ match }: VolunteerCardProps) => {
+  const visibleCauses = match.causes?.slice(0, 3) ?? [];
+  const extraCauseCount = Math.max((match.causes?.length ?? 0) - 3, 0);
+  const memberSince = formatMemberSince(match.createdAt);
+  const emergencyContact = match.emergencyContact;
+
   return (
-    <div className={styles.volunteerCard}>
-      <UserAvatars
-        userId={match.id}
-        profilePicture={match.profilePicture}
-        fullName={match.fullName}
-      />
-      <Typography
-        variant="sectionTitle"
-        textToDisplay={`Member since ${formattedDate}`}
-        extraClass="paddingLeft"
-      />
-      <div className={styles.volunteerImpactCard}>
-        <Typography variant="sectionTitle" textToDisplay="Volunteer Summary" />
-        <div className={styles.volunteerImpactDetail}>
-          <Typography
-            variant="boldTextSmall"
-            textToDisplay={match.volunteerSummary?.hoursVolunteered ?? 0}
+      <article className={styles.volunteerCard}>
+        <div className={styles.volunteerProfileRow}>
+          <img
+            src={match.profilePicture || assetUrl("/images/defaultProfilePicture.jpg")}
+            alt=""
+            className={styles.volunteerAvatar}
           />
-          <Typography variant="text" textToDisplay="Hours Volunteered" />
+          <div className={styles.volunteerProfileText}>
+            <button type="button">{match.fullName}</button>
+            {match.jobTitle && <span>{match.jobTitle}</span>}
+          </div>
         </div>
-        <div className={styles.volunteerImpactDetail}>
-          <Typography
-            variant="boldTextSmall"
-            textToDisplay={match.volunteerSummary?.volunteerValue ?? 0}
-          />
-          <Typography variant="text" textToDisplay="Volunteer Value" />
+
+        <p className={styles.volunteerMemberSince}>
+          Member since {memberSince}: {match.volunteerSummary?.hoursVolunteered ?? 0} vol
+          hours
+        </p>
+
+        <div className={styles.volunteerInfoGrid}>
+          <section className={styles.volunteerImpactCard}>
+            <h3>Total Volunteer Summary</h3>
+            <dl>
+              <div>
+                <dt>{match.volunteerSummary?.hoursVolunteered ?? 0}</dt>
+                <dd>Hours Volunteered</dd>
+              </div>
+              <div>
+                <dt>{formatCurrency(match.volunteerSummary?.volunteerValue)}</dt>
+                <dd>Volunteer Value</dd>
+              </div>
+              <div>
+                <dt>{match.volunteerSummary?.eventsAttended ?? 0}</dt>
+                <dd>Events Attended</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section className={styles.volunteerCausesCard}>
+            <h3>Interested Causes</h3>
+            <ul>
+              {visibleCauses.map((cause) => (
+                <li key={getCauseName(cause)}>
+                  <img
+                    src={
+                      getCauseImage(cause) ||
+                      assetUrl("/images/defaultCoverPhoto.jpg")
+                    }
+                    alt=""
+                  />
+                  <span>{getCauseName(cause)}</span>
+                </li>
+              ))}
+            </ul>
+            {extraCauseCount > 0 && (
+              <span className={styles.volunteerExtraCauses}>
+                +{extraCauseCount} more
+              </span>
+            )}
+          </section>
         </div>
-        <div className={styles.volunteerImpactDetail}>
-          <Typography
-            variant="boldTextSmall"
-            textToDisplay={match.volunteerSummary?.eventsAttended ?? 0}
-          />
-          <Typography variant="text" textToDisplay="Events Attended" />
+
+        <div className={styles.volunteerContactGrid}>
+          <div>
+            <h3>Emergency Contact</h3>
+            <p>{emergencyContact?.name || "None"}</p>
+          </div>
+          <div>
+            <h3>Relationship</h3>
+            <p>{emergencyContact?.relation || "None"}</p>
+          </div>
+          <div>
+            <h3>Phone Number</h3>
+            <p>{emergencyContact?.phone || "None"}</p>
+          </div>
         </div>
-        <div className={styles.volunteerCauses}>
-          <Typography
-            variant="sectionTitle"
-            textToDisplay="Interested Causes"
-          />
-          <Typography
-            variant="text"
-            textToDisplay={causeNames ?? ""}
-          />
-        </div>
-      </div>
-      <div className={styles.volunteerContact}>
-        <Typography variant="sectionTitle" textToDisplay="Emergency Contact" />
-        {hasEmergencyContact ? (
-          <>
-            <Typography
-              variant="text"
-              textToDisplay={`${match?.emergencyContact?.name}-${match?.emergencyContact?.relation}-${match?.emergencyContact?.phone}`}
-            />
-          </>
-        ) : (
-          <Typography
-            variant="text"
-            textToDisplay="No emergency contact information available"
-          />
-        )}
-      </div>
-    </div>
+      </article>
   );
 };

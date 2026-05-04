@@ -33,7 +33,7 @@ export const Matches = () => {
       ? upcomingEventMatchCount
       : volunteerMatchesData?.length ?? 0;
   const defaultMatchFilter =
-    userType === "individual" ? "Event Matches" : "Volunteer Matches";
+    userType === "individual" ? "Event Matches" : "Matches";
 
   const summaryCards = [
     {

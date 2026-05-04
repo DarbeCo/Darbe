@@ -1,74 +1,242 @@
-@media (min-width: 250px) and (max-width: 560px) {
-  .volunteerMatchesContainer {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    background: #d8d8d8;
-    /* For mobile bar covering the card */
-    padding-bottom: 60px;
-  }
-
-  .volunteerCard {
-    width: 90%;
-    padding: 16px;
-    margin: 10px auto;
-    display: flex;
-    flex-direction: column;
-    align-items: start;
-    gap: 15px;
-    background: #fff;
-  }
-
-  .volunteerImpactCard {
-    border: 1px solid #d8d8d8;
-    padding: 16px;
-  }
-
-  .volunteerImpactDetail {
-    display: flex;
-    flex-direction: row;
-    column-gap: 35px;
-    justify-content: start;
-  }
+.volunteerMatchesList {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 12px;
 }
 
-@media (min-width: 560px) {
+.volunteerMatchesContainer {
+  width: 100%;
+  padding: 16px;
+  border: 0;
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-sizing: border-box;
+}
+
+.volunteerMatchesTitle {
+  margin: 0;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 25px;
+}
+
+.volunteerMatchGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.volunteerCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 24px;
+  background-color: #faf9f9;
+}
+
+.volunteerCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 26px;
+  padding: 0;
+}
+
+.volunteerCardHeader strong {
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 19px;
+}
+
+.volunteerCardHeader button,
+.volunteerProfileText button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #2c77e7;
+  font-family: "Open Sans", sans-serif;
+  cursor: pointer;
+}
+
+.volunteerCardHeader button {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 19px;
+}
+
+.volunteerProfileRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.volunteerAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.volunteerProfileText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.volunteerProfileText button {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: left;
+}
+
+.volunteerProfileText span,
+.volunteerMemberSince,
+.volunteerContactGrid p,
+.volunteerImpactCard dd,
+.volunteerCausesCard li span,
+.volunteerExtraCauses {
+  margin: 0;
+  color: #000000;
+  font-family: Roboto, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 19px;
+}
+
+.volunteerMemberSince {
+  font-weight: 500;
+}
+
+.volunteerInfoGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+}
+
+.volunteerImpactCard,
+.volunteerCausesCard {
+  position: relative;
+  min-height: 123px;
+  padding: 16px;
+  border: 1px solid #d8d8d8;
+  border-radius: 4px;
+  background-color: #ffffff;
+  box-sizing: border-box;
+}
+
+.volunteerImpactCard h3,
+.volunteerCausesCard h3,
+.volunteerContactGrid h3 {
+  margin: 0 0 10px;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 19px;
+}
+
+.volunteerImpactCard dl {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.volunteerImpactCard dl div {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.volunteerImpactCard dt {
+  color: #000000;
+  font-family: Roboto, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 19px;
+}
+
+.volunteerImpactCard dd {
+  min-width: 0;
+}
+
+.volunteerCausesCard ul {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.volunteerCausesCard li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.volunteerCausesCard li img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.volunteerCausesCard li span {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.volunteerExtraCauses {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+}
+
+.volunteerContactGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.volunteerContactGrid h3 {
+  margin-bottom: 6px;
+}
+
+.volunteerContactGrid p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 699px) {
+  .volunteerMatchesList {
+    gap: 12px;
+  }
+
   .volunteerMatchesContainer {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    background: #d8d8d8;
-    /* For mobile bar covering the card */
-    padding-bottom: 60px;
+    border: 0;
+    border-radius: 0;
+    padding: 12px;
   }
 
   .volunteerCard {
-    width: 90%;
-    padding: 16px;
-    margin: 10px auto;
-    display: flex;
-    flex-direction: column;
-    align-items: start;
-    gap: 15px;
-    background: #fff;
+    padding: 0 12px;
   }
 
-  .volunteerImpactCard {
-    border: 1px solid #d8d8d8;
-    padding: 16px;
-  }
-
-  .volunteerContact {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .volunteerImpactDetail {
-    display: flex;
-    flex-direction: row;
-    column-gap: 35px;
-    justify-content: start;
+  .volunteerInfoGrid,
+  .volunteerContactGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 }

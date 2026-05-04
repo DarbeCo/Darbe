@@ -51,15 +51,23 @@ export const VolunteerMatches = ({
   }, [data, matchFilter, recentFilter]);
 
   return (
-    <div className={styles.volunteerMatchesContainer}>
+    <div className={styles.volunteerMatchesList}>
       {isLoading && <CircularProgress />}
       {!isLoading && filteredMatches.length === 0 && (
         <p>No volunteer matches found.</p>
       )}
       {!isLoading && filteredMatches.length > 0 && (
         <>
-          {filteredMatches.map((match) => (
-            <VolunteerCard key={match.id} match={match} />
+          {filteredMatches.map((match, index) => (
+            <div className={styles.volunteerMatchGroup} key={match.id}>
+              <div className={styles.volunteerCardHeader}>
+                <strong>Volunteer # {index + 1}/15</strong>
+                <button type="button">Dog Wash</button>
+              </div>
+              <div className={styles.volunteerMatchesContainer}>
+                <VolunteerCard match={match} />
+              </div>
+            </div>
           ))}
         </>
       )}
