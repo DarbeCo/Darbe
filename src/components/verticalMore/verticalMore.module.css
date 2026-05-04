@@ -1,0 +1,80 @@
+.deletePostOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.deletePostDialog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 302px;
+  min-height: 152px;
+  padding: 32px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-shadow: 0 0 18px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+}
+
+.deletePostTitle {
+  margin: 0;
+  color: #000000;
+  font-family: Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 20px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.deletePostActions {
+  display: flex;
+  gap: 25px;
+  margin-top: 26px;
+}
+
+.deletePostYesButton,
+.deletePostCancelButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 107px;
+  height: 47px;
+  padding: 12px 40px;
+  border: 1px solid #c4c4c4;
+  border-radius: 4px;
+  background-color: #ffffff;
+  color: #717070;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.deletePostYesButton:hover,
+.deletePostYesButton:focus-visible,
+.deletePostYesButton:active {
+  border-color: #088f26;
+  background-color: #088f26;
+  color: #ffffff;
+}
+
+.deletePostCancelButton:hover,
+.deletePostCancelButton:focus-visible,
+.deletePostCancelButton:active {
+  border-color: #ff0000;
+  background-color: #ff0000;
+  color: #ffffff;
+}
+
+.deletePostYesButton:disabled,
+.deletePostCancelButton:disabled {
+  opacity: 0.65;
+  cursor: default;
+}

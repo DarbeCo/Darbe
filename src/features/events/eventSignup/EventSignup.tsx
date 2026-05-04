@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CircularProgress } from "@mui/material";
 import { useLocation } from "react-router-dom";
 
@@ -12,10 +12,15 @@ import { useAppSelector } from "../../../services/hooks";
 import { selectCurrentUserId, selectUserType } from "../../users/selectors";
 import { CustomSvgs } from "../../../components/customSvgs/CustomSvgs";
 import { UserAvatars } from "../../../components/avatars/UserAvatars";
+import {
+  getIncompletePostNeedEventsForUser,
+  incompletePostNeedEventToShortEvent,
+} from "../../postNeed/incompleteEvents";
 
 import styles from "../styles/entityEvents.module.css";
 
 const adminTabs = ["Current", "Past", "Admin", "Incomplete"] as const;
+const nonprofitTabs = ["Current", "Past", "Incomplete"] as const;
 const nonAdminTabs = ["Current", "Past"] as const;
 type EventsTab = (typeof adminTabs)[number];
 const COLLAPSED_SUMMARY_COUNT = 3;
@@ -87,9 +92,12 @@ type VolunteerEventDisplay = {
 export const EventSignup = () => {
   const userType = useAppSelector(selectUserType);
   const currentUserId = useAppSelector(selectCurrentUserId);
-  const isAdmin = userType === "organization" || userType === "nonprofit";
-  const availableTabs: readonly EventsTab[] = isAdmin
+  const isPostNeedAdmin =
+    userType === "organization" || userType === "nonprofit";
+  const availableTabs: readonly EventsTab[] = userType === "organization"
     ? adminTabs
+    : userType === "nonprofit"
+    ? nonprofitTabs
     : nonAdminTabs;
   const location = useLocation();
   const restoredTab = (location.state as { activeEventsTab?: string } | null)
@@ -100,6 +108,9 @@ export const EventSignup = () => {
       : availableTabs[0]
   );
   const [showAllSummaryRows, setShowAllSummaryRows] = useState(false);
+  const [incompleteDraftEvents, setIncompleteDraftEvents] = useState<
+    ShortEventState[]
+  >([]);
   const eventCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const { data: events, isLoading } = useGetEventsQuery();
   const { data: signedUpEvents, isLoading: isLoadingSignedUpEvents } =
@@ -107,6 +118,24 @@ export const EventSignup = () => {
       { when: "upcoming" },
       { skip: userType !== "individual" }
     );
+  const { data: pastSignedUpEvents, isLoading: isLoadingPastSignedUpEvents } =
+    useGetSignedUpEventsQuery(
+      { when: "past" },
+      { skip: userType !== "individual" }
+    );
+
+  useEffect(() => {
+    if (!currentUserId || !isPostNeedAdmin) {
+      setIncompleteDraftEvents([]);
+      return;
+    }
+
+    const drafts = getIncompletePostNeedEventsForUser(currentUserId)
+      .filter((draft) => draft.missingFields.length > 0)
+      .map(incompletePostNeedEventToShortEvent);
+
+    setIncompleteDraftEvents(drafts);
+  }, [currentUserId, isPostNeedAdmin, activeTab]);
 
   const volunteerEvents = useMemo<VolunteerEventDisplay[]>(() => {
     const eventsToDisplay = [...(events ?? [])];
@@ -115,9 +144,24 @@ export const EventSignup = () => {
         event.eventOwner.id === currentUserId ||
         event.eventCoordinator?.id === currentUserId
     );
-    const sourceEvents = isAdmin ? adminManagedEvents : eventsToDisplay;
+    const sourceEvents = isPostNeedAdmin ? adminManagedEvents : eventsToDisplay;
 
     if (activeTab === "Past") {
+      if (!isPostNeedAdmin) {
+        return [...(pastSignedUpEvents ?? [])]
+          .filter(({ event }) => isPastEvent(event.eventDate))
+          .sort(
+            (first, second) =>
+              getEventDateOnlyTime(second.event.eventDate) -
+              getEventDateOnlyTime(first.event.eventDate)
+          )
+          .map(({ event, signupCount }) => ({
+            event,
+            signupCount,
+            isSignedUp: true,
+          }));
+      }
+
       return sourceEvents
         .filter((event) => isPastEvent(event.eventDate))
         .sort(
@@ -129,7 +173,7 @@ export const EventSignup = () => {
     }
 
     if (activeTab === "Current") {
-      if (isAdmin) {
+      if (isPostNeedAdmin) {
         return sourceEvents
           .filter((event) => isCurrentEvent(event.eventDate))
           .sort(
@@ -158,14 +202,18 @@ export const EventSignup = () => {
     }
 
     if (activeTab === "Incomplete") {
-      return sourceEvents
+      const databaseIncompleteEvents = sourceEvents
         .filter((event) => isIncompleteEvent(event))
-        .sort(
-          (first, second) =>
-            getEventDateOnlyTime(second.eventDate) -
-            getEventDateOnlyTime(first.eventDate)
-        )
         .map((event) => ({ event }));
+      const draftIncompleteEvents = incompleteDraftEvents.map((event) => ({
+        event,
+      }));
+
+      return [...databaseIncompleteEvents, ...draftIncompleteEvents].sort(
+          (first, second) =>
+            getEventDateOnlyTime(second.event.eventDate) -
+            getEventDateOnlyTime(first.event.eventDate)
+        );
     }
 
     return sourceEvents
@@ -175,10 +223,20 @@ export const EventSignup = () => {
           getEventDateOnlyTime(first.eventDate)
       )
       .map((event) => ({ event }));
-  }, [activeTab, currentUserId, events, isAdmin, signedUpEvents]);
+  }, [
+    activeTab,
+    currentUserId,
+    events,
+    incompleteDraftEvents,
+    isPostNeedAdmin,
+    pastSignedUpEvents,
+    signedUpEvents,
+  ]);
 
   const isLoadingVolunteerEvents =
-    isLoading || (activeTab === "Current" && isLoadingSignedUpEvents);
+    isLoading ||
+    (activeTab === "Current" && isLoadingSignedUpEvents) ||
+    (activeTab === "Past" && isLoadingPastSignedUpEvents);
   const summaryEvents = showAllSummaryRows
     ? volunteerEvents
     : volunteerEvents.slice(0, COLLAPSED_SUMMARY_COUNT);
@@ -306,7 +364,10 @@ export const EventSignup = () => {
                       variant="match"
                       isSignedUp={isSignedUp}
                       signupCount={signupCount}
-                      hideVolunteerActions={isAdmin || activeTab === "Past"}
+                      hideVolunteerActions={
+                        isPostNeedAdmin || activeTab === "Past"
+                      }
+                      hideDetailsAction={activeTab === "Incomplete"}
                       returnToEventsTab={activeTab}
                       canExpandVolunteers={activeTab === "Current"}
                     />

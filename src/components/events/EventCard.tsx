@@ -35,6 +35,7 @@ interface EventCardProps {
   onUnvolunteerSuccess?: (eventId: string) => void;
   canUnvolunteer?: boolean;
   hideVolunteerActions?: boolean;
+  hideDetailsAction?: boolean;
   returnToEventsTab?: string;
   canExpandVolunteers?: boolean;
   variant?: "default" | "match";
@@ -48,6 +49,7 @@ export const EventCard = ({
   onUnvolunteerSuccess,
   canUnvolunteer = true,
   hideVolunteerActions = false,
+  hideDetailsAction = false,
   returnToEventsTab,
   canExpandVolunteers = false,
   variant = "default",
@@ -237,12 +239,14 @@ export const EventCard = ({
               <ContentCopy />
             </IconButton>
           )}
-          <Typography
-            variant="blueTextNormal"
-            textToDisplay={"Details"}
-            onClick={handleDetailsClick}
-            extraClass="clickable"
-          />
+          {!hideDetailsAction && (
+            <Typography
+              variant="blueTextNormal"
+              textToDisplay={"Details"}
+              onClick={handleDetailsClick}
+              extraClass="clickable"
+            />
+          )}
         </div>
       </div>
       <div className={styles.eventMatchBodyQuickInfo}>

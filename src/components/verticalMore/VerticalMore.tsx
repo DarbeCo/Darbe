@@ -10,6 +10,8 @@ import { useDeleteEventMutation } from "../../services/api/endpoints/events/even
 import { HOME_ROUTE } from "../../routes/route.constants";
 import { useDeleteMessagesThreadMutation } from "../../services/api/endpoints/messages/messages.api";
 
+import styles from "./verticalMore.module.css";
+
 interface VerticalMoreProps {
   itemId: string;
   itemCategory: string;
@@ -22,9 +24,10 @@ export const VerticalMore = ({
   canEdit,
 }: VerticalMoreProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [showPostDeleteConfirm, setShowPostDeleteConfirm] = useState(false);
   const open = Boolean(anchorEl);
 
-  const [deletePost] = useDeletePostMutation();
+  const [deletePost, { isLoading: isDeletingPost }] = useDeletePostMutation();
   const [deleteComment] = useDeleteCommentMutation();
   const [deleteEvent] = useDeleteEventMutation();
   const [deleteMessagesThread] = useDeleteMessagesThreadMutation();
@@ -32,15 +35,27 @@ export const VerticalMore = ({
   const location = useLocation();
   const history = useNavigate();
 
-  const handleDelete = () => {
-    if (itemCategory === ITEM_CATEGORIES.POST) {
-      deletePost(itemId);
+  const handleConfirmPostDelete = async () => {
+    try {
+      await deletePost(itemId).unwrap();
+      setShowPostDeleteConfirm(false);
 
       const inSinglePostView = location.pathname.includes("post");
 
       if (inSinglePostView) {
         history(HOME_ROUTE);
       }
+    } catch (error) {
+      console.error("Error deleting post", error);
+    }
+  };
+
+  const handleDelete = () => {
+    setAnchorEl(null);
+
+    if (itemCategory === ITEM_CATEGORIES.POST) {
+      setShowPostDeleteConfirm(true);
+      return;
     }
     if (itemCategory === ITEM_CATEGORIES.COMMENT) {
       deleteComment(itemId);
@@ -80,6 +95,41 @@ export const VerticalMore = ({
       <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
         {canEdit && <MenuItem onClick={handleDelete}>Delete</MenuItem>}
       </Menu>
+      {showPostDeleteConfirm ? (
+        <div className={styles.deletePostOverlay}>
+          <div
+            className={styles.deletePostDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={`delete-post-dialog-title-${itemId}`}
+          >
+            <h2
+              className={styles.deletePostTitle}
+              id={`delete-post-dialog-title-${itemId}`}
+            >
+              Are you sure you want to delete?
+            </h2>
+            <div className={styles.deletePostActions}>
+              <button
+                type="button"
+                className={styles.deletePostYesButton}
+                onClick={handleConfirmPostDelete}
+                disabled={isDeletingPost}
+              >
+                Yes
+              </button>
+              <button
+                type="button"
+                className={styles.deletePostCancelButton}
+                onClick={() => setShowPostDeleteConfirm(false)}
+                disabled={isDeletingPost}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 };

@@ -24,7 +24,10 @@ interface InternalEventReviewProps {
   eventType?: string;
   onCancel: () => void;
   onEditStep: (step: number) => void;
+  onSaveIncomplete?: () => void;
   onSubmit: () => void;
+  isSavingIncomplete?: boolean;
+  isSubmitting?: boolean;
 }
 
 const defaultProfilePicture = assetUrl("/images/defaultProfilePicture.jpg");
@@ -36,7 +39,10 @@ export const InternalEventReview = ({
   eventType,
   onCancel,
   onEditStep,
+  onSaveIncomplete,
   onSubmit,
+  isSavingIncomplete = false,
+  isSubmitting = false,
 }: InternalEventReviewProps) => {
   const { user } = useAppSelector(selectUser);
   const { data: coordinator } = useGetSimpleUserInfoQuery(
@@ -281,10 +287,21 @@ export const InternalEventReview = ({
             darbeButtonType="secondaryNextButton"
             onClick={onCancel}
           />
+          {onSaveIncomplete && (
+            <button
+              type="button"
+              className={styles.saveIncompleteButton}
+              onClick={onSaveIncomplete}
+              disabled={isSavingIncomplete || isSubmitting}
+            >
+              Save as Incomplete
+            </button>
+          )}
           <DarbeButton
             buttonText="Submit"
             darbeButtonType="nextButton"
             onClick={onSubmit}
+            isDisabled={isSubmitting || isSavingIncomplete}
           />
         </div>
       </div>

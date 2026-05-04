@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { IconButton } from "@mui/material";
 
@@ -8,13 +8,18 @@ import { FormSteps } from "../../components/formSteps/FormSteps";
 import { useCreateEventMutation } from "../../services/api/endpoints/events/events.api";
 import { useAppSelector } from "../../services/hooks";
 import { EVENTS_ROUTE, HOME_ROUTE } from "../../routes/route.constants";
-import { selectCurrentUserId } from "../users/selectors";
+import { selectCurrentUserId, selectUser } from "../users/selectors";
 import { EventDetails } from "./forms/EventDetails";
 import { EventInfo } from "./forms/EventInfo";
 import { EventLocation } from "./forms/EventLocation";
 import { EventRequirements } from "./forms/EventRequirements";
 import { EventType } from "./EventType";
 import { InternalEventReview } from "./InternalEventReview";
+import {
+  buildIncompleteEventOwner,
+  createIncompleteEventId,
+  saveIncompletePostNeedEvent,
+} from "./incompleteEvents";
 import { ClosingIcon } from "../../components/closingIcon/ClosingIcon";
 import { Typography } from "../../components/typography/Typography";
 import { CustomSvgs } from "../../components/customSvgs/CustomSvgs";
@@ -92,16 +97,26 @@ const hasValue = (value?: unknown) => Boolean(value?.toString().trim());
 export const PostNeed = () => {
   const navigate = useNavigate();
   const userId = useAppSelector(selectCurrentUserId);
+  const { user } = useAppSelector(selectUser);
   const [currentStep, setCurrentStep] = useState(-1);
   const [eventType, setEventType] = useState("");
+  const [incompleteEventId] = useState(createIncompleteEventId);
   const [eventData, setEventData] = useState<CreateEvent>(INITIAL_EVENT_STATE);
   const [submitValidationDialog, setSubmitValidationDialog] = useState<{
     missingFields: string[];
     nextStep: number;
   } | null>(null);
-  const [createEvent] = useCreateEventMutation();
+  const [incompleteSavedDialog, setIncompleteSavedDialog] = useState(false);
+  const [isSavingIncomplete, setIsSavingIncomplete] = useState(false);
+  const eventActionLockRef = useRef(false);
+  const [createEvent, { isLoading: isPostingEvent }] =
+    useCreateEventMutation();
 
   const handlePostEvent = async () => {
+    if (eventActionLockRef.current || isPostingEvent || isSavingIncomplete) {
+      return;
+    }
+
     const invalidStep = getInvalidStep();
 
     if (invalidStep) {
@@ -110,6 +125,7 @@ export const PostNeed = () => {
     }
 
     try {
+      eventActionLockRef.current = true;
       const isInternalEvent = eventType === "internalEvent";
       // build the payload with the current userId
       const payload: CreateEvent = {
@@ -131,6 +147,8 @@ export const PostNeed = () => {
       navigate(EVENTS_ROUTE);
     } catch (error) {
       console.error("Error posting event", error);
+    } finally {
+      eventActionLockRef.current = false;
     }
   };
 
@@ -198,6 +216,11 @@ export const PostNeed = () => {
 
     setCurrentStep(submitValidationDialog.nextStep);
     setSubmitValidationDialog(null);
+  };
+
+  const handleIncompleteSavedConfirm = () => {
+    setIncompleteSavedDialog(false);
+    navigate(EVENTS_ROUTE, { state: { activeEventsTab: "Incomplete" } });
   };
 
   const eventStepTitle =
@@ -309,6 +332,96 @@ export const PostNeed = () => {
     return null;
   };
 
+  const getAllMissingRequiredFields = () => {
+    const missingFields = [
+      !hasText(eventData.eventName) ? "Event Name" : "",
+      !hasText(eventData.eventDate) ? "Date" : "",
+      toNumber(eventData.startTime) <= 0 ? "Start Time" : "",
+      toNumber(eventData.endTime) <= 0 ? "End Time" : "",
+      toNumber(eventData.endTime) > 0 &&
+      toNumber(eventData.startTime) > 0 &&
+      toNumber(eventData.endTime) <= toNumber(eventData.startTime)
+        ? "Valid Time Range"
+        : "",
+      !hasValue(eventData.eventDescription) ? "Description" : "",
+      !isInternalEvent && toNumber(eventData.maxVolunteerCount) <= 0
+        ? "# Of Volunteers Needed"
+        : "",
+      !isInternalEvent && !hasValue(eventData.eventHoursNeeded)
+        ? "# Of Hours Needed"
+        : "",
+      !hasText(eventData.eventAddress.locationName) ? "Location Name" : "",
+      !hasText(eventData.eventAddress.streetName) ? "Street Name" : "",
+      !hasText(eventData.eventAddress.city) ? "City" : "",
+      !isInternalEvent &&
+      !isCommunityEvent &&
+      !hasText(eventData.eventAddress.zipCode)
+        ? "Zip Code"
+        : "",
+      !eventData.isIndoor && !eventData.isOutdoor ? "Indoor or Outdoor" : "",
+      (isInternalEvent || isCommunityEvent) &&
+      !hasValue(eventData.eventInternalLocation)
+        ? "Assignment Location"
+        : "",
+      !hasValue(eventData.eventCoordinator) ? "Coordinator" : "",
+      !eventData.volunteerImpact.isIndividualImpact &&
+      !eventData.volunteerImpact.isGroupImpact
+        ? "Volunteer Impact Type"
+        : "",
+      eventData.volunteerImpact.isIndividualImpact &&
+      !hasValue(eventData.volunteerImpact.individualImpactPerHour)
+        ? "Individual Impact Per Hour"
+        : "",
+      eventData.volunteerImpact.isIndividualImpact &&
+      !hasValue(eventData.volunteerImpact.individualImpact)
+        ? "Individual Impact"
+        : "",
+      eventData.volunteerImpact.isGroupImpact &&
+      !hasValue(eventData.volunteerImpact.groupImpactPerHour)
+        ? "Group Impact Total"
+        : "",
+      eventData.volunteerImpact.isGroupImpact &&
+      !hasValue(eventData.volunteerImpact.groupImpact)
+        ? "Group Impact"
+        : "",
+    ].filter(Boolean);
+
+    return missingFields;
+  };
+
+  const handleSaveIncomplete = () => {
+    if (eventActionLockRef.current || isPostingEvent || isSavingIncomplete) {
+      return;
+    }
+
+    eventActionLockRef.current = true;
+    setIsSavingIncomplete(true);
+    const eventDate = toDatabaseDate(eventData.eventDate);
+    const payload: CreateEvent = {
+      ...eventData,
+      eventDate,
+      startTime: toNumber(eventData.startTime),
+      endTime: toNumber(eventData.endTime),
+      maxVolunteerCount: toNumber(eventData.maxVolunteerCount),
+      eventOwner: userId,
+    };
+
+    saveIncompletePostNeedEvent({
+      id: incompleteEventId,
+      eventType,
+      ownerId: userId,
+      coordinatorId: eventData.eventCoordinator || undefined,
+      data: payload,
+      savedAt: new Date().toISOString(),
+      missingFields: getAllMissingRequiredFields(),
+      owner: buildIncompleteEventOwner(user),
+    });
+    setSubmitValidationDialog(null);
+    setIncompleteSavedDialog(true);
+    eventActionLockRef.current = false;
+    setIsSavingIncomplete(false);
+  };
+
   const EventForms = [
     <EventInfo
       data={eventData}
@@ -335,6 +448,9 @@ export const PostNeed = () => {
       eventType={eventType}
       onCancel={handleGoBack}
       onEditStep={handleEditStep}
+      onSaveIncomplete={handleSaveIncomplete}
+      isSavingIncomplete={isSavingIncomplete}
+      isSubmitting={isPostingEvent}
       onSubmit={handlePostEvent}
     />,
   ];
@@ -399,6 +515,9 @@ export const PostNeed = () => {
           eventType={eventType}
           onCancel={handleGoBack}
           onEditStep={handleEditStep}
+          onSaveIncomplete={handleSaveIncomplete}
+          isSavingIncomplete={isSavingIncomplete}
+          isSubmitting={isPostingEvent}
           onSubmit={handlePostEvent}
         />
       ) : isEventPanelStep ? (
@@ -441,6 +560,14 @@ export const PostNeed = () => {
           </div>
           {EventForms[currentStep]}
           <div className={styles.eventStepButtonArea}>
+            <button
+              type="button"
+              className={styles.saveIncompleteButton}
+              onClick={handleSaveIncomplete}
+              disabled={isPostingEvent || isSavingIncomplete}
+            >
+              Save as Incomplete
+            </button>
             <DarbeButton
               onClick={handleGoBack}
               buttonText={previousButtonText}
@@ -450,7 +577,32 @@ export const PostNeed = () => {
               onClick={handleGoForward}
               buttonText={nextButtonText}
               darbeButtonType="nextButton"
+              isDisabled={isPostingEvent || isSavingIncomplete}
             />
+          </div>
+        </div>
+      ) : null}
+      {incompleteSavedDialog ? (
+        <div className={styles.postNeedSubmitDialogOverlay}>
+          <div
+            className={styles.postNeedSubmitDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="post-need-incomplete-dialog-title"
+          >
+            <h2
+              className={styles.postNeedSubmitDialogTitle}
+              id="post-need-incomplete-dialog-title"
+            >
+              Saved as Incomplete in the Events section.
+            </h2>
+            <div className={styles.postNeedSubmitDialogActions}>
+              <DarbeButton
+                buttonText="OK"
+                darbeButtonType="nextButton"
+                onClick={handleIncompleteSavedConfirm}
+              />
+            </div>
           </div>
         </div>
       ) : null}

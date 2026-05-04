@@ -681,7 +681,7 @@ export const getSignedUpEvents = async (
     .from("event_signups")
     .select("event_id, status, event_action_timestamp")
     .eq("user_id", userId)
-    .eq("status", "volunteered");
+    .in("status", ["volunteered", "confirmed"]);
 
   if (error) throw error;
 
