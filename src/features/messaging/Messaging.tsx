@@ -18,7 +18,11 @@ import {
 } from "../../services/api/endpoints/types/messages.api.types";
 import { SimpleUserInfo } from "../../services/api/endpoints/types/user.api.types";
 import { useAppSelector } from "../../services/hooks";
-import { selectCurrentUserId } from "../users/selectors";
+import {
+  selectCurrentFriends,
+  selectCurrentUserId,
+} from "../users/selectors";
+import { ProfileFriendState } from "../friends/types";
 import { DefaultTime } from "../../utils/CommonDateFormats";
 import { assetUrl } from "../../utils/assetUrl";
 import { convertFileToBase64 } from "../../utils/CommonFunctions";
@@ -44,6 +48,12 @@ const getDisplayName = (participant?: SimpleUserInfo) =>
   participant?.fullName ||
   participant?.nonprofitName ||
   participant?.organizationName ||
+  "Unknown User";
+
+const getFriendDisplayName = (friend: ProfileFriendState) =>
+  friend.fullName ||
+  friend.nonprofitName ||
+  friend.organizationName ||
   "Unknown User";
 
 const formatThreadDate = (dateSent: string) => {
@@ -103,9 +113,13 @@ const buildThreadSummary = (
 
 export const Messaging = () => {
   const currentUserId = useAppSelector(selectCurrentUserId);
+  const currentFriends = useAppSelector(selectCurrentFriends) ?? [];
   const { data: messageThreads = [], isLoading } = useGetMessagesQuery();
   const [selectedThreadId, setSelectedThreadId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [friendSearchTerm, setFriendSearchTerm] = useState("");
+  const [isFriendPickerOpen, setIsFriendPickerOpen] = useState(false);
+  const [draftThread, setDraftThread] = useState<ThreadSummary | null>(null);
   const [draftMessage, setDraftMessage] = useState("");
   const [selectedImage, setSelectedImage] = useState("");
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -145,7 +159,22 @@ export const Messaging = () => {
 
   const selectedThread =
     threadSummaries.find((thread) => thread.id === selectedThreadId) ||
+    draftThread ||
     threadSummaries[0];
+
+  const filteredFriends = currentFriends.filter((friend) => {
+    const searchValue = friendSearchTerm.trim().toLowerCase();
+
+    if (!searchValue) {
+      return true;
+    }
+
+    return (
+      getFriendDisplayName(friend).toLowerCase().includes(searchValue) ||
+      friend.city?.toLowerCase().includes(searchValue) ||
+      friend.zip?.toLowerCase().includes(searchValue)
+    );
+  });
 
   const { data: messageThread, isLoading: isLoadingThread } =
     useGetMessageThreadQuery(
@@ -220,9 +249,42 @@ export const Messaging = () => {
 
       setDraftMessage("");
       setSelectedImage("");
+      setDraftThread(null);
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const handleOpenFriendPicker = () => {
+    setIsFriendPickerOpen(true);
+    setFriendSearchTerm("");
+  };
+
+  const handleSelectFriend = (friend: ProfileFriendState) => {
+    const existingThread = threadSummaries.find(
+      (thread) => thread.friendId === friend.id
+    );
+
+    if (existingThread) {
+      setSelectedThreadId(existingThread.id);
+      setDraftThread(null);
+    } else {
+      const nextDraftThread = {
+        id: `draft-${friend.id}`,
+        friendId: friend.id,
+        fullName: getFriendDisplayName(friend),
+        profilePicture: friend.profilePicture,
+        lastMessage: "",
+        dateSent: "",
+      };
+      setDraftThread(nextDraftThread);
+      setSelectedThreadId(nextDraftThread.id);
+    }
+
+    setDraftMessage("");
+    setSelectedImage("");
+    setIsFriendPickerOpen(false);
+    setFriendSearchTerm("");
   };
 
   const renderTodayDivider = (message: MessageState, index: number) => {
@@ -380,6 +442,7 @@ export const Messaging = () => {
             type="button"
             className={styles.messagingComposeButton}
             aria-label="New message"
+            onClick={handleOpenFriendPicker}
           >
             <CreateOutlined />
           </button>
@@ -394,7 +457,60 @@ export const Messaging = () => {
           </div>
         </div>
         <div className={styles.messagingThreads}>
-          {isLoading ? (
+          {isFriendPickerOpen ? (
+            <>
+              <div className={styles.messagingFriendPickerHeader}>
+                <strong>New Message</strong>
+                <button
+                  type="button"
+                  onClick={() => setIsFriendPickerOpen(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+              <div className={styles.messagingFriendPickerSearch}>
+                <Search />
+                <InputBase
+                  value={friendSearchTerm}
+                  onChange={(event) => setFriendSearchTerm(event.target.value)}
+                  placeholder="Type in a name"
+                  className={styles.messagingSearchInput}
+                />
+              </div>
+              {filteredFriends.length ? (
+                filteredFriends.map((friend) => (
+                  <button
+                    type="button"
+                    key={friend.id}
+                    className={styles.messagingFriendRow}
+                    onClick={() => handleSelectFriend(friend)}
+                  >
+                    <Avatar
+                      src={
+                        friend.profilePicture
+                          ? assetUrl(friend.profilePicture)
+                          : undefined
+                      }
+                      alt={getFriendDisplayName(friend)}
+                      className={styles.messagingThreadAvatar}
+                    />
+                    <div className={styles.messagingThreadText}>
+                      <div className={styles.messagingThreadTop}>
+                        <strong>{getFriendDisplayName(friend)}</strong>
+                      </div>
+                      <p>
+                        {friend.organizationName ||
+                          friend.nonprofitName ||
+                          `${friend.city}, ${friend.zip}`}
+                      </p>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className={styles.messagingState}>No friends found</div>
+              )}
+            </>
+          ) : isLoading ? (
             <div className={styles.messagingState}>
               <CircularProgress size={24} />
             </div>
