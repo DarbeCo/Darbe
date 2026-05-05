@@ -170,7 +170,7 @@ export const Modal = () => {
                   case MODAL_TYPE.causes:
                     return "Edit Causes";
                   case MODAL_TYPE.friends:
-                    return "Edit Friends";
+                    return "Friends";
                   case MODAL_TYPE.military:
                     return "Edit Military";
                   case MODAL_TYPE.organizations:

@@ -671,6 +671,14 @@
   box-sizing: border-box;
 }
 
+.profileFriendsDialogSections {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: min(702px, 100%);
+  margin: 0 auto;
+}
+
 .profileDialogField {
   display: flex;
   flex-direction: column;

@@ -11,8 +11,6 @@ import {
 } from "../../../../components/modal/modalSlice";
 
 import styles from "../styles/userProfiles.module.css";
-import { useNavigate } from "react-router-dom";
-import { FRIENDS_ROUTE } from "../../../../routes/route.constants";
 
 interface UserProfileButtonsProps {
   friendCount: number;
@@ -36,11 +34,11 @@ export const UserProfileButtons = ({
   userId,
 }: UserProfileButtonsProps) => {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate()
 
   const handleFriendsClick = () => {
     if (canEdit) {
-      navigate(`${FRIENDS_ROUTE}`)
+      dispatch(setModalType(EDIT_SECTIONS.friends));
+      dispatch(showModal());
     } else {
       dispatch(setModalType(MODAL_TYPE.profileFriends));
       dispatch(setModalUserId(userId));
