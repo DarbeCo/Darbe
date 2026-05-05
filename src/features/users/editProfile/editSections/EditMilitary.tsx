@@ -71,7 +71,7 @@ const MilitarySelectField = ({
         value={textValue}
       >
         <option value="" aria-label={placeholder}></option>
-        {options.map((option) => (
+        {options?.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
@@ -217,7 +217,7 @@ export const EditMilitary = () => {
   const statusValue = formData.status ?? "";
   const branchValue = formData.branch ?? "";
   const rankOptions = branchValue
-    ? MILITARY_RANKS[branchValue as MilitaryBranch].map((rank) => ({
+    ? MILITARY_RANKS[branchValue as MilitaryBranch]?.map((rank) => ({
         value: rank,
         label: rank,
       }))
@@ -233,7 +233,7 @@ export const EditMilitary = () => {
             label="Branch Name"
             value={branchValue}
             placeholder="Branch"
-            options={MILITARY_BRANCH_OPTIONS.map((branch) => ({
+            options={MILITARY_BRANCH_OPTIONS?.map((branch) => ({
               value: branch,
               label: splitStringndCapitalize(branch, true),
             }))}
@@ -254,7 +254,7 @@ export const EditMilitary = () => {
             label="Status"
             value={statusValue}
             placeholder="Status"
-            options={MILITARY_STATUS_OPTIONS.map((status) => ({
+            options={MILITARY_STATUS_OPTIONS?.map((status) => ({
               value: status,
               label: status,
             }))}
