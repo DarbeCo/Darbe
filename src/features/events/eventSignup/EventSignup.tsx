@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CircularProgress } from "@mui/material";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   useGetEventsQuery,
@@ -12,6 +12,7 @@ import { useAppSelector } from "../../../services/hooks";
 import { selectCurrentUserId, selectUserType } from "../../users/selectors";
 import { CustomSvgs } from "../../../components/customSvgs/CustomSvgs";
 import { UserAvatars } from "../../../components/avatars/UserAvatars";
+import { CREATE_EVENT_ROUTE } from "../../../routes/route.constants";
 import {
   getIncompletePostNeedEventsForUser,
   incompletePostNeedEventToShortEvent,
@@ -90,6 +91,7 @@ type VolunteerEventDisplay = {
 };
 
 export const EventSignup = () => {
+  const navigate = useNavigate();
   const userType = useAppSelector(selectUserType);
   const currentUserId = useAppSelector(selectCurrentUserId);
   const isPostNeedAdmin =
@@ -248,6 +250,12 @@ export const EventSignup = () => {
     });
   };
 
+  const handleFinishIncompleteEvent = (eventId: string) => {
+    navigate(CREATE_EVENT_ROUTE, {
+      state: { incompleteEventId: eventId },
+    });
+  };
+
   return (
     <section className={styles.volunteerEventsPanel}>
         <div className={styles.volunteerEventsTitle}>
@@ -370,6 +378,14 @@ export const EventSignup = () => {
                       hideDetailsAction={activeTab === "Incomplete"}
                       returnToEventsTab={activeTab}
                       canExpandVolunteers
+                      incompleteActionLabel={
+                        activeTab === "Incomplete" ? "Complete Event Creation" : undefined
+                      }
+                      onIncompleteAction={
+                        activeTab === "Incomplete"
+                          ? handleFinishIncompleteEvent
+                          : undefined
+                      }
                     />
                   </div>
                 )

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { IconButton } from "@mui/material";
 
 import { DarbeButton } from "../../components/buttons/DarbeButton";
@@ -18,6 +18,8 @@ import { InternalEventReview } from "./InternalEventReview";
 import {
   buildIncompleteEventOwner,
   createIncompleteEventId,
+  getIncompletePostNeedEventById,
+  removeIncompletePostNeedEvent,
   saveIncompletePostNeedEvent,
 } from "./incompleteEvents";
 import { ClosingIcon } from "../../components/closingIcon/ClosingIcon";
@@ -96,12 +98,26 @@ const hasValue = (value?: unknown) => Boolean(value?.toString().trim());
 
 export const PostNeed = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const userId = useAppSelector(selectCurrentUserId);
   const { user } = useAppSelector(selectUser);
-  const [currentStep, setCurrentStep] = useState(-1);
-  const [eventType, setEventType] = useState("");
-  const [incompleteEventId] = useState(createIncompleteEventId);
-  const [eventData, setEventData] = useState<CreateEvent>(INITIAL_EVENT_STATE);
+  const routeIncompleteEventId = (
+    location.state as { incompleteEventId?: string } | null
+  )?.incompleteEventId;
+  const draftToFinish = routeIncompleteEventId
+    ? getIncompletePostNeedEventById(routeIncompleteEventId)
+    : undefined;
+  const [currentStep, setCurrentStep] = useState(
+    draftToFinish?.eventType ? 0 : -1
+  );
+  const [eventType, setEventType] = useState(draftToFinish?.eventType ?? "");
+  const [incompleteEventId] = useState(
+    () => draftToFinish?.id ?? createIncompleteEventId()
+  );
+  const [eventData, setEventData] = useState<CreateEvent>({
+    ...INITIAL_EVENT_STATE,
+    ...(draftToFinish?.data ?? {}),
+  });
   const [submitValidationDialog, setSubmitValidationDialog] = useState<{
     missingFields: string[];
     nextStep: number;
@@ -143,6 +159,7 @@ export const PostNeed = () => {
       };
 
       await createEvent(payload).unwrap();
+      removeIncompletePostNeedEvent(incompleteEventId);
       setSubmitValidationDialog(null);
       navigate(EVENTS_ROUTE);
     } catch (error) {
@@ -585,18 +602,22 @@ export const PostNeed = () => {
       {incompleteSavedDialog ? (
         <div className={styles.postNeedSubmitDialogOverlay}>
           <div
-            className={styles.postNeedSubmitDialog}
+            className={styles.postNeedSavedIncompleteDialog}
             role="dialog"
             aria-modal="true"
             aria-labelledby="post-need-incomplete-dialog-title"
           >
             <h2
-              className={styles.postNeedSubmitDialogTitle}
+              className={styles.postNeedSavedIncompleteTitle}
               id="post-need-incomplete-dialog-title"
             >
-              Saved as Incomplete in the Events section.
+              <span
+                className={styles.postNeedSavedIncompleteIcon}
+                aria-hidden="true"
+              />
+              <span>Saved as Incomplete in the Events section.</span>
             </h2>
-            <div className={styles.postNeedSubmitDialogActions}>
+            <div className={styles.postNeedSavedIncompleteActions}>
               <DarbeButton
                 buttonText="OK"
                 darbeButtonType="nextButton"

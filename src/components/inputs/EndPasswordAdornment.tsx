@@ -26,6 +26,7 @@ export const EndPasswordAdornment = ({
         onClick={handleClick}
         onMouseDown={handleMouseDown}
         edge="end"
+        sx={{ marginRight: "8px" }}
       >
         {showPassword ? <VisibilityOff /> : <Visibility />}
       </IconButton>

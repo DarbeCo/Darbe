@@ -72,6 +72,9 @@ export const getIncompletePostNeedEventsForUser = (userId: string) =>
     (draft) => draft.ownerId === userId || draft.coordinatorId === userId
   );
 
+export const getIncompletePostNeedEventById = (draftId: string) =>
+  safeReadDrafts().find((draft) => draft.id === draftId);
+
 export const saveIncompletePostNeedEvent = (draft: IncompletePostNeedEvent) => {
   const drafts = safeReadDrafts();
   const draftIndex = drafts.findIndex(
@@ -85,6 +88,10 @@ export const saveIncompletePostNeedEvent = (draft: IncompletePostNeedEvent) => {
   }
 
   safeWriteDrafts(drafts);
+};
+
+export const removeIncompletePostNeedEvent = (draftId: string) => {
+  safeWriteDrafts(safeReadDrafts().filter((draft) => draft.id !== draftId));
 };
 
 export const buildIncompleteEventOwner = (user: UserState | null | undefined) => ({
@@ -137,4 +144,9 @@ export const incompletePostNeedEventToShortEvent = (
   volunteerImpact: draft.data.volunteerImpact || {},
   eventAddress: draft.data.eventAddress || {},
   signups: [],
+  status: "incomplete",
+  incompleteDraftId: draft.id,
+} as ShortEventState & {
+  status: string;
+  incompleteDraftId: string;
 });

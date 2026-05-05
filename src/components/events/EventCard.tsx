@@ -39,6 +39,8 @@ interface EventCardProps {
   returnToEventsTab?: string;
   canExpandVolunteers?: boolean;
   variant?: "default" | "match";
+  incompleteActionLabel?: string;
+  onIncompleteAction?: (eventId: string) => void;
 }
 
 export const EventCard = ({
@@ -53,6 +55,8 @@ export const EventCard = ({
   returnToEventsTab,
   canExpandVolunteers = false,
   variant = "default",
+  incompleteActionLabel,
+  onIncompleteAction,
 }: EventCardProps) => {
   const navigate = useNavigate();
   const currentUserId = useAppSelector(selectCurrentUserId);
@@ -362,6 +366,15 @@ export const EventCard = ({
                   isDisabled={isVolunteerLocked}
                 />
               ) : null}
+            </div>
+          )}
+          {incompleteActionLabel && onIncompleteAction && (
+            <div className={styles.eventMatchActions}>
+              <DarbeButton
+                buttonText={incompleteActionLabel}
+                onClick={() => onIncompleteAction(event.id)}
+                darbeButtonType="nextButton"
+              />
             </div>
           )}
         </div>
