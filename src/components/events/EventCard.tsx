@@ -303,35 +303,33 @@ export const EventCard = ({
         </div>
       </div>
 
-      {!isEventPoster && !impactView && (
+      {!impactView && (
         <div className={styles.eventMatchFooter}>
-          {isMatchVariant && (
-            <button
-              type="button"
-              className={styles.eventSeeVolunteersButton}
-              onClick={() => {
-                if (canExpandVolunteers) {
-                  setIsVolunteerListOpen((isOpen) => !isOpen);
-                  return;
-                }
+          <button
+            type="button"
+            className={styles.eventSeeVolunteersButton}
+            onClick={() => {
+              if (canExpandVolunteers) {
+                setIsVolunteerListOpen((isOpen) => !isOpen);
+                return;
+              }
 
-                handleDetailsClick();
-              }}
-              aria-expanded={canExpandVolunteers ? isVolunteerListOpen : undefined}
-            >
-              See Volunteers
-              <CustomSvgs
-                svgPath={
-                  isVolunteerListOpen
-                    ? "/svgs/common/goUpIcon.svg"
-                    : "/svgs/common/goForwardIcon.svg"
-                }
-                variant="small"
-                altText=""
-              />
-            </button>
-          )}
-          {!hideVolunteerActions && (
+              handleDetailsClick();
+            }}
+            aria-expanded={canExpandVolunteers ? isVolunteerListOpen : undefined}
+          >
+            See Volunteers
+            <CustomSvgs
+              svgPath={
+                canExpandVolunteers && isVolunteerListOpen
+                  ? "/svgs/common/goUpIcon.svg"
+                  : "/svgs/common/goForwardIcon.svg"
+              }
+              variant="small"
+              altText=""
+            />
+          </button>
+          {!isEventPoster && !hideVolunteerActions && (
             <div className={styles.eventMatchActions}>
               {!hasVolunteered && !isSignedUpCard && (
                 <DarbeButton

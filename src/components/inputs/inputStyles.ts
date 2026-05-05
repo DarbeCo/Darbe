@@ -3,6 +3,12 @@ export const standardInput = {
   borderRadius: "8px",
   border: "2px solid #D8D8D8",
   width: "100%",
+  "& input::-ms-reveal": {
+    display: "none",
+  },
+  "& input::-ms-clear": {
+    display: "none",
+  },
 };
 
 export const shortInput = {

@@ -369,7 +369,7 @@ export const EventSignup = () => {
                       }
                       hideDetailsAction={activeTab === "Incomplete"}
                       returnToEventsTab={activeTab}
-                      canExpandVolunteers={activeTab === "Current"}
+                      canExpandVolunteers
                     />
                   </div>
                 )

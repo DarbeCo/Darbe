@@ -21,7 +21,7 @@ export const EndPasswordAdornment = ({
   };
 
   return (
-    <InputAdornment position="start">
+    <InputAdornment position="end">
       <IconButton
         onClick={handleClick}
         onMouseDown={handleMouseDown}
