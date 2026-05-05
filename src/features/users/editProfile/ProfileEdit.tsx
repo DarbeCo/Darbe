@@ -9,6 +9,7 @@ import { selectCurrentUserId, selectUser } from "../selectors";
 import { UserEditSections } from "./UserEditSections";
 import { EntityEditSections } from "./EntityEditSections";
 import { EDIT_SECTIONS } from "../userProfiles/constants";
+import { runProfileEditAutosave } from "./profileEditAutosave";
 
 import styles from "./styles/profileEdit.module.css";
 
@@ -22,7 +23,6 @@ export const ProfileEdit = () => {
   const shouldShowBackButton =
     isEntityProfile || section !== EDIT_SECTIONS.about;
   const isTallEditStep = !isEntityProfile && section === EDIT_SECTIONS.background;
-  const shouldUseInlineOrganizationHeader = section === EDIT_SECTIONS.organizations;
   const editHeaderTitle =
     section === EDIT_SECTIONS.causes
       ? "Edit Causes"
@@ -32,7 +32,13 @@ export const ProfileEdit = () => {
           ? "Edit Organizations"
           : "Edit About";
 
-  const handleGoBack = () => {
+  const handleGoBack = async () => {
+    const didAutosave = await runProfileEditAutosave();
+
+    if (!didAutosave) {
+      return;
+    }
+
     if (!isEntityProfile) {
       if (section === EDIT_SECTIONS.background) {
         navigate(`${EDIT_PROFILE_ROUTE}?section=${EDIT_SECTIONS.about}`);
@@ -53,7 +59,13 @@ export const ProfileEdit = () => {
     navigate(-1);
   };
 
-  const handleExitEdit = () => {
+  const handleExitEdit = async () => {
+    const didAutosave = await runProfileEditAutosave();
+
+    if (!didAutosave) {
+      return;
+    }
+
     navigate(`${PROFILE_ROUTE}/${userId}`);
   };
 
@@ -64,32 +76,30 @@ export const ProfileEdit = () => {
           isTallEditStep ? styles.profileEditFrameTall : ""
         }`}
       >
-        {!shouldUseInlineOrganizationHeader && (
-          <div
-            className={`${styles.profileEditHeader} ${
-              !shouldShowBackButton ? styles.profileEditHeaderNoBack : ""
-            }`}
-          >
-            <div className={styles.backIconContainer}>
-              {shouldShowBackButton && (
-                <IconButton onClick={handleGoBack}>
-                  <CustomSvgs
-                    svgPath="/svgs/common/goBackIcon.svg"
-                    altText="Go back"
-                  />
-                </IconButton>
-              )}
-            </div>
-            <div className={styles.headerTitleContainer}>
-              <span className={styles.profileEditHeaderTitle}>
-                {editHeaderTitle}
-              </span>
-            </div>
-            <div className={styles.closeIconContainer}>
-              <ClosingIcon useNoSx onClick={handleExitEdit} />
-            </div>
+        <div
+          className={`${styles.profileEditHeader} ${
+            !shouldShowBackButton ? styles.profileEditHeaderNoBack : ""
+          }`}
+        >
+          <div className={styles.backIconContainer}>
+            {shouldShowBackButton && (
+              <IconButton onClick={handleGoBack}>
+                <CustomSvgs
+                  svgPath="/svgs/common/goBackIcon.svg"
+                  altText="Go back"
+                />
+              </IconButton>
+            )}
           </div>
-        )}
+          <div className={styles.headerTitleContainer}>
+            <span className={styles.profileEditHeaderTitle}>
+              {editHeaderTitle}
+            </span>
+          </div>
+          <div className={styles.closeIconContainer}>
+            <ClosingIcon useNoSx onClick={handleExitEdit} />
+          </div>
+        </div>
         {!isEntityProfile && (
           <UserEditSections section={section} userId={userId} />
         )}

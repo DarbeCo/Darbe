@@ -11,11 +11,14 @@ import { useRemoveUserOrganizationMutationMutation } from "../../../../services/
 import { updateUserOrganizations } from "../../userSlice";
 import { PROFILE_ROUTE } from "../../../../routes/route.constants";
 import { OrganizationState } from "../../userProfiles/types";
+import { hideModal } from "../../../../components/modal/modalSlice";
+import { getModalStatus } from "../../../../components/modal/selectors";
 
 import styles from "../styles/profileEdit.module.css";
 
 export const EditOrganizations = () => {
   const userId = useAppSelector(selectCurrentUserId);
+  const isModalOpen = useAppSelector(getModalStatus);
   const navigate = useNavigate();
   const userOrganizations = useAppSelector(selectUserOrganizations);
   const dispatch = useAppDispatch();
@@ -73,47 +76,32 @@ export const EditOrganizations = () => {
     setOrganizationToEdit(undefined);
   };
 
-  const handleSave = () => {
+  const handlePrevious = () => {
+    if (isModalOpen) {
+      dispatch(hideModal());
+      return;
+    }
+
     navigate(`${PROFILE_ROUTE}/${userId}`);
   };
 
   return (
     <div
-      className={`${styles.profileEditContentOrganizations} ${
-        isOrganizationFormOpen ? styles.profileEditContentOrganizationForm : ""
-      }`}
+      className={styles.profileEditContentOrganizations}
     >
       <div
-        className={`${styles.profileEditOrganizationsScrollArea} ${
-          isOrganizationFormOpen
-            ? styles.profileEditOrganizationsScrollAreaForm
-            : ""
-        }`}
+        className={styles.profileEditOrganizationsScrollArea}
       >
-        <div
-          className={`${styles.profileOrganizationsPanel} ${
-            isOrganizationFormOpen ? styles.profileOrganizationsPanelForm : ""
-          }`}
-        >
-          {!isOrganizationFormOpen ? (
-            <div className={styles.profileOrganizationListHeader}>
-              <span className={styles.profileOrganizationListHeaderTitle}>
-                Organization List
-              </span>
-              <div className={styles.profileOrganizationListClose}>
-                <ClosingIcon useNoSx onClick={handleSave} />
-              </div>
+        <div className={styles.profileOrganizationsPanel}>
+          <div className={styles.profileOrganizationListHeader}>
+            <span className={styles.profileOrganizationListHeaderTitle}>
+              Organization List
+            </span>
+            <div className={styles.profileOrganizationListClose}>
+              <ClosingIcon useNoSx onClick={handlePrevious} />
             </div>
-          ) : null}
-          {isOrganizationFormOpen ? (
-            <OrganizationsModal
-              key={organizationToEdit ?? "new-organization"}
-              userId={userId}
-              closeModal={handleCloseForm}
-              organizationId={organizationToEdit}
-              embedded
-            />
-          ) : hasOrganizatiosn ? (
+          </div>
+          {hasOrganizatiosn ? (
             <SimpleProfileOrganizations
               handleDelete={deleteOrganization}
               handleEdit={editOrganization}
@@ -127,23 +115,29 @@ export const EditOrganizations = () => {
           )}
         </div>
       </div>
-      {!isOrganizationFormOpen ? (
-        <div className={styles.profileOrganizationsFooter}>
-          <button
-            type="button"
-            className={styles.profileOrganizationsAddButton}
-            onClick={handleAddOrganization}
-          >
-            Add Organization
-          </button>
-          <button
-            type="button"
-            className={styles.profileOrganizationsSaveButton}
-            onClick={handleSave}
-          >
-            Save
-          </button>
-        </div>
+      <div className={styles.profileOrganizationsFooter}>
+        <button
+          type="button"
+          className={styles.profileOrganizationsAddButton}
+          onClick={handleAddOrganization}
+        >
+          Add Organization
+        </button>
+        <button
+          type="button"
+          className={styles.profileOrganizationsSaveButton}
+          onClick={handlePrevious}
+        >
+          Previous
+        </button>
+      </div>
+      {isOrganizationFormOpen ? (
+        <OrganizationsModal
+          key={organizationToEdit ?? "new-organization"}
+          userId={userId}
+          closeModal={handleCloseForm}
+          organizationId={organizationToEdit}
+        />
       ) : null}
       {organizationToDelete ? (
         <div className={styles.profileOrganizationDeleteOverlay}>

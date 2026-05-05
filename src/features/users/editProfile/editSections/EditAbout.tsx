@@ -11,12 +11,14 @@ import { VolunteerExperienceState } from "../../userProfiles/types";
 import { prepareData } from "../util";
 import { UseDateParser } from "../../../../utils/commonHooks/UseDateParser";
 import { useEditAboutInformation } from "../hooks";
-import { hideModal } from "../../../../components/modal/modalSlice";
+import { setModalType } from "../../../../components/modal/modalSlice";
 import {
-  EDIT_PROFILE_ROUTE,
-  PROFILE_ROUTE,
-} from "../../../../routes/route.constants";
+  getModalStatus,
+  getModalType,
+} from "../../../../components/modal/selectors";
+import { EDIT_PROFILE_ROUTE } from "../../../../routes/route.constants";
 import { setUserProfile } from "../../userSlice";
+import { registerProfileEditAutosave } from "../profileEditAutosave";
 
 import styles from "../styles/profileEdit.module.css";
 
@@ -169,6 +171,8 @@ const DateRow = ({
 
 export const EditAbout = () => {
   const userId = useAppSelector(selectCurrentUserId);
+  const isModalOpen = useAppSelector(getModalStatus);
+  const modalType = useAppSelector(getModalType);
   const navigate = useNavigate();
 
   const { editUserAboutState, editUserVolunteerExperiencesState } =
@@ -196,6 +200,7 @@ export const EditAbout = () => {
   const [updateUserProfile] = useUpdateUserProfileMutation();
   const [saveError, setSaveError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const isAboutDialog = isModalOpen && modalType === EDIT_SECTIONS.about;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.name;
@@ -243,12 +248,18 @@ export const EditAbout = () => {
     }
 
     if (isFormDirty()) {
-      const didSave = await handleSave();
+      const didSave = await saveAbout({ shouldValidate: true });
 
       if (!didSave) {
         return;
       }
     }
+
+    if (isAboutDialog) {
+      dispatch(setModalType(EDIT_SECTIONS.background));
+      return;
+    }
+
     navigate(`${EDIT_PROFILE_ROUTE}?section=${EDIT_SECTIONS.background}`);
   };
 
@@ -300,8 +311,12 @@ export const EditAbout = () => {
     return errors;
   };
 
-  const handleSave = async () => {
-    const errors = validateForm();
+  const saveAbout = async ({
+    shouldValidate,
+  }: {
+    shouldValidate: boolean;
+  }) => {
+    const errors = shouldValidate ? validateForm() : {};
 
     if (Object.keys(errors).length) {
       setFieldErrors(errors);
@@ -329,7 +344,6 @@ export const EditAbout = () => {
     try {
       const updatedUser = await updateUserProfile(payload).unwrap();
       dispatch(setUserProfile(updatedUser));
-      dispatch(hideModal());
       return true;
     } catch (error) {
       console.error("Error saving Edit About", error);
@@ -338,13 +352,17 @@ export const EditAbout = () => {
     }
   };
 
-  const handleSaveAndReturnToProfile = async () => {
-    const didSave = await handleSave();
-
-    if (didSave) {
-      navigate(`${PROFILE_ROUTE}/${userId}`);
+  const autosaveAbout = async () => {
+    if (!isFormDirty()) {
+      return true;
     }
+
+    return saveAbout({ shouldValidate: false });
   };
+
+  useEffect(() => {
+    return registerProfileEditAutosave(autosaveAbout);
+  }, [formData, volunteerExperiences, dates]);
 
   return (
     <div className={styles.profileDialogContent}>
@@ -411,22 +429,17 @@ export const EditAbout = () => {
             onChange={handleDropdownChange}
           />
         </div>
-      </div>
 
-      {saveError && <p className={styles.profileDialogError}>{saveError}</p>}
+        {saveError && <p className={styles.profileDialogError}>{saveError}</p>}
 
-      <div className={`${styles.profileDialogFooter} ${styles.profileAboutFooter}`}>
-        <DarbeButton
-          buttonText="Save"
-          darbeButtonType="saveButton"
-          onClick={handleSaveAndReturnToProfile}
-        />
-        <DarbeButton
-          buttonText="Add Occupation"
-          darbeButtonType="nextButton"
-          endingIconPath="/svgs/common/goForwardIconWhite.svg"
-          onClick={handleNextSection}
-        />
+        <div className={styles.profileDialogBottomActions}>
+          <DarbeButton
+            buttonText="Add Occupation"
+            darbeButtonType="nextButton"
+            endingIconPath="/svgs/common/goForwardIconWhite.svg"
+            onClick={handleNextSection}
+          />
+        </div>
       </div>
     </div>
   );

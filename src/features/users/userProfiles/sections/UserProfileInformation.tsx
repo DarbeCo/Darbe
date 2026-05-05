@@ -1,12 +1,14 @@
-import { useNavigate } from "react-router-dom";
-
 import { DarbeProfileSharedState } from "../../userSlice";
 import { ProfileSection } from "./ProfileSection";
 import { Typography } from "../../../../components/typography/Typography";
 import { EditProfileIcon } from "./EditProfileIcon";
-import { EDIT_PROFILE_ROUTE } from "../../../../routes/route.constants";
 import { EDIT_SECTIONS } from "../constants";
 import Expander from "../../../../components/expander/Expander";
+import { useAppDispatch } from "../../../../services/hooks";
+import {
+  setModalType,
+  showModal,
+} from "../../../../components/modal/modalSlice";
 
 import styles from "../styles/userProfiles.module.css";
 
@@ -19,7 +21,7 @@ export const UserProfileInformation = ({
   userInformation,
   canEdit,
 }: UserProfileInformationProps) => {
-  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const {
     aboutMe,
     volunteerReason,
@@ -48,7 +50,8 @@ export const UserProfileInformation = ({
   const skillsText = skills?.map((skill) => skill.skillName).join(", ");
 
   const handleEditProfile = () => {
-    navigate(`${EDIT_PROFILE_ROUTE}?section=${EDIT_SECTIONS.about}`);
+    dispatch(setModalType(EDIT_SECTIONS.about));
+    dispatch(showModal());
   };
 
   return (

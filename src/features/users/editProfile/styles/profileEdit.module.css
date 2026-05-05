@@ -1074,6 +1074,22 @@
   max-width: 100%;
 }
 
+.profileDialogBottomActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  width: 100%;
+  margin-top: 16px;
+  padding-bottom: 0;
+  box-sizing: border-box;
+}
+
+.profileDialogBottomActions :global(.MuiButton-root) {
+  min-width: 144px !important;
+  height: 44px !important;
+  width: auto !important;
+}
+
 .profileAboutFooter {
   gap: 16px;
   padding-top: 0;
@@ -1145,19 +1161,22 @@
 
 .profileDialogFooter :global(.MuiButton-root) {
   flex: 0 0 auto;
-  min-width: 0 !important;
+  min-width: 144px !important;
+  height: 44px !important;
   width: auto !important;
 }
 
 .profileDialogCausesFooter :global(.MuiButton-root) {
   flex: 0 0 auto;
-  min-width: 0 !important;
+  min-width: 144px !important;
+  height: 44px !important;
   width: auto !important;
 }
 
 .profileDialogCenteredFooter :global(.MuiButton-root) {
   flex: 0 0 auto;
-  min-width: 0 !important;
+  min-width: 144px !important;
+  height: 44px !important;
   width: auto !important;
 }
 
@@ -1194,6 +1213,14 @@
 
   .profileDialogFooterActions {
     width: 100%;
+  }
+
+  .profileDialogBottomActions {
+    gap: 8px;
+  }
+
+  .profileDialogBottomActions :global(.MuiButton-root) {
+    flex: 1 1 0;
   }
 
   .profileDialogCausesFooter :global(.MuiButton-root) {
@@ -1266,6 +1293,16 @@
 
   .profileDialogFooterActions {
     width: 100%;
+  }
+
+  .profileDialogBottomActions {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .profileDialogBottomActions :global(.MuiButton-root) {
+    width: 100% !important;
+    flex: 1 1 100%;
   }
 
   .profileDialogCausesFooter :global(.MuiButton-root) {

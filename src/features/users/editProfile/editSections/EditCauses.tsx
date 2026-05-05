@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Checkbox } from "@mui/material";
 
 import { Causes } from "../../../../components/causes/Causes";
@@ -14,6 +14,7 @@ import {
   showModal,
 } from "../../../../components/modal/modalSlice";
 import { EDIT_SECTIONS } from "../../userProfiles/constants";
+import { registerProfileEditAutosave } from "../profileEditAutosave";
 
 import styles from "../styles/profileEdit.module.css";
 
@@ -74,12 +75,42 @@ export const EditCauses = () => {
     }
   };
 
-  const handleSaveCauses = async () => {
-    await persistCauses(true);
+  const isCausesDirty = () =>
+    JSON.stringify(updatedCauses) !== JSON.stringify(currentCauses);
+
+  const autosaveCauses = async () => {
+    if (!isCausesDirty()) {
+      return true;
+    }
+
+    try {
+      await persistCauses(false);
+      return true;
+    } catch (error) {
+      console.error("Error autosaving Edit Causes", error);
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    return registerProfileEditAutosave(autosaveCauses);
+  }, [updatedCauses, currentCauses]);
+
+  const handlePreviousCauses = async () => {
+    const didAutosave = await autosaveCauses();
+
+    if (didAutosave) {
+      dispatch(setModalType(EDIT_SECTIONS.profile));
+    }
   };
 
   const handleEditAvailability = async () => {
-    await persistCauses(false);
+    const didAutosave = await autosaveCauses();
+
+    if (!didAutosave) {
+      return;
+    }
+
     dispatch(setModalType(EDIT_SECTIONS.availability));
     dispatch(showModal());
   };
@@ -117,9 +148,9 @@ export const EditCauses = () => {
         </label>
         <div className={styles.profileDialogFooterActions}>
           <DarbeButton
-            buttonText="Save"
-            darbeButtonType="saveButton"
-            onClick={handleSaveCauses}
+            buttonText="Previous"
+            darbeButtonType="secondaryNextButton"
+            onClick={handlePreviousCauses}
           />
           <DarbeButton
             buttonText="Edit Availability"

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MenuItem, Select, SelectChangeEvent } from "@mui/material";
 
 import { DarbeButton } from "../../../../components/buttons/DarbeButton";
@@ -17,6 +17,7 @@ import { EDIT_SECTIONS } from "../../userProfiles/constants";
 import { selectCurrentUserId, selectUser } from "../../selectors";
 import { DarbeProfileSharedState } from "../../userSlice";
 import { useEditProfileInformation } from "../hooks";
+import { registerProfileEditAutosave } from "../profileEditAutosave";
 
 import styles from "../styles/profileEdit.module.css";
 
@@ -401,8 +402,30 @@ export const EditProfileInfo = () => {
     JSON.stringify(dateOfBirth) !== JSON.stringify(initialDateOfBirth) ||
     titlePrefix !== (editProfileState.title ?? "");
 
-  const handleSave = async () => {
-    await persistProfile(true);
+  const autosaveProfile = async () => {
+    if (!isFormDirty()) {
+      return true;
+    }
+
+    try {
+      await persistProfile(false);
+      return true;
+    } catch (error) {
+      console.error("Error autosaving Edit Profile", error);
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    return registerProfileEditAutosave(autosaveProfile);
+  }, [formData, location, dateOfBirth, titlePrefix]);
+
+  const handlePrevious = async () => {
+    const didAutosave = await autosaveProfile();
+
+    if (didAutosave) {
+      dispatch(hideModal());
+    }
   };
 
   const handleSecondaryAction = async () => {
@@ -573,19 +596,19 @@ export const EditProfileInfo = () => {
             className={styles.profileDialogFieldFullWidth}
           />
         </div>
-      </div>
 
-      <div className={styles.profileDialogFooter}>
-        <DarbeButton
-          buttonText="Save"
-          darbeButtonType="saveButton"
-          onClick={handleSave}
-        />
-        <DarbeButton
-          buttonText={isProfileDialog ? "Edit Causes" : "Availability"}
-          darbeButtonType="nextButton"
-          onClick={handleSecondaryAction}
-        />
+        <div className={styles.profileDialogBottomActions}>
+          <DarbeButton
+            buttonText="Previous"
+            darbeButtonType="secondaryNextButton"
+            onClick={handlePrevious}
+          />
+          <DarbeButton
+            buttonText={isProfileDialog ? "Edit Causes" : "Availability"}
+            darbeButtonType="nextButton"
+            onClick={handleSecondaryAction}
+          />
+        </div>
       </div>
     </div>
   );

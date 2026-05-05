@@ -194,9 +194,9 @@ export const LicensesModal = ({
           />
         )}
         <DarbeButton
-          buttonText="Save"
+          buttonText="Previous"
           isDisabled={!licenseInfo.licenseName}
-          darbeButtonType="saveButton"
+          darbeButtonType="secondaryNextButton"
           onClick={handleSaveLicense}
         />
       </div>

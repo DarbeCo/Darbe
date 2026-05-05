@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../../services/hooks";
 
@@ -11,14 +11,16 @@ import {
 } from "../../userProfiles/constants";
 import { useUpdateUserProfileMutation } from "../../../../services/api/endpoints/profiles/profiles.api";
 import { useEditMilitaryInformation } from "../hooks";
-import { hideModal } from "../../../../components/modal/modalSlice";
-import { selectCurrentUserId } from "../../selectors";
+import { setModalType } from "../../../../components/modal/modalSlice";
 import {
-  EDIT_PROFILE_ROUTE,
-  PROFILE_ROUTE,
-} from "../../../../routes/route.constants";
+  getModalStatus,
+  getModalType,
+} from "../../../../components/modal/selectors";
+import { selectCurrentUserId } from "../../selectors";
+import { EDIT_PROFILE_ROUTE } from "../../../../routes/route.constants";
 import { setUserProfile } from "../../userSlice";
 import { splitStringndCapitalize } from "../../../../utils/CommonFunctions";
+import { registerProfileEditAutosave } from "../profileEditAutosave";
 
 import styles from "../styles/profileEdit.module.css";
 
@@ -86,6 +88,8 @@ const MilitarySelectField = ({
 
 export const EditMilitary = () => {
   const userId = useAppSelector(selectCurrentUserId);
+  const isModalOpen = useAppSelector(getModalStatus);
+  const modalType = useAppSelector(getModalType);
   const navigate = useNavigate();
   const { editMilitaryState } = useEditMilitaryInformation();
 
@@ -95,6 +99,8 @@ export const EditMilitary = () => {
   const [updateUserProfile] = useUpdateUserProfileMutation();
   const [saveError, setSaveError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const isMilitaryDialog =
+    isModalOpen && modalType === EDIT_SECTIONS.military;
 
   const handleDropdownChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -143,7 +149,7 @@ export const EditMilitary = () => {
     return errors;
   };
 
-  const handleSave = async () => {
+  const validateAndPersistMilitary = async () => {
     const errors = validateForm();
 
     if (Object.keys(errors).length > 0) {
@@ -170,7 +176,6 @@ export const EditMilitary = () => {
     try {
       const updatedUser = await updateUserProfile(payload).unwrap();
       dispatch(setUserProfile(updatedUser));
-      dispatch(hideModal());
       return true;
     } catch (error) {
       console.error("Error saving Military", error);
@@ -187,12 +192,31 @@ export const EditMilitary = () => {
     );
   };
 
-  const handleSaveAndReturnToProfile = async () => {
-    const didSave = await handleSave();
-
-    if (didSave) {
-      navigate(`${PROFILE_ROUTE}/${userId}`);
+  const autosaveMilitary = async () => {
+    if (!isFormDirty()) {
+      return true;
     }
+
+    return validateAndPersistMilitary();
+  };
+
+  useEffect(() => {
+    return registerProfileEditAutosave(autosaveMilitary);
+  }, [formData]);
+
+  const handlePrevious = async () => {
+    const didSave = await autosaveMilitary();
+
+    if (!didSave) {
+      return;
+    }
+
+    if (isMilitaryDialog) {
+      dispatch(setModalType(EDIT_SECTIONS.background));
+      return;
+    }
+
+    navigate(`${EDIT_PROFILE_ROUTE}?section=${EDIT_SECTIONS.background}`);
   };
 
   const handleNextSection = async () => {
@@ -205,12 +229,18 @@ export const EditMilitary = () => {
     }
 
     if (isFormDirty()) {
-      const didSave = await handleSave();
+      const didSave = await autosaveMilitary();
 
       if (!didSave) {
         return;
       }
     }
+
+    if (isMilitaryDialog) {
+      dispatch(setModalType(EDIT_SECTIONS.qualifications));
+      return;
+    }
+
     navigate(`${EDIT_PROFILE_ROUTE}?section=${EDIT_SECTIONS.qualifications}`);
   };
 
@@ -262,22 +292,22 @@ export const EditMilitary = () => {
             onChange={handleDropdownChange}
           />
         </div>
-      </div>
 
-      {saveError && <p className={styles.profileDialogError}>{saveError}</p>}
+        {saveError && <p className={styles.profileDialogError}>{saveError}</p>}
 
-      <div className={styles.profileDialogFooter}>
-        <DarbeButton
-          buttonText="Save"
-          darbeButtonType="saveButton"
-          onClick={handleSaveAndReturnToProfile}
-        />
-        <DarbeButton
-          buttonText="Licenses"
-          darbeButtonType="nextButton"
-          endingIconPath="/svgs/common/goForwardIconWhite.svg"
-          onClick={handleNextSection}
-        />
+        <div className={styles.profileDialogBottomActions}>
+          <DarbeButton
+            buttonText="Previous"
+            darbeButtonType="secondaryNextButton"
+            onClick={handlePrevious}
+          />
+          <DarbeButton
+            buttonText="Licenses"
+            darbeButtonType="nextButton"
+            endingIconPath="/svgs/common/goForwardIconWhite.svg"
+            onClick={handleNextSection}
+          />
+        </div>
       </div>
     </div>
   );

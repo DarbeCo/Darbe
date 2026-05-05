@@ -37,6 +37,7 @@ import { EditEntityProfileInfo } from "../../features/users/editProfile/editEnti
 import { EditEntityAbout } from "../../features/users/editProfile/editEntitySections/EditEntityAbout";
 import { EditEntityValues } from "../../features/users/editProfile/editEntitySections/EditEntityValues";
 import { EditEntityPrograms } from "../../features/users/editProfile/editEntitySections/EditEntityPrograms";
+import { runProfileEditAutosave } from "../../features/users/editProfile/profileEditAutosave";
 
 /**
  * Mainly used for the create a post pop up modal
@@ -73,7 +74,13 @@ export const Modal = () => {
     };
   }, [isOpen]);
 
-  const closeModal = () => {
+  const closeModal = async () => {
+    const didAutosave = await runProfileEditAutosave();
+
+    if (!didAutosave) {
+      return;
+    }
+
     dispatch(hideModal());
   };
 
@@ -97,14 +104,22 @@ export const Modal = () => {
     modalType === MODAL_TYPE.profileCauses ||
     modalType === MODAL_TYPE.profileFriends;
   const profileBackTargets: Partial<Record<string, string>> = {
+    [MODAL_TYPE.causes]: MODAL_TYPE.profile,
+    [MODAL_TYPE.availability]: MODAL_TYPE.causes,
     [MODAL_TYPE.background]: MODAL_TYPE.about,
     [MODAL_TYPE.military]: MODAL_TYPE.background,
     [MODAL_TYPE.qualifications]: MODAL_TYPE.military,
   };
   const profileBackTarget = profileBackTargets[modalType];
 
-  const handleProfileBack = () => {
+  const handleProfileBack = async () => {
     if (profileBackTarget) {
+      const didAutosave = await runProfileEditAutosave();
+
+      if (!didAutosave) {
+        return;
+      }
+
       dispatch(setModalType(profileBackTarget));
     }
   };

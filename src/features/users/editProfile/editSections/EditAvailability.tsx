@@ -1,25 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../services/hooks";
-import { useNavigate } from "react-router-dom";
 
 import { DarbeButton } from "../../../../components/buttons/DarbeButton";
 import {
   type Availability as EditAvailabilityState,
   DayOfWeek,
 } from "../../../../services/types/availability.types";
-import { PROFILE_ROUTE } from "../../../../routes/route.constants";
 import { Availability } from "../../../../components/availability/Availability";
-import { hideModal } from "../../../../components/modal/modalSlice";
+import {
+  hideModal,
+  setModalType,
+} from "../../../../components/modal/modalSlice";
 import { useEditAvailabilityInformation } from "../hooks";
 import { useUpdateUserProfileMutation } from "../../../../services/api/endpoints/profiles/profiles.api";
 import { selectCurrentUserId } from "../../selectors";
 import { updateUserAvailability } from "../../userSlice";
+import { EDIT_SECTIONS } from "../../userProfiles/constants";
+import { registerProfileEditAutosave } from "../profileEditAutosave";
 
 import styles from "../styles/profileEdit.module.css";
 
 export const EditAvailability = () => {
   const userId = useAppSelector(selectCurrentUserId);
-  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [updateUserProfile] = useUpdateUserProfileMutation();
   const { editUserAvailabilityState } = useEditAvailabilityInformation();
@@ -60,7 +62,7 @@ export const EditAvailability = () => {
     });
   };
 
-  const handleSave = async () => {
+  const persistAvailability = async () => {
     const payload = {
       user: {
         id: userId,
@@ -73,9 +75,43 @@ export const EditAvailability = () => {
     if (updatedUser.user?.availability) {
       dispatch(updateUserAvailability(updatedUser.user.availability));
     }
+  };
 
-    navigate(`${PROFILE_ROUTE}/${userId}`);
-    dispatch(hideModal());
+  const isAvailabilityDirty = () =>
+    JSON.stringify(newAvailability) !== JSON.stringify(editUserAvailabilityState);
+
+  const autosaveAvailability = async () => {
+    if (!isAvailabilityDirty()) {
+      return true;
+    }
+
+    try {
+      await persistAvailability();
+      return true;
+    } catch (error) {
+      console.error("Error autosaving Edit Availability", error);
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    return registerProfileEditAutosave(autosaveAvailability);
+  }, [newAvailability, editUserAvailabilityState]);
+
+  const handlePrevious = async () => {
+    const didAutosave = await autosaveAvailability();
+
+    if (didAutosave) {
+      dispatch(setModalType(EDIT_SECTIONS.causes));
+    }
+  };
+
+  const handleClose = async () => {
+    const didAutosave = await autosaveAvailability();
+
+    if (didAutosave) {
+      dispatch(hideModal());
+    }
   };
 
   return (
@@ -89,13 +125,18 @@ export const EditAvailability = () => {
             variant="profileDialog"
           />
         </div>
-      </div>
-      <div className={styles.profileDialogCenteredFooter}>
-        <DarbeButton
-          buttonText="Save"
-          darbeButtonType="saveButton"
-          onClick={handleSave}
-        />
+        <div className={styles.profileDialogBottomActions}>
+          <DarbeButton
+            buttonText="Previous"
+            darbeButtonType="secondaryNextButton"
+            onClick={handlePrevious}
+          />
+          <DarbeButton
+            buttonText="Close"
+            darbeButtonType="nextButton"
+            onClick={handleClose}
+          />
+        </div>
       </div>
     </div>
   );

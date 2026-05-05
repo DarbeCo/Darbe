@@ -508,6 +508,11 @@
   box-sizing: border-box;
 }
 
+.inlineQualificationFooter :global(.MuiButton-root) {
+  min-width: 144px !important;
+  height: 44px !important;
+}
+
 .skillSearchField {
   display: flex;
   align-items: center;

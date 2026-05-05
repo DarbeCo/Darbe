@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 
+import { useAppDispatch } from "../../../../services/hooks";
 import {
   EducationState,
   JobExperienceState,
@@ -11,6 +12,10 @@ import { EDIT_SECTIONS, PROFILE_SECTIONS } from "../constants";
 import { EditProfileIcon } from "./EditProfileIcon";
 import { Typography } from "../../../../components/typography/Typography";
 import { EDIT_PROFILE_ROUTE } from "../../../../routes/route.constants";
+import {
+  setModalType,
+  showModal,
+} from "../../../../components/modal/modalSlice";
 import {
   capitalizeFirstLetter,
   formatDateTime,
@@ -64,6 +69,7 @@ export const ProfileSection = ({
   const svgPath = `/svgs/common/${sectionType}Icon.svg`;
   const sectionTittle = PROFILE_SECTIONS[sectionType];
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
   const sectionToEdit = () => {
     if (
@@ -89,6 +95,12 @@ export const ProfileSection = ({
 
   const handleEditProfile = () => {
     const sectionRoute = sectionToEdit();
+
+    if (sectionRoute === EDIT_SECTIONS.about) {
+      dispatch(setModalType(EDIT_SECTIONS.about));
+      dispatch(showModal());
+      return;
+    }
 
     if (sectionRoute) {
       navigate(`${EDIT_PROFILE_ROUTE}?section=${sectionRoute}`);

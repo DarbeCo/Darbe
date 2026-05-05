@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useEditOrganizationInformation } from "../../hooks";
 import { OrganizationState } from "../../../userProfiles/types";
@@ -9,6 +9,7 @@ import { useAppDispatch, useAppSelector } from "../../../../../services/hooks";
 import styles from "./styles/subSections.module.css";
 import { updateUserOrganizations } from "../../../userSlice";
 import { selectUserOrganizations } from "../../../selectors";
+import { registerProfileEditAutosave } from "../../profileEditAutosave";
 
 interface OrganizationsModalProps {
   closeModal: () => void;
@@ -89,6 +90,23 @@ export const OrganizationsModal = ({
     setOpenDateDropdown(undefined);
   };
 
+  const isOrganizationDirty = () =>
+    JSON.stringify(organizationInfo) !== JSON.stringify(editOrganizationState) ||
+    organizationDates.startMonth !== startMonth ||
+    organizationDates.startYear !== startYear ||
+    organizationDates.endMonth !== endMonth ||
+    organizationDates.endYear !== endYear;
+
+  const hasOrganizationData = () =>
+    Boolean(
+      organizationInfo.organizationName?.trim() ||
+        organizationInfo.position?.trim() ||
+        organizationDates.startMonth ||
+        organizationDates.startYear ||
+        organizationDates.endMonth ||
+        organizationDates.endYear
+    );
+
   // TODO: Util/generificize this
   const prepareSubmission = () => {
     const startString = `${organizationDates.startMonth} ${organizationDates.startYear}`;
@@ -147,6 +165,33 @@ export const OrganizationsModal = ({
 
     closeModal();
   };
+
+  const autosaveOrganization = async () => {
+    if (!isOrganizationDirty() || (!organizationId && !hasOrganizationData())) {
+      return true;
+    }
+
+    try {
+      await handleSaveOrganization();
+      return true;
+    } catch (error) {
+      console.error("Error autosaving Organization", error);
+      return false;
+    }
+  };
+
+  const handlePreviousOrganization = async () => {
+    if (!isOrganizationDirty() || (!organizationId && !hasOrganizationData())) {
+      closeModal();
+      return;
+    }
+
+    await handleSaveOrganization();
+  };
+
+  useEffect(() => {
+    return registerProfileEditAutosave(autosaveOrganization);
+  }, [organizationInfo, organizationDates, currentOrganizations]);
 
   const renderDateSelect = (
     name: keyof typeof organizationDates,
@@ -220,7 +265,7 @@ export const OrganizationsModal = ({
         <button
           type="button"
           className={styles.organizationFormCloseButton}
-          onClick={closeModal}
+          onClick={handlePreviousOrganization}
           aria-label="Close organization form"
         >
           &times;
@@ -308,10 +353,9 @@ export const OrganizationsModal = ({
         <button
           type="button"
           className={styles.organizationCompactSave}
-          disabled={!organizationInfo.organizationName || !organizationInfo.position}
-          onClick={handleSaveOrganization}
+          onClick={handlePreviousOrganization}
         >
-          Save
+          Previous
         </button>
       </div>
     </div>

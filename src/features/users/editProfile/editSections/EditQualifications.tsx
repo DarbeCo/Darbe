@@ -11,8 +11,13 @@ import { SkillsModal } from "./subSections/SkillsModal";
 import { useAppDispatch, useAppSelector } from "../../../../services/hooks";
 import { selectQualifications, selectCurrentUserId } from "../../selectors";
 import { isValidArray } from "../../../../utils/CommonFunctions";
-import { hideModal } from "../../../../components/modal/modalSlice";
-import { PROFILE_ROUTE } from "../../../../routes/route.constants";
+import { setModalType } from "../../../../components/modal/modalSlice";
+import {
+  getModalStatus,
+  getModalType,
+} from "../../../../components/modal/selectors";
+import { EDIT_PROFILE_ROUTE } from "../../../../routes/route.constants";
+import { EDIT_SECTIONS } from "../../userProfiles/constants";
 
 
 import styles from "../styles/profileEdit.module.css";
@@ -25,6 +30,8 @@ export const EditQualifications = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const userId = useAppSelector(selectCurrentUserId);
+  const isModalOpen = useAppSelector(getModalStatus);
+  const modalType = useAppSelector(getModalType);
   const { licenses, skills } = useAppSelector(selectQualifications);
   const [activePanel, setActivePanel] = useState<QualificationPanel>("list");
   const [licenseIdToEdit, setLicenseIdToEdit] = useState<string | undefined>();
@@ -58,22 +65,14 @@ export const EditQualifications = () => {
     setActivePanel("skill");
   };
 
-  const handleSaveAndReturnToProfile = () => {
-    dispatch(hideModal());
-    navigate(`${PROFILE_ROUTE}/${userId}`);
-  };
+  const handlePrevious = () => {
+    if (isModalOpen && modalType === EDIT_SECTIONS.qualifications) {
+      dispatch(setModalType(EDIT_SECTIONS.military));
+      return;
+    }
 
-  if (activePanel === "license") {
-    return (
-      <LicensesModal
-        closeModal={closeInlinePanel}
-        inline
-        licenseId={licenseIdToEdit}
-        existingLicenses={licenses}
-        userId={userId}
-      />
-    );
-  }
+    navigate(`${EDIT_PROFILE_ROUTE}?section=${EDIT_SECTIONS.military}`);
+  };
 
   if (activePanel === "skill") {
     return (
@@ -138,15 +137,23 @@ export const EditQualifications = () => {
             )}
           </div>
         </div>
-      </div>
 
-      <div className={styles.profileDialogFooter}>
-        <DarbeButton
-          buttonText="Save"
-          darbeButtonType="saveButton"
-          onClick={handleSaveAndReturnToProfile}
-        />
+        <div className={styles.profileDialogBottomActions}>
+          <DarbeButton
+            buttonText="Previous"
+            darbeButtonType="secondaryNextButton"
+            onClick={handlePrevious}
+          />
+        </div>
       </div>
+      {activePanel === "license" ? (
+        <LicensesModal
+          closeModal={closeInlinePanel}
+          licenseId={licenseIdToEdit}
+          existingLicenses={licenses}
+          userId={userId}
+        />
+      ) : null}
     </div>
   );
 };

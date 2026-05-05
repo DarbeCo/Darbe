@@ -10,13 +10,15 @@ import { prepareData } from "../util";
 import { useUpdateUserProfileMutation } from "../../../../services/api/endpoints/profiles/profiles.api";
 import { useEditBackgroundInformation } from "../hooks";
 import { UseDateParser } from "../../../../utils/commonHooks/UseDateParser";
-import { hideModal } from "../../../../components/modal/modalSlice";
-import { selectCurrentUserId } from "../../selectors";
+import { setModalType } from "../../../../components/modal/modalSlice";
 import {
-  EDIT_PROFILE_ROUTE,
-  PROFILE_ROUTE,
-} from "../../../../routes/route.constants";
+  getModalStatus,
+  getModalType,
+} from "../../../../components/modal/selectors";
+import { selectCurrentUserId } from "../../selectors";
+import { EDIT_PROFILE_ROUTE } from "../../../../routes/route.constants";
 import { setUserProfile } from "../../userSlice";
+import { registerProfileEditAutosave } from "../profileEditAutosave";
 
 import styles from "../styles/profileEdit.module.css";
 
@@ -219,6 +221,8 @@ const DateField = ({
 // TODO: Do we even need checkboxes?
 export const EditBackground = () => {
   const userId = useAppSelector(selectCurrentUserId);
+  const isModalOpen = useAppSelector(getModalStatus);
+  const modalType = useAppSelector(getModalType);
   const navigate = useNavigate();
   const { editJobExperienceState, editEducationExperienceState } =
     useEditBackgroundInformation();
@@ -267,6 +271,8 @@ export const EditBackground = () => {
 
   const [updateUserProfile] = useUpdateUserProfileMutation();
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const isBackgroundDialog =
+    isModalOpen && modalType === EDIT_SECTIONS.background;
 
   const hasJobFields = () =>
     Boolean(
@@ -390,8 +396,18 @@ export const EditBackground = () => {
     }
 
     if (isFormDirty()) {
-      await handleSave();
+      const didSave = await autosaveBackground();
+
+      if (!didSave) {
+        return;
+      }
     }
+
+    if (isBackgroundDialog) {
+      dispatch(setModalType(EDIT_SECTIONS.military));
+      return;
+    }
+
     navigate(`${EDIT_PROFILE_ROUTE}?section=${EDIT_SECTIONS.military}`);
   };
 
@@ -436,7 +452,7 @@ export const EditBackground = () => {
   //   setFormData({ ...formData, [e.target.name]: e.target.checked });
   // };
 
-  const handleSave = async () => {
+  const persistBackground = async () => {
     const preparedJobExperience = prepareData(
       jobDates,
       { ...jobExperience }
@@ -465,12 +481,46 @@ export const EditBackground = () => {
 
     const updatedUser = await updateUserProfile(payload).unwrap();
     dispatch(setUserProfile(updatedUser));
-    dispatch(hideModal());
   };
 
-  const handleSaveAndReturnToProfile = async () => {
-    await handleSave();
-    navigate(`${PROFILE_ROUTE}/${userId}`);
+  const autosaveBackground = async () => {
+    if (!isFormDirty()) {
+      return true;
+    }
+
+    try {
+      await persistBackground();
+      return true;
+    } catch (error) {
+      console.error("Error autosaving Edit About occupation", error);
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    return registerProfileEditAutosave(autosaveBackground);
+  }, [
+    jobExperience,
+    educationExperience,
+    jobDates,
+    educationDates,
+    currentlyWorking,
+    currentlyAttending,
+  ]);
+
+  const handlePrevious = async () => {
+    const didSave = await autosaveBackground();
+
+    if (!didSave) {
+      return;
+    }
+
+    if (isBackgroundDialog) {
+      dispatch(setModalType(EDIT_SECTIONS.about));
+      return;
+    }
+
+    navigate(`${EDIT_PROFILE_ROUTE}?section=${EDIT_SECTIONS.about}`);
   };
 
   return (
@@ -589,20 +639,20 @@ export const EditBackground = () => {
             Currently Attending
           </label>
         </div>
-      </div>
 
-      <div className={styles.profileDialogFooter}>
-        <DarbeButton
-          buttonText="Save"
-          darbeButtonType="saveButton"
-          onClick={handleSaveAndReturnToProfile}
-        />
-        <DarbeButton
-          buttonText="Military"
-          darbeButtonType="nextButton"
-          endingIconPath="/svgs/common/goForwardIconWhite.svg"
-          onClick={handleNextSection}
-        />
+        <div className={styles.profileDialogBottomActions}>
+          <DarbeButton
+            buttonText="Previous"
+            darbeButtonType="secondaryNextButton"
+            onClick={handlePrevious}
+          />
+          <DarbeButton
+            buttonText="Military"
+            darbeButtonType="nextButton"
+            endingIconPath="/svgs/common/goForwardIconWhite.svg"
+            onClick={handleNextSection}
+          />
+        </div>
       </div>
     </div>
   );

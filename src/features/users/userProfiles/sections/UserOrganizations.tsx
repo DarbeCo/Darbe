@@ -1,5 +1,3 @@
-import { useNavigate } from "react-router-dom";
-
 import { Typography } from "../../../../components/typography/Typography";
 import { EDIT_SECTIONS } from "../constants";
 import { OrganizationState } from "../types";
@@ -9,7 +7,11 @@ import {
   formatDateTime,
 } from "../../../../utils/CommonFunctions";
 import { DATE_CONSTANTS } from "../../../../utils/CommonConstants";
-import { EDIT_PROFILE_ROUTE } from "../../../../routes/route.constants";
+import { useAppDispatch } from "../../../../services/hooks";
+import {
+  setModalType,
+  showModal,
+} from "../../../../components/modal/modalSlice";
 
 import styles from "../styles/userProfiles.module.css";
 
@@ -23,10 +25,11 @@ export const UserOrganizations = ({
   organizations,
   canEdit,
 }: UserOrganizationsProps) => {
-  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
   const handleEdit = () => {
-    navigate(`${EDIT_PROFILE_ROUTE}?section=${EDIT_SECTIONS.organizations}`);
+    dispatch(setModalType(EDIT_SECTIONS.organizations));
+    dispatch(showModal());
   };
 
   return (
