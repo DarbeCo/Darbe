@@ -1,11 +1,4 @@
 import { useState } from "react";
-import { ClosingIcon } from "../../../../../components/closingIcon/ClosingIcon";
-import { Inputs } from "../../../../../components/inputs/Inputs";
-import { CheckBox } from "../../../../../components/checkbox/Checkbox";
-import { Dropdown } from "../../../../../components/dropdowns/Dropdown";
-import { Months } from "../../../../../components/dropdowns/dropdownTypes/Months";
-import { Years } from "../../../../../components/dropdowns/dropdownTypes/Years";
-import { DarbeButton } from "../../../../../components/buttons/DarbeButton";
 import { useEditLicenseInformation } from "../../hooks";
 import { LicenseState } from "../../../userProfiles/types";
 import { UseDateParser } from "../../../../../utils/commonHooks/UseDateParser";
@@ -15,6 +8,25 @@ import { updateUserLicenses } from "../../../userSlice";
 import { useAppDispatch } from "../../../../../services/hooks";
 
 import styles from "./styles/subSections.module.css";
+
+const MONTH_OPTIONS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+const YEAR_OPTIONS = Array.from({ length: 101 }, (_, index) =>
+  `${new Date().getFullYear() - index}`
+);
 
 interface LicensesProps {
   closeModal: () => void;
@@ -51,14 +63,18 @@ export const LicensesModal = ({
     expirationMonth: expirationMonth,
     expirationYear: expirationYear,
   });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [updateUserProfile] = useUpdateUserProfileMutation();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+
     setLicenseInfo({
       ...licenseInfo,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+    setFieldErrors((previous) => ({ ...previous, [name]: "" }));
   };
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,6 +102,12 @@ export const LicensesModal = ({
   };
 
   const handleSaveLicense = async () => {
+    if (!licenseInfo.licenseName?.trim()) {
+      setFieldErrors({ licenseName: "License Name is required." });
+      return;
+    }
+
+    setFieldErrors({});
     const preparedLicense = prepareSumission();
     const licenses = licenseId
       ? existingLicenses.map((existingLicense) =>
@@ -110,9 +132,16 @@ export const LicensesModal = ({
   const content = (
     <>
       {!inline && (
-        <div className={styles.modalContentHeader}>
-          <ClosingIcon onClick={closeModal} horizontalPlacement="right" />
-          <span className={styles.modalHeaderText}>Add Licenses</span>
+        <div className={styles.organizationFormHeader}>
+          <span>{licenseId ? "Edit Licenses" : "Add Licenses"}</span>
+          <button
+            type="button"
+            className={styles.organizationFormCloseButton}
+            onClick={closeModal}
+            aria-label="Close license form"
+          >
+            &times;
+          </button>
         </div>
       )}
       {inline && (
@@ -120,85 +149,120 @@ export const LicensesModal = ({
           {licenseId ? "Edit Licenses" : "Add Licenses"}
         </h2>
       )}
-      <div className={styles.modalContentForm}>
-        <Inputs
-          label="License Name"
-          placeholder="Enter license name"
-          type="text"
-          name="licenseName"
-          darbeInputType="standardInput"
-          value={licenseInfo.licenseName}
-          handleChange={handleChange}
-        />
-        <Inputs
-          label="License Issuer"
-          placeholder="Enter license issuer"
-          type="text"
-          name="licenseIssuer"
-          darbeInputType="standardInput"
-          value={licenseInfo.licenseIssuer}
-          handleChange={handleChange}
-        />
-        <div className={styles.modalContentFormDates}>
-          <div className={styles.modalContentDropdowns}>
-            <Dropdown
+      <div className={styles.organizationCompactForm}>
+        <div className={styles.organizationCompactField}>
+          <label>
+            License Name<span>*</span>
+          </label>
+          <input
+            type="text"
+            name="licenseName"
+            value={licenseInfo.licenseName ?? ""}
+            placeholder="Enter license name"
+            className={`${styles.organizationCompactInput} ${
+              fieldErrors.licenseName ? styles.organizationFieldError : ""
+            }`.trim()}
+            onChange={handleChange}
+          />
+          {fieldErrors.licenseName ? (
+            <p className={styles.organizationFieldMessage}>
+              {fieldErrors.licenseName}
+            </p>
+          ) : null}
+        </div>
+        <div className={styles.organizationCompactField}>
+          <label>License Issuer</label>
+          <input
+            type="text"
+            name="licenseIssuer"
+            value={licenseInfo.licenseIssuer ?? ""}
+            placeholder="Enter license issuer"
+            className={styles.organizationCompactInput}
+            onChange={handleChange}
+          />
+        </div>
+        <div className={styles.organizationCompactField}>
+          <label>Issue Date</label>
+          <div className={styles.organizationCompactDateRow}>
+            <select
+              className={styles.organizationCompactInput}
               name="issueMonth"
-              label="Issue Month"
-              initialValue={licenseDates.issueMonth}
               onChange={handleDropdownChange}
+              value={licenseDates.issueMonth ?? ""}
             >
-              {Months()}
-            </Dropdown>
-            <Dropdown
+              <option value="">Month</option>
+              {MONTH_OPTIONS.map((month) => (
+                <option key={month} value={month}>
+                  {month}
+                </option>
+              ))}
+            </select>
+            <select
+              className={styles.organizationCompactInput}
               name="issueYear"
-              label="Issue Year"
-              initialValue={licenseDates.issueYear}
               onChange={handleDropdownChange}
+              value={licenseDates.issueYear ?? ""}
             >
-              {Years()}
-            </Dropdown>
-          </div>
-          <div className={styles.modalContentDropdowns}>
-            <Dropdown
-              name="expirationMonth"
-              label="Expiration Month"
-              initialValue={licenseDates.expirationMonth}
-              onChange={handleDropdownChange}
-            >
-              {Months()}
-            </Dropdown>
-            <Dropdown
-              name="expirationYear"
-              label="Expiration Year"
-              initialValue={licenseDates.expirationYear}
-              onChange={handleDropdownChange}
-            >
-              {Years()}
-            </Dropdown>
+              <option value="">Year</option>
+              {YEAR_OPTIONS.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
-        <CheckBox
-          name="doesNotExpire"
-          label="This credential does not expire"
-          labelPlacement="right"
-          defaultChecked={licenseInfo.doesNotExpire}
-          onChange={handleCheckboxChange}
-        />
-      </div>
-      <div className={styles.inlineQualificationFooter}>
-        {inline && (
-          <DarbeButton
-            buttonText="Cancel"
-            darbeButtonType="secondaryButton"
-            onClick={closeModal}
+        <div className={styles.organizationCompactField}>
+          <label>Expiration Date</label>
+          <div className={styles.organizationCompactDateRow}>
+            <select
+              className={styles.organizationCompactInput}
+              name="expirationMonth"
+              onChange={handleDropdownChange}
+              value={licenseDates.expirationMonth ?? ""}
+              disabled={Boolean(licenseInfo.doesNotExpire)}
+            >
+              <option value="">Month</option>
+              {MONTH_OPTIONS.map((month) => (
+                <option key={month} value={month}>
+                  {month}
+                </option>
+              ))}
+            </select>
+            <select
+              className={styles.organizationCompactInput}
+              name="expirationYear"
+              onChange={handleDropdownChange}
+              value={licenseDates.expirationYear ?? ""}
+              disabled={Boolean(licenseInfo.doesNotExpire)}
+            >
+              <option value="">Year</option>
+              {YEAR_OPTIONS.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <label className={styles.organizationActiveMember}>
+          <input
+            type="checkbox"
+            name="doesNotExpire"
+            checked={Boolean(licenseInfo.doesNotExpire)}
+            onChange={handleCheckboxChange}
           />
-        )}
-        <DarbeButton
-          buttonText="Previous"
-          isDisabled={!licenseInfo.licenseName}
-          darbeButtonType="secondaryNextButton"
+          <span>This credential does not expire</span>
+        </label>
+      </div>
+      <div className={styles.organizationCompactFooter}>
+        <button
+          type="button"
+          className={styles.organizationCompactSave}
           onClick={handleSaveLicense}
-        />
+        >
+          Finish
+        </button>
       </div>
     </>
   );
@@ -213,7 +277,7 @@ export const LicensesModal = ({
 
   return (
     <div className={styles.modalContainer}>
-      <div className={styles.modalContent}>{content}</div>
+      <div className={styles.organizationDialog}>{content}</div>
     </div>
   );
 };

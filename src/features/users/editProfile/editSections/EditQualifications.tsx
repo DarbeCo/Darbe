@@ -74,18 +74,6 @@ export const EditQualifications = () => {
     navigate(`${EDIT_PROFILE_ROUTE}?section=${EDIT_SECTIONS.military}`);
   };
 
-  if (activePanel === "skill") {
-    return (
-      <SkillsModal
-        closeModal={closeInlinePanel}
-        inline
-        skillId={skillIdToEdit}
-        existingSkills={skills}
-        userId={userId}
-      />
-    );
-  }
-
   return (
     <div className={styles.profileDialogContent}>
       <div className={styles.profileDialogScrollArea}>
@@ -151,6 +139,14 @@ export const EditQualifications = () => {
           closeModal={closeInlinePanel}
           licenseId={licenseIdToEdit}
           existingLicenses={licenses}
+          userId={userId}
+        />
+      ) : null}
+      {activePanel === "skill" ? (
+        <SkillsModal
+          closeModal={closeInlinePanel}
+          skillId={skillIdToEdit}
+          existingSkills={skills}
           userId={userId}
         />
       ) : null}

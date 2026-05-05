@@ -31,12 +31,12 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  row-gap: 16px;
-  width: min(520px, calc(100vw - 32px));
-  max-height: min(680px, calc(100vh - 64px));
-  padding: 24px;
+  width: min(750px, calc(100vw - 48px));
+  max-height: min(868px, calc(100dvh - 48px));
+  padding: 0 24px 24px;
   border-radius: 8px;
   background-color: #ffffff;
+  border: 1px solid #d8d8d8;
   box-shadow: 0 0 18px rgba(0, 0, 0, 0.25);
   overflow-y: auto;
   box-sizing: border-box;
@@ -293,27 +293,29 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 36px;
-  min-height: 36px;
-  border-bottom: 4px solid #d8d8d8;
+  height: 73px;
+  min-height: 73px;
+  margin: 0 -24px 16px;
+  width: calc(100% + 48px);
+  border-bottom: 8px solid #d8d8d8;
   color: #263238;
   font-family: "Open Sans", sans-serif;
-  font-size: 16px;
+  font-size: 24px;
   font-weight: 700;
-  line-height: 22px;
+  line-height: 33px;
   box-sizing: border-box;
 }
 
 .organizationFormCloseButton {
   position: absolute;
-  right: 8px;
-  top: 4px;
+  right: 24px;
+  top: 20.5px;
   width: 24px;
   height: 24px;
   border: 0;
   background: transparent;
   color: #263238;
-  font-size: 18px;
+  font-size: 26px;
   line-height: 24px;
   cursor: pointer;
   padding: 0;
@@ -323,24 +325,26 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 347px;
-  padding: 12px 10px 0;
+  max-width: 702px;
+  margin: 0 auto;
+  padding: 0;
   box-sizing: border-box;
 }
 
 .organizationCompactField {
+  margin-top: 16px;
   display: flex;
   flex-direction: column;
   width: 100%;
 }
 
 .organizationCompactField label {
-  margin-bottom: 3px;
+  margin-bottom: 5px;
   color: #000000;
   font-family: "Open Sans", sans-serif;
-  font-size: 12px;
+  font-size: 18px;
   font-weight: 600;
-  line-height: 16px;
+  line-height: normal;
 }
 
 .organizationCompactField label span {
@@ -350,22 +354,22 @@
 .organizationCompactDateRow {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 18px;
   width: 100%;
-  margin-bottom: 9px;
+  margin-bottom: 16px;
 }
 
 .organizationCompactSelect,
 .organizationCompactInput {
   width: 100%;
-  height: 26px;
-  border: 1px solid #c4c4c4;
-  border-radius: 4px;
+  height: 56px;
+  border: 2px solid #d8d8d8;
+  border-radius: 8px;
   background-color: #ffffff;
   color: #000000;
   font-family: Roboto, sans-serif;
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 18px;
+  line-height: normal;
   box-sizing: border-box;
 }
 
@@ -374,7 +378,115 @@
 }
 
 .organizationCompactInput {
-  padding: 5px 8px;
+  padding: 8px 12px;
+}
+
+.organizationCompactDropdown {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.organizationCompactDropdownButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 56px;
+  padding: 0 38px 0 14px;
+  border: 2px solid #d8d8d8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #000000;
+  font-family: Roboto, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: normal;
+  text-align: left;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.organizationCompactDropdownOpen .organizationCompactDropdownButton {
+  border-color: #000000;
+  border-bottom-color: transparent;
+  border-radius: 8px 8px 0 0;
+}
+
+.organizationCompactDropdownError .organizationCompactDropdownButton,
+.organizationFieldError {
+  border-color: #b00020;
+}
+
+.organizationCompactDropdownArrow {
+  position: absolute;
+  right: 34px;
+  top: 23px;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid #000000;
+}
+
+.organizationCompactDropdownArrowOpen {
+  border-top: 0;
+  border-bottom: 5px solid #000000;
+}
+
+.organizationCompactDropdownMenu {
+  position: absolute;
+  z-index: 4;
+  top: calc(100% - 2px);
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 210px;
+  padding: 0 8px 8px;
+  border: 2px solid #000000;
+  border-top: 0;
+  border-radius: 0 0 8px 8px;
+  background: #ffffff;
+  box-sizing: border-box;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.organizationCompactDropdownMenu::-webkit-scrollbar {
+  display: none;
+}
+
+.organizationCompactDropdownOption {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 37px;
+  padding: 8px;
+  border: 0;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #717070;
+  font-family: Roboto, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: normal;
+  text-align: left;
+  cursor: pointer;
+}
+
+.organizationCompactDropdownOptionSelected {
+  background: #eaeaea;
+  color: #263238;
+  font-weight: 700;
+}
+
+.organizationCompactDropdownOption:hover,
+.organizationCompactDropdownOption:focus-visible {
+  background: #eaeaea;
+  color: #263238;
+  outline: none;
 }
 
 .organizationCompactSelect:invalid,
@@ -383,23 +495,32 @@
   color: #717070;
 }
 
+.organizationFieldMessage {
+  margin: 4px 0 0;
+  color: #b00020;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
 .organizationActiveMember {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   width: fit-content;
-  margin-bottom: 8px;
+  margin: -3px 0 13px;
   color: #000000;
   font-family: "Open Sans", sans-serif;
-  font-size: 12px;
+  font-size: 18px;
   font-weight: 400;
-  line-height: 16px;
+  line-height: normal;
   cursor: pointer;
 }
 
 .organizationActiveMember input {
-  width: 12px;
-  height: 12px;
+  width: 24px;
+  height: 24px;
   margin: 0;
   accent-color: #2c77e7;
 }
@@ -407,37 +528,44 @@
 .organizationPositionCounter {
   align-self: flex-end;
   margin-top: 2px;
-  color: #000000;
-  font-family: Roboto, sans-serif;
-  font-size: 8px;
-  line-height: 10px;
+  color: #263238;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 12px;
 }
 
 .organizationCompactFooter {
   display: flex;
   justify-content: flex-end;
-  align-items: flex-end;
-  flex: 1 1 auto;
-  min-height: 0;
+  align-items: center;
+  gap: 16px;
   width: 100%;
-  max-width: 347px;
-  padding: 0 10px 10px;
+  max-width: 702px;
+  margin: 16px auto 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
 .organizationCompactSave {
-  min-width: 31px;
-  height: 20px;
-  padding: 0 7px;
-  border: 1px solid #088f26;
-  border-radius: 0;
+  min-width: 144px;
+  height: 44px;
+  padding: 12px 40px;
+  border: 1px solid #2c77e7;
+  border-radius: 4px;
   background: #ffffff;
-  color: #088f26;
+  color: #2c77e7;
   font-family: "Open Sans", sans-serif;
-  font-size: 10px;
+  font-size: 16px;
   font-weight: 600;
-  line-height: 14px;
+  line-height: 22px;
   cursor: pointer;
+}
+
+.organizationCompactSave:hover,
+.organizationCompactSave:focus-visible {
+  background-color: #2c77e7;
+  color: #ffffff;
 }
 
 .organizationCompactSave:disabled {

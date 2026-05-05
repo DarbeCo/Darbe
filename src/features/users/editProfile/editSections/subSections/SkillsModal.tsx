@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { ClosingIcon } from "../../../../../components/closingIcon/ClosingIcon";
-import { DarbeButton } from "../../../../../components/buttons/DarbeButton";
 import { useUpdateUserProfileMutation } from "../../../../../services/api/endpoints/profiles/profiles.api";
 import { useEditSkillsInformation } from "../../hooks";
 import { SkillState } from "../../../userProfiles/types";
@@ -29,17 +27,22 @@ export const SkillsModal = ({
   const [skill, setSkillName] = useState<SkillState | undefined>(
     editSkillState
   );
+  const [fieldError, setFieldError] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
 
     setSkillName({ skillName: value });
+    setFieldError("");
   };
 
   const [updateUserProfile] = useUpdateUserProfileMutation();
 
   const handleSaveSkill = async () => {
-    if (!skill?.skillName?.trim()) return;
+    if (!skill?.skillName?.trim()) {
+      setFieldError("Skill Name is required.");
+      return;
+    }
 
     const preparedSkill = {
       ...skill,
@@ -68,9 +71,16 @@ export const SkillsModal = ({
   const content = (
     <>
       {!inline && (
-        <div className={styles.modalContentHeader}>
-          <ClosingIcon onClick={closeModal} horizontalPlacement="right" />
-          <span className={styles.modalHeaderText}>Add Skills</span>
+        <div className={styles.organizationFormHeader}>
+          <span>{skillId ? "Edit Skills" : "Add Skills"}</span>
+          <button
+            type="button"
+            className={styles.organizationFormCloseButton}
+            onClick={closeModal}
+            aria-label="Close skill form"
+          >
+            &times;
+          </button>
         </div>
       )}
       {inline && (
@@ -78,33 +88,36 @@ export const SkillsModal = ({
           {skillId ? "Edit Skills" : "Add Skills"}
         </h2>
       )}
-      <div className={styles.skillSearchField}>
-        <span aria-hidden="true" className={styles.skillSearchIcon} />
-        <input
-          className={styles.skillSearchInput}
-          name="skillName"
-          onChange={handleChange}
-          placeholder="Search for a skill (ex: Adobe)"
-          value={skill?.skillName ?? ""}
-        />
-      </div>
-      <span className={styles.emptyQualificationsText}>
-        {skill?.skillName ? skill.skillName : "No skills to display"}
-      </span>
-      <div className={styles.inlineQualificationFooter}>
-        {inline && (
-          <DarbeButton
-            buttonText="Cancel"
-            darbeButtonType="secondaryButton"
-            onClick={closeModal}
+      <div className={styles.organizationCompactForm}>
+        <div className={styles.organizationCompactField}>
+          <label>
+            Skill Name<span>*</span>
+          </label>
+          <input
+            className={`${styles.organizationCompactInput} ${
+              fieldError ? styles.organizationFieldError : ""
+            }`.trim()}
+            name="skillName"
+            onChange={handleChange}
+            placeholder="Search for a skill (ex: Adobe)"
+            value={skill?.skillName ?? ""}
           />
-        )}
-        <DarbeButton
-          buttonText="Save"
-          isDisabled={!skill?.skillName}
-          darbeButtonType="saveButton"
+          {fieldError ? (
+            <p className={styles.organizationFieldMessage}>{fieldError}</p>
+          ) : null}
+        </div>
+        {/* <span className={styles.emptyQualificationsText}>
+          {skill?.skillName ? skill.skillName : "No skills to display"}
+        </span> */}
+      </div>
+      <div className={styles.organizationCompactFooter}>
+        <button
+          type="button"
+          className={styles.organizationCompactSave}
           onClick={handleSaveSkill}
-        />
+        >
+          Finish
+        </button>
       </div>
     </>
   );
@@ -119,9 +132,7 @@ export const SkillsModal = ({
 
   return (
     <div className={styles.modalContainer}>
-      <div className={styles.modalContent}>
-        {content}
-      </div>
+      <div className={styles.organizationDialog}>{content}</div>
     </div>
   );
 };

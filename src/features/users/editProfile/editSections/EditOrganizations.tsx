@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
-import { ClosingIcon } from "../../../../components/closingIcon/ClosingIcon";
+import { DarbeButton } from "../../../../components/buttons/DarbeButton";
 import { Typography } from "../../../../components/typography/Typography";
 import { OrganizationsModal } from "./subSections/OrganizationsModal";
 import { SimpleProfileOrganizations } from "./subSections/SimpleProfileOrganizations";
@@ -9,17 +8,12 @@ import { useAppDispatch, useAppSelector } from "../../../../services/hooks";
 import { selectUserOrganizations, selectCurrentUserId } from "../../selectors";
 import { useRemoveUserOrganizationMutationMutation } from "../../../../services/api/endpoints/profiles/profiles.api";
 import { updateUserOrganizations } from "../../userSlice";
-import { PROFILE_ROUTE } from "../../../../routes/route.constants";
 import { OrganizationState } from "../../userProfiles/types";
-import { hideModal } from "../../../../components/modal/modalSlice";
-import { getModalStatus } from "../../../../components/modal/selectors";
 
 import styles from "../styles/profileEdit.module.css";
 
 export const EditOrganizations = () => {
   const userId = useAppSelector(selectCurrentUserId);
-  const isModalOpen = useAppSelector(getModalStatus);
-  const navigate = useNavigate();
   const userOrganizations = useAppSelector(selectUserOrganizations);
   const dispatch = useAppDispatch();
   const [removeOrganization] = useRemoveUserOrganizationMutationMutation();
@@ -76,31 +70,11 @@ export const EditOrganizations = () => {
     setOrganizationToEdit(undefined);
   };
 
-  const handlePrevious = () => {
-    if (isModalOpen) {
-      dispatch(hideModal());
-      return;
-    }
-
-    navigate(`${PROFILE_ROUTE}/${userId}`);
-  };
-
   return (
-    <div
-      className={styles.profileEditContentOrganizations}
-    >
-      <div
-        className={styles.profileEditOrganizationsScrollArea}
-      >
+    <div className={styles.profileDialogContent}>
+      <div className={styles.profileDialogScrollArea}>
         <div className={styles.profileOrganizationsPanel}>
-          <div className={styles.profileOrganizationListHeader}>
-            <span className={styles.profileOrganizationListHeaderTitle}>
-              Organization List
-            </span>
-            <div className={styles.profileOrganizationListClose}>
-              <ClosingIcon useNoSx onClick={handlePrevious} />
-            </div>
-          </div>
+          <h2 className={styles.profileEditSectionTitle}>Organization List</h2>
           {hasOrganizatiosn ? (
             <SimpleProfileOrganizations
               handleDelete={deleteOrganization}
@@ -114,22 +88,14 @@ export const EditOrganizations = () => {
             />
           )}
         </div>
-      </div>
-      <div className={styles.profileOrganizationsFooter}>
-        <button
-          type="button"
-          className={styles.profileOrganizationsAddButton}
-          onClick={handleAddOrganization}
-        >
-          Add Organization
-        </button>
-        <button
-          type="button"
-          className={styles.profileOrganizationsSaveButton}
-          onClick={handlePrevious}
-        >
-          Previous
-        </button>
+
+        <div className={styles.profileDialogBottomActions}>
+          <DarbeButton
+            buttonText="Add Organization"
+            darbeButtonType="nextButton"
+            onClick={handleAddOrganization}
+          />
+        </div>
       </div>
       {isOrganizationFormOpen ? (
         <OrganizationsModal

@@ -51,6 +51,7 @@ export const OrganizationsModal = ({
     keyof typeof organizationDates | undefined
   >();
   const [activeMember, setActiveMember] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [updateUserProfile] = useUpdateUserProfileMutation();
   const months = [
@@ -73,10 +74,13 @@ export const OrganizationsModal = ({
   );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+
     setOrganizationInfo({
       ...organizationInfo,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+    setFieldErrors((previous) => ({ ...previous, [name]: "" }));
   };
 
   const handleDropdownChange = (
@@ -87,7 +91,35 @@ export const OrganizationsModal = ({
       ...organizationDates,
       [name]: value,
     });
+    if (name === "startMonth" || name === "startYear") {
+      setFieldErrors((previous) => ({ ...previous, startDate: "" }));
+    }
+    if (name === "endMonth" || name === "endYear") {
+      setFieldErrors((previous) => ({ ...previous, endDate: "" }));
+    }
     setOpenDateDropdown(undefined);
+  };
+
+  const validateOrganization = () => {
+    const errors: Record<string, string> = {};
+
+    if (!organizationInfo.organizationName?.trim()) {
+      errors.organizationName = "Organization Name is required.";
+    }
+
+    if (!organizationDates.startMonth || !organizationDates.startYear) {
+      errors.startDate = "Start Date is required.";
+    }
+
+    if (!organizationDates.endMonth || !organizationDates.endYear) {
+      errors.endDate = "End Date is required.";
+    }
+
+    if (!organizationInfo.position?.trim()) {
+      errors.position = "Position is required.";
+    }
+
+    return errors;
   };
 
   const isOrganizationDirty = () =>
@@ -126,6 +158,14 @@ export const OrganizationsModal = ({
   };
 
   const handleSaveOrganization = async () => {
+    const errors = validateOrganization();
+
+    if (Object.keys(errors).length) {
+      setFieldErrors(errors);
+      return false;
+    }
+
+    setFieldErrors({});
     const { startDate, endDate } = prepareSubmission();
 
     const formattedOrganizationInfo = {
@@ -164,6 +204,7 @@ export const OrganizationsModal = ({
     }
 
     closeModal();
+    return true;
   };
 
   const autosaveOrganization = async () => {
@@ -172,8 +213,7 @@ export const OrganizationsModal = ({
     }
 
     try {
-      await handleSaveOrganization();
-      return true;
+      return await handleSaveOrganization();
     } catch (error) {
       console.error("Error autosaving Organization", error);
       return false;
@@ -202,6 +242,15 @@ export const OrganizationsModal = ({
     <div
       className={`${styles.organizationCompactDropdown} ${
         openDateDropdown === name ? styles.organizationCompactDropdownOpen : ""
+      } ${
+        (name === "startMonth" || name === "startYear") &&
+        fieldErrors.startDate
+          ? styles.organizationCompactDropdownError
+          : ""
+      } ${
+        (name === "endMonth" || name === "endYear") && fieldErrors.endDate
+          ? styles.organizationCompactDropdownError
+          : ""
       }`}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) {
@@ -281,9 +330,16 @@ export const OrganizationsModal = ({
             name="organizationName"
             value={organizationInfo.organizationName ?? ""}
             placeholder="Organization name"
-            className={styles.organizationCompactInput}
+            className={`${styles.organizationCompactInput} ${
+              fieldErrors.organizationName ? styles.organizationFieldError : ""
+            }`.trim()}
             onChange={handleChange}
           />
+          {fieldErrors.organizationName ? (
+            <p className={styles.organizationFieldMessage}>
+              {fieldErrors.organizationName}
+            </p>
+          ) : null}
         </div>
         <div className={styles.organizationCompactField}>
           <label>
@@ -303,6 +359,11 @@ export const OrganizationsModal = ({
               years
             )}
           </div>
+          {fieldErrors.startDate ? (
+            <p className={styles.organizationFieldMessage}>
+              {fieldErrors.startDate}
+            </p>
+          ) : null}
         </div>
         <div className={styles.organizationCompactField}>
           <label>
@@ -322,6 +383,11 @@ export const OrganizationsModal = ({
               years
             )}
           </div>
+          {fieldErrors.endDate ? (
+            <p className={styles.organizationFieldMessage}>
+              {fieldErrors.endDate}
+            </p>
+          ) : null}
         </div>
         <label className={styles.organizationActiveMember}>
           <input
@@ -341,9 +407,16 @@ export const OrganizationsModal = ({
             value={organizationInfo.position ?? ""}
             placeholder="President"
             maxLength={300}
-            className={styles.organizationCompactInput}
+            className={`${styles.organizationCompactInput} ${
+              fieldErrors.position ? styles.organizationFieldError : ""
+            }`.trim()}
             onChange={handleChange}
           />
+          {fieldErrors.position ? (
+            <p className={styles.organizationFieldMessage}>
+              {fieldErrors.position}
+            </p>
+          ) : null}
           <span className={styles.organizationPositionCounter}>
             {(organizationInfo.position ?? "").length}/300
           </span>
@@ -355,7 +428,7 @@ export const OrganizationsModal = ({
           className={styles.organizationCompactSave}
           onClick={handlePreviousOrganization}
         >
-          Previous
+          Finish
         </button>
       </div>
     </div>
