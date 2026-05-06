@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { selectUser } from "../../features/users/selectors";
@@ -54,6 +54,8 @@ const DetailMetric = ({ icon, label, alt }: DetailMetricProps) => (
   </div>
 );
 
+const TWENTY_FOUR_HOURS_IN_MS = 24 * 60 * 60 * 1000;
+
 export const EventDetailCard = ({
   event = undefined,
   eventId = undefined,
@@ -77,6 +79,7 @@ export const EventDetailCard = ({
   const [showPassConfirmDialog, setShowPassConfirmDialog] = useState(false);
   const [showPassRejectedDialog, setShowPassRejectedDialog] = useState(false);
   const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
+  const shareMenuRef = useRef<HTMLDivElement | null>(null);
   const eventCoordinatorId = isPreview
     ? previewEventData?.eventCoordinator
     : event?.eventCoordinator.id;
@@ -90,6 +93,25 @@ export const EventDetailCard = ({
       [name]: checked,
     }));
   };
+
+  useEffect(() => {
+    if (!isShareMenuOpen) {
+      return;
+    }
+
+    const handleClickAway = (event: MouseEvent) => {
+      if (
+        shareMenuRef.current &&
+        !shareMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsShareMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickAway);
+
+    return () => document.removeEventListener("mousedown", handleClickAway);
+  }, [isShareMenuOpen]);
 
   const eventOwnerName = isPreview
     ? user?.userType === "organization"
@@ -207,6 +229,12 @@ export const EventDetailCard = ({
   const returnToEventsTab = (
     location.state as { returnToEventsTab?: string } | null
   )?.returnToEventsTab;
+  const eventDateTime = eventDateToUse
+    ? new Date(eventDateToUse.toString()).getTime()
+    : undefined;
+  const isMoreThanTwentyFourHoursPast =
+    eventDateTime !== undefined &&
+    Date.now() - eventDateTime > TWENTY_FOUR_HOURS_IN_MS;
 
   const handleGoBack = () => {
     if (returnToEventsTab) {
@@ -304,7 +332,7 @@ export const EventDetailCard = ({
             <span>{eventOwnerName}</span>
           </button>
           <div className={styles.eventDetailHeaderActions}>
-            <div className={styles.eventShareMenuWrap}>
+            <div className={styles.eventShareMenuWrap} ref={shareMenuRef}>
               <button
                 type="button"
                 onClick={() => setIsShareMenuOpen((isOpen) => !isOpen)}
@@ -472,7 +500,7 @@ export const EventDetailCard = ({
         </label>
       </section>
 
-      {!isEventOwner && !isPreview && (
+      {!isEventOwner && !isPreview && !isMoreThanTwentyFourHoursPast && (
         <div className={styles.eventDetailActions}>
           <button
             type="button"

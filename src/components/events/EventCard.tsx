@@ -152,12 +152,24 @@ export const EventCard = ({
     ? event.endTime - event.startTime
     : undefined;
   const formattedStartTime = formatDarbeTimeToString(event.startTime);
+  const today = new Date();
+  const todayTime = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  ).getTime();
+  const eventDateTime = new Date(
+    eventDate.getFullYear(),
+    eventDate.getMonth(),
+    eventDate.getDate()
+  ).getTime();
   const signupValueToUse =
     signupCount > 0 ? signupCount : event.signups?.length || 0;
   const signedUpVolunteers = `${signupValueToUse}/${event.maxVolunteerCount} ${
     variant === "match" ? "Volunteers" : "Signed Up"
   }`;
   const isEventPoster = currentUserId === event.eventOwner.id;
+  const isPastEvent = eventDateTime < todayTime;
   const isVolunteerLocked = hasVolunteered || isVolunteering;
   const isSignedUpCard = Boolean(isSignedUp);
   const canSelectVolunteers = currentUserType === "nonprofit";
@@ -410,10 +422,10 @@ export const EventCard = ({
                     {signup.user.jobTitle && <span>{signup.user.jobTitle}</span>}
                   </div>
                 </div>
-                {isCurrentVolunteer && (
+                {(isCurrentVolunteer || isPastEvent) && (
                   <div className={styles.eventVolunteerCheckIn}>
                     <strong>{isCheckedIn ? "Checked In" : "Not Checked In"}</strong>
-                    {!isCheckedIn && (
+                    {isCurrentVolunteer && !isPastEvent && !isCheckedIn && (
                       <button
                         type="button"
                         className={styles.eventVolunteerCheckInButton}

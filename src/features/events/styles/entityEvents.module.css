@@ -108,10 +108,11 @@
   .volunteerSummaryRows {
     display: flex;
     flex-direction: column;
+    gap: 8px;
   }
 
   .volunteerSummaryRowsExpanded {
-    max-height: 234px;
+    max-height: 274px;
     overflow-y: auto;
     padding-right: 4px;
   }
