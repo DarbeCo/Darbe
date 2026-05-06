@@ -10,6 +10,7 @@ import styles from "../styles/entityEvents.module.css";
 interface EventMatchesProps {
   matchFilter?: "Event Matches" | "Cause Matches" | "Availability Matches";
   recentFilter?: "Most Recent" | "Least Recent" | "A - Z";
+  hideLoadingSpinner?: boolean;
 }
 
 const getDateOnlyTime = (date: Date) =>
@@ -38,6 +39,7 @@ export const getUpcomingEventMatches = (events: ShortEventState[] = []) =>
 export const EventMatches = ({
   matchFilter = "Event Matches",
   recentFilter = "Most Recent",
+  hideLoadingSpinner = false,
 }: EventMatchesProps) => {
   const { data, isLoading } = useGetEventsQuery();
   const filteredEvents = useMemo(() => {
@@ -74,7 +76,7 @@ export const EventMatches = ({
 
   return (
     <div className={styles.darbeEventCards}>
-      {isLoading && <CircularProgress />}
+      {isLoading && !hideLoadingSpinner && <CircularProgress />}
       {!isLoading && filteredEvents.length === 0 && (
         <p className={styles.noEventMatches}>No matches found.</p>
       )}

@@ -353,13 +353,7 @@ export const EventCard = ({
               ) : !isSignedUpCard ? (
                 <DarbeButton
                   buttonText={
-                    isMatchVariant
-                      ? hasVolunteered
-                        ? "Checked In"
-                        : "Check In"
-                      : hasVolunteered
-                      ? "Volunteered"
-                      : "Volunteer"
+                    hasVolunteered ? "Volunteered" : "Volunteer"
                   }
                   onClick={handleVolunteerEvent}
                   darbeButtonType="nextButton"

@@ -113,11 +113,12 @@ export const Matches = () => {
       <div className={styles.matchesContent}>
         <h1 className={styles.matchesSectionTitle}>{defaultMatchFilter}</h1>
         {userType === "individual" ? (
-          <EventMatches />
+          <EventMatches hideLoadingSpinner />
         ) : (
           <VolunteerMatches
             matchFilter="Volunteer Matches"
             recentFilter="Most Recent"
+            hideLoadingSpinner
           />
         )}
         {matchCount > 0 && (

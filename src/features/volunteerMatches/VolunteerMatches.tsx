@@ -8,6 +8,7 @@ import styles from "./styles/volunteerMathces.module.css";
 interface VolunteerMatchesProps {
   matchFilter: "Volunteer Matches" | "Cause Matches" | "Availability Matches";
   recentFilter: "Most Recent" | "Least Recent" | "A - Z";
+  hideLoadingSpinner?: boolean;
 }
 
 const getVolunteerName = (match: { fullName?: string; firstName?: string; lastName?: string }) =>
@@ -16,6 +17,7 @@ const getVolunteerName = (match: { fullName?: string; firstName?: string; lastNa
 export const VolunteerMatches = ({
   matchFilter,
   recentFilter,
+  hideLoadingSpinner = false,
 }: VolunteerMatchesProps) => {
   const { data, isLoading } = useGetVolunteerMatchesQuery();
   const filteredMatches = useMemo(() => {
@@ -52,7 +54,7 @@ export const VolunteerMatches = ({
 
   return (
     <div className={styles.volunteerMatchesList}>
-      {isLoading && <CircularProgress />}
+      {isLoading && !hideLoadingSpinner && <CircularProgress />}
       {!isLoading && filteredMatches.length === 0 && (
         <p>No volunteer matches found.</p>
       )}
