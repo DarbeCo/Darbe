@@ -1,20 +1,59 @@
-@media (min-width: 250px) and (max-width: 560px) {
-  .notificationPageDisplay {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    padding-bottom: 80px;
-  }
+.notificationPageDisplay {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding-bottom: 80px;
+  box-sizing: border-box;
 }
 
-@media (min-width: 560px) {
+.notificationPanel {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 750px);
+  min-height: 240px;
+  border: 1px solid #d8d8d8;
+  border-radius: 4px;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.notificationPanel h1 {
+  margin: 0;
+  padding: 12px 8px 6px;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 25px;
+}
+
+.notificationList {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.notificationStatus {
+  margin: 0;
+  padding: 24px 8px;
+  color: #717070;
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+@media (max-width: 560px) {
   .notificationPageDisplay {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    border-radius: 8px;
-    padding-bottom: 80px;
+    padding: 0 8px 80px;
+  }
+
+  .notificationPanel {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .notificationPanel h1 {
+    padding-inline: 0;
   }
 }
