@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import debounce from "lodash.debounce";
 import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { SerializedError } from "@reduxjs/toolkit";
 
@@ -12,6 +11,9 @@ interface DebouncedSearchResult {
   isLoading: boolean;
 }
 
+const SEARCH_DEBOUNCE_MS = 900;
+const MIN_SEARCH_CHARACTERS = 3;
+
 const useDebouncedSearch = (
   input: string,
   searchFilter?: string
@@ -19,24 +21,27 @@ const useDebouncedSearch = (
   const [debouncedInput, setDebouncedInput] = useState<string>("");
 
   useEffect(() => {
-    const debouncedSetInput = debounce((value: string) => {
-      setDebouncedInput(value);
-    }, 900);
+    const trimmedInput = input.trim();
 
-    if (input.length > 3) {
-      debouncedSetInput(input);
+    if (trimmedInput.length < MIN_SEARCH_CHARACTERS) {
+      setDebouncedInput("");
+      return;
     }
 
-    return () => {
-      debouncedSetInput.cancel();
-    };
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedInput(trimmedInput);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timeoutId);
   }, [input]);
 
   const populatedInput = searchFilter
     ? `${searchFilter}?${searchFilter}=${debouncedInput}`
     : debouncedInput;
 
-  const { data, error, isLoading } = useGetSearchResultsQuery(populatedInput);
+  const { data, error, isLoading } = useGetSearchResultsQuery(populatedInput, {
+    skip: debouncedInput.length < MIN_SEARCH_CHARACTERS,
+  });
 
   return {
     data,

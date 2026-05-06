@@ -46,6 +46,8 @@ export { getUserFeed, submitPostLike } from "./feed";
 export {
   createEvent,
   deleteEvent,
+  checkInForEvent,
+  checkOutFromEvent,
   getEventDetails,
   getEvents,
   getSignedUpEvents,

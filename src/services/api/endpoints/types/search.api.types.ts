@@ -7,6 +7,7 @@ export interface SearchResultState {
   organizationName?: string;
   rosterName?: string;
   fullName?: string;
+  userType?: string;
   city?: string;
   zip?: string;
 }

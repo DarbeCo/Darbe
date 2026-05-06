@@ -849,6 +849,8 @@ export interface Database {
           user_id: string;
           status: string;
           event_action_timestamp: string;
+          check_in_at: string | null;
+          check_out_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -857,6 +859,8 @@ export interface Database {
           user_id: string;
           status?: string;
           event_action_timestamp?: string;
+          check_in_at?: string | null;
+          check_out_at?: string | null;
           created_at?: string;
         };
         Update: {
@@ -865,6 +869,8 @@ export interface Database {
           user_id?: string;
           status?: string;
           event_action_timestamp?: string;
+          check_in_at?: string | null;
+          check_out_at?: string | null;
           created_at?: string;
         };
         Relationships: [];

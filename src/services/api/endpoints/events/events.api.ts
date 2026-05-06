@@ -14,6 +14,8 @@ import {
   getEvents,
   getSignedUpEvents,
   getVolunteerMatches,
+  checkInForEvent,
+  checkOutFromEvent,
   passOnEvent,
   unvolunteerFromEvent,
   volunteerForEvent,
@@ -118,6 +120,38 @@ const eventsApi = darbeBaseApi.injectEndpoints({
       },
       invalidatesTags: ["Events"],
     }),
+    checkInForEvent: builder.mutation<void, string>({
+      async queryFn(eventId) {
+        try {
+          await checkInForEvent(eventId);
+          return { data: undefined };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      invalidatesTags: ["Events"],
+    }),
+    checkOutFromEvent: builder.mutation<void, string>({
+      async queryFn(eventId) {
+        try {
+          await checkOutFromEvent(eventId);
+          return { data: undefined };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      invalidatesTags: ["Events"],
+    }),
     unvolunteerFromEvent: builder.mutation<void, string>({
       async queryFn(eventId) {
         try {
@@ -182,6 +216,8 @@ export const {
   useDeleteEventMutation,
   useVolunteerForEventMutation,
   usePassOnEventMutation,
+  useCheckInForEventMutation,
+  useCheckOutFromEventMutation,
   useUnvolunteerFromEventMutation,
   useGetSignedUpEventsQuery,
   useGetVolunteerMatchesQuery,

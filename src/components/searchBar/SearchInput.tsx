@@ -53,8 +53,9 @@ export const SearchInput = ({
         }
         className={styles.searchInputBar}
         placeholder={placeholder}
+        value={searchInput}
       />
-      {searchInput && (
+      {searchInput.trim().length >= 3 && (
         <SearchResults
           data={data}
           error={error}

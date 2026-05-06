@@ -114,6 +114,8 @@ const buildSignupPlaceholders = (count: number, eventId: string) =>
     eventId,
     status: "volunteered" as const,
     eventActionTimeStamp: new Date(0).toISOString(),
+    checkInAt: undefined,
+    checkOutAt: undefined,
   }));
 
 const getJobTitleMap = async (userIds: string[]) => {
@@ -200,7 +202,7 @@ const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> 
       .in("event_id", eventIds),
     supabase
       .from("event_signups")
-      .select("id, event_id, user_id, status, event_action_timestamp")
+      .select("id, event_id, user_id, status, event_action_timestamp, check_in_at, check_out_at")
       .in("event_id", eventIds)
       .neq("status", "passed"),
     getProfilesByIds(ownerIds),
@@ -240,6 +242,8 @@ const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> 
       eventId: string;
       status: "volunteered" | "confirmed" | "passed";
       eventActionTimeStamp: string;
+      checkInAt?: string;
+      checkOutAt?: string;
     }[]
   >();
 
@@ -257,6 +261,8 @@ const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> 
       eventId: signup.event_id,
       status: signup.status as "volunteered" | "confirmed" | "passed",
       eventActionTimeStamp: signup.event_action_timestamp,
+      checkInAt: signup.check_in_at ?? undefined,
+      checkOutAt: signup.check_out_at ?? undefined,
     });
     signupsByEvent.set(signup.event_id, eventSignups);
   });
@@ -635,6 +641,69 @@ export const passOnEvent = async (eventId: string): Promise<void> => {
   await incrementImpact(userId, { events_passed: 1 });
 };
 
+export const checkInForEvent = async (eventId: string): Promise<void> => {
+  const userId = await ensureUserId();
+  const checkedInAt = new Date().toISOString();
+
+  const { data: existingSignup, error: existingError } = await supabase
+    .from("event_signups")
+    .select("id, status, check_in_at")
+    .eq("event_id", eventId)
+    .eq("user_id", userId)
+    .in("status", ["volunteered", "confirmed"])
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+
+  if (!existingSignup) {
+    throw new Error("You must volunteer for this event before checking in");
+  }
+
+  if (existingSignup.check_in_at) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("event_signups")
+    .update({
+      status: "confirmed",
+      check_in_at: checkedInAt,
+      event_action_timestamp: checkedInAt,
+    })
+    .eq("id", existingSignup.id);
+
+  if (error) throw error;
+};
+
+export const checkOutFromEvent = async (eventId: string): Promise<void> => {
+  const userId = await ensureUserId();
+  const checkedOutAt = new Date().toISOString();
+
+  const { data: existingSignup, error: existingError } = await supabase
+    .from("event_signups")
+    .select("id, check_in_at, check_out_at")
+    .eq("event_id", eventId)
+    .eq("user_id", userId)
+    .eq("status", "confirmed")
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+
+  if (!existingSignup?.check_in_at || existingSignup.check_out_at) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("event_signups")
+    .update({
+      check_out_at: checkedOutAt,
+      event_action_timestamp: checkedOutAt,
+    })
+    .eq("id", existingSignup.id);
+
+  if (error) throw error;
+};
+
 export const unvolunteerFromEvent = async (eventId: string): Promise<void> => {
   const userId = await ensureUserId();
 
@@ -679,7 +748,7 @@ export const getSignedUpEvents = async (
   const userId = await ensureUserId();
   const { data: signups, error } = await supabase
     .from("event_signups")
-    .select("event_id, status, event_action_timestamp")
+    .select("event_id, status, event_action_timestamp, check_in_at, check_out_at")
     .eq("user_id", userId)
     .in("status", ["volunteered", "confirmed"]);
 
@@ -729,6 +798,8 @@ export const getSignedUpEvents = async (
       event_id: string;
       status: string;
       event_action_timestamp: string;
+      check_in_at: string | null;
+      check_out_at: string | null;
     }
   >();
 
@@ -753,6 +824,8 @@ export const getSignedUpEvents = async (
     signedUpUser,
     eventActionTimeStamp: signup.event_action_timestamp,
     status: signup.status as "volunteered" | "confirmed" | "passed",
+    checkInAt: signup.check_in_at ?? undefined,
+    checkOutAt: signup.check_out_at ?? undefined,
     signupCount: signupCountMap.get(signup.event_id) ?? 0,
   }));
 };

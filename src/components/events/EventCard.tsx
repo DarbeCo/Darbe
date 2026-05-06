@@ -23,6 +23,8 @@ import { assetUrl } from "../../utils/assetUrl";
 import styles from "./styles/eventCards.module.css";
 import {
   usePassOnEventMutation,
+  useCheckInForEventMutation,
+  useCheckOutFromEventMutation,
   useUnvolunteerFromEventMutation,
   useVolunteerForEventMutation,
 } from "../../services/api/endpoints/events/events.api";
@@ -62,6 +64,10 @@ export const EventCard = ({
   const currentUserId = useAppSelector(selectCurrentUserId);
   const currentUserType = useAppSelector(selectUserType);
   const [passOnEvent, { isLoading: isPassing }] = usePassOnEventMutation();
+  const [checkInForEvent, { isLoading: isCheckingIn }] =
+    useCheckInForEventMutation();
+  const [checkOutFromEvent, { isLoading: isCheckingOut }] =
+    useCheckOutFromEventMutation();
   const [unvolunteerFromEvent, { isLoading: isUnvolunteering }] =
     useUnvolunteerFromEventMutation();
   const [volunteerForEvent, { isLoading: isVolunteering }] =
@@ -122,6 +128,22 @@ export const EventCard = ({
     }
   };
 
+  const handleCheckInEvent = async () => {
+    try {
+      await checkInForEvent(event.id).unwrap();
+    } catch (error) {
+      console.error("Error checking into event", error);
+    }
+  };
+
+  const handleCheckOutEvent = async () => {
+    try {
+      await checkOutFromEvent(event.id).unwrap();
+    } catch (error) {
+      console.error("Error checking out of event", error);
+    }
+  };
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(eventShareUrl);
   };
@@ -171,10 +193,11 @@ export const EventCard = ({
   const isEventPoster = currentUserId === event.eventOwner.id;
   const isPastEvent = eventDateTime < todayTime;
   const isVolunteerLocked = hasVolunteered || isVolunteering;
+  const isCheckInLocked = isCheckingIn || isCheckingOut;
   const isSignedUpCard = Boolean(isSignedUp);
   const canSelectVolunteers = currentUserType === "nonprofit";
   const checkedInVolunteerCount =
-    event.signups?.filter((signup) => signup.status === "confirmed").length ?? 0;
+    event.signups?.filter((signup) => signup.checkInAt).length ?? 0;
 
   // TODO: Move out to a hook/util?
   const calculateEventImpact = () => {
@@ -392,7 +415,14 @@ export const EventCard = ({
               signup.user.fullName ||
               `${signup.user.firstName ?? ""} ${signup.user.lastName ?? ""}`.trim();
             const isCurrentVolunteer = signup.user.id === currentUserId;
-            const isCheckedIn = signup.status === "confirmed";
+            const isCheckedIn = Boolean(signup.checkInAt);
+            const isCheckedOut = Boolean(signup.checkOutAt);
+            const checkStatusText = isCheckedOut
+              ? "Checked Out"
+              : isCheckedIn
+              ? "Checked In"
+              : "Not Checked In";
+            const checkButtonText = isCheckedIn ? "Check Out" : "Check In";
 
             return (
               <div className={styles.eventVolunteerRow} key={signup.id}>
@@ -424,15 +454,15 @@ export const EventCard = ({
                 </div>
                 {(isCurrentVolunteer || isPastEvent) && (
                   <div className={styles.eventVolunteerCheckIn}>
-                    <strong>{isCheckedIn ? "Checked In" : "Not Checked In"}</strong>
-                    {isCurrentVolunteer && !isPastEvent && !isCheckedIn && (
+                    <strong>{checkStatusText}</strong>
+                    {isCurrentVolunteer && !isPastEvent && !isCheckedOut && (
                       <button
                         type="button"
                         className={styles.eventVolunteerCheckInButton}
-                        onClick={handleVolunteerEvent}
-                        disabled={isVolunteerLocked}
+                        onClick={isCheckedIn ? handleCheckOutEvent : handleCheckInEvent}
+                        disabled={isCheckInLocked}
                       >
-                        Check In
+                        {checkButtonText}
                       </button>
                     )}
                   </div>

@@ -10,6 +10,7 @@ const mapProfileToSearchResult = (profile: any): SearchResultState => ({
   profilePicture: profile.profile_picture_url ?? undefined,
   nonprofitName: profile.nonprofit_name ?? undefined,
   organizationName: profile.organization_name ?? undefined,
+  userType: profile.user_type ?? undefined,
   city: profile.city ?? undefined,
   zip: profile.zip ?? undefined,
 });
@@ -31,10 +32,11 @@ const searchProfiles = async (term: string, ids?: string[]) => {
   let query = supabase
     .from("profiles")
     .select(
-      "id, first_name, last_name, full_name, profile_picture_url, nonprofit_name, organization_name, city, zip"
+      "id, first_name, last_name, full_name, profile_picture_url, nonprofit_name, organization_name, user_type, city, zip"
     )
+    .in("user_type", ["individual", "nonprofit"])
     .or(
-      `first_name.ilike.%${term}%,last_name.ilike.%${term}%,full_name.ilike.%${term}%,organization_name.ilike.%${term}%,nonprofit_name.ilike.%${term}%`
+      `first_name.ilike.%${term}%,last_name.ilike.%${term}%,full_name.ilike.%${term}%,nonprofit_name.ilike.%${term}%`
     );
 
   if (ids && ids.length) {
