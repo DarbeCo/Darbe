@@ -13,6 +13,7 @@ const GLOBAL_LOADING_OVERLAY_ATTR = "data-global-loading-overlay";
 
 type QuerySubState = {
   status?: string;
+  data?: unknown;
 };
 
 type ApiSubState = {
@@ -36,7 +37,7 @@ export const GlobalLoadingOverlay = () => {
 
   const hasPendingRequest = useMemo(() => {
     const pendingQueries = Object.values(apiState?.queries ?? {}).some(
-      (query) => query?.status === "pending"
+      (query) => query?.status === "pending" && query.data === undefined
     );
     const pendingMutations = Object.values(apiState?.mutations ?? {}).some(
       (mutation) => mutation?.status === "pending"
