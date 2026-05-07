@@ -11,6 +11,11 @@ import type { SimpleUserInfo } from "../api/endpoints/types/user.api.types";
 import { supabase } from "../supabase/client";
 import { ensureUserId } from "./utils";
 import { getProfilesByIds, mapProfileToSimpleUserInfo } from "./profiles";
+import {
+  getEventTimeParts,
+  parseEventDateAsLocalDate,
+  parseEventDateTimeAsLocalDate,
+} from "../../utils/eventDateUtils";
 
 type EventRow = {
   id: string;
@@ -73,23 +78,44 @@ const fallbackSimpleUser = (id: string): SimpleUserInfo => ({
 const toSimpleUser = (profile: any, id: string): SimpleUserInfo =>
   profile ? mapProfileToSimpleUserInfo(profile) : fallbackSimpleUser(id);
 
+const mapSignupVolunteerToSimpleUser = (volunteer: {
+  user_id: string;
+  full_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  profile_picture_url: string | null;
+  nonprofit_name: string | null;
+  organization_name: string | null;
+  user_type: string | null;
+}): SimpleUserInfo => ({
+  id: volunteer.user_id,
+  fullName: volunteer.full_name ?? "",
+  firstName: volunteer.first_name ?? "",
+  lastName: volunteer.last_name ?? "",
+  profilePicture: volunteer.profile_picture_url ?? undefined,
+  nonprofitName: volunteer.nonprofit_name ?? undefined,
+  organizationName: volunteer.organization_name ?? undefined,
+  userType: volunteer.user_type ?? undefined,
+});
+
 const timeToDecimal = (time: string | null): number | undefined => {
   if (!time) return undefined;
   const [hourValue, minuteValue] = time.split(":");
   const hours = Number(hourValue);
   const minutes = Number(minuteValue);
   if (!Number.isFinite(hours)) return undefined;
-  const decimal = minutes >= 30 ? 0.5 : 0;
-  return hours + decimal;
+  if (!Number.isFinite(minutes)) return hours;
+  return Number(`${hours}.${minutes.toString().padStart(2, "0")}`);
 };
 
 const decimalToTimeString = (value: number | undefined): string | null => {
   if (value === undefined || value === null) return null;
   const numberValue = Number(value);
   if (!Number.isFinite(numberValue)) return null;
-  const hours = Math.floor(numberValue);
-  const minutes = numberValue % 1 === 0 ? "00" : "30";
-  return `${hours.toString().padStart(2, "0")}:${minutes}:00`;
+  const { hour, minute } = getEventTimeParts(numberValue);
+  return `${hour.toString().padStart(2, "0")}:${minute
+    .toString()
+    .padStart(2, "0")}:00`;
 };
 
 const toDatabaseDateString = (value: Date | string): string => {
@@ -106,17 +132,6 @@ const toDatabaseDateString = (value: Date | string): string => {
 
   return value.split("T")[0];
 };
-
-const buildSignupPlaceholders = (count: number, eventId: string) =>
-  Array.from({ length: count }, (_, index) => ({
-    id: `${eventId}-${index}`,
-    user: fallbackSimpleUser(""),
-    eventId,
-    status: "volunteered" as const,
-    eventActionTimeStamp: new Date(0).toISOString(),
-    checkInAt: undefined,
-    checkOutAt: undefined,
-  }));
 
 const getJobTitleMap = async (userIds: string[]) => {
   if (!userIds.length) return new Map<string, string>();
@@ -188,27 +203,23 @@ const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> 
     )
   );
 
-  const [addressesRes, impactsRes, signupRowsRes, owners, coordinators, signupCountMap] =
+  const [addressesRes, impactsRes, signupRowsRes, owners, coordinators] =
     await Promise.all([
-    supabase
-      .from("event_addresses")
-      .select("event_id, location_name, street_name, city, zip_code")
-      .in("event_id", eventIds),
-    supabase
-      .from("event_volunteer_impacts")
-      .select(
-        "event_id, individual_impact, individual_impact_per_hour, group_impact, group_impact_per_hour, is_individual_impact, is_group_impact"
-      )
-      .in("event_id", eventIds),
-    supabase
-      .from("event_signups")
-      .select("id, event_id, user_id, status, event_action_timestamp, check_in_at, check_out_at")
-      .in("event_id", eventIds)
-      .neq("status", "passed"),
-    getProfilesByIds(ownerIds),
-    getProfilesByIds(coordinatorIds),
-    getSignupCounts(eventIds),
-  ]);
+      supabase
+        .from("event_addresses")
+        .select("event_id, location_name, street_name, city, zip_code")
+        .in("event_id", eventIds),
+      supabase
+        .from("event_volunteer_impacts")
+        .select(
+          "event_id, individual_impact, individual_impact_per_hour, group_impact, group_impact_per_hour, is_individual_impact, is_group_impact"
+        )
+        .in("event_id", eventIds),
+      supabase
+        .rpc("get_event_signup_volunteers", { event_ids: eventIds }),
+      getProfilesByIds(ownerIds),
+      getProfilesByIds(coordinatorIds),
+    ]);
 
   if (addressesRes.error) throw addressesRes.error;
   if (impactsRes.error) throw impactsRes.error;
@@ -227,13 +238,7 @@ const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> 
   const signupUserIds = Array.from(
     new Set((signupRowsRes.data ?? []).map((signup) => signup.user_id))
   );
-  const [signupProfiles, signupJobTitleMap] = await Promise.all([
-    getProfilesByIds(signupUserIds),
-    getJobTitleMap(signupUserIds),
-  ]);
-  const signupProfileMap = new Map(
-    signupProfiles.map((profile) => [profile.id, profile])
-  );
+  const signupJobTitleMap = await getJobTitleMap(signupUserIds);
   const signupsByEvent = new Map<
     string,
     {
@@ -248,10 +253,7 @@ const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> 
   >();
 
   (signupRowsRes.data ?? []).forEach((signup) => {
-    const signupUser = toSimpleUser(
-      signupProfileMap.get(signup.user_id),
-      signup.user_id
-    );
+    const signupUser = mapSignupVolunteerToSimpleUser(signup);
     signupUser.jobTitle = signupJobTitleMap.get(signup.user_id);
 
     const eventSignups = signupsByEvent.get(signup.event_id) ?? [];
@@ -268,8 +270,8 @@ const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> 
   });
 
   return events.map((event) => {
-    const signupCount = signupCountMap.get(event.id) ?? 0;
     const coordinatorId = event.event_coordinator_id;
+    const eventSignups = signupsByEvent.get(event.id) ?? [];
 
     return {
       id: event.id,
@@ -286,8 +288,7 @@ const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> 
       eventDescription: event.event_description ?? "",
       volunteerImpact: mapImpactRow(impactMap.get(event.id)),
       eventAddress: mapAddressRow(addressMap.get(event.id)),
-      signups:
-        signupsByEvent.get(event.id) ?? buildSignupPlaceholders(signupCount, event.id),
+      signups: eventSignups,
     };
   });
 };
@@ -410,7 +411,7 @@ export const getEvents = async (): Promise<ShortEventState[]> => {
 
     const blockedEventIds = new Set(
       (signups ?? [])
-        .filter((row) => row.status === "volunteered" || row.status === "passed")
+        .filter((row) => row.status === "volunteered" || row.status === "confirmed")
         .map((row) => row.event_id)
     );
 
@@ -498,7 +499,7 @@ export const getEventDetails = async (eventId: string): Promise<EventsState> => 
     volunteerImpact: mapImpactRow(impactsRes.data ?? undefined),
     adultWaiver: event.adult_waiver_url ?? "",
     minorWaiver: event.minor_waiver_url ?? "",
-    signups: buildSignupPlaceholders(signupCount, eventId),
+    signups: [],
   };
 };
 
@@ -620,14 +621,38 @@ export const volunteerForEvent = async (eventId: string): Promise<void> => {
 export const passOnEvent = async (eventId: string): Promise<void> => {
   const userId = await ensureUserId();
 
-  const { data: existing } = await supabase
+  const { data: existingSignups, error: existingError } = await supabase
     .from("event_signups")
-    .select("id")
-    .match({ event_id: eventId, user_id: userId })
-    .maybeSingle();
+    .select("id, status")
+    .match({ event_id: eventId, user_id: userId });
 
-  if (existing) {
-    throw new Error("You have already passed this event");
+  if (existingError) throw existingError;
+
+  const activeSignups = (existingSignups ?? []).filter(
+    (signup) => signup.status !== "passed"
+  );
+
+  if ((existingSignups ?? []).length > 0) {
+    if (!activeSignups.length) {
+      throw new Error("You have already passed this event");
+    }
+
+    const passedAt = new Date().toISOString();
+    const activeSignupIds = activeSignups.map((signup) => signup.id);
+    const { error } = await supabase
+      .from("event_signups")
+      .update({
+        status: "passed",
+        check_in_at: null,
+        check_out_at: null,
+        event_action_timestamp: passedAt,
+      })
+      .in("id", activeSignupIds);
+
+    if (error) throw error;
+
+    await incrementImpact(userId, { events_passed: 1 });
+    return;
   }
 
   const { error } = await supabase.from("event_signups").insert({
@@ -778,10 +803,17 @@ export const getSignedUpEvents = async (
     );
 
     filteredEvents = filteredEvents.filter((event) => {
-      const eventDate = new Date(event.event_date);
+      const eventDate = parseEventDateAsLocalDate(event.event_date);
+      const eventEndTime = timeToDecimal(event.end_time);
+      const hasEventEnded =
+        eventEndTime !== undefined
+          ? new Date() >
+            parseEventDateTimeAsLocalDate(event.event_date, eventEndTime)
+          : eventDate < startOfToday;
+
       return when === "past"
-        ? eventDate < startOfToday
-        : eventDate >= startOfToday;
+        ? hasEventEnded
+        : !hasEventEnded;
     });
   }
 
@@ -813,7 +845,7 @@ export const getSignedUpEvents = async (
     if (
       !existingSignup ||
       new Date(signup.event_action_timestamp).getTime() >
-        new Date(existingSignup.event_action_timestamp).getTime()
+      new Date(existingSignup.event_action_timestamp).getTime()
     ) {
       latestSignupByEvent.set(signup.event_id, signup);
     }

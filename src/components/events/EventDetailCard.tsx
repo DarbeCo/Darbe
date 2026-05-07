@@ -24,6 +24,7 @@ import {
   PROFILE_ROUTE,
 } from "../../routes/route.constants";
 import { assetUrl } from "../../utils/assetUrl";
+import { parseEventDateAsLocalDate } from "../../utils/eventDateUtils";
 import {
   MODAL_TYPE,
   setExternalData,
@@ -141,7 +142,7 @@ export const EventDetailCard = ({
       ? `${eventEndtimeToUse - eventStartTimeToUse} Hours`
       : "? Hours";
   const compactDate = eventDateToUse
-    ? new Date(eventDateToUse.toString()).toLocaleDateString("en-US", {
+    ? parseEventDateAsLocalDate(eventDateToUse).toLocaleDateString("en-US", {
         weekday: "short",
         month: "short",
         day: "numeric",
@@ -230,7 +231,7 @@ export const EventDetailCard = ({
     location.state as { returnToEventsTab?: string } | null
   )?.returnToEventsTab;
   const eventDateTime = eventDateToUse
-    ? new Date(eventDateToUse.toString()).getTime()
+    ? parseEventDateAsLocalDate(eventDateToUse).getTime()
     : undefined;
   const isMoreThanTwentyFourHoursPast =
     eventDateTime !== undefined &&

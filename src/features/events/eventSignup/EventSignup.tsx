@@ -17,6 +17,10 @@ import {
   getIncompletePostNeedEventsForUser,
   incompletePostNeedEventToShortEvent,
 } from "../../postNeed/incompleteEvents";
+import {
+  parseEventDateAsLocalDate,
+  parseEventDateTimeAsLocalDate,
+} from "../../../utils/eventDateUtils";
 
 import styles from "../styles/entityEvents.module.css";
 
@@ -27,7 +31,7 @@ type EventsTab = (typeof adminTabs)[number];
 const COLLAPSED_SUMMARY_COUNT = 3;
 
 const formatSummaryDate = (eventDate: string) =>
-  new Date(eventDate).toLocaleDateString("en-US", {
+  parseEventDateAsLocalDate(eventDate).toLocaleDateString("en-US", {
     month: "2-digit",
     day: "2-digit",
   });
@@ -56,19 +60,24 @@ const getEventDateOnlyTime = (eventDate: string) => {
   return getDateOnlyTime(new Date(eventDate));
 };
 
-const isPastEvent = (eventDate: string) => {
+const isPastEvent = (
+  event: Pick<ShortEventState, "eventDate" | "endTime">
+) => {
   const todayTime = getDateOnlyTime(new Date());
-  const eventDateTime = getEventDateOnlyTime(eventDate);
+  const eventDateTime = getEventDateOnlyTime(event.eventDate);
+
+  if (event.endTime !== undefined) {
+    return (
+      new Date() > parseEventDateTimeAsLocalDate(event.eventDate, event.endTime)
+    );
+  }
 
   return eventDateTime < todayTime;
 };
 
-const isCurrentEvent = (eventDate: string) => {
-  const todayTime = getDateOnlyTime(new Date());
-  const eventDateTime = getEventDateOnlyTime(eventDate);
-
-  return eventDateTime >= todayTime;
-};
+const isCurrentEvent = (
+  event: Pick<ShortEventState, "eventDate" | "endTime">
+) => !isPastEvent(event);
 
 const isIncompleteEvent = (event: ShortEventState) => {
   const maybeEvent = event as ShortEventState & {
@@ -113,6 +122,7 @@ export const EventSignup = () => {
   const [incompleteDraftEvents, setIncompleteDraftEvents] = useState<
     ShortEventState[]
   >([]);
+  const [hiddenEventIds, setHiddenEventIds] = useState<string[]>([]);
   const eventCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const { data: events, isLoading } = useGetEventsQuery();
   const { data: signedUpEvents, isLoading: isLoadingSignedUpEvents } =
@@ -141,6 +151,7 @@ export const EventSignup = () => {
 
   const volunteerEvents = useMemo<VolunteerEventDisplay[]>(() => {
     const eventsToDisplay = [...(events ?? [])];
+    const hiddenEventIdSet = new Set(hiddenEventIds);
     const adminManagedEvents = eventsToDisplay.filter(
       (event) =>
         event.eventOwner.id === currentUserId ||
@@ -151,7 +162,10 @@ export const EventSignup = () => {
     if (activeTab === "Past") {
       if (!isPostNeedAdmin) {
         return [...(pastSignedUpEvents ?? [])]
-          .filter(({ event }) => isPastEvent(event.eventDate))
+          .filter(
+            ({ event }) =>
+              isPastEvent(event) && !hiddenEventIdSet.has(event.id)
+          )
           .sort(
             (first, second) =>
               getEventDateOnlyTime(second.event.eventDate) -
@@ -165,7 +179,7 @@ export const EventSignup = () => {
       }
 
       return sourceEvents
-        .filter((event) => isPastEvent(event.eventDate))
+        .filter((event) => isPastEvent(event))
         .sort(
           (first, second) =>
             getEventDateOnlyTime(second.eventDate) -
@@ -177,7 +191,9 @@ export const EventSignup = () => {
     if (activeTab === "Current") {
       if (isPostNeedAdmin) {
         return sourceEvents
-          .filter((event) => isCurrentEvent(event.eventDate))
+          .filter(
+            (event) => isCurrentEvent(event) && !hiddenEventIdSet.has(event.id)
+          )
           .sort(
             (first, second) =>
               getEventDateOnlyTime(first.eventDate) -
@@ -189,7 +205,9 @@ export const EventSignup = () => {
       return [...(signedUpEvents ?? [])]
         .filter(
           ({ event, status }) =>
-            status !== "passed" && isCurrentEvent(event.eventDate)
+            status !== "passed" &&
+            isCurrentEvent(event) &&
+            !hiddenEventIdSet.has(event.id)
         )
         .sort(
           (first, second) =>
@@ -229,6 +247,7 @@ export const EventSignup = () => {
     activeTab,
     currentUserId,
     events,
+    hiddenEventIds,
     incompleteDraftEvents,
     isPostNeedAdmin,
     pastSignedUpEvents,
@@ -254,6 +273,14 @@ export const EventSignup = () => {
     navigate(CREATE_EVENT_ROUTE, {
       state: { incompleteEventId: eventId },
     });
+  };
+
+  const handlePassEventSuccess = (eventId: string) => {
+    setHiddenEventIds((currentHiddenEventIds) =>
+      currentHiddenEventIds.includes(eventId)
+        ? currentHiddenEventIds
+        : [...currentHiddenEventIds, eventId]
+    );
   };
 
   return (
@@ -378,6 +405,10 @@ export const EventSignup = () => {
                       hideDetailsAction={activeTab === "Incomplete"}
                       returnToEventsTab={activeTab}
                       canExpandVolunteers
+                      useCurrentEventTimingActions={
+                        userType === "individual" && activeTab === "Current"
+                      }
+                      onPassSuccess={handlePassEventSuccess}
                       incompleteActionLabel={
                         activeTab === "Incomplete" ? "Complete Event Creation" : undefined
                       }

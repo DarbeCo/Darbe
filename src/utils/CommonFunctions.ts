@@ -6,6 +6,7 @@ import {
 } from "./CommonConstants";
 import { DefaultTime, MonthAtTime, NTimeAgo } from "./CommonDateFormats";
 import { TimeVariants } from "./CommonTypes";
+import { getEventTimeParts } from "./eventDateUtils";
 
 export const turnNumberIntoString = (num: number) => {
   switch (num) {
@@ -156,12 +157,12 @@ export const formatDarbeTimeToString = (time: number | undefined) => {
     throw new Error("Invalid input: time must not be a string");
   }
 
-  const hour = Math.floor(time);
-  const minute = time % 1 === 0 ? "00" : "30";
+  const { hour, minute } = getEventTimeParts(time);
+  const paddedMinute = minute.toString().padStart(2, "0");
   const period = hour < 12 ? "AM" : "PM";
   const displayHour = hour % 12 === 0 ? 12 : hour % 12;
 
-  return `${displayHour}:${minute} ${period}`;
+  return `${displayHour}:${paddedMinute} ${period}`;
 };
 
 export const isValidArray = (arr: any[] | undefined) => {

@@ -1,9 +1,11 @@
 import { CircularProgress } from "@mui/material";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useGetEventsQuery } from "../../../services/api/endpoints/events/events.api";
 import { EventCard } from "../../../components/events/EventCard";
 import { ShortEventState } from "../../../services/api/endpoints/types/events.api.types";
+import { useAppSelector } from "../../../services/hooks";
+import { selectCurrentUserId } from "../../users/selectors";
 
 import styles from "../styles/entityEvents.module.css";
 
@@ -41,13 +43,38 @@ export const EventMatches = ({
   recentFilter = "Most Recent",
   hideLoadingSpinner = false,
 }: EventMatchesProps) => {
+  const currentUserId = useAppSelector(selectCurrentUserId);
   const { data, isLoading } = useGetEventsQuery();
+  const [dismissedEventIds, setDismissedEventIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    setDismissedEventIds([]);
+  }, [currentUserId]);
+
+  const handleDismissMatch = (eventId: string) => {
+    setDismissedEventIds((currentDismissedEventIds) =>
+      currentDismissedEventIds.includes(eventId)
+        ? currentDismissedEventIds
+        : [...currentDismissedEventIds, eventId]
+    );
+  };
+
   const filteredEvents = useMemo(() => {
     if (!data || matchFilter !== "Event Matches") {
       return [];
     }
 
-    const sortedEvents = getUpcomingEventMatches(data);
+    const dismissedEventIdSet = new Set(dismissedEventIds);
+    const sortedEvents = getUpcomingEventMatches(data).filter((event) => {
+      const currentUserSignup = event.signups?.find(
+        (signup) => signup.user.id === currentUserId
+      );
+
+      return (
+        !dismissedEventIdSet.has(event.id) &&
+        !currentUserSignup
+      );
+    });
 
     if (recentFilter === "Most Recent") {
       sortedEvents.sort(
@@ -72,7 +99,7 @@ export const EventMatches = ({
     }
 
     return sortedEvents;
-  }, [data, matchFilter, recentFilter]);
+  }, [currentUserId, data, dismissedEventIds, matchFilter, recentFilter]);
 
   return (
     <div className={styles.darbeEventCards}>
@@ -82,7 +109,14 @@ export const EventMatches = ({
       )}
       {!isLoading &&
         filteredEvents.map((event: ShortEventState) => (
-          <EventCard key={event.id} event={event} variant="match" />
+          <EventCard
+            key={event.id}
+            event={event}
+            variant="match"
+            showVolunteerAndPassActions
+            onVolunteerSuccess={handleDismissMatch}
+            onPassSuccess={handleDismissMatch}
+          />
         ))}
     </div>
   );

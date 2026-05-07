@@ -19,6 +19,10 @@ import {
   selectUserType,
 } from "../../features/users/selectors";
 import { assetUrl } from "../../utils/assetUrl";
+import {
+  parseEventDateAsLocalDate,
+  parseEventDateTimeAsLocalDate,
+} from "../../utils/eventDateUtils";
 
 import styles from "./styles/eventCards.module.css";
 import {
@@ -43,6 +47,10 @@ interface EventCardProps {
   variant?: "default" | "match";
   incompleteActionLabel?: string;
   onIncompleteAction?: (eventId: string) => void;
+  useCurrentEventTimingActions?: boolean;
+  showVolunteerAndPassActions?: boolean;
+  onVolunteerSuccess?: (eventId: string) => void;
+  onPassSuccess?: (eventId: string) => void;
 }
 
 export const EventCard = ({
@@ -59,6 +67,10 @@ export const EventCard = ({
   variant = "default",
   incompleteActionLabel,
   onIncompleteAction,
+  useCurrentEventTimingActions = false,
+  showVolunteerAndPassActions = false,
+  onVolunteerSuccess,
+  onPassSuccess,
 }: EventCardProps) => {
   const navigate = useNavigate();
   const currentUserId = useAppSelector(selectCurrentUserId);
@@ -90,6 +102,7 @@ export const EventCard = ({
     try {
       await passOnEvent(event.id).unwrap();
       setShowPassConfirmDialog(false);
+      onPassSuccess?.(event.id);
       setShowPassRejectedDialog(true);
       setTimeout(() => setShowPassRejectedDialog(false), 1400);
     } catch (error) {
@@ -103,6 +116,7 @@ export const EventCard = ({
     try {
       await volunteerForEvent(eventId).unwrap();
       setHasVolunteered(true);
+      onVolunteerSuccess?.(eventId);
       setShowVolunteerDialog(true);
       setTimeout(() => setShowVolunteerDialog(false), 1400);
     } catch (error) {
@@ -112,6 +126,7 @@ export const EventCard = ({
 
       if (errorMessage.includes("already volunteered")) {
         setHasVolunteered(true);
+        onVolunteerSuccess?.(eventId);
       } else {
         console.error("Error volunteering for event", error);
       }
@@ -159,12 +174,27 @@ export const EventCard = ({
     ? `${event.endTime - event.startTime} Hours`
     : "? Hours";
 
-  const formattedDate = new Date(event.eventDate).toLocaleDateString("en-US", {
+  const eventDate = parseEventDateAsLocalDate(event.eventDate);
+  const formattedDate = eventDate.toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
     year: "numeric",
   });
-  const eventDate = new Date(event.eventDate);
+  const eventStartDateTime = parseEventDateTimeAsLocalDate(
+    event.eventDate,
+    event.startTime
+  );
+  const eventEndDateTime =
+    event.endTime !== undefined
+      ? parseEventDateTimeAsLocalDate(event.eventDate, event.endTime)
+      : undefined;
+  const now = new Date();
+  const isBeforeEventStart = now < eventStartDateTime;
+  const isWithinEventTime =
+    now >= eventStartDateTime &&
+    (eventEndDateTime === undefined || now <= eventEndDateTime);
+  const hasEventEnded =
+    eventEndDateTime !== undefined ? now > eventEndDateTime : undefined;
   const compactDate = eventDate.toLocaleDateString("en-US", {
     weekday: "short",
     month: "short",
@@ -191,13 +221,52 @@ export const EventCard = ({
     variant === "match" ? "Volunteers" : "Signed Up"
   }`;
   const isEventPoster = currentUserId === event.eventOwner.id;
-  const isPastEvent = eventDateTime < todayTime;
+  const isPastEvent =
+    hasEventEnded !== undefined ? hasEventEnded : eventDateTime < todayTime;
   const isVolunteerLocked = hasVolunteered || isVolunteering;
   const isCheckInLocked = isCheckingIn || isCheckingOut;
   const isSignedUpCard = Boolean(isSignedUp);
   const canSelectVolunteers = currentUserType === "nonprofit";
   const checkedInVolunteerCount =
     event.signups?.filter((signup) => signup.checkInAt).length ?? 0;
+  const currentUserSignup = event.signups?.find(
+    (signup) => signup.user.id === currentUserId
+  );
+  const coordinatorVolunteerSignup = event.eventCoordinator?.id
+    ? event.signups?.find((signup) => signup.user.id === event.eventCoordinator?.id)
+    : undefined;
+  const coordinatorVolunteerRow =
+    event.eventCoordinator && event.eventCoordinator.id
+      ? [
+          {
+            id: `coordinator-${event.eventCoordinator.id}`,
+            user: event.eventCoordinator,
+            eventId: event.id,
+            status:
+              coordinatorVolunteerSignup?.status ?? ("volunteered" as const),
+            eventActionTimeStamp:
+              coordinatorVolunteerSignup?.eventActionTimeStamp ??
+              new Date(0).toISOString(),
+            checkInAt: coordinatorVolunteerSignup?.checkInAt,
+            checkOutAt: coordinatorVolunteerSignup?.checkOutAt,
+            isCoordinator: true,
+          },
+        ]
+      : [];
+  const volunteerRows = [
+    ...coordinatorVolunteerRow,
+    ...(event.signups ?? [])
+      .filter((signup) => signup.user.id !== event.eventCoordinator?.id)
+      .map((signup) => ({ ...signup, isCoordinator: false })),
+  ];
+  const currentUserCheckedIn = Boolean(currentUserSignup?.checkInAt);
+  const showCurrentEventPassAction =
+    useCurrentEventTimingActions && isSignedUpCard && isBeforeEventStart;
+  const showCurrentEventCheckInAction =
+    useCurrentEventTimingActions &&
+    isSignedUpCard &&
+    isWithinEventTime &&
+    !currentUserCheckedIn;
 
   // TODO: Move out to a hook/util?
   const calculateEventImpact = () => {
@@ -370,15 +439,43 @@ export const EventCard = ({
           </button>
           {!isEventPoster && !hideVolunteerActions && (
             <div className={styles.eventMatchActions}>
-              {!hasVolunteered && !isSignedUpCard && (
+              {showVolunteerAndPassActions && !hasVolunteered && !isSignedUpCard ? (
+                <>
+                  <DarbeButton
+                    buttonText="Pass"
+                    onClick={handlePassEvent}
+                    darbeButtonType="secondaryNextButton"
+                    isDisabled={isPassing}
+                  />
+                  <DarbeButton
+                    buttonText="Volunteer"
+                    onClick={handleVolunteerEvent}
+                    darbeButtonType="nextButton"
+                    isDisabled={isVolunteerLocked}
+                  />
+                </>
+              ) : showCurrentEventPassAction ? (
                 <DarbeButton
                   buttonText="Pass"
                   onClick={handlePassEvent}
                   darbeButtonType="secondaryNextButton"
                   isDisabled={isPassing}
                 />
-              )}
-              {isSignedUpCard && canUnvolunteer ? (
+              ) : showCurrentEventCheckInAction ? (
+                <DarbeButton
+                  buttonText="Check In"
+                  onClick={handleCheckInEvent}
+                  darbeButtonType="nextButton"
+                  isDisabled={isCheckingIn}
+                />
+              ) : !hasVolunteered && !isSignedUpCard ? (
+                <DarbeButton
+                  buttonText="Pass"
+                  onClick={handlePassEvent}
+                  darbeButtonType="secondaryNextButton"
+                  isDisabled={isPassing}
+                />
+              ) : isSignedUpCard && canUnvolunteer && !useCurrentEventTimingActions ? (
                 <DarbeButton
                   buttonText="Unvolunteer"
                   onClick={handleUnvolunteerEvent}
@@ -410,9 +507,11 @@ export const EventCard = ({
       )}
       {canExpandVolunteers && isVolunteerListOpen && (
         <div className={styles.eventVolunteerList}>
-          {event.signups?.map((signup) => {
+          {volunteerRows.map((signup) => {
             const volunteerName =
               signup.user.fullName ||
+              signup.user.organizationName ||
+              signup.user.nonprofitName ||
               `${signup.user.firstName ?? ""} ${signup.user.lastName ?? ""}`.trim();
             const isCurrentVolunteer = signup.user.id === currentUserId;
             const isCheckedIn = Boolean(signup.checkInAt);
@@ -423,6 +522,11 @@ export const EventCard = ({
               ? "Checked In"
               : "Not Checked In";
             const checkButtonText = isCheckedIn ? "Check Out" : "Check In";
+            const canShowCheckAction =
+              isCurrentVolunteer &&
+              !isPastEvent &&
+              !isCheckedOut &&
+              (isCheckedIn || isWithinEventTime);
 
             return (
               <div className={styles.eventVolunteerRow} key={signup.id}>
@@ -449,24 +553,26 @@ export const EventCard = ({
                     >
                       {volunteerName}
                     </button>
-                    {signup.user.jobTitle && <span>{signup.user.jobTitle}</span>}
+                    <span>
+                      {signup.isCoordinator
+                        ? "Volunteer Coordinator"
+                        : signup.user.jobTitle}
+                    </span>
                   </div>
                 </div>
-                {(isCurrentVolunteer || isPastEvent) && (
-                  <div className={styles.eventVolunteerCheckIn}>
-                    <strong>{checkStatusText}</strong>
-                    {isCurrentVolunteer && !isPastEvent && !isCheckedOut && (
-                      <button
-                        type="button"
-                        className={styles.eventVolunteerCheckInButton}
-                        onClick={isCheckedIn ? handleCheckOutEvent : handleCheckInEvent}
-                        disabled={isCheckInLocked}
-                      >
-                        {checkButtonText}
-                      </button>
-                    )}
-                  </div>
-                )}
+                <div className={styles.eventVolunteerCheckIn}>
+                  <strong>{checkStatusText}</strong>
+                  {canShowCheckAction && (
+                    <button
+                      type="button"
+                      className={styles.eventVolunteerCheckInButton}
+                      onClick={isCheckedIn ? handleCheckOutEvent : handleCheckInEvent}
+                      disabled={isCheckInLocked}
+                    >
+                      {checkButtonText}
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}

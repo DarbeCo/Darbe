@@ -1078,6 +1078,27 @@ export interface Database {
         Args: { event_ids: string[] };
         Returns: { event_id: string; signup_count: number }[];
       };
+      get_event_signup_volunteers: {
+        Args: { event_ids: string[] };
+        Returns: {
+          id: string;
+          event_id: string;
+          user_id: string;
+          status: string;
+          event_action_timestamp: string;
+          check_in_at: string | null;
+          check_out_at: string | null;
+          full_name: string | null;
+          first_name: string | null;
+          last_name: string | null;
+          profile_picture_url: string | null;
+          nonprofit_name: string | null;
+          organization_name: string | null;
+          city: string | null;
+          zip: string | null;
+          user_type: string | null;
+        }[];
+      };
     };
     Enums: {};
     CompositeTypes: {};
