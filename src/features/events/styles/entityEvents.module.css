@@ -63,6 +63,44 @@
     min-height: 33px;
   }
 
+  .nonprofitEventActions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    width: 100%;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #d8d8d8;
+  }
+
+  .nonprofitEventAction {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 65px;
+    padding: 16px;
+    border: 1px solid #2c77e7;
+    border-radius: 8px;
+    background: transparent;
+    color: #000000;
+    font-family: "Open Sans", sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 33px;
+    cursor: pointer;
+  }
+
+  .nonprofitEventAction:hover,
+  .nonprofitEventAction:focus-visible {
+    border-color: #2c77e7;
+    color: #000000;
+  }
+
+  .nonprofitEventAction:focus-visible {
+    outline: 2px solid #2c77e7;
+    outline-offset: 2px;
+  }
+
   .volunteerEventsTabs button {
     min-width: 0;
     height: 33px;
@@ -243,6 +281,38 @@
     border: 1px solid #d8d8d8;
     border-radius: 8px;
     background-color: #ffffff;
+  }
+
+  .nonprofitEventsPanel {
+    gap: 16px;
+  }
+
+  .nonprofitEventsPanel .volunteerEventsTitle {
+    margin-bottom: 0;
+  }
+
+  .nonprofitEventActions {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding-bottom: 16px;
+  }
+
+  .nonprofitEventAction {
+    width: 351px;
+    height: 65px;
+    min-height: 65px;
+  }
+
+  .nonprofitEventsPanel .volunteerEventsTabs {
+    justify-content: space-around;
+    gap: 0;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #d8d8d8;
+  }
+
+  .nonprofitEventsPanel .volunteerEventsTabs button {
+    min-width: 160px;
+    text-align: center;
   }
 
   .darbeEventCards {

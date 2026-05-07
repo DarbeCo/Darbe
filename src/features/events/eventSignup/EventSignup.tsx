@@ -25,7 +25,7 @@ import {
 import styles from "../styles/entityEvents.module.css";
 
 const adminTabs = ["Current", "Past", "Admin", "Incomplete"] as const;
-const nonprofitTabs = ["Current", "Past", "Incomplete"] as const;
+const nonprofitTabs = ["Past", "Current", "Admin"] as const;
 const nonAdminTabs = ["Current", "Past"] as const;
 type EventsTab = (typeof adminTabs)[number];
 const COLLAPSED_SUMMARY_COUNT = 3;
@@ -116,6 +116,8 @@ export const EventSignup = () => {
   const [activeTab, setActiveTab] = useState<EventsTab>(
     availableTabs.includes(restoredTab as EventsTab)
       ? (restoredTab as EventsTab)
+      : availableTabs.includes("Current")
+      ? "Current"
       : availableTabs[0]
   );
   const [showAllSummaryRows, setShowAllSummaryRows] = useState(false);
@@ -275,6 +277,12 @@ export const EventSignup = () => {
     });
   };
 
+  const handleCreateEvent = (eventType: "externalEvent" | "internalEvent") => {
+    navigate(CREATE_EVENT_ROUTE, {
+      state: { initialEventType: eventType },
+    });
+  };
+
   const handlePassEventSuccess = (eventId: string) => {
     setHiddenEventIds((currentHiddenEventIds) =>
       currentHiddenEventIds.includes(eventId)
@@ -284,7 +292,11 @@ export const EventSignup = () => {
   };
 
   return (
-    <section className={styles.volunteerEventsPanel}>
+    <section
+      className={`${styles.volunteerEventsPanel} ${
+        userType === "nonprofit" ? styles.nonprofitEventsPanel : ""
+      }`}
+    >
         <div className={styles.volunteerEventsTitle}>
           <CustomSvgs
             svgPath="/svgs/common/eventsIcon.svg"
@@ -293,6 +305,34 @@ export const EventSignup = () => {
           />
           <h1>Events</h1>
         </div>
+        {userType === "nonprofit" && (
+          <div className={styles.nonprofitEventActions}>
+            <button
+              type="button"
+              className={styles.nonprofitEventAction}
+              onClick={() => handleCreateEvent("externalEvent")}
+            >
+              <CustomSvgs
+                svgPath="/svgs/common/postAddIcon.svg"
+                variant="small"
+                altText=""
+              />
+              <span>Post A Need</span>
+            </button>
+            <button
+              type="button"
+              className={styles.nonprofitEventAction}
+              onClick={() => handleCreateEvent("internalEvent")}
+            >
+              <CustomSvgs
+                svgPath="/svgs/common/eventsIcon.svg"
+                variant="small"
+                altText=""
+              />
+              <span>Create Internal Event</span>
+            </button>
+          </div>
+        )}
         <div className={styles.volunteerEventsTabs} role="tablist">
           {availableTabs.map((tab) => (
             <button

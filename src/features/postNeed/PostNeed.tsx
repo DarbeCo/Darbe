@@ -102,21 +102,35 @@ export const PostNeed = () => {
   const userId = useAppSelector(selectCurrentUserId);
   const { user } = useAppSelector(selectUser);
   const routeIncompleteEventId = (
-    location.state as { incompleteEventId?: string } | null
+    location.state as {
+      incompleteEventId?: string;
+      initialEventType?: string;
+    } | null
   )?.incompleteEventId;
+  const routeInitialEventType = (
+    location.state as {
+      incompleteEventId?: string;
+      initialEventType?: string;
+    } | null
+  )?.initialEventType;
   const draftToFinish = routeIncompleteEventId
     ? getIncompletePostNeedEventById(routeIncompleteEventId)
     : undefined;
   const [currentStep, setCurrentStep] = useState(
-    draftToFinish?.eventType ? 0 : -1
+    draftToFinish?.eventType || routeInitialEventType ? 0 : -1
   );
-  const [eventType, setEventType] = useState(draftToFinish?.eventType ?? "");
+  const [eventType, setEventType] = useState(
+    draftToFinish?.eventType ?? routeInitialEventType ?? ""
+  );
   const [incompleteEventId] = useState(
     () => draftToFinish?.id ?? createIncompleteEventId()
   );
   const [eventData, setEventData] = useState<CreateEvent>({
     ...INITIAL_EVENT_STATE,
     ...(draftToFinish?.data ?? {}),
+    isFollowersOnly:
+      (draftToFinish?.data ?? {}).isFollowersOnly ??
+      routeInitialEventType === "internalEvent",
   });
   const [submitValidationDialog, setSubmitValidationDialog] = useState<{
     missingFields: string[];
