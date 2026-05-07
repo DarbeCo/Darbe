@@ -528,6 +528,13 @@
   gap: 24px;
 }
 
+.eventVolunteerCheckStatus {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
 .eventVolunteerCheckIn strong,
 .eventVolunteerListFooter strong {
   color: #000000;
@@ -535,6 +542,15 @@
   font-size: 16px;
   font-weight: 600;
   line-height: normal;
+}
+
+.eventVolunteerCheckTime {
+  color: #666666;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: normal;
+  white-space: nowrap;
 }
 
 .eventVolunteerCheckInButton {

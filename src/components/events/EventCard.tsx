@@ -53,6 +53,26 @@ interface EventCardProps {
   onPassSuccess?: (eventId: string) => void;
 }
 
+const formatCheckTimestamp = (timestamp?: string) => {
+  if (!timestamp) {
+    return "";
+  }
+
+  const date = new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleString("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+};
+
 export const EventCard = ({
   event,
   isSignedUp,
@@ -521,6 +541,13 @@ export const EventCard = ({
               : isCheckedIn
               ? "Checked In"
               : "Not Checked In";
+            const checkedOutTimeText = isCheckedOut
+              ? formatCheckTimestamp(signup.checkOutAt)
+              : "";
+            const checkedInTimeText =
+              isCheckedIn && !isCheckedOut
+                ? formatCheckTimestamp(signup.checkInAt)
+                : "";
             const checkButtonText = isCheckedIn ? "Check Out" : "Check In";
             const canShowCheckAction =
               isCurrentVolunteer &&
@@ -561,7 +588,19 @@ export const EventCard = ({
                   </div>
                 </div>
                 <div className={styles.eventVolunteerCheckIn}>
-                  <strong>{checkStatusText}</strong>
+                  <div className={styles.eventVolunteerCheckStatus}>
+                    <strong>{checkStatusText}</strong>
+                    {checkedOutTimeText && (
+                      <span className={styles.eventVolunteerCheckTime}>
+                        {checkedOutTimeText}
+                      </span>
+                    )}
+                    {checkedInTimeText && (
+                      <span className={styles.eventVolunteerCheckTime}>
+                        {checkedInTimeText}
+                      </span>
+                    )}
+                  </div>
                   {canShowCheckAction && (
                     <button
                       type="button"
