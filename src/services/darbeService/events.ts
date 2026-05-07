@@ -446,7 +446,6 @@ export const getEventDetails = async (eventId: string): Promise<EventsState> => 
     impactsRes,
     ownerProfiles,
     coordinatorProfiles,
-    signupCounts,
   ] = await Promise.all([
     supabase
       .from("event_addresses")
@@ -467,7 +466,6 @@ export const getEventDetails = async (eventId: string): Promise<EventsState> => 
       .maybeSingle(),
     getProfilesByIds([event.event_owner_id]),
     getProfilesByIds([event.event_coordinator_id]),
-    getSignupCounts([eventId]),
   ]);
 
   if (addressRes.error) throw addressRes.error;
@@ -476,8 +474,6 @@ export const getEventDetails = async (eventId: string): Promise<EventsState> => 
 
   const ownerProfile = ownerProfiles[0];
   const coordinatorProfile = coordinatorProfiles[0];
-  const signupCount = signupCounts.get(eventId) ?? 0;
-
   return {
     eventName: event.event_name,
     eventDescription: event.event_description ?? "",
