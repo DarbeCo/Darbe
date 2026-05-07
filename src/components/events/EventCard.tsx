@@ -280,6 +280,7 @@ export const EventCard = ({
       .map((signup) => ({ ...signup, isCoordinator: false })),
   ];
   const currentUserCheckedIn = Boolean(currentUserSignup?.checkInAt);
+  const currentUserCheckedOut = Boolean(currentUserSignup?.checkOutAt);
   const showCurrentEventPassAction =
     useCurrentEventTimingActions && isSignedUpCard && isBeforeEventStart;
   const showCurrentEventCheckInAction =
@@ -287,6 +288,11 @@ export const EventCard = ({
     isSignedUpCard &&
     isWithinEventTime &&
     !currentUserCheckedIn;
+  const showCurrentEventCheckOutAction =
+    useCurrentEventTimingActions &&
+    isSignedUpCard &&
+    currentUserCheckedIn &&
+    !currentUserCheckedOut;
 
   // TODO: Move out to a hook/util?
   const calculateEventImpact = () => {
@@ -487,6 +493,13 @@ export const EventCard = ({
                   onClick={handleCheckInEvent}
                   darbeButtonType="nextButton"
                   isDisabled={isCheckingIn}
+                />
+              ) : showCurrentEventCheckOutAction ? (
+                <DarbeButton
+                  buttonText="Check Out"
+                  onClick={handleCheckOutEvent}
+                  darbeButtonType="checkoutButton"
+                  isDisabled={isCheckInLocked}
                 />
               ) : !hasVolunteered && !isSignedUpCard ? (
                 <DarbeButton

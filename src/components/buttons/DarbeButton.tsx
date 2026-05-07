@@ -16,6 +16,7 @@ import {
   saveButton,
   nextButton,
   secondaryNextButton,
+  checkoutButton,
   rosterButton,
 } from "./buttonStyles";
 import { CustomSvgs } from "../customSvgs/CustomSvgs";
@@ -35,6 +36,7 @@ type DarbeButtonType =
   | "saveButton"
   | "nextButton"
   | "secondaryNextButton"
+  | "checkoutButton"
   | "showMore"
   | "friendRequestButton"
   | "messageFriendButton"
@@ -78,6 +80,7 @@ export const DarbeButton = ({
     saveButton,
     nextButton,
     secondaryNextButton,
+    checkoutButton,
     rosterButton,
   };
   const darbeButtonSx = sxDefinitions[darbeButtonType];

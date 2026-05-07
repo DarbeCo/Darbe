@@ -289,6 +289,38 @@ export const secondaryNextButton = {
   },
 };
 
+export const checkoutButton = {
+  width: "144px",
+  minWidth: "144px",
+  height: "46px",
+  border: "2px solid #2C77E7",
+  borderRadius: "4px",
+  backgroundColor: "#fff",
+  color: "#2C77E7",
+  fontFamily: "'Open Sans', sans-serif",
+  fontSize: "16px",
+  fontWeight: "700",
+  lineHeight: "22px",
+  textTransform: "none",
+  padding: "12px 40px",
+  whiteSpace: "nowrap",
+  flexShrink: 0,
+  "&:hover": {
+    backgroundColor: "#fff",
+    color: "#2C77E7",
+    border: "2px solid #2C77E7",
+  },
+  "& .MuiButton-startIcon, & .MuiButton-endIcon": {
+    flexShrink: 0,
+  },
+  "&.Mui-disabled": {
+    backgroundColor: "#F3F5F7",
+    color: "#9AA3AF",
+    borderColor: "#D8D8D8",
+    opacity: 1,
+  },
+};
+
 export const rosterButton = {
   width: '157px',
   height: '38px',
