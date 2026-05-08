@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import { Inputs } from "../../../../components/inputs/Inputs";
 import { DarbeButton } from "../../../../components/buttons/DarbeButton";
+import { setModalType } from "../../../../components/modal/modalSlice";
 import { useUpdateEntityProfileMutation } from "../../../../services/api/endpoints/profiles/profiles.api";
+import { useAppDispatch, useAppSelector } from "../../../../services/hooks";
 import { splitStringndCapitalize } from "../../../../utils/CommonFunctions";
 import { EDIT_SECTIONS } from "../../userProfiles/constants";
-import { useEditEntityAboutInformation } from "../hooks";
-import { useAppDispatch, useAppSelector } from "../../../../services/hooks";
 import { selectCurrentUserId, selectUser } from "../../selectors";
-import { setModalType } from "../../../../components/modal/modalSlice";
+import { useEditEntityAboutInformation } from "../hooks";
+import { registerProfileEditAutosave } from "../profileEditAutosave";
 
 import styles from "../styles/profileEdit.module.css";
 
@@ -23,58 +23,79 @@ export const EditEntityAbout = () => {
 
   const [updateUserProfile] = useUpdateEntityProfileMutation();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setEditProfileInfo((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = async () => {
+  const isFormDirty = useCallback(() => {
+    return editProfileInfo.aboutUs !== editEntityAboutState.aboutUs;
+  }, [editEntityAboutState.aboutUs, editProfileInfo.aboutUs]);
+
+  const saveAbout = useCallback(async () => {
+    if (!isFormDirty()) {
+      return;
+    }
+
     const payload = {
       ...editProfileInfo,
       user: { id: userId },
     };
     await updateUserProfile(payload);
+  }, [editProfileInfo, isFormDirty, updateUserProfile, userId]);
+
+  useEffect(() => {
+    return registerProfileEditAutosave(saveAbout);
+  }, [saveAbout]);
+
+  const handleSave = async () => {
+    await saveAbout();
   };
 
-  const isFormDirty = () => {
-    return editProfileInfo.aboutUs !== editEntityAboutState.aboutUs;
-  };
-
-  const handleNextSection = () => {
-    if (isFormDirty()) {
-      handleSave();
-    }
+  const handleNextSection = async () => {
+    await saveAbout();
     dispatch(setModalType(EDIT_SECTIONS.values));
   };
 
   const capitalizedEntityName = splitStringndCapitalize(entityType, true);
+  const aboutValue = editProfileInfo.aboutUs ?? "";
 
   return (
-    <div className={styles.profileEditContent}>
-      <div className={styles.editInputs}>
-        <Inputs
-          label={`About Us`}
-          placeholder={`Update your ${capitalizedEntityName} about us section`}
-          name="aboutUs"
-          value={editProfileInfo.aboutUs}
-          handleChange={handleChange}
-          darbeInputType="textAreaInput"
-          isTextArea={true}
-        />
-      </div>
+    <div className={styles.profileDialogContent}>
+      <div className={styles.profileDialogScrollArea}>
+        <div className={styles.profileDialogGrid}>
+          <div
+            className={`${styles.profileDialogField} ${styles.profileDialogFieldFullWidth}`}
+          >
+            <label className={styles.profileDialogLabel} htmlFor="aboutUs">
+              About Us
+            </label>
+            <textarea
+              id="aboutUs"
+              className={`${styles.profileDialogTextarea} ${
+                aboutValue ? styles.profileDialogFieldFilled : ""
+              }`.trim()}
+              name="aboutUs"
+              onChange={handleChange}
+              placeholder={`Update your ${capitalizedEntityName} about us section`}
+              value={aboutValue}
+            />
+          </div>
+        </div>
 
-      <div className={styles.editProfileButtons}>
-        <DarbeButton
-          buttonText="Save"
-          darbeButtonType="saveButton"
-          onClick={handleSave}
-        />
-        <DarbeButton
-          buttonText="Values"
-          darbeButtonType="nextButton"
-          endingIconPath="/svgs/common/goForwardIconWhite.svg"
-          onClick={handleNextSection}
-        />
+        <div className={styles.profileDialogBottomActions}>
+          <DarbeButton
+            buttonText="Save"
+            darbeButtonType="saveButton"
+            onClick={handleSave}
+          />
+          <DarbeButton
+            buttonText="Values"
+            darbeButtonType="nextButton"
+            endingIconPath="/svgs/common/goForwardIconWhite.svg"
+            onClick={handleNextSection}
+          />
+        </div>
       </div>
     </div>
   );

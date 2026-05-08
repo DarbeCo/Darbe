@@ -103,13 +103,19 @@ export const Modal = () => {
     modalType === MODAL_TYPE.causes ||
     modalType === MODAL_TYPE.availability ||
     modalType === MODAL_TYPE.profileCauses ||
-    modalType === MODAL_TYPE.profileFriends;
+    modalType === MODAL_TYPE.profileFriends ||
+    modalType === MODAL_TYPE.entityProfile ||
+    modalType === MODAL_TYPE.entityAbout ||
+    modalType === MODAL_TYPE.values ||
+    modalType === MODAL_TYPE.programs;
   const profileBackTargets: Partial<Record<string, string>> = {
     [MODAL_TYPE.causes]: MODAL_TYPE.profile,
     [MODAL_TYPE.availability]: MODAL_TYPE.causes,
     [MODAL_TYPE.background]: MODAL_TYPE.about,
     [MODAL_TYPE.military]: MODAL_TYPE.background,
     [MODAL_TYPE.qualifications]: MODAL_TYPE.military,
+    [MODAL_TYPE.values]: MODAL_TYPE.entityAbout,
+    [MODAL_TYPE.programs]: MODAL_TYPE.values,
   };
   const profileBackTarget = profileBackTargets[modalType];
 

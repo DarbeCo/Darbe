@@ -1,15 +1,15 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import { Inputs } from "../../../../components/inputs/Inputs";
 import { DarbeButton } from "../../../../components/buttons/DarbeButton";
+import { hideModal } from "../../../../components/modal/modalSlice";
 import { useUpdateEntityProfileMutation } from "../../../../services/api/endpoints/profiles/profiles.api";
+import { useAppDispatch, useAppSelector } from "../../../../services/hooks";
 import { splitStringndCapitalize } from "../../../../utils/CommonFunctions";
+import { selectCurrentUserId, selectUser } from "../../selectors";
 import { useEditEntityProgramsInformation } from "../hooks";
+import { registerProfileEditAutosave } from "../profileEditAutosave";
 
 import styles from "../styles/profileEdit.module.css";
-import { useAppDispatch, useAppSelector } from "../../../../services/hooks";
-import { selectCurrentUserId, selectUser } from "../../selectors";
-import { hideModal } from "../../../../components/modal/modalSlice";
 
 export const EditEntityPrograms = () => {
   const dispatch = useAppDispatch();
@@ -24,44 +24,63 @@ export const EditEntityPrograms = () => {
 
   const [updateUserProfile] = useUpdateEntityProfileMutation();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setEditProfileInfo((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = async () => {
+  const savePrograms = useCallback(async () => {
     const payload = {
       ...editProfileInfo,
       user: { id: userId },
     };
 
     await updateUserProfile(payload);
+  }, [editProfileInfo, updateUserProfile, userId]);
+
+  useEffect(() => {
+    return registerProfileEditAutosave(savePrograms);
+  }, [savePrograms]);
+
+  const handleSave = async () => {
+    await savePrograms();
 
     dispatch(hideModal());
   };
 
   const capitalizedEntityName = splitStringndCapitalize(entityType, true);
+  const programsValue = editProfileInfo.programs ?? "";
 
   return (
-    <div className={styles.profileEditContent}>
-      <div className={styles.editInputs}>
-        <Inputs
-          label="Programs"
-          placeholder={`Update your ${capitalizedEntityName}'s programs section`}
-          name="programs"
-          value={editProfileInfo.programs}
-          handleChange={handleChange}
-          darbeInputType="textAreaInput"
-          isTextArea={true}
-        />
-      </div>
+    <div className={styles.profileDialogContent}>
+      <div className={styles.profileDialogScrollArea}>
+        <div className={styles.profileDialogGrid}>
+          <div
+            className={`${styles.profileDialogField} ${styles.profileDialogFieldFullWidth}`}
+          >
+            <label className={styles.profileDialogLabel} htmlFor="programs">
+              Programs
+            </label>
+            <textarea
+              id="programs"
+              className={`${styles.profileDialogTextarea} ${
+                programsValue ? styles.profileDialogFieldFilled : ""
+              }`.trim()}
+              name="programs"
+              onChange={handleChange}
+              placeholder={`Update your ${capitalizedEntityName}'s programs section`}
+              value={programsValue}
+            />
+          </div>
+        </div>
 
-      <div className={styles.editProfileButtons}>
-        <DarbeButton
-          buttonText="Save"
-          darbeButtonType="saveButton"
-          onClick={handleSave}
-        />
+        <div className={styles.profileDialogBottomActions}>
+          <DarbeButton
+            buttonText="Save"
+            darbeButtonType="saveButton"
+            onClick={handleSave}
+          />
+        </div>
       </div>
     </div>
   );

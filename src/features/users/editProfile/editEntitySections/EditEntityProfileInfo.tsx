@@ -1,17 +1,29 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import { Inputs } from "../../../../components/inputs/Inputs";
-import { Dropdown } from "../../../../components/dropdowns/Dropdown";
 import { DarbeButton } from "../../../../components/buttons/DarbeButton";
+import { hideModal } from "../../../../components/modal/modalSlice";
 import { useUpdateEntityProfileMutation } from "../../../../services/api/endpoints/profiles/profiles.api";
-import { splitStringndCapitalize } from "../../../../utils/CommonFunctions";
-import { useEditEntityProfileInformation } from "../hooks";
 import { useAppDispatch, useAppSelector } from "../../../../services/hooks";
+import { splitStringndCapitalize } from "../../../../utils/CommonFunctions";
 import { selectCurrentUserId, selectUser } from "../../selectors";
-import { NonprofitTypes } from "../../../../components/dropdowns/dropdownTypes/NonprofitTypes";
+import { useEditEntityProfileInformation } from "../hooks";
+import { registerProfileEditAutosave } from "../profileEditAutosave";
 
 import styles from "../styles/profileEdit.module.css";
-import { hideModal } from "../../../../components/modal/modalSlice";
+
+type EntityProfileField =
+  | "nonprofitName"
+  | "organizationName"
+  | "parentEntity"
+  | "nonprofitType"
+  | "tagLine"
+  | "ein"
+  | "address"
+  | "state"
+  | "city"
+  | "zip"
+  | "phoneNumber"
+  | "website";
 
 export const EditEntityProfileInfo = () => {
   const dispatch = useAppDispatch();
@@ -26,147 +38,117 @@ export const EditEntityProfileInfo = () => {
 
   const [updateUserProfile] = useUpdateEntityProfileMutation();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setEditProfileInfo((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleDropdownChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setEditProfileInfo((prev) => ({ ...prev, [name]: value }));
+  const getFieldValue = (name: EntityProfileField) => {
+    if (name === "parentEntity") {
+      const parentEntity = editProfileInfo.parentEntity;
+
+      if (typeof parentEntity === "string") {
+        return parentEntity;
+      }
+
+      return parentEntity?.fullName ?? "";
+    }
+
+    return String(editProfileInfo[name] ?? "");
   };
 
-  const handleSave = async () => {
+  const renderInput = (
+    label: string,
+    name: EntityProfileField,
+    placeholder: string,
+    className?: string
+  ) => {
+    const value = getFieldValue(name);
+
+    return (
+      <div className={`${styles.profileDialogField} ${className ?? ""}`.trim()}>
+        <label className={styles.profileDialogLabel} htmlFor={name}>
+          {label}
+        </label>
+        <input
+          id={name}
+          className={`${styles.profileDialogInput} ${
+            value ? styles.profileDialogFieldFilled : ""
+          }`.trim()}
+          name={name}
+          onChange={handleChange}
+          placeholder={placeholder}
+          value={value}
+        />
+      </div>
+    );
+  };
+
+  const saveProfile = useCallback(async () => {
     const payload = {
       ...editProfileInfo,
       user: { id: userId },
     };
 
     await updateUserProfile(payload);
+  }, [editProfileInfo, updateUserProfile, userId]);
+
+  useEffect(() => {
+    return registerProfileEditAutosave(saveProfile);
+  }, [saveProfile]);
+
+  const handleSave = async () => {
+    await saveProfile();
 
     dispatch(hideModal());
   };
 
   const capitalizedEntityName = splitStringndCapitalize(entityType, true);
-  const formNameIdentifier =
+  const formNameIdentifier: EntityProfileField =
     entityType === "nonprofit" ? "nonprofitName" : "organizationName";
 
   return (
-    <div className={styles.profileEditContent}>
-      <div className={styles.editInputs}>
-        <Inputs
-          label={`${capitalizedEntityName} Name`}
-          placeholder={`Update your ${capitalizedEntityName} name`}
-          name={formNameIdentifier}
-          handleChange={handleChange}
-          value={editProfileInfo[formNameIdentifier]}
-          darbeInputType="standardInput"
-        />
-        <Inputs
-          label={`Parent ${capitalizedEntityName}`}
-          placeholder={`Update your parent ${capitalizedEntityName}`}
-          name="parentEntity"
-          handleChange={handleChange}
-          value={editProfileInfo.parentEntity?.fullName}
-          darbeInputType="standardInput"
-        />
-        {entityType === "nonprofit" && (
-          <div className={styles.editProfileDropdownAreaFullWidthSingular}>
-            <Dropdown
-              label="Nonprofit Type"
-              name="nonprofitType"
-              initialValue={editProfileInfo.nonprofitType}
-              onChange={handleDropdownChange}
-            >
-              {NonprofitTypes()}
-            </Dropdown>
-          </div>
-        )}
-        {/* I don't think design ever thought about this */}
-        {/* {entityType === "organization" && (
-          <div className={styles.editProfileDropdownAreaFullWidthSingular}>
-            <Dropdown
-              label={`associated nonprofit/organization type`}
-              name="associatedEntity"
-              initialValue={editProfileInfo.associatedEntity?.fullName}
-              onChange={handleDropdownChange}
-            >
-              <> </>
-            </Dropdown>
-          </div>
-        )} */}
-        <Inputs
-          label="Tagline"
-          placeholder="Update your tagline"
-          name="tagLine"
-          handleChange={handleChange}
-          value={editProfileInfo.tagLine}
-          darbeInputType="standardInput"
-        />
-        <Inputs
-          label="EIN"
-          placeholder="Update your EIN"
-          name="ein"
-          handleChange={handleChange}
-          value={editProfileInfo.ein}
-          darbeInputType="standardInput"
-        />
-        <Inputs
-          label="Address"
-          placeholder="Update your address"
-          name="address"
-          handleChange={handleChange}
-          value={editProfileInfo.address}
-          darbeInputType="standardInput"
-        />
-        <Inputs
-          label="State"
-          placeholder="Update your state"
-          name="state"
-          value={editProfileInfo.state}
-          handleChange={handleChange}
-          darbeInputType="standardInput"
-        />
-        <Inputs
-          label="City"
-          placeholder="Update your city"
-          name="city"
-          value={editProfileInfo.city}
-          handleChange={handleChange}
-          darbeInputType="standardInput"
-        />
-        <Inputs
-          label="Zip"
-          placeholder="Update your zip"
-          name="zip"
-          value={editProfileInfo.zip}
-          handleChange={handleChange}
-          darbeInputType="standardInput"
-        />
-        <Inputs
-          label="Phone Number"
-          placeholder="Update your phone number"
-          name="phoneNumber"
-          handleChange={handleChange}
-          value={editProfileInfo.phoneNumber}
-          darbeInputType="standardInput"
-        />
-        <Inputs
-          label="Website"
-          placeholder="Update your website"
-          name="website"
-          handleChange={handleChange}
-          value={editProfileInfo.website}
-          darbeInputType="standardInput"
-        />
-      </div>
+    <div className={styles.profileDialogContent}>
+      <div className={styles.profileDialogScrollArea}>
+        <div className={styles.profileDialogGrid}>
+          {renderInput(
+            `${capitalizedEntityName} Name`,
+            formNameIdentifier,
+            `Update your ${capitalizedEntityName} name`,
+            styles.profileDialogFieldFullWidth
+          )}
+          {renderInput(
+            `Parent ${capitalizedEntityName}`,
+            "parentEntity",
+            `Update your parent ${capitalizedEntityName}`,
+            styles.profileDialogFieldFullWidth
+          )}
+          {entityType === "nonprofit" &&
+            renderInput(
+              "Nonprofit Type",
+              "nonprofitType",
+              "Update your nonprofit type",
+              styles.profileDialogFieldFullWidth
+            )}
+          {renderInput("Tagline", "tagLine", "Update your tagline")}
+          {renderInput("EIN", "ein", "Update your EIN")}
+          {renderInput("Address", "address", "Update your address")}
+          {renderInput("State", "state", "Update your state")}
+          {renderInput("City", "city", "Update your city")}
+          {renderInput("Zip", "zip", "Update your zip")}
+          {renderInput("Phone Number", "phoneNumber", "Update your phone number")}
+          {renderInput("Website", "website", "Update your website")}
+        </div>
 
-      <div className={styles.editProfileButtons}>
-        <DarbeButton
-          buttonText="Save"
-          darbeButtonType="saveButton"
-          onClick={handleSave}
-        />
+        <div className={styles.profileDialogBottomActions}>
+          <DarbeButton
+            buttonText="Save"
+            darbeButtonType="saveButton"
+            onClick={handleSave}
+          />
+        </div>
       </div>
     </div>
   );
