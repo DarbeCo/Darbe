@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ArrowBack,
   CameraAlt,
   CreateOutlined,
   MoreHoriz,
@@ -32,6 +33,7 @@ import {
   getMessagePreviewText,
   isImageMessage,
 } from "../../components/messaging/messageUtils";
+import useScreenWidthHook from "../../utils/commonHooks/UseScreenWidth";
 
 import styles from "./styles/messaging.module.css";
 
@@ -114,11 +116,14 @@ const buildThreadSummary = (
 export const Messaging = () => {
   const currentUserId = useAppSelector(selectCurrentUserId);
   const currentFriends = useAppSelector(selectCurrentFriends) ?? [];
+  const { isDesktop } = useScreenWidthHook();
   const { data: messageThreads = [], isLoading } = useGetMessagesQuery();
   const [selectedThreadId, setSelectedThreadId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [friendSearchTerm, setFriendSearchTerm] = useState("");
   const [isFriendPickerOpen, setIsFriendPickerOpen] = useState(false);
+  const [isMobileConversationOpen, setIsMobileConversationOpen] =
+    useState(false);
   const [draftThread, setDraftThread] = useState<ThreadSummary | null>(null);
   const [draftMessage, setDraftMessage] = useState("");
   const [selectedImage, setSelectedImage] = useState("");
@@ -150,12 +155,12 @@ export const Messaging = () => {
   );
 
   useEffect(() => {
-    if (selectedThreadId || !threadSummaries.length) {
+    if (!isDesktop || selectedThreadId || !threadSummaries.length) {
       return;
     }
 
     setSelectedThreadId(threadSummaries[0].id);
-  }, [selectedThreadId, threadSummaries]);
+  }, [isDesktop, selectedThreadId, threadSummaries]);
 
   useEffect(() => {
     if (!draftThread) {
@@ -177,7 +182,35 @@ export const Messaging = () => {
   const selectedThread =
     threadSummaries.find((thread) => thread.id === selectedThreadId) ||
     draftThread ||
-    threadSummaries[0];
+    (isDesktop ? threadSummaries[0] : undefined);
+
+  const threadSummaryByFriendId = useMemo(
+    () =>
+      new Map(
+        threadSummaries.map((threadSummary) => [
+          threadSummary.friendId,
+          threadSummary,
+        ])
+      ),
+    [threadSummaries]
+  );
+
+  const filteredMobileFriends = currentFriends.filter((friend) => {
+    const searchValue = searchTerm.trim().toLowerCase();
+
+    if (!searchValue) {
+      return true;
+    }
+
+    const existingThread = threadSummaryByFriendId.get(friend.id);
+
+    return (
+      getFriendDisplayName(friend).toLowerCase().includes(searchValue) ||
+      existingThread?.lastMessage.toLowerCase().includes(searchValue) ||
+      friend.city?.toLowerCase().includes(searchValue) ||
+      friend.zip?.toLowerCase().includes(searchValue)
+    );
+  });
 
   const filteredFriends = currentFriends.filter((friend) => {
     const searchValue = friendSearchTerm.trim().toLowerCase();
@@ -299,8 +332,15 @@ export const Messaging = () => {
 
     setDraftMessage("");
     setSelectedImage("");
+    setIsMobileConversationOpen(true);
     setIsFriendPickerOpen(false);
     setFriendSearchTerm("");
+  };
+
+  const handleBackToMobileFriends = () => {
+    setIsMobileConversationOpen(false);
+    setDraftMessage("");
+    setSelectedImage("");
   };
 
   const renderTodayDivider = (message: MessageState, index: number) => {
@@ -361,13 +401,56 @@ export const Messaging = () => {
     );
   };
 
+  const renderFriendSelectionRow = (friend: ProfileFriendState) => {
+    const existingThread = threadSummaryByFriendId.get(friend.id);
+    const nameToUse = getFriendDisplayName(friend);
+
+    return (
+      <button
+        key={friend.id}
+        type="button"
+        className={styles.messagingThreadRow}
+        onClick={() => handleSelectFriend(friend)}
+      >
+        <Avatar
+          src={friend.profilePicture ? assetUrl(friend.profilePicture) : undefined}
+          alt={nameToUse}
+          className={styles.messagingThreadAvatar}
+        />
+        <div className={styles.messagingThreadText}>
+          <div className={styles.messagingThreadTop}>
+            <strong>{nameToUse}</strong>
+            <span>{formatThreadDate(existingThread?.dateSent ?? "")}</span>
+          </div>
+          <p>{getMessagePreviewText(existingThread?.lastMessage || "Tap to message")}</p>
+        </div>
+      </button>
+    );
+  };
+
   return (
     <section className={styles.messagingV2Page}>
-      <div className={styles.messagingConversation}>
+      <div
+        className={`${styles.messagingConversation} ${
+          !isDesktop && !isMobileConversationOpen
+            ? styles.messagingMobileHidden
+            : ""
+        }`}
+      >
         {selectedThread ? (
           <>
             <header className={styles.messagingConversationHeader}>
               <div className={styles.messagingConversationIdentity}>
+                {!isDesktop && (
+                  <button
+                    type="button"
+                    className={styles.messagingBackButton}
+                    onClick={handleBackToMobileFriends}
+                    aria-label="Back to friends"
+                  >
+                    <ArrowBack />
+                  </button>
+                )}
                 <Avatar
                   src={
                     selectedThread.profilePicture
@@ -444,36 +527,58 @@ export const Messaging = () => {
           </>
         ) : (
           <div className={styles.messagingEmptyConversation}>
-            {isLoading ? <CircularProgress size={24} /> : "No messages"}
+            {isLoading ? <CircularProgress size={24} /> : "Select a friend"}
           </div>
         )}
       </div>
 
-      <aside className={styles.messagingThreadPanel}>
+      <aside
+        className={`${styles.messagingThreadPanel} ${
+          !isDesktop && isMobileConversationOpen
+            ? styles.messagingMobileHidden
+            : ""
+        }`}
+      >
         <header className={styles.messagingThreadHeader}>
-          <h2>Messages</h2>
+          <h2>{isDesktop ? "Messages" : "Friends"}</h2>
         </header>
         <div className={styles.messagingSearchRow}>
-          <button
-            type="button"
-            className={styles.messagingComposeButton}
-            aria-label="New message"
-            onClick={handleOpenFriendPicker}
-          >
-            <CreateOutlined />
-          </button>
+          {isDesktop ? (
+            <button
+              type="button"
+              className={styles.messagingComposeButton}
+              aria-label="New message"
+              onClick={handleOpenFriendPicker}
+            >
+              <CreateOutlined />
+            </button>
+          ) : (
+            <span className={styles.messagingSearchSpacer} />
+          )}
           <div className={styles.messagingSearchBox}>
             <Search />
             <InputBase
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Search Messages"
+              placeholder={isDesktop ? "Search Messages" : "Search Friends"}
               className={styles.messagingSearchInput}
             />
           </div>
         </div>
         <div className={styles.messagingThreads}>
-          {isFriendPickerOpen ? (
+          {!isDesktop ? (
+            <>
+              {isLoading && (
+                <div className={styles.messagingState}>
+                  <CircularProgress size={24} />
+                </div>
+              )}
+              {!isLoading && filteredMobileFriends.length === 0 && (
+                <div className={styles.messagingState}>No friends found</div>
+              )}
+              {!isLoading && filteredMobileFriends.map(renderFriendSelectionRow)}
+            </>
+          ) : isFriendPickerOpen ? (
             <>
               <div className={styles.messagingFriendPickerHeader}>
                 <strong>New Message</strong>

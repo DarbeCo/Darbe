@@ -135,7 +135,8 @@
 
 .messagingMoreButton,
 .messagingCameraButton,
-.messagingComposeButton {
+.messagingComposeButton,
+.messagingBackButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -148,6 +149,14 @@
 
 .messagingCameraButton {
   align-self: center;
+}
+
+.messagingBackButton {
+  flex: 0 0 auto;
+}
+
+.messagingBackButton svg {
+  font-size: 24px;
 }
 
 .messagingMoreButton svg {
@@ -367,6 +376,11 @@
   box-sizing: border-box;
 }
 
+.messagingSearchSpacer {
+  width: 24px;
+  height: 24px;
+}
+
 .messagingComposeButton svg {
   font-size: 20px;
 }
@@ -570,29 +584,102 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 100vh;
-    max-height: 100vh;
+    height: calc(100dvh - 124px);
+    max-height: calc(100dvh - 124px);
     min-height: 0;
+    padding-bottom: 8px;
+    box-sizing: border-box;
   }
 
   .messagingConversation,
   .messagingThreadPanel {
     min-height: 0;
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
   }
 
   .messagingThreadPanel {
-    order: -1;
-    height: 320px;
-    max-height: 320px;
+    flex: 1;
   }
 
   .messagingConversation {
     flex: 1;
-    height: auto;
-    max-height: none;
+    padding-bottom: 0;
+  }
+
+  .messagingMobileHidden {
+    display: none;
+  }
+
+  .messagingConversationHeader {
+    flex: 0 0 72px;
+    padding: 0 16px;
+  }
+
+  .messagingConversationIdentity {
+    gap: 12px;
+  }
+
+  .messagingHeaderAvatar {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .messagingConversationIdentity h1 {
+    font-size: 20px;
+  }
+
+  .messagingThreadHeader {
+    flex: 0 0 64px;
+    padding: 0 16px;
+  }
+
+  .messagingSearchRow {
+    padding: 12px 16px;
+  }
+
+  .messagingThreadRow {
+    min-height: 76px;
+    padding: 14px 16px;
+  }
+
+  .messagingMessages {
+    flex: 1 1 auto;
+    gap: 16px;
+    padding: 20px 12px 12px;
+  }
+
+  .messagingMessageFriend,
+  .messagingMessageMine {
+    gap: 8px;
+  }
+
+  .messagingMessageAvatar {
+    margin-top: 0;
   }
 
   .messagingBubble {
-    width: min(376px, 76vw);
+    width: auto;
+    max-width: 74vw;
+    min-height: 0;
+  }
+
+  .messagingBubbleArea {
+    max-width: 76vw;
+  }
+
+  .messagingComposer {
+    flex: 0 0 73px;
+    height: 73px;
+    padding: 8px 12px;
+    background-color: #ffffff;
+  }
+}
+
+@media (min-width: 700px) and (max-width: 1259px) {
+  .messagingV2Page {
+    height: calc(100dvh - 124px);
+    max-height: calc(100dvh - 124px);
   }
 }
