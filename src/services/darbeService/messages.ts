@@ -47,34 +47,6 @@ const getThreadIdWithUser = async (friendId: string): Promise<string | null> => 
   return shared?.[0]?.thread_id ?? null;
 };
 
-const ensureThread = async (friendId: string): Promise<string> => {
-  const userId = await ensureUserId();
-  const existingThreadId = await getThreadIdWithUser(friendId);
-
-  if (existingThreadId) return existingThreadId;
-
-  const { data: newThread, error: threadError } = await supabase
-    .from("message_threads")
-    .insert({})
-    .select("id")
-    .single();
-
-  if (threadError || !newThread) {
-    throw threadError ?? new Error("Failed to create thread");
-  }
-
-  const { error: participantError } = await supabase
-    .from("message_thread_participants")
-    .insert([
-      { thread_id: newThread.id, user_id: userId },
-      { thread_id: newThread.id, user_id: friendId },
-    ]);
-
-  if (participantError) throw participantError;
-
-  return newThread.id;
-};
-
 export const getMessages = async (): Promise<MessageThreadsState[]> => {
   const userId = await ensureUserId();
   const { data: threadRows, error } = await supabase
@@ -141,23 +113,18 @@ export const getMessages = async (): Promise<MessageThreadsState[]> => {
 export const createMessage = async (
   message: NewMessage
 ): Promise<MessageState> => {
-  const userId = await ensureUserId();
-  const threadId = await ensureThread(message.receiverId);
+  const { data, error } = await supabase.rpc("send_message", {
+    target_receiver_id: message.receiverId,
+    message_body: message.message,
+  });
 
-  const { data, error } = await supabase
-    .from("messages")
-    .insert({
-      thread_id: threadId,
-      sender_id: userId,
-      receiver_id: message.receiverId,
-      message: message.message,
-    })
-    .select("sender_id, receiver_id, message, is_read, date_sent")
-    .single();
+  const sentMessage = data?.[0];
 
-  if (error || !data) throw error ?? new Error("Failed to create message");
+  if (error || !sentMessage) {
+    throw error ?? new Error("Failed to create message");
+  }
 
-  return mapMessageRow(data);
+  return mapMessageRow(sentMessage);
 };
 
 export const markMessageAsRead = async (messageId: string): Promise<MessageState> => {

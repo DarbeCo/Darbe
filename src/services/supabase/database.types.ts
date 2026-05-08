@@ -1099,6 +1099,16 @@ export interface Database {
           user_type: string | null;
         }[];
       };
+      send_message: {
+        Args: { target_receiver_id: string; message_body: string };
+        Returns: {
+          sender_id: string;
+          receiver_id: string;
+          message: string;
+          is_read: boolean;
+          date_sent: string;
+        }[];
+      };
     };
     Enums: {};
     CompositeTypes: {};

@@ -157,6 +157,23 @@ export const Messaging = () => {
     setSelectedThreadId(threadSummaries[0].id);
   }, [selectedThreadId, threadSummaries]);
 
+  useEffect(() => {
+    if (!draftThread) {
+      return;
+    }
+
+    const createdThread = threadSummaries.find(
+      (thread) => thread.friendId === draftThread.friendId
+    );
+
+    if (!createdThread) {
+      return;
+    }
+
+    setSelectedThreadId(createdThread.id);
+    setDraftThread(null);
+  }, [draftThread, threadSummaries]);
+
   const selectedThread =
     threadSummaries.find((thread) => thread.id === selectedThreadId) ||
     draftThread ||
@@ -249,7 +266,6 @@ export const Messaging = () => {
 
       setDraftMessage("");
       setSelectedImage("");
-      setDraftThread(null);
     } catch (error) {
       console.error(error);
     }
