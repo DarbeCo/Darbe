@@ -9,6 +9,7 @@ export const MODAL_TYPE = {
   profileCauses: "profileCauses",
   profileFriends: "profileFriends",
   editRoster: "editRoster",
+  friendSuggestions: "friendSuggestions",
 }
 
 const initialState = {

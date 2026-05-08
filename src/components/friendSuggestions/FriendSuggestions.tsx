@@ -6,7 +6,6 @@ import {
 } from "../../services/api/endpoints/friends/friends.api";
 import useScreenWidthHook from "../../utils/commonHooks/UseScreenWidth";
 import { DesktopFriendSuggestions } from "./DesktopFriendSuggestions";
-import { MobileFriendSuggestions } from "./MobileFriendSuggestions";
 
 export const FriendSuggestions = () => {
   const { isDesktop } = useScreenWidthHook();
@@ -66,9 +65,6 @@ export const FriendSuggestions = () => {
           suggestedFriends={filteredSuggestedFriends}
           handleFriendSuggestionRefresh={handleFriendSuggestionRefresh}
         />
-      )}
-      {!isDesktop && (
-        <MobileFriendSuggestions suggestedFriends={filteredSuggestedFriends} />
       )}
     </>
   );

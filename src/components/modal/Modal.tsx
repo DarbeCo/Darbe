@@ -38,6 +38,7 @@ import { EditEntityAbout } from "../../features/users/editProfile/editEntitySect
 import { EditEntityValues } from "../../features/users/editProfile/editEntitySections/EditEntityValues";
 import { EditEntityPrograms } from "../../features/users/editProfile/editEntitySections/EditEntityPrograms";
 import { runProfileEditAutosave } from "../../features/users/editProfile/profileEditAutosave";
+import { FriendSuggestionsDialog } from "../friendSuggestions/FriendSuggestionsDialog";
 
 /**
  * Mainly used for the create a post pop up modal
@@ -137,7 +138,13 @@ export const Modal = () => {
             isProfileModal ? styles.profileModalHeader : ""
           }`.trim()}
         >
-          <div className={isProfileModal ? styles.profileModalHeaderInner : ""}>
+          <div
+            className={
+              isProfileModal
+                ? styles.profileModalHeaderInner
+                : styles.modalHeaderInner
+            }
+          >
             {isProfileModal && (
               <div className={styles.profileModalHeaderSpacer}>
                 {profileBackTarget && (
@@ -191,6 +198,8 @@ export const Modal = () => {
                     return "Edit Roster";
                   case MODAL_TYPE.createRoster:
                     return "Create Roster";
+                  case MODAL_TYPE.friendSuggestions:
+                    return "Friend Suggestions";
                   case MODAL_TYPE.entityProfile:
                     return "Edit Profile";
                   case MODAL_TYPE.entityAbout:
@@ -279,6 +288,8 @@ export const Modal = () => {
               return <SimpleRosterEdit externalData={externalData} />;
             case MODAL_TYPE.createRoster:
               return <SimpleCreateRoster />;
+            case MODAL_TYPE.friendSuggestions:
+              return <FriendSuggestionsDialog />;
             default:
               return null;
           }

@@ -5,7 +5,9 @@ import { ExpandMore } from "@mui/icons-material";
 
 import { CustomSvgs } from "../customSvgs/CustomSvgs";
 import { selectUser } from "../../features/users/selectors";
+import { useAppDispatch } from "../../services/hooks";
 import { useNavigateHook } from "../../utils/commonHooks/UseNavigate";
+import { MODAL_TYPE, setModalType, showModal } from "../modal/modalSlice";
 import {
   FRIENDS_ROUTE,
   HELP_ROUTE,
@@ -27,6 +29,7 @@ export const MiniMenu = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const navigate = useNavigateHook();
+  const dispatch = useAppDispatch();
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -58,6 +61,10 @@ export const MiniMenu = () => {
     if (route === "messages") {
       navigate(`${MESSAGING_ROUTE}/${userId}`);
     }
+    if (route === "friendSuggestions") {
+      dispatch(setModalType(MODAL_TYPE.friendSuggestions));
+      dispatch(showModal());
+    }
   };
 
   const isEntity = user?.userType !== "individual";
@@ -66,6 +73,7 @@ export const MiniMenu = () => {
   const nonDesktopOptions = [
     "profile",
     "messages",
+    ...(isEntity ? [] : ["friendSuggestions"]),
     friendTextToShow,
     "help",
     "privacy",
