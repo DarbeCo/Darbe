@@ -35,7 +35,13 @@ interface Signups  {
   id: string;
   user: SimpleUserInfo;
   eventId: string;
-  status: "volunteered" | "confirmed" | "passed"
+  status:
+    | "volunteered"
+    | "confirmed"
+    | "passed"
+    | "no_show"
+    | "approved"
+    | "denied"
   eventActionTimeStamp: string;
   checkInAt?: string;
   checkOutAt?: string;
@@ -99,7 +105,13 @@ export interface UserEventSignups {
   event: ShortEventState;
   signedUpUser: SimpleUserInfo;
   eventActionTimeStamp: string;
-  status: "volunteered" | "confirmed" | "passed";
+  status:
+    | "volunteered"
+    | "confirmed"
+    | "passed"
+    | "no_show"
+    | "approved"
+    | "denied";
   checkInAt?: string;
   checkOutAt?: string;
   signupCount: number;

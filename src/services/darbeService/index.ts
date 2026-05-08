@@ -44,10 +44,15 @@ export {
 } from "./comments";
 export { getUserFeed, submitPostLike } from "./feed";
 export {
+  addEventVolunteer,
+  approveAllEventVolunteers,
+  approveEventVolunteer,
   createEvent,
+  denyEventVolunteer,
   deleteEvent,
   checkInForEvent,
   checkOutFromEvent,
+  markNoShowForEvent,
   getEventDetails,
   getEvents,
   getSignedUpEvents,

@@ -8,14 +8,19 @@ import {
   VolunteerMatch,
 } from "../types/events.api.types";
 import {
+  addEventVolunteer,
+  approveAllEventVolunteers,
+  approveEventVolunteer,
   createEvent,
   deleteEvent,
+  denyEventVolunteer,
   getEventDetails,
   getEvents,
   getSignedUpEvents,
   getVolunteerMatches,
   checkInForEvent,
   checkOutFromEvent,
+  markNoShowForEvent,
   passOnEvent,
   unvolunteerFromEvent,
   volunteerForEvent,
@@ -157,6 +162,86 @@ const eventsApi = darbeBaseApi.injectEndpoints({
       },
       invalidatesTags: ["Events"],
     }),
+    markNoShowForEvent: builder.mutation<void, EventSignupAction>({
+      async queryFn(action) {
+        try {
+          await markNoShowForEvent(action);
+          return { data: undefined };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      invalidatesTags: ["Events"],
+    }),
+    addEventVolunteer: builder.mutation<void, EventSignupAction>({
+      async queryFn(action) {
+        try {
+          await addEventVolunteer(action);
+          return { data: undefined };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      invalidatesTags: ["Events"],
+    }),
+    approveEventVolunteer: builder.mutation<void, EventSignupAction>({
+      async queryFn(action) {
+        try {
+          await approveEventVolunteer(action);
+          return { data: undefined };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      invalidatesTags: ["Events"],
+    }),
+    denyEventVolunteer: builder.mutation<void, EventSignupAction>({
+      async queryFn(action) {
+        try {
+          await denyEventVolunteer(action);
+          return { data: undefined };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      invalidatesTags: ["Events"],
+    }),
+    approveAllEventVolunteers: builder.mutation<void, string>({
+      async queryFn(eventId) {
+        try {
+          await approveAllEventVolunteers(eventId);
+          return { data: undefined };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      invalidatesTags: ["Events"],
+    }),
     unvolunteerFromEvent: builder.mutation<void, string>({
       async queryFn(eventId) {
         try {
@@ -217,12 +302,17 @@ const eventsApi = darbeBaseApi.injectEndpoints({
 export const {
   useGetEventsQuery,
   useGetEventDetailsQuery,
+  useAddEventVolunteerMutation,
+  useApproveAllEventVolunteersMutation,
+  useApproveEventVolunteerMutation,
   useCreateEventMutation,
+  useDenyEventVolunteerMutation,
   useDeleteEventMutation,
   useVolunteerForEventMutation,
   usePassOnEventMutation,
   useCheckInForEventMutation,
   useCheckOutFromEventMutation,
+  useMarkNoShowForEventMutation,
   useUnvolunteerFromEventMutation,
   useGetSignedUpEventsQuery,
   useGetVolunteerMatchesQuery,

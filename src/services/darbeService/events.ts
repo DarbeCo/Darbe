@@ -245,7 +245,13 @@ const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> 
       id: string;
       user: SimpleUserInfo;
       eventId: string;
-      status: "volunteered" | "confirmed" | "passed";
+      status:
+        | "volunteered"
+        | "confirmed"
+        | "passed"
+        | "no_show"
+        | "approved"
+        | "denied";
       eventActionTimeStamp: string;
       checkInAt?: string;
       checkOutAt?: string;
@@ -261,7 +267,13 @@ const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> 
       id: signup.id,
       user: signupUser,
       eventId: signup.event_id,
-      status: signup.status as "volunteered" | "confirmed" | "passed",
+      status: signup.status as
+        | "volunteered"
+        | "confirmed"
+        | "passed"
+        | "no_show"
+        | "approved"
+        | "denied",
       eventActionTimeStamp: signup.event_action_timestamp,
       checkInAt: signup.check_in_at ?? undefined,
       checkOutAt: signup.check_out_at ?? undefined,
@@ -411,7 +423,9 @@ export const getEvents = async (): Promise<ShortEventState[]> => {
 
     const blockedEventIds = new Set(
       (signups ?? [])
-        .filter((row) => row.status === "volunteered" || row.status === "confirmed")
+        .filter((row) =>
+          ["volunteered", "confirmed", "approved", "no_show"].includes(row.status)
+        )
         .map((row) => row.event_id)
     );
 
@@ -591,14 +605,6 @@ export const volunteerForEvent = async (eventId: string): Promise<void> => {
     throw new Error("You have already volunteered for this event");
   }
 
-  const { data: event, error: eventError } = await supabase
-    .from("events")
-    .select("start_time, end_time")
-    .eq("id", eventId)
-    .single();
-
-  if (eventError || !event) throw eventError ?? new Error("Event not found");
-
   const { error } = await supabase.from("event_signups").insert({
     event_id: eventId,
     user_id: userId,
@@ -606,12 +612,6 @@ export const volunteerForEvent = async (eventId: string): Promise<void> => {
   });
 
   if (error) throw error;
-
-  const start = timeToDecimal(event.start_time) ?? 0;
-  const end = timeToDecimal(event.end_time);
-  const hours = end ? Math.max(end - start, 0) : 0;
-
-  await incrementImpact(userId, { events_attended: 1, hours_volunteered: hours });
 };
 
 export const passOnEvent = async (eventId: string): Promise<void> => {
@@ -708,6 +708,90 @@ export const checkOutFromEvent = async (
   if (error) throw error;
 };
 
+export const markNoShowForEvent = async (
+  action: EventSignupAction
+): Promise<void> => {
+  await ensureUserId();
+
+  if (!action.userId) {
+    throw new Error("Volunteer is required");
+  }
+
+  const { error } = await supabase.rpc("manage_event_signup_check_time", {
+    target_event_id: action.eventId,
+    target_user_id: action.userId,
+    check_action: "no_show",
+  });
+
+  if (error) throw error;
+};
+
+export const addEventVolunteer = async (
+  action: EventSignupAction
+): Promise<void> => {
+  await ensureUserId();
+
+  if (!action.userId) {
+    throw new Error("Volunteer is required");
+  }
+
+  const { error } = await supabase.rpc("manage_event_signup_check_time", {
+    target_event_id: action.eventId,
+    target_user_id: action.userId,
+    check_action: "add_volunteer",
+  });
+
+  if (error) throw error;
+};
+
+export const approveEventVolunteer = async (
+  action: EventSignupAction
+): Promise<void> => {
+  await ensureUserId();
+
+  if (!action.userId) {
+    throw new Error("Volunteer is required");
+  }
+
+  const { error } = await supabase.rpc("manage_event_signup_check_time", {
+    target_event_id: action.eventId,
+    target_user_id: action.userId,
+    check_action: "approve",
+  });
+
+  if (error) throw error;
+};
+
+export const denyEventVolunteer = async (
+  action: EventSignupAction
+): Promise<void> => {
+  await ensureUserId();
+
+  if (!action.userId) {
+    throw new Error("Volunteer is required");
+  }
+
+  const { error } = await supabase.rpc("manage_event_signup_check_time", {
+    target_event_id: action.eventId,
+    target_user_id: action.userId,
+    check_action: "deny",
+  });
+
+  if (error) throw error;
+};
+
+export const approveAllEventVolunteers = async (
+  eventId: string
+): Promise<void> => {
+  await ensureUserId();
+
+  const { error } = await supabase.rpc("approve_all_event_volunteers", {
+    target_event_id: eventId,
+  });
+
+  if (error) throw error;
+};
+
 export const unvolunteerFromEvent = async (eventId: string): Promise<void> => {
   const userId = await ensureUserId();
 
@@ -754,7 +838,7 @@ export const getSignedUpEvents = async (
     .from("event_signups")
     .select("event_id, status, event_action_timestamp, check_in_at, check_out_at")
     .eq("user_id", userId)
-    .in("status", ["volunteered", "confirmed"]);
+    .in("status", ["volunteered", "confirmed", "approved", "no_show"]);
 
   if (error) throw error;
 
@@ -834,7 +918,13 @@ export const getSignedUpEvents = async (
     event: eventMap.get(signup.event_id) as ShortEventState,
     signedUpUser,
     eventActionTimeStamp: signup.event_action_timestamp,
-    status: signup.status as "volunteered" | "confirmed" | "passed",
+    status: signup.status as
+      | "volunteered"
+      | "confirmed"
+      | "passed"
+      | "no_show"
+      | "approved"
+      | "denied",
     checkInAt: signup.check_in_at ?? undefined,
     checkOutAt: signup.check_out_at ?? undefined,
     signupCount: signupCountMap.get(signup.event_id) ?? 0,

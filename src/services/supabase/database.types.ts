@@ -1117,6 +1117,10 @@ export interface Database {
         };
         Returns: undefined;
       };
+      approve_all_event_volunteers: {
+        Args: { target_event_id: string };
+        Returns: undefined;
+      };
     };
     Enums: {};
     CompositeTypes: {};

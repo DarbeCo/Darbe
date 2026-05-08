@@ -9,7 +9,7 @@ export const getUserImpact = async (userId?: string): Promise<EventImpact[]> => 
     .from("event_signups")
     .select("id, event_id, status")
     .eq("user_id", currentUserId)
-    .in("status", ["volunteered", "confirmed"]);
+    .eq("status", "approved");
 
   if (error) throw error;
 

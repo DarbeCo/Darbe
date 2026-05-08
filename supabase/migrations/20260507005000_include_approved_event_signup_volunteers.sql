@@ -41,5 +41,11 @@ as $$
   from public.event_signups signup
   join public.profiles profile on profile.id = signup.user_id
   where signup.event_id = any(event_ids)
-    and signup.status in ('volunteered', 'confirmed', 'no_show');
+    and signup.status in (
+      'volunteered',
+      'confirmed',
+      'no_show',
+      'approved',
+      'denied'
+    );
 $$;

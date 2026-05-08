@@ -446,6 +446,118 @@
   background-color: #ffffff;
 }
 
+.eventVolunteerAdminToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.eventVolunteerSearchWrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 38px;
+  padding: 0 8px;
+  border: 1px solid #d8d8d8;
+  border-radius: 4px;
+  background-color: #ffffff;
+  box-sizing: border-box;
+}
+
+.eventVolunteerSearchWrap span {
+  flex: 0 0 auto;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.eventVolunteerSearchWrap input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background-color: transparent;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+}
+
+.eventVolunteerSearchWrap input::placeholder {
+  color: #717070;
+}
+
+.eventVolunteerAdminActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.eventVolunteerAddButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  min-width: 112px;
+  padding: 8px 16px;
+  border: 1px solid #2c77e7;
+  border-radius: 4px;
+  background-color: #ffffff;
+  color: #2c77e7;
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+}
+
+.eventVolunteerAddPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-top: -8px;
+  padding: 8px;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  background-color: #faf9f9;
+  box-sizing: border-box;
+}
+
+.eventVolunteerAddPanel button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid #eaeaea;
+  border-radius: 4px;
+  background-color: #ffffff;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.eventVolunteerAddPanel button strong {
+  color: #2c77e7;
+}
+
+.eventVolunteerNoSearchResults {
+  margin: 0;
+  padding: 8px 12px;
+  color: #717070;
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+}
+
 .eventVolunteerRow,
 .eventVolunteerListFooter {
   display: flex;
@@ -571,7 +683,66 @@
   cursor: pointer;
 }
 
-.eventVolunteerCheckInButton:disabled {
+.eventVolunteerNoShowButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 112px;
+  height: 38px;
+  padding: 8px 16px;
+  border: 1px solid #2c77e7;
+  border-radius: 4px;
+  background-color: #ffffff;
+  color: #2c77e7;
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+}
+
+.eventVolunteerApprovalActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eventVolunteerApproveButton,
+.eventVolunteerDenyButton,
+.eventVolunteerApproveAllButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+}
+
+.eventVolunteerApproveButton,
+.eventVolunteerApproveAllButton {
+  min-width: 112px;
+  border: 0;
+  background-color: #2c77e7;
+  color: #ffffff;
+}
+
+.eventVolunteerDenyButton {
+  min-width: 88px;
+  border: 1px solid #2c77e7;
+  background-color: #ffffff;
+  color: #2c77e7;
+}
+
+.eventVolunteerCheckInButton:disabled,
+.eventVolunteerNoShowButton:disabled,
+.eventVolunteerApproveButton:disabled,
+.eventVolunteerDenyButton:disabled,
+.eventVolunteerApproveAllButton:disabled {
   opacity: 0.7;
   cursor: default;
 }
@@ -830,6 +1001,18 @@
 
   .eventShareMenu::before {
     right: 20px;
+  }
+
+  .eventVolunteerAdminToolbar,
+  .eventVolunteerAdminActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .eventVolunteerSearchWrap,
+  .eventVolunteerAddButton,
+  .eventVolunteerApproveAllButton {
+    width: 100%;
   }
 }
 

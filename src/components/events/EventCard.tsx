@@ -26,12 +26,18 @@ import {
 
 import styles from "./styles/eventCards.module.css";
 import {
+  useAddEventVolunteerMutation,
+  useApproveAllEventVolunteersMutation,
+  useApproveEventVolunteerMutation,
   usePassOnEventMutation,
   useCheckInForEventMutation,
   useCheckOutFromEventMutation,
+  useDenyEventVolunteerMutation,
+  useMarkNoShowForEventMutation,
   useUnvolunteerFromEventMutation,
   useVolunteerForEventMutation,
 } from "../../services/api/endpoints/events/events.api";
+import { useGetSearchResultsQuery } from "../../services/api/endpoints/search/search.api";
 
 interface EventCardProps {
   event: ShortEventState;
@@ -100,6 +106,16 @@ export const EventCard = ({
     useCheckInForEventMutation();
   const [checkOutFromEvent, { isLoading: isCheckingOut }] =
     useCheckOutFromEventMutation();
+  const [markNoShowForEvent, { isLoading: isMarkingNoShow }] =
+    useMarkNoShowForEventMutation();
+  const [addEventVolunteer, { isLoading: isAddingVolunteer }] =
+    useAddEventVolunteerMutation();
+  const [approveEventVolunteer, { isLoading: isApprovingVolunteer }] =
+    useApproveEventVolunteerMutation();
+  const [denyEventVolunteer, { isLoading: isDenyingVolunteer }] =
+    useDenyEventVolunteerMutation();
+  const [approveAllEventVolunteers, { isLoading: isApprovingAllVolunteers }] =
+    useApproveAllEventVolunteersMutation();
   const [unvolunteerFromEvent, { isLoading: isUnvolunteering }] =
     useUnvolunteerFromEventMutation();
   const [volunteerForEvent, { isLoading: isVolunteering }] =
@@ -109,6 +125,14 @@ export const EventCard = ({
   const [showPassConfirmDialog, setShowPassConfirmDialog] = useState(false);
   const [showPassRejectedDialog, setShowPassRejectedDialog] = useState(false);
   const [isVolunteerListOpen, setIsVolunteerListOpen] = useState(false);
+  const [isAddVolunteerOpen, setIsAddVolunteerOpen] = useState(false);
+  const [addVolunteerSearch, setAddVolunteerSearch] = useState("");
+  const { data: addVolunteerResults = [] } = useGetSearchResultsQuery(
+    addVolunteerSearch,
+    {
+      skip: addVolunteerSearch.trim().length < 3,
+    }
+  );
 
   const handleAvatarClick = (userId: string) => {
     navigate(`${PROFILE_ROUTE}/${userId}`);
@@ -183,6 +207,60 @@ export const EventCard = ({
     }
   };
 
+  const handleNoShowEvent = async (targetUserId: string) => {
+    try {
+      await markNoShowForEvent({
+        eventId: event.id,
+        userId: targetUserId,
+      }).unwrap();
+    } catch (error) {
+      console.error("Error marking volunteer as no show", error);
+    }
+  };
+
+  const handleAddVolunteer = async (targetUserId: string) => {
+    try {
+      await addEventVolunteer({
+        eventId: event.id,
+        userId: targetUserId,
+      }).unwrap();
+      setAddVolunteerSearch("");
+      setIsAddVolunteerOpen(false);
+    } catch (error) {
+      console.error("Error adding volunteer to event", error);
+    }
+  };
+
+  const handleApproveVolunteer = async (targetUserId: string) => {
+    try {
+      await approveEventVolunteer({
+        eventId: event.id,
+        userId: targetUserId,
+      }).unwrap();
+    } catch (error) {
+      console.error("Error approving volunteer impact", error);
+    }
+  };
+
+  const handleDenyVolunteer = async (targetUserId: string) => {
+    try {
+      await denyEventVolunteer({
+        eventId: event.id,
+        userId: targetUserId,
+      }).unwrap();
+    } catch (error) {
+      console.error("Error denying volunteer impact", error);
+    }
+  };
+
+  const handleApproveAllVolunteers = async () => {
+    try {
+      await approveAllEventVolunteers(event.id).unwrap();
+    } catch (error) {
+      console.error("Error approving all volunteer impacts", error);
+    }
+  };
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(eventShareUrl);
   };
@@ -252,7 +330,14 @@ export const EventCard = ({
   const isPastEvent =
     hasEventEnded !== undefined ? hasEventEnded : eventDateTime < todayTime;
   const isVolunteerLocked = hasVolunteered || isVolunteering;
-  const isCheckInLocked = isCheckingIn || isCheckingOut;
+  const isCheckInLocked =
+    isCheckingIn ||
+    isCheckingOut ||
+    isMarkingNoShow ||
+    isAddingVolunteer ||
+    isApprovingVolunteer ||
+    isDenyingVolunteer ||
+    isApprovingAllVolunteers;
   const isSignedUpCard = Boolean(isSignedUp);
   const canSelectVolunteers = currentUserType === "nonprofit";
   const checkedInVolunteerCount =
@@ -287,6 +372,23 @@ export const EventCard = ({
       .filter((signup) => signup.user.id !== event.eventCoordinator?.id)
       .map((signup) => ({ ...signup, isCoordinator: false })),
   ];
+  const volunteerUserIds = new Set(volunteerRows.map((signup) => signup.user.id));
+  const addableVolunteerResults = addVolunteerResults.filter(
+    (result) =>
+      result.userType === "individual" && !volunteerUserIds.has(result.id)
+  );
+  const hasApprovableVolunteers =
+    canManageVolunteerCheckIns &&
+    isPastEvent &&
+    volunteerRows.some(
+      (signup) =>
+        signup.user.userType !== "organization" &&
+        signup.user.userType !== "nonprofit" &&
+        Boolean(signup.checkInAt) &&
+        signup.status !== "approved" &&
+        signup.status !== "denied" &&
+        signup.status !== "no_show"
+    );
   const currentUserCheckedIn = Boolean(currentUserSignup?.checkInAt);
   const currentUserCheckedOut = Boolean(currentUserSignup?.checkOutAt);
   const showCurrentEventPassAction =
@@ -548,6 +650,72 @@ export const EventCard = ({
       )}
       {canExpandVolunteers && isVolunteerListOpen && (
         <div className={styles.eventVolunteerList}>
+          {canManageVolunteerCheckIns && (
+            <div className={styles.eventVolunteerAdminToolbar}>
+              <div className={styles.eventVolunteerSearchWrap}>
+                <CustomSvgs
+                  svgPath="/svgs/common/searchIcon.svg"
+                  variant="small"
+                  altText=""
+                />
+                <input
+                  type="search"
+                  placeholder="Search"
+                  value={addVolunteerSearch}
+                  onFocus={() => setIsAddVolunteerOpen(true)}
+                  onChange={(event) => {
+                    setAddVolunteerSearch(event.target.value);
+                    setIsAddVolunteerOpen(true);
+                  }}
+                />
+              </div>
+              <div className={styles.eventVolunteerAdminActions}>
+                <button
+                  type="button"
+                  className={styles.eventVolunteerAddButton}
+                  onClick={() => setIsAddVolunteerOpen((isOpen) => !isOpen)}
+                >
+                  Add Volunteer
+                </button>
+                <button
+                  type="button"
+                  className={styles.eventVolunteerApproveAllButton}
+                  onClick={handleApproveAllVolunteers}
+                  disabled={isCheckInLocked || !hasApprovableVolunteers}
+                >
+                  Approve All
+                </button>
+              </div>
+            </div>
+          )}
+          {canManageVolunteerCheckIns &&
+            isAddVolunteerOpen &&
+            addVolunteerSearch.trim().length >= 3 && (
+            <div className={styles.eventVolunteerAddPanel}>
+              {addableVolunteerResults.map((result) => {
+                const resultName =
+                  result.fullName ||
+                  `${result.firstName ?? ""} ${result.lastName ?? ""}`.trim();
+
+                return (
+                  <button
+                    type="button"
+                    key={result.id}
+                    onClick={() => handleAddVolunteer(result.id)}
+                    disabled={isCheckInLocked}
+                  >
+                    <span>{resultName}</span>
+                    <strong>Add</strong>
+                  </button>
+                );
+              })}
+              {addableVolunteerResults.length === 0 && (
+                <p className={styles.eventVolunteerNoSearchResults}>
+                  No volunteers found.
+                </p>
+              )}
+            </div>
+          )}
           {volunteerRows.map((signup) => {
             const volunteerName =
               signup.user.fullName ||
@@ -555,8 +723,7 @@ export const EventCard = ({
               signup.user.nonprofitName ||
               `${signup.user.firstName ?? ""} ${signup.user.lastName ?? ""}`.trim();
             const isCurrentVolunteer = signup.user.id === currentUserId;
-            const hasSignupRecord =
-              !signup.id.startsWith("coordinator-");
+            const hasSignupRecord = !signup.id.startsWith("coordinator-");
             const isCheckableUser =
               signup.user.userType !== "organization" &&
               signup.user.userType !== "nonprofit";
@@ -564,7 +731,16 @@ export const EventCard = ({
               signup.user.id === event.eventCoordinator?.id;
             const isCheckedIn = Boolean(signup.checkInAt);
             const isCheckedOut = Boolean(signup.checkOutAt);
-            const checkStatusText = isCheckedOut
+            const isNoShow = signup.status === "no_show";
+            const isApproved = signup.status === "approved";
+            const isDenied = signup.status === "denied";
+            const checkStatusText = isNoShow
+              ? "No Show"
+              : isApproved
+              ? "Approved"
+              : isDenied
+              ? "Denied"
+              : isCheckedOut
               ? "Checked Out"
               : isCheckedIn
               ? "Checked In"
@@ -585,6 +761,31 @@ export const EventCard = ({
               !isPastEvent &&
               !isCheckedOut &&
               isWithinEventTime;
+            const canShowAdminPostEventCheckOut =
+              canManageVolunteerCheckIns &&
+              isCheckableUser &&
+              isPastEvent &&
+              isCheckedIn &&
+              !isCheckedOut &&
+              !isApproved &&
+              !isDenied &&
+              !isNoShow;
+            const canShowNoShowAction =
+              canManageVolunteerCheckIns &&
+              isCheckableUser &&
+              (hasSignupRecord || isVolunteerCoordinator) &&
+              isPastEvent &&
+              !isCheckedIn &&
+              !isNoShow &&
+              !isDenied;
+            const canShowApprovalActions =
+              canManageVolunteerCheckIns &&
+              isCheckableUser &&
+              isPastEvent &&
+              isCheckedIn &&
+              !isApproved &&
+              !isDenied &&
+              !isNoShow;
 
             return (
               <div className={styles.eventVolunteerRow} key={signup.id}>
@@ -632,7 +833,7 @@ export const EventCard = ({
                       </span>
                     )}
                   </div>
-                  {canShowCheckAction && (
+                  {(canShowCheckAction || canShowAdminPostEventCheckOut) && (
                     <button
                       type="button"
                       className={styles.eventVolunteerCheckInButton}
@@ -645,6 +846,36 @@ export const EventCard = ({
                     >
                       {checkButtonText}
                     </button>
+                  )}
+                  {canShowNoShowAction && (
+                    <button
+                      type="button"
+                      className={styles.eventVolunteerNoShowButton}
+                      onClick={() => handleNoShowEvent(signup.user.id)}
+                      disabled={isCheckInLocked}
+                    >
+                      No Show
+                    </button>
+                  )}
+                  {canShowApprovalActions && (
+                    <div className={styles.eventVolunteerApprovalActions}>
+                      <button
+                        type="button"
+                        className={styles.eventVolunteerApproveButton}
+                        onClick={() => handleApproveVolunteer(signup.user.id)}
+                        disabled={isCheckInLocked}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.eventVolunteerDenyButton}
+                        onClick={() => handleDenyVolunteer(signup.user.id)}
+                        disabled={isCheckInLocked}
+                      >
+                        Deny
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
