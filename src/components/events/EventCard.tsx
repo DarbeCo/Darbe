@@ -163,17 +163,21 @@ export const EventCard = ({
     }
   };
 
-  const handleCheckInEvent = async () => {
+  const handleCheckInEvent = async (targetUserId?: string) => {
     try {
-      await checkInForEvent(event.id).unwrap();
+      await checkInForEvent(
+        targetUserId ? { eventId: event.id, userId: targetUserId } : event.id
+      ).unwrap();
     } catch (error) {
       console.error("Error checking into event", error);
     }
   };
 
-  const handleCheckOutEvent = async () => {
+  const handleCheckOutEvent = async (targetUserId?: string) => {
     try {
-      await checkOutFromEvent(event.id).unwrap();
+      await checkOutFromEvent(
+        targetUserId ? { eventId: event.id, userId: targetUserId } : event.id
+      ).unwrap();
     } catch (error) {
       console.error("Error checking out of event", error);
     }
@@ -241,6 +245,10 @@ export const EventCard = ({
     variant === "match" ? "Volunteers" : "Signed Up"
   }`;
   const isEventPoster = currentUserId === event.eventOwner.id;
+  const isEventCoordinator = currentUserId === event.eventCoordinator?.id;
+  const canManageVolunteerCheckIns =
+    (currentUserType === "organization" || currentUserType === "nonprofit") &&
+    (isEventPoster || isEventCoordinator);
   const isPastEvent =
     hasEventEnded !== undefined ? hasEventEnded : eventDateTime < todayTime;
   const isVolunteerLocked = hasVolunteered || isVolunteering;
@@ -490,14 +498,14 @@ export const EventCard = ({
               ) : showCurrentEventCheckInAction ? (
                 <DarbeButton
                   buttonText="Check In"
-                  onClick={handleCheckInEvent}
+                  onClick={() => handleCheckInEvent()}
                   darbeButtonType="nextButton"
                   isDisabled={isCheckingIn}
                 />
               ) : showCurrentEventCheckOutAction ? (
                 <DarbeButton
                   buttonText="Check Out"
-                  onClick={handleCheckOutEvent}
+                  onClick={() => handleCheckOutEvent()}
                   darbeButtonType="checkoutButton"
                   isDisabled={isCheckInLocked}
                 />
@@ -547,6 +555,13 @@ export const EventCard = ({
               signup.user.nonprofitName ||
               `${signup.user.firstName ?? ""} ${signup.user.lastName ?? ""}`.trim();
             const isCurrentVolunteer = signup.user.id === currentUserId;
+            const hasSignupRecord =
+              !signup.id.startsWith("coordinator-");
+            const isCheckableUser =
+              signup.user.userType !== "organization" &&
+              signup.user.userType !== "nonprofit";
+            const isVolunteerCoordinator =
+              signup.user.id === event.eventCoordinator?.id;
             const isCheckedIn = Boolean(signup.checkInAt);
             const isCheckedOut = Boolean(signup.checkOutAt);
             const checkStatusText = isCheckedOut
@@ -563,10 +578,13 @@ export const EventCard = ({
                 : "";
             const checkButtonText = isCheckedIn ? "Check Out" : "Check In";
             const canShowCheckAction =
-              isCurrentVolunteer &&
+              (isCurrentVolunteer || canManageVolunteerCheckIns) &&
+              isCheckableUser &&
+              (hasSignupRecord ||
+                (canManageVolunteerCheckIns && isVolunteerCoordinator)) &&
               !isPastEvent &&
               !isCheckedOut &&
-              (isCheckedIn || isWithinEventTime);
+              isWithinEventTime;
 
             return (
               <div className={styles.eventVolunteerRow} key={signup.id}>
@@ -618,7 +636,11 @@ export const EventCard = ({
                     <button
                       type="button"
                       className={styles.eventVolunteerCheckInButton}
-                      onClick={isCheckedIn ? handleCheckOutEvent : handleCheckInEvent}
+                      onClick={() =>
+                        isCheckedIn
+                          ? handleCheckOutEvent(signup.user.id)
+                          : handleCheckInEvent(signup.user.id)
+                      }
                       disabled={isCheckInLocked}
                     >
                       {checkButtonText}

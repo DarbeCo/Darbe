@@ -662,65 +662,48 @@ export const passOnEvent = async (eventId: string): Promise<void> => {
   await incrementImpact(userId, { events_passed: 1 });
 };
 
-export const checkInForEvent = async (eventId: string): Promise<void> => {
+type EventSignupAction = {
+  eventId: string;
+  userId?: string;
+};
+
+const normalizeEventSignupAction = (
+  action: string | EventSignupAction
+): Required<EventSignupAction> => ({
+  eventId: typeof action === "string" ? action : action.eventId,
+  userId: typeof action === "string" ? "" : action.userId ?? "",
+});
+
+export const checkInForEvent = async (
+  action: string | EventSignupAction
+): Promise<void> => {
   const userId = await ensureUserId();
-  const checkedInAt = new Date().toISOString();
+  const { eventId, userId: targetUserIdFromAction } =
+    normalizeEventSignupAction(action);
+  const targetUserId = targetUserIdFromAction || userId;
 
-  const { data: existingSignup, error: existingError } = await supabase
-    .from("event_signups")
-    .select("id, status, check_in_at")
-    .eq("event_id", eventId)
-    .eq("user_id", userId)
-    .in("status", ["volunteered", "confirmed"])
-    .maybeSingle();
-
-  if (existingError) throw existingError;
-
-  if (!existingSignup) {
-    throw new Error("You must volunteer for this event before checking in");
-  }
-
-  if (existingSignup.check_in_at) {
-    return;
-  }
-
-  const { error } = await supabase
-    .from("event_signups")
-    .update({
-      status: "confirmed",
-      check_in_at: checkedInAt,
-      event_action_timestamp: checkedInAt,
-    })
-    .eq("id", existingSignup.id);
+  const { error } = await supabase.rpc("manage_event_signup_check_time", {
+    target_event_id: eventId,
+    target_user_id: targetUserId,
+    check_action: "check_in",
+  });
 
   if (error) throw error;
 };
 
-export const checkOutFromEvent = async (eventId: string): Promise<void> => {
+export const checkOutFromEvent = async (
+  action: string | EventSignupAction
+): Promise<void> => {
   const userId = await ensureUserId();
-  const checkedOutAt = new Date().toISOString();
+  const { eventId, userId: targetUserIdFromAction } =
+    normalizeEventSignupAction(action);
+  const targetUserId = targetUserIdFromAction || userId;
 
-  const { data: existingSignup, error: existingError } = await supabase
-    .from("event_signups")
-    .select("id, check_in_at, check_out_at")
-    .eq("event_id", eventId)
-    .eq("user_id", userId)
-    .eq("status", "confirmed")
-    .maybeSingle();
-
-  if (existingError) throw existingError;
-
-  if (!existingSignup?.check_in_at || existingSignup.check_out_at) {
-    return;
-  }
-
-  const { error } = await supabase
-    .from("event_signups")
-    .update({
-      check_out_at: checkedOutAt,
-      event_action_timestamp: checkedOutAt,
-    })
-    .eq("id", existingSignup.id);
+  const { error } = await supabase.rpc("manage_event_signup_check_time", {
+    target_event_id: eventId,
+    target_user_id: targetUserId,
+    check_action: "check_out",
+  });
 
   if (error) throw error;
 };

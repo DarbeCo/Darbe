@@ -21,6 +21,11 @@ import {
   volunteerForEvent,
 } from "../../../darbeService";
 
+type EventSignupAction = {
+  eventId: string;
+  userId?: string;
+};
+
 const eventsApi = darbeBaseApi.injectEndpoints({
   endpoints: (builder) => ({
     getEvents: builder.query<ShortEventState[], void>({
@@ -120,10 +125,10 @@ const eventsApi = darbeBaseApi.injectEndpoints({
       },
       invalidatesTags: ["Events"],
     }),
-    checkInForEvent: builder.mutation<void, string>({
-      async queryFn(eventId) {
+    checkInForEvent: builder.mutation<void, string | EventSignupAction>({
+      async queryFn(action) {
         try {
-          await checkInForEvent(eventId);
+          await checkInForEvent(action);
           return { data: undefined };
         } catch (error) {
           return {
@@ -136,10 +141,10 @@ const eventsApi = darbeBaseApi.injectEndpoints({
       },
       invalidatesTags: ["Events"],
     }),
-    checkOutFromEvent: builder.mutation<void, string>({
-      async queryFn(eventId) {
+    checkOutFromEvent: builder.mutation<void, string | EventSignupAction>({
+      async queryFn(action) {
         try {
-          await checkOutFromEvent(eventId);
+          await checkOutFromEvent(action);
           return { data: undefined };
         } catch (error) {
           return {

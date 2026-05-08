@@ -1109,6 +1109,14 @@ export interface Database {
           date_sent: string;
         }[];
       };
+      manage_event_signup_check_time: {
+        Args: {
+          target_event_id: string;
+          target_user_id: string;
+          check_action: string;
+        };
+        Returns: undefined;
+      };
     };
     Enums: {};
     CompositeTypes: {};
