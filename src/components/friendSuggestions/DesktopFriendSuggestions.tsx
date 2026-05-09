@@ -8,9 +8,11 @@ import { Typography } from "../typography/Typography";
 import styles from "./styles/friendSuggestions.module.css";
 import { useCallback, useMemo, useRef, useState } from "react";
 
+const INITIAL_VISIBLE_SUGGESTIONS = 4;
+const SUGGESTIONS_INCREMENT = 4;
+
 export interface DesktopFriendSuggestionsProps {
   suggestedFriends?: SuggestedFriendState[];
-  handleFriendSuggestionRefresh: (newIdsToFilterOn: string[]) => void
 }
 
 const FriendSuggestion = ({ 
@@ -61,11 +63,11 @@ const FriendSuggestion = ({
 
 export const DesktopFriendSuggestions = ({
   suggestedFriends,
-  handleFriendSuggestionRefresh
 }: DesktopFriendSuggestionsProps) => {
 
 
   const [sendFriendRequest] = useSendFriendRequestMutation();
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_SUGGESTIONS);
   const [requestingIds, setRequestingIds] = useState<Record<string, boolean>>(
     {}
   );
@@ -96,8 +98,15 @@ export const DesktopFriendSuggestions = ({
 
   const suggestions = useMemo(() => {
     if (!suggestedFriends) return []
-    return suggestedFriends.slice(0, 4)
-  }, [suggestedFriends])
+    return suggestedFriends.slice(0, visibleCount)
+  }, [suggestedFriends, visibleCount])
+
+  const hasMoreSuggestions =
+    Boolean(suggestedFriends) && suggestions.length < (suggestedFriends?.length ?? 0);
+
+  const handleShowMore = () => {
+    setVisibleCount((currentCount) => currentCount + SUGGESTIONS_INCREMENT);
+  };
 
   return (
     <Card className={styles.desktopFriendSuggestionsCard}>
@@ -108,24 +117,24 @@ export const DesktopFriendSuggestions = ({
       <CardContent className={styles.friendSuggestionsCard} >
         {showSuggestedFriends ? (
           <>
-            {suggestions.map((suggestedFriend, index) => {
-              const isRequesting = !!requestingIds[suggestedFriend.id];
-              return (
-                  <FriendSuggestion 
-                    key={`${suggestedFriend.id}_${index}`}
-                    suggestedFriend={suggestedFriend}
-                    handleSendFriendRequest={handleSendFriendRequest}
-                    isRequesting={isRequesting}
-                  />
-              );
-            })}
-            {suggestedFriends && suggestedFriends.length > 4 && (
+            <div className={styles.friendSuggestionsList}>
+              {suggestions.map((suggestedFriend) => {
+                const isRequesting = !!requestingIds[suggestedFriend.id];
+                return (
+                    <FriendSuggestion
+                      key={suggestedFriend.id}
+                      suggestedFriend={suggestedFriend}
+                      handleSendFriendRequest={handleSendFriendRequest}
+                      isRequesting={isRequesting}
+                    />
+                );
+              })}
+            </div>
+            {hasMoreSuggestions && (
               <button
                 type="button"
                 className={styles.friendSuggestionsShowMore}
-                onClick={() =>
-                  handleFriendSuggestionRefresh(suggestions.map((el) => el.id))
-                }
+                onClick={handleShowMore}
               >
                 Show more
               </button>

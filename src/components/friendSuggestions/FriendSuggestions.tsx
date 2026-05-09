@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   useGetFriendRequestsQuery,
   useGetSentFriendRequestsQuery,
@@ -9,8 +9,6 @@ import { DesktopFriendSuggestions } from "./DesktopFriendSuggestions";
 
 export const FriendSuggestions = () => {
   const { isDesktop } = useScreenWidthHook();
-
-  const [filterIds, setFilterIds] = useState<string[]>([]);
 
   const { data: friendRequests = [] } = useGetFriendRequestsQuery();
   const { data: pendingRequests = [] } = useGetSentFriendRequestsQuery();
@@ -28,10 +26,9 @@ export const FriendSuggestions = () => {
 
   const combinedFilterIds = useMemo(() => {
     const ids = new Set<string>();
-    filterIds.forEach((id) => ids.add(id));
     pendingRequestIds.forEach((id) => ids.add(id));
     return Array.from(ids);
-  }, [filterIds, pendingRequestIds]);
+  }, [pendingRequestIds]);
 
   const pendingRequestIdSet = useMemo(
     () => new Set(pendingRequestIds),
@@ -49,21 +46,12 @@ export const FriendSuggestions = () => {
     );
   }, [pendingRequestIdSet, suggestedFriends]);
 
-  const handleFriendSuggestionRefresh = useCallback(
-    (newIdsToFilterOn: string[]) => {
-      setFilterIds((prev) => [...prev, ...newIdsToFilterOn]);
-    },
-    []
-  );
-
-
   // TODO: Combine these, pretty much copy past unless we have some wild changes
   return (
     <>
       {isDesktop && (
         <DesktopFriendSuggestions
           suggestedFriends={filteredSuggestedFriends}
-          handleFriendSuggestionRefresh={handleFriendSuggestionRefresh}
         />
       )}
     </>

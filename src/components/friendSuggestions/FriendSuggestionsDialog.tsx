@@ -1,6 +1,6 @@
 import { AddCircleTwoTone } from "@mui/icons-material";
 import { Avatar, CircularProgress } from "@mui/material";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { SuggestedFriendState } from "../../features/friends/types";
@@ -15,6 +15,7 @@ import {
 import styles from "./styles/friendSuggestions.module.css";
 
 const VISIBLE_SUGGESTIONS_COUNT = 4;
+const SUGGESTIONS_INCREMENT = 4;
 
 const getSuggestionName = (suggestedFriend: SuggestedFriendState) =>
   suggestedFriend.fullName?.length > 0
@@ -23,7 +24,9 @@ const getSuggestionName = (suggestedFriend: SuggestedFriendState) =>
 
 export const FriendSuggestionsDialog = () => {
   const navigate = useNavigate();
-  const [filterIds, setFilterIds] = useState<string[]>([]);
+  const [visibleSuggestions, setVisibleSuggestions] = useState<
+    SuggestedFriendState[]
+  >([]);
   const [requestingIds, setRequestingIds] = useState<Record<string, boolean>>(
     {}
   );
@@ -45,10 +48,9 @@ export const FriendSuggestionsDialog = () => {
 
   const combinedFilterIds = useMemo(() => {
     const ids = new Set<string>();
-    filterIds.forEach((id) => ids.add(id));
     pendingRequestIds.forEach((id) => ids.add(id));
     return Array.from(ids);
-  }, [filterIds, pendingRequestIds]);
+  }, [pendingRequestIds]);
 
   const pendingRequestIdSet = useMemo(
     () => new Set(pendingRequestIds),
@@ -66,9 +68,28 @@ export const FriendSuggestionsDialog = () => {
     );
   }, [pendingRequestIdSet, suggestedFriends]);
 
-  const visibleSuggestions = filteredSuggestedFriends.slice(
-    0,
-    VISIBLE_SUGGESTIONS_COUNT
+  useEffect(() => {
+    setVisibleSuggestions((currentSuggestions) => {
+      const availableSuggestionIds = new Set(
+        filteredSuggestedFriends.map((suggestedFriend) => suggestedFriend.id)
+      );
+      const keptSuggestions = currentSuggestions.filter((suggestedFriend) =>
+        availableSuggestionIds.has(suggestedFriend.id)
+      );
+
+      if (keptSuggestions.length) {
+        return keptSuggestions;
+      }
+
+      return filteredSuggestedFriends.slice(0, VISIBLE_SUGGESTIONS_COUNT);
+    });
+  }, [filteredSuggestedFriends]);
+
+  const hasMoreSuggestions = filteredSuggestedFriends.some(
+    (suggestedFriend) =>
+      !visibleSuggestions.some(
+        (visibleSuggestion) => visibleSuggestion.id === suggestedFriend.id
+      )
   );
 
   const handleSendFriendRequest = useCallback(
@@ -80,7 +101,11 @@ export const FriendSuggestionsDialog = () => {
 
       try {
         await sendFriendRequest(suggestedFriendId).unwrap();
-        setFilterIds((prev) => [...prev, suggestedFriendId]);
+        setVisibleSuggestions((currentSuggestions) =>
+          currentSuggestions.filter(
+            (suggestedFriend) => suggestedFriend.id !== suggestedFriendId
+          )
+        );
       } catch (error) {
         requestLocksRef.current.delete(suggestedFriendId);
         setRequestingIds((prev) => ({ ...prev, [suggestedFriendId]: false }));
@@ -91,10 +116,16 @@ export const FriendSuggestionsDialog = () => {
   );
 
   const handleShowMore = () => {
-    setFilterIds((prev) => [
-      ...prev,
-      ...visibleSuggestions.map((suggestion) => suggestion.id),
-    ]);
+    setVisibleSuggestions((currentSuggestions) => {
+      const visibleSuggestionIds = new Set(
+        currentSuggestions.map((suggestedFriend) => suggestedFriend.id)
+      );
+      const nextSuggestions = filteredSuggestedFriends
+        .filter((suggestedFriend) => !visibleSuggestionIds.has(suggestedFriend.id))
+        .slice(0, SUGGESTIONS_INCREMENT);
+
+      return [...currentSuggestions, ...nextSuggestions];
+    });
   };
 
   const handleProfileClick = (userId: string) => {
@@ -157,7 +188,7 @@ export const FriendSuggestionsDialog = () => {
               );
             })}
           </div>
-          {filteredSuggestedFriends.length > VISIBLE_SUGGESTIONS_COUNT && (
+          {hasMoreSuggestions && (
             <button
               type="button"
               className={styles.friendSuggestionsShowMore}
