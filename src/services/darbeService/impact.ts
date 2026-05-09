@@ -5,29 +5,38 @@ import { getShortEventsByIds } from "./events";
 
 export const getUserImpact = async (userId?: string): Promise<EventImpact[]> => {
   const currentUserId = userId ?? (await ensureUserId());
-  const { data: signups, error } = await supabase
-    .from("event_signups")
-    .select("id, event_id, status")
-    .eq("user_id", currentUserId)
-    .eq("status", "approved");
+  const { data: impactRows, error } = await supabase
+    .from("impact")
+    .select("id, event_id, hours_volunteered")
+    .eq("impact_owner_id", currentUserId)
+    .not("event_id", "is", null)
+    .gt("events_attended", 0)
+    .order("updated_at", { ascending: false });
 
   if (error) throw error;
 
-  const eventIds = Array.from(new Set((signups ?? []).map((row) => row.event_id)));
+  const eventIds = Array.from(
+    new Set(
+      (impactRows ?? [])
+        .map((row) => row.event_id)
+        .filter((eventId): eventId is string => Boolean(eventId))
+    )
+  );
   const events = await getShortEventsByIds(eventIds);
   const eventMap = new Map(events.map((event) => [event.id, event]));
 
-  return (signups ?? [])
-    .filter((signup) => eventMap.has(signup.event_id))
-    .map((signup) => {
-      const event = eventMap.get(signup.event_id)!;
-      const hoursVolunteered =
-        event.endTime !== undefined ? Math.max(event.endTime - event.startTime, 0) : 0;
+  return (impactRows ?? [])
+    .filter((impact) => {
+      if (!impact.event_id) return false;
+      return eventMap.has(impact.event_id);
+    })
+    .map((impact) => {
+      const event = eventMap.get(impact.event_id as string)!;
 
       return {
-        id: signup.id,
+        id: impact.id,
         impactType: "individual" as const,
-        hoursVolunteered,
+        hoursVolunteered: Number(impact.hours_volunteered ?? 0),
         volunteerValue: 0,
         event,
       };

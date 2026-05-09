@@ -45,6 +45,10 @@ interface Signups  {
   eventActionTimeStamp: string;
   checkInAt?: string;
   checkOutAt?: string;
+  volunteerStartTime?: string;
+  volunteerEndTime?: string;
+  volunteerLocation?: string;
+  volunteerImpact?: string;
 } 
 
 export interface SimpleEventState {

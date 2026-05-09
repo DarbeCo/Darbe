@@ -59,6 +59,7 @@ export {
   getVolunteerMatches,
   passOnEvent,
   unvolunteerFromEvent,
+  updateEventSignupImpactDetails,
   volunteerForEvent,
 } from "./events";
 export {

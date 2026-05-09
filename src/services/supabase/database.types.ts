@@ -851,6 +851,10 @@ export interface Database {
           event_action_timestamp: string;
           check_in_at: string | null;
           check_out_at: string | null;
+          volunteer_start_time: string | null;
+          volunteer_end_time: string | null;
+          volunteer_location: string | null;
+          volunteer_impact: string | null;
           created_at: string;
         };
         Insert: {
@@ -861,6 +865,10 @@ export interface Database {
           event_action_timestamp?: string;
           check_in_at?: string | null;
           check_out_at?: string | null;
+          volunteer_start_time?: string | null;
+          volunteer_end_time?: string | null;
+          volunteer_location?: string | null;
+          volunteer_impact?: string | null;
           created_at?: string;
         };
         Update: {
@@ -871,6 +879,10 @@ export interface Database {
           event_action_timestamp?: string;
           check_in_at?: string | null;
           check_out_at?: string | null;
+          volunteer_start_time?: string | null;
+          volunteer_end_time?: string | null;
+          volunteer_location?: string | null;
+          volunteer_impact?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -1088,6 +1100,10 @@ export interface Database {
           event_action_timestamp: string;
           check_in_at: string | null;
           check_out_at: string | null;
+          volunteer_start_time: string | null;
+          volunteer_end_time: string | null;
+          volunteer_location: string | null;
+          volunteer_impact: string | null;
           full_name: string | null;
           first_name: string | null;
           last_name: string | null;
@@ -1119,6 +1135,16 @@ export interface Database {
       };
       approve_all_event_volunteers: {
         Args: { target_event_id: string };
+        Returns: undefined;
+      };
+      update_event_signup_impact_details: {
+        Args: {
+          target_signup_id: string;
+          volunteer_start_time_value: string;
+          volunteer_end_time_value: string;
+          volunteer_location_value: string;
+          volunteer_impact_value: string;
+        };
         Returns: undefined;
       };
     };

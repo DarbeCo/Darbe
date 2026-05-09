@@ -24,7 +24,7 @@ const mapMessageRow = (row: {
   dateSent: row.date_sent,
 });
 
-const getThreadIdWithUser = async (friendId: string): Promise<string | null> => {
+const getThreadIdsWithUser = async (friendId: string): Promise<string[]> => {
   const userId = await ensureUserId();
   const { data: myThreads, error } = await supabase
     .from("message_thread_participants")
@@ -34,7 +34,7 @@ const getThreadIdWithUser = async (friendId: string): Promise<string | null> => 
   if (error) throw error;
 
   const threadIds = (myThreads ?? []).map((row) => row.thread_id);
-  if (!threadIds.length) return null;
+  if (!threadIds.length) return [];
 
   const { data: shared, error: sharedError } = await supabase
     .from("message_thread_participants")
@@ -44,7 +44,7 @@ const getThreadIdWithUser = async (friendId: string): Promise<string | null> => 
 
   if (sharedError) throw sharedError;
 
-  return shared?.[0]?.thread_id ?? null;
+  return Array.from(new Set((shared ?? []).map((row) => row.thread_id)));
 };
 
 export const getMessages = async (): Promise<MessageThreadsState[]> => {
@@ -98,15 +98,46 @@ export const getMessages = async (): Promise<MessageThreadsState[]> => {
     messagesByThread.set(row.thread_id, list);
   });
 
-  return threadIds.map((threadId) => {
+  const mergedThreadsByFriend = new Map<string, MessageThreadsState>();
+
+  threadIds.forEach((threadId) => {
+    const participants = participantsByThread.get(threadId) ?? [];
+    const friend = participants.find((participant) => participant.id !== userId);
+
+    if (!friend) {
+      return;
+    }
+
     const messages = messagesByThread.get(threadId) ?? [];
-    const lastMessage = messages.length ? messages[messages.length - 1] : null;
-    return {
-      id: threadId,
+    const existingThread = mergedThreadsByFriend.get(friend.id);
+    const mergedMessages = [...(existingThread?.messages ?? []), ...messages].sort(
+      (firstMessage, secondMessage) =>
+        new Date(firstMessage.dateSent).getTime() -
+        new Date(secondMessage.dateSent).getTime()
+    );
+    const lastMessage = mergedMessages.length
+      ? mergedMessages[mergedMessages.length - 1]
+      : null;
+
+    mergedThreadsByFriend.set(friend.id, {
+      id: existingThread?.id ?? threadId,
       lastMessage,
-      messages,
-      participants: participantsByThread.get(threadId) ?? [],
-    };
+      messages: mergedMessages,
+      participants: existingThread?.participants.length
+        ? existingThread.participants
+        : participants,
+    });
+  });
+
+  return Array.from(mergedThreadsByFriend.values()).sort((firstThread, secondThread) => {
+    const firstTime = firstThread.lastMessage
+      ? new Date(firstThread.lastMessage.dateSent).getTime()
+      : 0;
+    const secondTime = secondThread.lastMessage
+      ? new Date(secondThread.lastMessage.dateSent).getTime()
+      : 0;
+
+    return secondTime - firstTime;
   });
 };
 
@@ -144,9 +175,9 @@ export const getMessageThread = async (
   params: GetMessageThreadParams
 ): Promise<SingleMessageThreadState> => {
   const friendId = params.friendId;
-  const threadId = await getThreadIdWithUser(friendId);
+  const threadIds = await getThreadIdsWithUser(friendId);
 
-  if (!threadId) {
+  if (!threadIds.length) {
     return { id: "", messages: [], participants: [] };
   }
 
@@ -154,23 +185,25 @@ export const getMessageThread = async (
     supabase
       .from("message_thread_participants")
       .select("user_id")
-      .eq("thread_id", threadId),
+      .in("thread_id", threadIds),
     supabase
       .from("messages")
       .select("sender_id, receiver_id, message, is_read, date_sent")
-      .eq("thread_id", threadId)
+      .in("thread_id", threadIds)
       .order("date_sent", { ascending: true }),
   ]);
 
   if (participantsRes.error) throw participantsRes.error;
   if (messagesRes.error) throw messagesRes.error;
 
-  const participantIds = (participantsRes.data ?? []).map((row) => row.user_id);
+  const participantIds = Array.from(
+    new Set((participantsRes.data ?? []).map((row) => row.user_id))
+  );
   const profiles = await getProfilesByIds(participantIds);
   const participants = profiles.map(mapProfileToSimpleUserInfo);
   const messages = (messagesRes.data ?? []).map(mapMessageRow);
 
-  return { id: threadId, messages, participants };
+  return { id: threadIds[0], messages, participants };
 };
 
 export const deleteMessagesThread = async (threadId: string): Promise<void> => {

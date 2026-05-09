@@ -255,6 +255,10 @@ const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> 
       eventActionTimeStamp: string;
       checkInAt?: string;
       checkOutAt?: string;
+      volunteerStartTime?: string;
+      volunteerEndTime?: string;
+      volunteerLocation?: string;
+      volunteerImpact?: string;
     }[]
   >();
 
@@ -277,6 +281,10 @@ const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> 
       eventActionTimeStamp: signup.event_action_timestamp,
       checkInAt: signup.check_in_at ?? undefined,
       checkOutAt: signup.check_out_at ?? undefined,
+      volunteerStartTime: signup.volunteer_start_time ?? undefined,
+      volunteerEndTime: signup.volunteer_end_time ?? undefined,
+      volunteerLocation: signup.volunteer_location ?? undefined,
+      volunteerImpact: signup.volunteer_impact ?? undefined,
     });
     signupsByEvent.set(signup.event_id, eventSignups);
   });
@@ -334,6 +342,7 @@ const incrementImpact = async (
       "id, events_created, events_attended, events_passed, events_coordinated, hours_volunteered, user_type"
     )
     .eq("impact_owner_id", userId)
+    .is("event_id", null)
     .maybeSingle();
 
   if (existingError) throw existingError;
@@ -350,6 +359,7 @@ const incrementImpact = async (
     const { error } = await supabase.from("impact").insert({
       impact_owner_id: userId,
       user_type: profile.user_type,
+      event_id: null,
       events_created: fields.events_created ?? 0,
       events_attended: fields.events_attended ?? 0,
       events_passed: fields.events_passed ?? 0,
@@ -792,6 +802,32 @@ export const approveAllEventVolunteers = async (
   if (error) throw error;
 };
 
+export type EventSignupImpactDetails = {
+  signupId: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  impact: string;
+};
+
+export const updateEventSignupImpactDetails = async ({
+  signupId,
+  startTime,
+  endTime,
+  location,
+  impact,
+}: EventSignupImpactDetails): Promise<void> => {
+  const { error } = await supabase.rpc("update_event_signup_impact_details", {
+    target_signup_id: signupId,
+    volunteer_start_time_value: startTime,
+    volunteer_end_time_value: endTime,
+    volunteer_location_value: location,
+    volunteer_impact_value: impact,
+  });
+
+  if (error) throw error;
+};
+
 export const unvolunteerFromEvent = async (eventId: string): Promise<void> => {
   const userId = await ensureUserId();
 
@@ -977,7 +1013,8 @@ export const getVolunteerMatches = async (): Promise<VolunteerMatch[]> => {
     supabase
       .from("impact")
       .select("impact_owner_id, hours_volunteered, events_attended")
-      .in("impact_owner_id", profileIds),
+      .in("impact_owner_id", profileIds)
+      .is("event_id", null),
     supabase
       .from("causes")
       .select("id, name, description, image_url, active")

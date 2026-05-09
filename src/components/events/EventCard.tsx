@@ -35,6 +35,7 @@ import {
   useDenyEventVolunteerMutation,
   useMarkNoShowForEventMutation,
   useUnvolunteerFromEventMutation,
+  useUpdateEventSignupImpactDetailsMutation,
   useVolunteerForEventMutation,
 } from "../../services/api/endpoints/events/events.api";
 import { useGetSearchResultsQuery } from "../../services/api/endpoints/search/search.api";
@@ -79,6 +80,34 @@ const formatCheckTimestamp = (timestamp?: string) => {
   });
 };
 
+const formatEventTimeRangeValue = (time?: number) =>
+  time !== undefined ? formatDarbeTimeToString(time) : "--";
+
+const formatVolunteerActionTime = (timestamp?: string) => {
+  if (!timestamp) {
+    return "";
+  }
+
+  const date = new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+};
+
+type ImpactEditState = {
+  signupId: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  impact: string;
+};
+
 export const EventCard = ({
   event,
   isSignedUp,
@@ -116,6 +145,8 @@ export const EventCard = ({
     useDenyEventVolunteerMutation();
   const [approveAllEventVolunteers, { isLoading: isApprovingAllVolunteers }] =
     useApproveAllEventVolunteersMutation();
+  const [updateImpactDetails, { isLoading: isUpdatingImpactDetails }] =
+    useUpdateEventSignupImpactDetailsMutation();
   const [unvolunteerFromEvent, { isLoading: isUnvolunteering }] =
     useUnvolunteerFromEventMutation();
   const [volunteerForEvent, { isLoading: isVolunteering }] =
@@ -127,6 +158,12 @@ export const EventCard = ({
   const [isVolunteerListOpen, setIsVolunteerListOpen] = useState(false);
   const [isAddVolunteerOpen, setIsAddVolunteerOpen] = useState(false);
   const [addVolunteerSearch, setAddVolunteerSearch] = useState("");
+  const [impactEditState, setImpactEditState] =
+    useState<ImpactEditState | null>(null);
+  const [impactEditError, setImpactEditError] = useState("");
+  const [impactDetailOverrides, setImpactDetailOverrides] = useState<
+    Record<string, Omit<ImpactEditState, "signupId">>
+  >({});
   const { data: addVolunteerResults = [] } = useGetSearchResultsQuery(
     addVolunteerSearch,
     {
@@ -261,6 +298,30 @@ export const EventCard = ({
     }
   };
 
+  const handleSaveImpactDetails = async () => {
+    if (!impactEditState) {
+      return;
+    }
+
+    try {
+      setImpactEditError("");
+      await updateImpactDetails(impactEditState).unwrap();
+      setImpactDetailOverrides((currentOverrides) => ({
+        ...currentOverrides,
+        [impactEditState.signupId]: {
+          startTime: impactEditState.startTime,
+          endTime: impactEditState.endTime,
+          location: impactEditState.location,
+          impact: impactEditState.impact,
+        },
+      }));
+      setImpactEditState(null);
+    } catch (error) {
+      console.error("Error updating volunteer impact details", error);
+      setImpactEditError("Unable to save impact details.");
+    }
+  };
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(eventShareUrl);
   };
@@ -337,7 +398,8 @@ export const EventCard = ({
     isAddingVolunteer ||
     isApprovingVolunteer ||
     isDenyingVolunteer ||
-    isApprovingAllVolunteers;
+    isApprovingAllVolunteers ||
+    isUpdatingImpactDetails;
   const isSignedUpCard = Boolean(isSignedUp);
   const canSelectVolunteers = currentUserType === "nonprofit";
   const checkedInVolunteerCount =
@@ -352,7 +414,9 @@ export const EventCard = ({
     event.eventCoordinator && event.eventCoordinator.id
       ? [
           {
-            id: `coordinator-${event.eventCoordinator.id}`,
+            id:
+              coordinatorVolunteerSignup?.id ??
+              `coordinator-${event.eventCoordinator.id}`,
             user: event.eventCoordinator,
             eventId: event.id,
             status:
@@ -385,6 +449,7 @@ export const EventCard = ({
         signup.user.userType !== "organization" &&
         signup.user.userType !== "nonprofit" &&
         Boolean(signup.checkInAt) &&
+        Boolean(signup.checkOutAt) &&
         signup.status !== "approved" &&
         signup.status !== "denied" &&
         signup.status !== "no_show"
@@ -783,56 +848,115 @@ export const EventCard = ({
               isCheckableUser &&
               isPastEvent &&
               isCheckedIn &&
+              isCheckedOut &&
               !isApproved &&
               !isDenied &&
               !isNoShow;
+            const showApprovalCandidateLayout =
+              canShowApprovalActions || isApproved || isDenied;
+            const impactDetailOverride = impactDetailOverrides[signup.id];
+            const candidateStartTime =
+              impactDetailOverride?.startTime ||
+              signup.volunteerStartTime ||
+              formatVolunteerActionTime(signup.checkInAt) ||
+              formatEventTimeRangeValue(event.startTime);
+            const candidateEndTime =
+              impactDetailOverride?.endTime ||
+              signup.volunteerEndTime ||
+              formatVolunteerActionTime(signup.checkOutAt) ||
+              formatEventTimeRangeValue(event.endTime);
+            const candidateLocation =
+              impactDetailOverride?.location ||
+              signup.volunteerLocation ||
+              event.eventAddress.locationName ||
+              locationText;
+            const candidateImpact =
+              impactDetailOverride?.impact ||
+              signup.volunteerImpact ||
+              eventImpactText ||
+              "--";
 
             return (
-              <div className={styles.eventVolunteerRow} key={signup.id}>
-                <div className={styles.eventVolunteerInfo}>
-                  <button
-                    type="button"
-                    className={styles.eventVolunteerAvatarButton}
-                    onClick={() => handleAvatarClick(signup.user.id)}
-                    aria-label={`Open ${volunteerName} profile`}
-                  >
-                    <img
-                      className={styles.eventVolunteerAvatar}
-                      src={
-                        signup.user.profilePicture ||
-                        assetUrl("/images/defaultProfilePicture.jpg")
-                      }
-                      alt=""
-                    />
-                  </button>
-                  <div className={styles.eventVolunteerText}>
+              <div
+                className={`${styles.eventVolunteerRow} ${
+                  showApprovalCandidateLayout
+                    ? styles.eventVolunteerApprovalRow
+                    : ""
+                }`.trim()}
+                key={signup.id}
+              >
+                <div className={styles.eventVolunteerMain}>
+                  <div className={styles.eventVolunteerInfo}>
                     <button
                       type="button"
+                      className={styles.eventVolunteerAvatarButton}
                       onClick={() => handleAvatarClick(signup.user.id)}
+                      aria-label={`Open ${volunteerName} profile`}
                     >
-                      {volunteerName}
+                      <img
+                        className={styles.eventVolunteerAvatar}
+                        src={
+                          signup.user.profilePicture ||
+                          assetUrl("/images/defaultProfilePicture.jpg")
+                        }
+                        alt=""
+                      />
                     </button>
-                    <span>
-                      {signup.isCoordinator
-                        ? "Volunteer Coordinator"
-                        : signup.user.jobTitle}
-                    </span>
+                    <div className={styles.eventVolunteerText}>
+                      <button
+                        type="button"
+                        onClick={() => handleAvatarClick(signup.user.id)}
+                      >
+                        {volunteerName}
+                      </button>
+                      <span>
+                        {signup.isCoordinator
+                          ? "Volunteer Coordinator"
+                          : signup.user.jobTitle}
+                      </span>
+                    </div>
                   </div>
+                  {showApprovalCandidateLayout && (
+                    <div className={styles.eventVolunteerCandidateDetails}>
+                      <span>
+                        <strong>Start Time:</strong>{" "}
+                        {candidateStartTime}
+                      </span>
+                      <span>
+                        <strong>Location:</strong>{" "}
+                        {candidateLocation}
+                      </span>
+                      <span>
+                        <strong>End Time:</strong>{" "}
+                        {candidateEndTime}
+                      </span>
+                      <span>
+                        <strong>Impact:</strong> {candidateImpact}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className={styles.eventVolunteerCheckIn}>
-                  <div className={styles.eventVolunteerCheckStatus}>
-                    <strong>{checkStatusText}</strong>
-                    {checkedOutTimeText && (
-                      <span className={styles.eventVolunteerCheckTime}>
-                        {checkedOutTimeText}
-                      </span>
-                    )}
-                    {checkedInTimeText && (
-                      <span className={styles.eventVolunteerCheckTime}>
-                        {checkedInTimeText}
-                      </span>
-                    )}
-                  </div>
+                  {!showApprovalCandidateLayout && (
+                    <div className={styles.eventVolunteerCheckStatus}>
+                      <strong>{checkStatusText}</strong>
+                      {checkedOutTimeText && (
+                        <span className={styles.eventVolunteerCheckTime}>
+                          {checkedOutTimeText}
+                        </span>
+                      )}
+                      {checkedInTimeText && (
+                        <span className={styles.eventVolunteerCheckTime}>
+                          {checkedInTimeText}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {showApprovalCandidateLayout && !canShowApprovalActions && (
+                    <div className={styles.eventVolunteerCheckStatus}>
+                      <strong>{checkStatusText}</strong>
+                    </div>
+                  )}
                   {(canShowCheckAction || canShowAdminPostEventCheckOut) && (
                     <button
                       type="button"
@@ -876,6 +1000,29 @@ export const EventCard = ({
                         Deny
                       </button>
                     </div>
+                  )}
+                  {canShowApprovalActions && (
+                    <button
+                      type="button"
+                      className={styles.eventVolunteerApprovalMark}
+                      onClick={() => {
+                        setImpactEditState({
+                          signupId: signup.id,
+                          startTime: candidateStartTime,
+                          endTime: candidateEndTime,
+                          location: candidateLocation,
+                          impact: candidateImpact,
+                        });
+                        setImpactEditError("");
+                      }}
+                      aria-label={`Edit ${volunteerName} impact details`}
+                    >
+                      <CustomSvgs
+                        svgPath="/svgs/common/editProfileIcon.svg"
+                        variant="small"
+                        altText=""
+                      />
+                    </button>
                   )}
                 </div>
               </div>
@@ -964,6 +1111,84 @@ export const EventCard = ({
               />
               <span>Event Rejected</span>
             </h2>
+          </div>
+        </div>
+      ) : null}
+      {impactEditState ? (
+        <div className={styles.eventImpactEditOverlay}>
+          <div className={styles.eventImpactEditDialog} role="dialog" aria-modal="true">
+            <label>
+              <span>Start Time:</span>
+              <input
+                value={impactEditState.startTime}
+                onChange={(event) =>
+                  setImpactEditState((currentState) =>
+                    currentState
+                      ? { ...currentState, startTime: event.target.value }
+                      : currentState
+                  )
+                }
+              />
+            </label>
+            <label>
+              <span>End Time:</span>
+              <input
+                value={impactEditState.endTime}
+                onChange={(event) =>
+                  setImpactEditState((currentState) =>
+                    currentState
+                      ? { ...currentState, endTime: event.target.value }
+                      : currentState
+                  )
+                }
+              />
+            </label>
+            <label>
+              <span>Location:</span>
+              <input
+                value={impactEditState.location}
+                onChange={(event) =>
+                  setImpactEditState((currentState) =>
+                    currentState
+                      ? { ...currentState, location: event.target.value }
+                      : currentState
+                  )
+                }
+              />
+            </label>
+            <label>
+              <span>Impact:</span>
+              <input
+                value={impactEditState.impact}
+                onChange={(event) =>
+                  setImpactEditState((currentState) =>
+                    currentState
+                      ? { ...currentState, impact: event.target.value }
+                      : currentState
+                  )
+                }
+              />
+            </label>
+            <div className={styles.eventImpactEditActions}>
+              <button
+                type="button"
+                className={styles.eventImpactEditSave}
+                onClick={handleSaveImpactDetails}
+                disabled={isUpdatingImpactDetails}
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                className={styles.eventImpactEditCancel}
+                onClick={() => setImpactEditState(null)}
+              >
+                Cancel
+              </button>
+            </div>
+            {impactEditError && (
+              <p className={styles.eventImpactEditError}>{impactEditError}</p>
+            )}
           </div>
         </div>
       ) : null}

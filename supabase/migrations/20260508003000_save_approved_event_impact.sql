@@ -14,6 +14,7 @@ declare
   target_signup record;
   target_profile record;
   target_impact record;
+  target_event_impact record;
   event_hours numeric := 0;
   action_timestamp timestamptz := now();
 begin
@@ -206,6 +207,7 @@ begin
       into target_impact
     from public.impact
     where impact_owner_id = target_user_id
+      and event_id is null
     limit 1;
 
     if found then
@@ -219,6 +221,7 @@ begin
       insert into public.impact (
         impact_owner_id,
         user_type,
+        event_id,
         events_created,
         events_attended,
         events_passed,
@@ -228,6 +231,44 @@ begin
       values (
         target_user_id,
         target_profile.user_type,
+        null,
+        0,
+        1,
+        0,
+        0,
+        event_hours
+      );
+    end if;
+
+    select id
+      into target_event_impact
+    from public.impact
+    where impact_owner_id = target_user_id
+      and event_id = target_event_id
+    limit 1;
+
+    if found then
+      update public.impact
+      set
+        events_attended = 1,
+        hours_volunteered = event_hours,
+        updated_at = action_timestamp
+      where id = target_event_impact.id;
+    else
+      insert into public.impact (
+        impact_owner_id,
+        user_type,
+        event_id,
+        events_created,
+        events_attended,
+        events_passed,
+        events_coordinated,
+        hours_volunteered
+      )
+      values (
+        target_user_id,
+        target_profile.user_type,
+        target_event_id,
         0,
         1,
         0,
@@ -253,52 +294,34 @@ begin
 end;
 $$;
 
-create or replace function public.approve_all_event_volunteers(
-  target_event_id uuid
+insert into public.impact (
+  impact_owner_id,
+  user_type,
+  event_id,
+  events_created,
+  events_attended,
+  events_passed,
+  events_coordinated,
+  hours_volunteered
 )
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  acting_user_id uuid := auth.uid();
-  managed_event record;
-  signup_record record;
-begin
-  if acting_user_id is null then
-    raise exception 'Not authenticated';
-  end if;
-
-  select event_owner_id, event_coordinator_id
-    into managed_event
-  from public.events
-  where id = target_event_id;
-
-  if not found then
-    raise exception 'Event not found';
-  end if;
-
-  if acting_user_id <> managed_event.event_owner_id
-    and acting_user_id <> managed_event.event_coordinator_id then
-    raise exception 'You do not have permission to approve this event';
-  end if;
-
-  for signup_record in
-    select signup.user_id
-    from public.event_signups signup
-    join public.profiles profile on profile.id = signup.user_id
-    where signup.event_id = target_event_id
-      and signup.status in ('confirmed', 'volunteered')
-      and signup.check_in_at is not null
-      and signup.check_out_at is not null
-      and profile.user_type not in ('organization', 'nonprofit')
-  loop
-    perform public.manage_event_signup_check_time(
-      target_event_id,
-      signup_record.user_id,
-      'approve'
-    );
-  end loop;
-end;
-$$;
+select
+  signup.user_id,
+  profile.user_type,
+  signup.event_id,
+  0,
+  1,
+  0,
+  0,
+  greatest(extract(epoch from (signup.check_out_at - signup.check_in_at)) / 3600, 0)
+from public.event_signups signup
+join public.profiles profile on profile.id = signup.user_id
+where signup.status = 'approved'
+  and signup.check_in_at is not null
+  and signup.check_out_at is not null
+  and profile.user_type not in ('organization', 'nonprofit')
+  and not exists (
+    select 1
+    from public.impact existing_impact
+    where existing_impact.impact_owner_id = signup.user_id
+      and existing_impact.event_id = signup.event_id
+  );
