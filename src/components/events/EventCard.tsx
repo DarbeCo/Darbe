@@ -108,6 +108,10 @@ type ImpactEditState = {
   impact: string;
 };
 
+type VolunteerSignupRow = ShortEventState["signups"][number] & {
+  isCoordinator: boolean;
+};
+
 export const EventCard = ({
   event,
   isSignedUp,
@@ -410,7 +414,7 @@ export const EventCard = ({
   const coordinatorVolunteerSignup = event.eventCoordinator?.id
     ? event.signups?.find((signup) => signup.user.id === event.eventCoordinator?.id)
     : undefined;
-  const coordinatorVolunteerRow =
+  const coordinatorVolunteerRow: VolunteerSignupRow[] =
     event.eventCoordinator && event.eventCoordinator.id
       ? [
           {
@@ -426,15 +430,19 @@ export const EventCard = ({
               new Date(0).toISOString(),
             checkInAt: coordinatorVolunteerSignup?.checkInAt,
             checkOutAt: coordinatorVolunteerSignup?.checkOutAt,
+            volunteerStartTime: coordinatorVolunteerSignup?.volunteerStartTime,
+            volunteerEndTime: coordinatorVolunteerSignup?.volunteerEndTime,
+            volunteerLocation: coordinatorVolunteerSignup?.volunteerLocation,
+            volunteerImpact: coordinatorVolunteerSignup?.volunteerImpact,
             isCoordinator: true,
           },
         ]
       : [];
-  const volunteerRows = [
+  const volunteerRows: VolunteerSignupRow[] = [
     ...coordinatorVolunteerRow,
     ...(event.signups ?? [])
       .filter((signup) => signup.user.id !== event.eventCoordinator?.id)
-      .map((signup) => ({ ...signup, isCoordinator: false })),
+      .map((signup): VolunteerSignupRow => ({ ...signup, isCoordinator: false })),
   ];
   const volunteerUserIds = new Set(volunteerRows.map((signup) => signup.user.id));
   const addableVolunteerResults = addVolunteerResults.filter(
