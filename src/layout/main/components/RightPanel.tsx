@@ -16,8 +16,8 @@ export const RightPanel = ({ showSuggestedFriends }: RightPanelProps) => {
         <FriendSuggestions />
       ) : (
         <div className={styles.rightPanelStats}>
-          <VolunteerRecentImpacts />
           <VolunteerCurrentMatches />
+          <VolunteerRecentImpacts />
           <VolunteerAnnualSummary />
         </div>
       )}
