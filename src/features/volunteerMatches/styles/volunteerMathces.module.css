@@ -18,9 +18,9 @@
   margin: 0;
   color: #000000;
   font-family: "Open Sans", sans-serif;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
-  line-height: 25px;
+  line-height: normal;
 }
 
 .volunteerMatchGroup {
@@ -48,9 +48,9 @@
 .volunteerCardHeader strong {
   color: #000000;
   font-family: "Open Sans", sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  line-height: 19px;
+  line-height: 18px;
 }
 
 .volunteerCardHeader button,
@@ -64,9 +64,9 @@
 }
 
 .volunteerCardHeader button {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
-  line-height: 19px;
+  line-height: 17px;
 }
 
 .volunteerProfileRow {
@@ -89,9 +89,9 @@
 }
 
 .volunteerProfileText button {
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 700;
-  line-height: 22px;
+  line-height: 18px;
   text-align: left;
 }
 
@@ -102,11 +102,11 @@
 .volunteerCausesCard li span,
 .volunteerExtraCauses {
   margin: 0;
-  color: #000000;
-  font-family: Roboto, sans-serif;
-  font-size: 14px;
+  color: #303030;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
   font-weight: 400;
-  line-height: 19px;
+  line-height: 17px;
 }
 
 .volunteerMemberSince {
@@ -136,9 +136,9 @@
   margin: 0 0 10px;
   color: #000000;
   font-family: "Open Sans", sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  line-height: 19px;
+  line-height: 18px;
 }
 
 .volunteerImpactCard dl {
@@ -157,10 +157,10 @@
 
 .volunteerImpactCard dt {
   color: #000000;
-  font-family: Roboto, sans-serif;
-  font-size: 14px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
   font-weight: 700;
-  line-height: 19px;
+  line-height: 18px;
 }
 
 .volunteerImpactCard dd {

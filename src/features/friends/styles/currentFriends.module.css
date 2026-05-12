@@ -5,8 +5,10 @@
 }
 
 .friendCardHeader {
+    font-family: "Open Sans", sans-serif;
     font-size: 20px;
     font-weight: 700;
+    line-height: normal;
     text-align: left;
     border-bottom: 1px #EAEAEA solid;
     padding: .5em 0 .5em 0 !important;
@@ -14,6 +16,7 @@
 
 .currentFriendCardContentDiv {
     display: flex;
+    align-items: center;
     justify-content: space-between;
     margin-bottom: 1em;
     border-bottom: 1px solid #D8D8D8;

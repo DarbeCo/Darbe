@@ -26,6 +26,7 @@
 }
 
 .volunteerStatsTitle {
+  font-family: "Open Sans", sans-serif;
   font-size: 20px;
   font-weight: 700;
   line-height: 30px;
@@ -63,29 +64,34 @@
 
 .currentMatchesName {
   color: #000;
-  font-size: 14px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
   font-weight: 700;
-  line-height: 20px;
+  line-height: 18px;
 }
 
 .currentMatchesSubtitle {
-  color: #4b5563;
+  color: #303030;
+  font-family: "Open Sans", sans-serif;
   font-size: 12px;
-  line-height: 16px;
+  font-weight: 400;
+  line-height: 17px;
 }
 
 .currentMatchesMeta {
   color: #2c77e7;
+  font-family: "Open Sans", sans-serif;
   font-size: 12px;
   font-weight: 700;
-  line-height: 16px;
+  line-height: 17px;
   white-space: nowrap;
 }
 
 .currentMatchesEmpty {
-  color: #4b5563;
-  font-size: 13px;
-  line-height: 18px;
+  color: #303030;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  line-height: 17px;
 }
 
 @media (min-width: 560px) and (max-width: 1260px) {

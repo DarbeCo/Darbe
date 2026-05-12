@@ -124,11 +124,11 @@
 .messagingConversationIdentity h1 {
   overflow: hidden;
   margin: 0;
-  color: #263238;
-  font-family: Roboto, sans-serif;
-  font-size: 22px;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
   font-weight: 700;
-  line-height: normal;
+  line-height: 18px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -204,11 +204,11 @@
 }
 
 .messagingTodayDivider span {
-  color: #263238;
-  font-family: Roboto, sans-serif;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
   font-size: 12px;
   font-weight: 400;
-  line-height: normal;
+  line-height: 17px;
 }
 
 .messagingMessageAvatar {
@@ -235,20 +235,21 @@
   border: 1px solid #eaeaea;
   border-radius: 4px;
   background-color: #faf9f9;
-  color: #263238;
-  font-family: Roboto, sans-serif;
-  font-size: 16px;
+  color: #303030;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
   font-weight: 400;
-  line-height: normal;
+  line-height: 18px;
   box-sizing: border-box;
   white-space: pre-wrap;
 }
 
 .messagingTime {
   color: #000000;
-  font-family: Roboto, sans-serif;
+  font-family: "Open Sans", sans-serif;
   font-size: 12px;
-  line-height: normal;
+  font-weight: 400;
+  line-height: 17px;
 }
 
 .messagingMessageImage {
@@ -279,8 +280,10 @@
   background: transparent;
   color: #2c77e7;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 17px;
 }
 
 .messagingComposer {
@@ -307,11 +310,11 @@
   padding: 4px 8px;
   border: 1px solid #263238;
   border-radius: 0;
-  color: #263238;
+  color: #303030;
   background-color: #ffffff;
-  font-family: Roboto, sans-serif;
-  font-size: 16px;
-  line-height: normal;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  line-height: 18px;
   resize: none;
   box-sizing: border-box;
   overflow-y: hidden;
@@ -330,8 +333,9 @@
   color: #2c77e7;
   cursor: pointer;
   font-family: "Open Sans", sans-serif;
-  font-size: 16px;
-  font-weight: 400;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 17px;
 }
 
 .messagingSendButton:not(:disabled) {
@@ -359,10 +363,11 @@
 
 .messagingThreadHeader h2 {
   margin: 0;
-  color: #263238;
+  color: #000000;
   font-family: "Open Sans", sans-serif;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
+  line-height: normal;
 }
 
 .messagingSearchRow {
@@ -405,8 +410,10 @@
 .messagingSearchInput {
   width: 100%;
   min-width: 0;
-  color: #263238;
+  color: #303030;
+  font-family: "Open Sans", sans-serif;
   font-size: 12px;
+  line-height: 17px;
 }
 
 .messagingThreads {
@@ -445,10 +452,11 @@
 }
 
 .messagingFriendPickerHeader strong {
-  color: #263238;
+  color: #000000;
   font-family: "Open Sans", sans-serif;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 700;
+  line-height: 18px;
 }
 
 .messagingFriendPickerHeader button {
@@ -458,8 +466,9 @@
   color: #2c77e7;
   cursor: pointer;
   font-family: "Open Sans", sans-serif;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 17px;
 }
 
 .messagingFriendPickerSearch {
@@ -537,30 +546,32 @@
 .messagingThreadTop strong {
   overflow: hidden;
   color: #000000;
-  font-family: Roboto, sans-serif;
-  font-size: 16px;
-  font-weight: 400;
-  line-height: normal;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .messagingThreadTop span {
   flex: 0 0 auto;
-  color: #717070;
-  font-family: Roboto, sans-serif;
-  font-size: 16px;
-  line-height: normal;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 17px;
 }
 
 .messagingThreadText p {
   display: -webkit-box;
   overflow: hidden;
   margin: 0;
-  color: #000000;
-  font-family: Roboto, sans-serif;
-  font-size: 16px;
-  line-height: normal;
+  color: #303030;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 17px;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
@@ -572,7 +583,9 @@
   justify-content: center;
   min-height: 160px;
   color: #717070;
-  font-size: 16px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  line-height: 17px;
 }
 
 .messagingEmptyConversation {
@@ -627,7 +640,7 @@
   }
 
   .messagingConversationIdentity h1 {
-    font-size: 20px;
+    font-size: 13px;
   }
 
   .messagingThreadHeader {
