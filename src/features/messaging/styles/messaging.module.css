@@ -230,7 +230,6 @@
 
 .messagingBubble {
   width: 376px;
-  min-height: 110px;
   padding: 8px;
   border: 1px solid #eaeaea;
   border-radius: 4px;
@@ -431,7 +430,7 @@
   gap: 16px;
   align-items: flex-start;
   width: 100%;
-  min-height: 112px;
+  min-height: 83px;
   padding: 20px 20px 16px 24px;
   border: 0;
   border-bottom: 1px solid #eaeaea;
