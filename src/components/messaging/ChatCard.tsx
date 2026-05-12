@@ -1,7 +1,11 @@
 import { MessageTime } from "../../utils/CommonDateFormats";
 import { UserAvatars } from "../avatars/UserAvatars";
 import { Typography } from "../typography/Typography";
-import { getImageMessageSrc, isImageMessage } from "./messageUtils";
+import {
+  getImageMessageSrc,
+  getMessageText,
+  isImageMessage,
+} from "./messageUtils";
 
 import styles from "./styles/messaging.module.css";
 
@@ -26,23 +30,28 @@ export const ChatCard = ({
     ? styles.myMessageChatFormat
     : styles.friendMessageChatFormat;
   const isPhotoMessage = isImageMessage(message);
+  const messageText = getMessageText(message);
+  const imageSrc = getImageMessageSrc(message);
 
   return (
     <div className={myMessageClass}>
-      <UserAvatars userId={userId} profilePicture={profilePicture} />
+      {!isMyMessage && (
+        <UserAvatars userId={userId} profilePicture={profilePicture} />
+      )}
       <div className={chatMessageFormatting}>
         <div className={styles.chatContent}>
-          {isPhotoMessage ? (
-            <img
-              src={getImageMessageSrc(message)}
-              alt="Message attachment"
-              className={styles.chatMessageImage}
-            />
-          ) : (
+          {messageText && (
             <Typography
               variant="text"
-              textToDisplay={message}
+              textToDisplay={messageText}
               extraClass="ChatCardText"
+            />
+          )}
+          {isPhotoMessage && imageSrc && (
+            <img
+              src={imageSrc}
+              alt="Message attachment"
+              className={styles.chatMessageImage}
             />
           )}
         </div>

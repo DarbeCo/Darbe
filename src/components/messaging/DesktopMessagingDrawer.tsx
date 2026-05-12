@@ -28,8 +28,10 @@ import { assetUrl } from "../../utils/assetUrl";
 import { Typography } from "../typography/Typography";
 import { convertFileToBase64 } from "../../utils/CommonFunctions";
 import {
+  combineImageAndTextMessages,
   createImageMessagePayload,
   getImageMessageSrc,
+  getMessageText,
   getMessagePreviewText,
   isImageMessage,
 } from "./messageUtils";
@@ -87,19 +89,12 @@ const MessageThreadPopup = ({
     }
 
     try {
-      if (nextMessage) {
-        await sendMessage({
-          receiverId: thread.friendId,
-          message: nextMessage,
-        }).unwrap();
-      }
-
-      if (selectedImage) {
-        await sendMessage({
-          receiverId: thread.friendId,
-          message: createImageMessagePayload(selectedImage),
-        }).unwrap();
-      }
+      await sendMessage({
+        receiverId: thread.friendId,
+        message: selectedImage
+          ? createImageMessagePayload(selectedImage, nextMessage)
+          : nextMessage,
+      }).unwrap();
 
       setDraftMessage("");
       setSelectedImage("");
@@ -150,10 +145,12 @@ const MessageThreadPopup = ({
             <CircularProgress size={22} />
           </div>
         )}
-        {messageThread?.messages?.map((message, index) => {
+        {combineImageAndTextMessages(messageThread?.messages ?? []).map((message, index) => {
           const isMine = message.senderId === currentUserId;
           const timeSent = MessageTime(new Date(message.dateSent));
           const isPhotoMessage = isImageMessage(message.message);
+          const messageText = getMessageText(message.message);
+          const imageSrc = getImageMessageSrc(message.message);
           return (
             <div
               key={`${message.dateSent}-${index}`}
@@ -175,14 +172,13 @@ const MessageThreadPopup = ({
                   isMine ? styles.outgoingMessageBubble : styles.incomingMessageBubble
                 }
               >
-                {isPhotoMessage ? (
+                {messageText && <span>{messageText}</span>}
+                {isPhotoMessage && imageSrc && (
                   <img
-                    src={getImageMessageSrc(message.message)}
+                    src={imageSrc}
                     alt="Message attachment"
                     className={styles.chatImage}
                   />
-                ) : (
-                  <span>{message.message}</span>
                 )}
                 <small>{timeSent}</small>
               </div>
@@ -352,22 +348,18 @@ export const DesktopMessagingDrawer = () => {
         const unreadCount = thread.messages.filter(
           (message) => message.senderId === participant.id && !message.isRead
         ).length;
-        const lastMessage =
-          thread.lastMessage?.message ||
-          thread.messages[thread.messages.length - 1]?.message ||
-          "No messages yet";
-        const dateSent =
-          thread.lastMessage?.dateSent ||
-          thread.messages[thread.messages.length - 1]?.dateSent ||
-          "";
+        const combinedMessages = combineImageAndTextMessages(thread.messages);
+        const lastMessage = combinedMessages.length
+          ? combinedMessages[combinedMessages.length - 1]
+          : thread.lastMessage;
 
         summaries.push({
           id: thread.id,
           friendId: participant.id,
           fullName: getDisplayName(participant),
           profilePicture: participant.profilePicture,
-          lastMessage,
-          dateSent,
+          lastMessage: lastMessage?.message || "No messages yet",
+          dateSent: lastMessage?.dateSent || "",
           unreadCount,
         });
       });

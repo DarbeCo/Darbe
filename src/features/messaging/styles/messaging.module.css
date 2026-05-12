@@ -229,6 +229,9 @@
 }
 
 .messagingBubble {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   width: 376px;
   padding: 8px;
   border: 1px solid #eaeaea;

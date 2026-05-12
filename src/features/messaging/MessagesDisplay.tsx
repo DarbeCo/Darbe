@@ -3,6 +3,7 @@ import { CircularProgress } from "@mui/material";
 import { useGetMessageThreadQuery } from "../../services/api/endpoints/messages/messages.api";
 import { MessagingInput } from "../../components/messaging/MessagingInput";
 import { ChatCard } from "../../components/messaging/ChatCard";
+import { combineImageAndTextMessages } from "../../components/messaging/messageUtils";
 
 import styles from "./styles/messaging.module.css";
 
@@ -41,7 +42,7 @@ export const MessagesDisplay = ({
     <>
       <div className={styles.messageThread}>
         {isLoading && <CircularProgress />}
-        {messages?.map((message, idx) => {
+        {combineImageAndTextMessages(messages ?? []).map((message, idx) => {
           const userToDisplay = participants.find(
             (participant) => participant.id !== message.receiverId
           );

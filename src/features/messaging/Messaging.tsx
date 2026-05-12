@@ -28,8 +28,10 @@ import { MessageDate, MessageTime } from "../../utils/CommonDateFormats";
 import { assetUrl } from "../../utils/assetUrl";
 import { convertFileToBase64 } from "../../utils/CommonFunctions";
 import {
+  combineImageAndTextMessages,
   createImageMessagePayload,
   getImageMessageSrc,
+  getMessageText,
   getMessagePreviewText,
   isImageMessage,
 } from "../../components/messaging/messageUtils";
@@ -91,9 +93,11 @@ const buildThreadSummary = (
     return null;
   }
 
+  const combinedMessages = combineImageAndTextMessages(thread.messages);
   const lastMessage =
-    thread.lastMessage ||
-    (thread.messages.length ? thread.messages[thread.messages.length - 1] : null);
+    combinedMessages.length
+      ? combinedMessages[combinedMessages.length - 1]
+      : thread.lastMessage;
 
   return {
     id: thread.id,
@@ -275,19 +279,12 @@ export const Messaging = () => {
     }
 
     try {
-      if (text) {
-        await sendMessage({
-          receiverId: selectedThread.friendId,
-          message: text,
-        }).unwrap();
-      }
-
-      if (selectedImage) {
-        await sendMessage({
-          receiverId: selectedThread.friendId,
-          message: createImageMessagePayload(selectedImage),
-        }).unwrap();
-      }
+      await sendMessage({
+        receiverId: selectedThread.friendId,
+        message: selectedImage
+          ? createImageMessagePayload(selectedImage, text)
+          : text,
+      }).unwrap();
 
       setDraftMessage("");
       setSelectedImage("");
@@ -336,7 +333,8 @@ export const Messaging = () => {
   };
 
   const renderDateDivider = (message: MessageState, index: number) => {
-    const previousMessage = messageThread?.messages[index - 1];
+    const messages = combineImageAndTextMessages(messageThread?.messages ?? []);
+    const previousMessage = messages[index - 1];
 
     return (
       !previousMessage ||
@@ -350,6 +348,8 @@ export const Messaging = () => {
   const renderMessage = (message: MessageState, index: number) => {
     const isMine = message.senderId === currentUserId;
     const isPhoto = isImageMessage(message.message);
+    const messageText = getMessageText(message.message);
+    const imageSrc = getImageMessageSrc(message.message);
 
     return (
       <div key={`${message.dateSent}-${index}`}>
@@ -376,14 +376,13 @@ export const Messaging = () => {
           )}
           <div className={styles.messagingBubbleArea}>
             <div className={styles.messagingBubble}>
-              {isPhoto ? (
+              {messageText && <span>{messageText}</span>}
+              {isPhoto && imageSrc && (
                 <img
-                  src={getImageMessageSrc(message.message)}
+                  src={imageSrc}
                   alt="Message attachment"
                   className={styles.messagingMessageImage}
                 />
-              ) : (
-                message.message
               )}
             </div>
             <span className={styles.messagingTime}>
@@ -470,7 +469,9 @@ export const Messaging = () => {
                   <CircularProgress size={24} />
                 </div>
               )}
-              {messageThread?.messages.map(renderMessage)}
+              {combineImageAndTextMessages(
+                messageThread?.messages ?? []
+              ).map(renderMessage)}
             </div>
             {selectedImage && (
               <div className={styles.messagingAttachmentPreview}>
