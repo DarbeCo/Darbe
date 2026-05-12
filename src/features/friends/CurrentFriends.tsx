@@ -5,7 +5,11 @@ import { skipToken } from "@reduxjs/toolkit/query";
 import styles from './styles/currentFriends.module.css'
 import { UserState } from "../users/userSlice";
 import CurrentFriendsCard from "./CurrentFriendsCard";
+import { ProfileFriendState } from "./types";
 
+const getFriendName = (friend: ProfileFriendState) =>
+    friend.fullName ||
+    `${friend.firstName ?? ""} ${friend.lastName ?? ""}`.trim();
 
 const CurrentFriends = ({ user }: { user: UserState | null}) => {
 
@@ -14,12 +18,23 @@ const CurrentFriends = ({ user }: { user: UserState | null}) => {
     } = useGetFriendsQuery(user ? user.id : skipToken)
 
     const friendsLength = useMemo(() => friends.length, [friends])
+    const sortedFriends = useMemo(
+        () =>
+            [...friends].sort((firstFriend, secondFriend) =>
+                getFriendName(firstFriend).localeCompare(
+                    getFriendName(secondFriend),
+                    undefined,
+                    { sensitivity: "base" }
+                )
+            ),
+        [friends]
+    )
 
     return (
         <div>
             <CardHeader title={`${friendsLength} Friends`} className={styles.friendCardHeader}/>
             <CardContent  className={styles.currentFriendCardContent}>
-                {friends.map((el, idx) => (
+                {sortedFriends.map((el, idx) => (
                     <CurrentFriendsCard key={`${el.id}_${idx}_${el.zip}`}  friend={el}/>
                 ))}
             </CardContent>

@@ -3,13 +3,29 @@ import { useGetFriendRequestsQuery } from "../../services/api/endpoints/friends/
 import { useMemo } from "react";
 import FriendsCard from "./FriendCard";
 import styles from "./styles/friendRequests.module.css";
+import { FriendRequestState } from "./types";
+
+const getRequesterName = (request: FriendRequestState) =>
+  request.requesterId.fullName ||
+  `${request.requesterId.firstName ?? ""} ${
+    request.requesterId.lastName ?? ""
+  }`.trim();
 
 export const FriendRequests = () => {
   const { data: friendRequests = [], isLoading: friendRequestsLoading } =
     useGetFriendRequestsQuery();
 
   const allFriendRequests = useMemo(
-    () => (!friendRequestsLoading ? friendRequests : []),
+    () =>
+      !friendRequestsLoading
+        ? [...friendRequests].sort((firstRequest, secondRequest) =>
+            getRequesterName(firstRequest).localeCompare(
+              getRequesterName(secondRequest),
+              undefined,
+              { sensitivity: "base" }
+            )
+          )
+        : [],
     [friendRequests, friendRequestsLoading]
   );
 

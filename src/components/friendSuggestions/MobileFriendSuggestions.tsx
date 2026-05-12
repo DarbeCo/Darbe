@@ -7,13 +7,18 @@ import { SuggestedFriendState } from "../../features/friends/types";
 import { UserAvatars } from "../avatars/UserAvatars";
 import { Typography } from "../typography/Typography";
 import { PROFILE_ROUTE } from "../../routes/route.constants";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import styles from "./styles/friendSuggestions.module.css";
 
 interface MobileFriendSuggestionsProps {
   suggestedFriends?: SuggestedFriendState[];
 }
+
+const getSuggestionName = (suggestedFriend: SuggestedFriendState) =>
+  suggestedFriend.fullName?.length > 0
+    ? suggestedFriend.fullName
+    : suggestedFriend.firstName;
 
 export const MobileFriendSuggestions = ({
   suggestedFriends,
@@ -25,6 +30,17 @@ export const MobileFriendSuggestions = ({
     {}
   );
   const requestLocksRef = useRef(new Set<string>());
+  const sortedSuggestedFriends = useMemo(
+    () =>
+      [...(suggestedFriends ?? [])].sort((firstSuggestion, secondSuggestion) =>
+        getSuggestionName(firstSuggestion).localeCompare(
+          getSuggestionName(secondSuggestion),
+          undefined,
+          { sensitivity: "base" }
+        )
+      ),
+    [suggestedFriends]
+  );
 
   const handleSendFriendRequest = async (suggestedFriendId: string) => {
     if (requestLocksRef.current.has(suggestedFriendId)) return;
@@ -55,11 +71,8 @@ export const MobileFriendSuggestions = ({
         />
         {showSuggestedFriends ? (
           <>
-            {suggestedFriends.map((suggestedFriend) => {
-              const nameToUse =
-                suggestedFriend.fullName?.length > 0
-                  ? suggestedFriend.fullName
-                  : suggestedFriend.firstName;
+            {sortedSuggestedFriends.map((suggestedFriend) => {
+              const nameToUse = getSuggestionName(suggestedFriend);
 
               return (
                 <div

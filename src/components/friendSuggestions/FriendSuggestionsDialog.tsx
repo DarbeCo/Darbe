@@ -63,9 +63,17 @@ export const FriendSuggestionsDialog = () => {
 
   const filteredSuggestedFriends = useMemo(() => {
     if (!suggestedFriends) return [];
-    return suggestedFriends.filter(
-      (suggestedFriend) => !pendingRequestIdSet.has(suggestedFriend.id)
-    );
+    return suggestedFriends
+      .filter(
+        (suggestedFriend) => !pendingRequestIdSet.has(suggestedFriend.id)
+      )
+      .sort((firstSuggestion, secondSuggestion) =>
+        getSuggestionName(firstSuggestion).localeCompare(
+          getSuggestionName(secondSuggestion),
+          undefined,
+          { sensitivity: "base" }
+        )
+      );
   }, [pendingRequestIdSet, suggestedFriends]);
 
   useEffect(() => {

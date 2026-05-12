@@ -15,6 +15,20 @@ export interface DesktopFriendSuggestionsProps {
   suggestedFriends?: SuggestedFriendState[];
 }
 
+const getSuggestionName = (suggestedFriend: SuggestedFriendState) =>
+  suggestedFriend.fullName?.length > 0
+    ? suggestedFriend.fullName
+    : suggestedFriend.firstName;
+
+const sortSuggestionsByName = (suggestions: SuggestedFriendState[]) =>
+  [...suggestions].sort((firstSuggestion, secondSuggestion) =>
+    getSuggestionName(firstSuggestion).localeCompare(
+      getSuggestionName(secondSuggestion),
+      undefined,
+      { sensitivity: "base" }
+    )
+  );
+
 const FriendSuggestion = ({ 
   suggestedFriend, 
   handleSendFriendRequest,
@@ -25,10 +39,7 @@ const FriendSuggestion = ({
   isRequesting: boolean;
 }) => {
 
-  const nameToUse =
-    suggestedFriend.fullName?.length > 0
-      ? suggestedFriend.fullName
-      : suggestedFriend.firstName;
+  const nameToUse = getSuggestionName(suggestedFriend);
   return (
     <div className={styles.suggestedFriendCard} >
       <div className={styles.friendSuggestionIdentity}>
@@ -98,7 +109,7 @@ export const DesktopFriendSuggestions = ({
 
   const suggestions = useMemo(() => {
     if (!suggestedFriends) return []
-    return suggestedFriends.slice(0, visibleCount)
+    return sortSuggestionsByName(suggestedFriends).slice(0, visibleCount)
   }, [suggestedFriends, visibleCount])
 
   const hasMoreSuggestions =
