@@ -11,6 +11,7 @@ export type ProfileFriendState = {
   nonprofitName?: string;
   zip: string
   city: string
+  connectedAt?: string;
 };
 
 export type ProfileFollowState = {

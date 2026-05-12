@@ -235,16 +235,23 @@ export const getUserFollowers = async (userId: string): Promise<ProfileFollowSta
 };
 
 export const getFriends = async (userId: string): Promise<ProfileFriendState[]> => {
-  const { data, error } = await supabase.rpc("get_user_friends", {
-    target_user_id: userId,
-  });
+  const { data, error } = await supabase
+    .from("friendships")
+    .select("friend_id, created_at")
+    .eq("user_id", userId);
 
   if (error) throw error;
 
   const friendIds = uniqueIds((data ?? []).map((row) => row.friend_id));
   const friendProfiles = await getProfilesByIds(friendIds);
+  const connectedAtByFriendId = new Map(
+    (data ?? []).map((row) => [row.friend_id, row.created_at])
+  );
 
-  return friendProfiles.map(mapProfileToFriend);
+  return friendProfiles.map((profile) => ({
+    ...mapProfileToFriend(profile),
+    connectedAt: connectedAtByFriendId.get(profile.id),
+  }));
 };
 
 export const getMutualFriends = async (userId: string): Promise<ProfileFriendState[]> => {

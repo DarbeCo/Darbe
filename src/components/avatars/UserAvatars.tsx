@@ -13,9 +13,12 @@ interface UserAvatarsProps {
   nonprofitName?: string;
   variant?: "default" | "small" | "large";
   timeStamp?: string;
+  subText?: string;
   city?: string;
   zip?: string;
   onClick?: () => void;
+  className?: string;
+  infoClassName?: string;
 }
 
 /**
@@ -28,10 +31,13 @@ export const UserAvatars = ({
   organizationName,
   nonprofitName,
   timeStamp,
+  subText,
   city,
   zip,
   userId,
   onClick,
+  className,
+  infoClassName,
 }: UserAvatarsProps) => {
   const styleVariants = {
     default: styles.avatarDefault,
@@ -64,9 +70,9 @@ export const UserAvatars = ({
   }, [handleFriendClick, onClick, userId]);
 
   return (
-    <div onClick={handleClick} className={styles.avatarUserDiv}>
+    <div onClick={handleClick} className={`${styles.avatarUserDiv} ${className ?? ""}`}>
       <Avatar className={styleToUse} alt="user picture" src={profilePicture} />
-      <div className={styles.avatarUserInfo}>
+      <div className={`${styles.avatarUserInfo} ${infoClassName ?? ""}`}>
         <span className={styles.avatarUserName}>{nameToUse}</span>
         {showCity && (
           <small style={{ marginLeft: ".75em" }}>
@@ -76,6 +82,7 @@ export const UserAvatars = ({
         {timeStamp && (
           <span className={styles.avatarTimeStamp}>{timeStamp}</span>
         )}
+        {subText && <span className={styles.avatarSubText}>{subText}</span>}
       </div>
     </div>
   );

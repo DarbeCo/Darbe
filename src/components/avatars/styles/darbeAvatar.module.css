@@ -41,7 +41,8 @@
   max-width: 250px;
 }
 
-.avatarTimeStamp {
+.avatarTimeStamp,
+.avatarSubText {
   color: #000000;
   font-family: "Open Sans", sans-serif;
   font-size: 12px;
@@ -49,6 +50,10 @@
   line-height: 17px;
   text-align: left;
   padding-left: 10px;
+}
+
+.avatarSubText {
+  color: #303030;
 }
 
 .avatarUserInfo small {
