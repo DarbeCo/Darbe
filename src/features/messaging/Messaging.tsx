@@ -24,7 +24,7 @@ import {
   selectCurrentUserId,
 } from "../users/selectors";
 import { ProfileFriendState } from "../friends/types";
-import { DefaultTime } from "../../utils/CommonDateFormats";
+import { MessageDate, MessageTime } from "../../utils/CommonDateFormats";
 import { assetUrl } from "../../utils/assetUrl";
 import { convertFileToBase64 } from "../../utils/CommonFunctions";
 import {
@@ -75,14 +75,6 @@ const isSameCalendarDay = (firstDate: Date, secondDate: Date) =>
   firstDate.getFullYear() === secondDate.getFullYear() &&
   firstDate.getMonth() === secondDate.getMonth() &&
   firstDate.getDate() === secondDate.getDate();
-
-const isToday = (dateSent: string) => {
-  if (!dateSent) {
-    return false;
-  }
-
-  return isSameCalendarDay(new Date(dateSent), new Date());
-};
 
 const getOtherParticipant = (
   thread: MessageThreadsState,
@@ -343,14 +335,16 @@ export const Messaging = () => {
     setSelectedImage("");
   };
 
-  const renderTodayDivider = (message: MessageState, index: number) => {
-    if (!isToday(message.dateSent)) {
-      return false;
-    }
-
+  const renderDateDivider = (message: MessageState, index: number) => {
     const previousMessage = messageThread?.messages[index - 1];
 
-    return !previousMessage || !isToday(previousMessage.dateSent);
+    return (
+      !previousMessage ||
+      !isSameCalendarDay(
+        new Date(previousMessage.dateSent),
+        new Date(message.dateSent)
+      )
+    );
   };
 
   const renderMessage = (message: MessageState, index: number) => {
@@ -359,9 +353,9 @@ export const Messaging = () => {
 
     return (
       <div key={`${message.dateSent}-${index}`}>
-        {renderTodayDivider(message, index) && (
+        {renderDateDivider(message, index) && (
           <div className={styles.messagingTodayDivider}>
-            <span>Today</span>
+            <span>{MessageDate(new Date(message.dateSent))}</span>
           </div>
         )}
         <div
@@ -393,7 +387,7 @@ export const Messaging = () => {
               )}
             </div>
             <span className={styles.messagingTime}>
-              {DefaultTime(new Date(message.dateSent))}
+              {MessageTime(new Date(message.dateSent))}
             </span>
           </div>
         </div>

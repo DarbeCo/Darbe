@@ -23,7 +23,7 @@ import {
 } from "../../features/users/selectors";
 import { ProfileFriendState } from "../../features/friends/types";
 import { useAppSelector } from "../../services/hooks";
-import { DefaultTime } from "../../utils/CommonDateFormats";
+import { DefaultTime, MessageTime } from "../../utils/CommonDateFormats";
 import { assetUrl } from "../../utils/assetUrl";
 import { Typography } from "../typography/Typography";
 import { convertFileToBase64 } from "../../utils/CommonFunctions";
@@ -152,7 +152,7 @@ const MessageThreadPopup = ({
         )}
         {messageThread?.messages?.map((message, index) => {
           const isMine = message.senderId === currentUserId;
-          const timeSent = DefaultTime(new Date(message.dateSent));
+          const timeSent = MessageTime(new Date(message.dateSent));
           const isPhotoMessage = isImageMessage(message.message);
           return (
             <div

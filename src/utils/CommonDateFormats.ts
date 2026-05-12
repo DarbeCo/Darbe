@@ -53,3 +53,17 @@ export const DefaultTime = (date: Date): string => {
 
   return formattedDate;
 };
+
+export const MessageDate = (date: Date): string =>
+  date.toLocaleDateString("en-US", {
+    month: "long",
+    day: "2-digit",
+    year: "numeric",
+  });
+
+export const MessageTime = (date: Date): string =>
+  date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });

@@ -1,4 +1,4 @@
-import { DefaultTime } from "../../utils/CommonDateFormats";
+import { MessageTime } from "../../utils/CommonDateFormats";
 import { UserAvatars } from "../avatars/UserAvatars";
 import { Typography } from "../typography/Typography";
 import { getImageMessageSrc, isImageMessage } from "./messageUtils";
@@ -20,7 +20,7 @@ export const ChatCard = ({
   isMyMessage,
   dateSent,
 }: ChatCardProps) => {
-  const formattedDate = DefaultTime(new Date(dateSent));
+  const formattedDate = MessageTime(new Date(dateSent));
   const myMessageClass = isMyMessage ? styles.myMessage : styles.friendMessage;
   const chatMessageFormatting = isMyMessage
     ? styles.myMessageChatFormat
