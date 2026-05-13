@@ -50,7 +50,10 @@ export const OrganizationsModal = ({
   const [openDateDropdown, setOpenDateDropdown] = useState<
     keyof typeof organizationDates | undefined
   >();
-  const [activeMember, setActiveMember] = useState(false);
+  const initialActiveMember = Boolean(
+    organizationId && !editOrganizationState.endDate
+  );
+  const [activeMember, setActiveMember] = useState(initialActiveMember);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [updateUserProfile] = useUpdateUserProfileMutation();
@@ -111,7 +114,10 @@ export const OrganizationsModal = ({
       errors.startDate = "Start Date is required.";
     }
 
-    if (!organizationDates.endMonth || !organizationDates.endYear) {
+    if (
+      !activeMember &&
+      (!organizationDates.endMonth || !organizationDates.endYear)
+    ) {
       errors.endDate = "End Date is required.";
     }
 
@@ -127,7 +133,8 @@ export const OrganizationsModal = ({
     organizationDates.startMonth !== startMonth ||
     organizationDates.startYear !== startYear ||
     organizationDates.endMonth !== endMonth ||
-    organizationDates.endYear !== endYear;
+    organizationDates.endYear !== endYear ||
+    activeMember !== initialActiveMember;
 
   const hasOrganizationData = () =>
     Boolean(
@@ -150,11 +157,28 @@ export const OrganizationsModal = ({
 
     let endDate;
 
-    if (organizationDates.endMonth && organizationDates.endYear) {
+    if (!activeMember && organizationDates.endMonth && organizationDates.endYear) {
       endDate = isNaN(Date.parse(endString)) ? undefined : new Date(endString);
     }
 
     return { startDate, endDate };
+  };
+
+  const handleActiveMemberChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const isActive = event.target.checked;
+
+    setActiveMember(isActive);
+
+    if (isActive) {
+      setOrganizationDates((previousDates) => ({
+        ...previousDates,
+        endMonth: "",
+        endYear: "",
+      }));
+      setFieldErrors((previous) => ({ ...previous, endDate: "" }));
+    }
   };
 
   const handleSaveOrganization = async () => {
@@ -231,13 +255,14 @@ export const OrganizationsModal = ({
 
   useEffect(() => {
     return registerProfileEditAutosave(autosaveOrganization);
-  }, [organizationInfo, organizationDates, currentOrganizations]);
+  }, [organizationInfo, organizationDates, activeMember, currentOrganizations]);
 
   const renderDateSelect = (
     name: keyof typeof organizationDates,
     value: string | undefined,
     placeholder: string,
-    options: string[]
+    options: string[],
+    disabled = false
   ) => (
     <div
       className={`${styles.organizationCompactDropdown} ${
@@ -263,7 +288,9 @@ export const OrganizationsModal = ({
         className={`${styles.organizationCompactDropdownButton} ${
           value ? "" : styles.organizationCompactSelectEmpty
         }`}
+        disabled={disabled}
         onClick={() =>
+          !disabled &&
           setOpenDateDropdown(openDateDropdown === name ? undefined : name)
         }
         aria-haspopup="listbox"
@@ -367,20 +394,22 @@ export const OrganizationsModal = ({
         </div>
         <div className={styles.organizationCompactField}>
           <label>
-            End Date<span>*</span>
+            End Date{!activeMember && <span>*</span>}
           </label>
           <div className={styles.organizationCompactDateRow}>
             {renderDateSelect(
               "endMonth",
               organizationDates.endMonth,
               "Month",
-              months
+              months,
+              activeMember
             )}
             {renderDateSelect(
               "endYear",
               organizationDates.endYear,
               "Year",
-              years
+              years,
+              activeMember
             )}
           </div>
           {fieldErrors.endDate ? (
@@ -393,7 +422,7 @@ export const OrganizationsModal = ({
           <input
             type="checkbox"
             checked={activeMember}
-            onChange={(event) => setActiveMember(event.target.checked)}
+            onChange={handleActiveMemberChange}
           />
           <span>Active Member</span>
         </label>
