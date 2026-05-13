@@ -127,6 +127,7 @@ export const Messaging = () => {
   const [selectedImage, setSelectedImage] = useState("");
   const imageInputRef = useRef<HTMLInputElement>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
+  const messageListEndRef = useRef<HTMLDivElement>(null);
   const composerTextAreaRef = useRef<HTMLTextAreaElement>(null);
   const [sendMessage, { isLoading: isSending }] = useCreateMessageMutation();
 
@@ -270,11 +271,26 @@ export const Messaging = () => {
       }
     );
 
+  const displayedMessages = useMemo(
+    () => combineImageAndTextMessages(messageThread?.messages ?? []),
+    [messageThread?.messages]
+  );
+
+  const scrollMessagesToBottom = () => {
+    messageListEndRef.current?.scrollIntoView({ block: "end" });
+
+    const messageList = messageListRef.current;
+    if (messageList) {
+      messageList.scrollTop = messageList.scrollHeight;
+    }
+  };
+
   useEffect(() => {
-    messageListRef.current?.scrollTo({
-      top: messageListRef.current.scrollHeight,
-    });
-  }, [messageThread?.messages.length, selectedThread?.id]);
+    requestAnimationFrame(scrollMessagesToBottom);
+    const scrollTimeout = window.setTimeout(scrollMessagesToBottom, 100);
+
+    return () => window.clearTimeout(scrollTimeout);
+  }, [displayedMessages.length, selectedThread?.id]);
 
   useEffect(() => {
     const textarea = composerTextAreaRef.current;
@@ -371,8 +387,7 @@ export const Messaging = () => {
   };
 
   const renderDateDivider = (message: MessageState, index: number) => {
-    const messages = combineImageAndTextMessages(messageThread?.messages ?? []);
-    const previousMessage = messages[index - 1];
+    const previousMessage = displayedMessages[index - 1];
 
     return (
       !previousMessage ||
@@ -420,6 +435,7 @@ export const Messaging = () => {
                   src={imageSrc}
                   alt="Message attachment"
                   className={styles.messagingMessageImage}
+                  onLoad={scrollMessagesToBottom}
                 />
               )}
             </div>
@@ -507,9 +523,8 @@ export const Messaging = () => {
                   <CircularProgress size={24} />
                 </div>
               )}
-              {combineImageAndTextMessages(
-                messageThread?.messages ?? []
-              ).map(renderMessage)}
+              {displayedMessages.map(renderMessage)}
+              <div ref={messageListEndRef} />
             </div>
             {selectedImage && (
               <div className={styles.messagingAttachmentPreview}>

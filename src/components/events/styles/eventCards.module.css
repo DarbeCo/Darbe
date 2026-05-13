@@ -926,37 +926,41 @@
 @media (max-width: 699px) {
   .eventMatchPreviewCard {
     width: 100%;
-    padding: 0 16px 16px;
+    padding: 0 12px 16px;
     border-radius: 0;
     background-color: #ffffff;
+    overflow: hidden;
+    box-sizing: border-box;
   }
 
   .eventInvitationBanner {
-    margin: 0 -16px;
-    padding: 8px 16px;
+    margin: 0 -12px;
+    padding: 8px 12px;
     border-radius: 0;
     font-size: 16px;
     line-height: 22px;
   }
 
   .eventMatchPreviewCard .eventMatchBodyQuickInfo {
-    grid-template-columns: 164px minmax(0, 1fr);
-    gap: 16px;
+    grid-template-columns: minmax(112px, 38vw) minmax(0, 1fr);
+    gap: 12px;
     padding-top: 16px;
   }
 
   .eventMatchPreviewCard .eventCardCover {
-    width: 164px;
-    height: 164px;
-    aspect-ratio: auto;
+    width: 100%;
+    height: auto;
+    max-height: 164px;
+    aspect-ratio: 1;
   }
 
   .eventMatchPreviewCard .eventCardSection {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    row-gap: 0;
-    height: 164px;
+    row-gap: 8px;
+    min-height: 0;
+    height: auto;
     border: 0;
     border-radius: 0;
     overflow: visible;
@@ -973,10 +977,12 @@
   }
 
   .eventMatchPreviewCard .eventCardRowInfo span {
-    font-size: 16px;
+    min-width: 0;
+    font-size: 14px;
     font-weight: 600;
-    line-height: 22px;
-    white-space: nowrap;
+    line-height: 19px;
+    overflow-wrap: anywhere;
+    white-space: normal;
   }
 
   .eventMatchPreviewCard .eventMatchHeader {
@@ -991,7 +997,7 @@
   }
 
   .eventMatchPreviewCard .eventMatchHeaderDetails {
-    gap: 12px;
+    gap: 8px;
   }
 
   .eventMatchPreviewCard .eventMatchHeaderDetails span,
@@ -1033,7 +1039,7 @@
 
   .eventMatchPreviewCard .eventMatchFooter {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: 8px;
     padding-top: 12px;
   }
@@ -1042,7 +1048,12 @@
     width: 100%;
     min-width: 0;
     height: 36px;
-    padding: 8px 24px;
+    padding: 8px 12px;
+  }
+
+  .eventMatchActions {
+    width: 100%;
+    gap: 8px;
   }
 
   .eventShareMenu {
@@ -1071,6 +1082,17 @@
   .eventVolunteerApprovalActions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .eventVolunteerRow,
+  .eventVolunteerListFooter {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .eventVolunteerCheckStatus {
+    align-items: flex-start;
   }
 
   .eventVolunteerCandidateDetails {

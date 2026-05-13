@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useRef } from "react";
 import { CircularProgress } from "@mui/material";
 
 import { useGetMessageThreadQuery } from "../../services/api/endpoints/messages/messages.api";
@@ -18,31 +19,51 @@ export const MessagesDisplay = ({
   friendId,
   initialMessage,
 }: MessagesDisplayProps) => {
-  if (!currentUserId || !friendId) {
-    return null;
-  }
-
   const { data: messageThread, isLoading } = useGetMessageThreadQuery(
     {
-      friendId,
+      friendId: friendId || "",
     },
     {
       pollingInterval: 2500,
+      skip: !currentUserId || !friendId,
       skipPollingIfUnfocused: true,
     }
   );
 
-  if (!messageThread) {
+  const messageThreadRef = useRef<HTMLDivElement>(null);
+  const messageThreadEndRef = useRef<HTMLDivElement>(null);
+  const displayedMessages = useMemo(
+    () => combineImageAndTextMessages(messageThread?.messages ?? []),
+    [messageThread?.messages]
+  );
+
+  const scrollMessagesToBottom = () => {
+    messageThreadEndRef.current?.scrollIntoView({ block: "end" });
+
+    const messageThreadElement = messageThreadRef.current;
+    if (messageThreadElement) {
+      messageThreadElement.scrollTop = messageThreadElement.scrollHeight;
+    }
+  };
+
+  useEffect(() => {
+    requestAnimationFrame(scrollMessagesToBottom);
+    const scrollTimeout = window.setTimeout(scrollMessagesToBottom, 100);
+
+    return () => window.clearTimeout(scrollTimeout);
+  }, [displayedMessages.length, friendId]);
+
+  if (!currentUserId || !friendId || !messageThread) {
     return null;
   }
 
-  const { messages, participants } = messageThread;
+  const { participants } = messageThread;
 
   return (
     <>
-      <div className={styles.messageThread}>
+      <div className={styles.messageThread} ref={messageThreadRef}>
         {isLoading && <CircularProgress />}
-        {combineImageAndTextMessages(messages ?? []).map((message, idx) => {
+        {displayedMessages.map((message, idx) => {
           const userToDisplay = participants.find(
             (participant) => participant.id !== message.receiverId
           );
@@ -59,6 +80,7 @@ export const MessagesDisplay = ({
             />
           );
         })}
+        <div ref={messageThreadEndRef} />
       </div>
       <MessagingInput
         currentUserId={currentUserId}

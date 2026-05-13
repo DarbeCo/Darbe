@@ -37,7 +37,9 @@
   .volunteerEventsPanel {
     display: flex;
     flex-direction: column;
-    width: 100%;
+    width: min(100%, 750px);
+    margin: 0 auto;
+    padding: 0 8px 80px;
     gap: 16px;
     box-sizing: border-box;
   }
@@ -60,6 +62,7 @@
     display: flex;
     align-items: center;
     gap: 40px;
+    max-width: 100%;
     min-height: 33px;
   }
 
@@ -277,6 +280,7 @@
 
   .volunteerEventsPanel {
     width: 750px;
+    margin: 0;
     padding: 16px;
     border: 1px solid #d8d8d8;
     border-radius: 8px;
@@ -324,6 +328,11 @@
   .volunteerEventsTabs {
     gap: 24px;
     overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .volunteerEventsTabs::-webkit-scrollbar {
+    display: none;
   }
 
   .volunteerEventsTabs button {
@@ -338,8 +347,14 @@
   }
 
   .volunteerSummaryRow {
-    grid-template-columns: 48px minmax(0, 1fr) 58px;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
     gap: 8px;
+  }
+
+  .volunteerSummaryVolunteerCount {
+    font-size: 12px;
+    line-height: 17px;
+    white-space: nowrap;
   }
 
   .volunteerSummaryCoordinator {
