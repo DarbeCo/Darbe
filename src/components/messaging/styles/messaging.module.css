@@ -86,6 +86,7 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: space-between;
+  min-width: 0;
   width: 100%;
 }
 
@@ -94,6 +95,7 @@
   flex-direction: column;
   align-items: flex-end;
   justify-content: space-between;
+  min-width: 0;
   width: 100%;
 }
 
@@ -110,6 +112,8 @@
   gap: 8px;
   height: auto;
   width: fit-content;
+  max-width: min(100%, 420px);
+  min-width: 0;
   border-radius: 4px;
   background-color: #eaeaea;
   padding: 10px;
@@ -118,6 +122,17 @@
   font-size: 13px;
   font-weight: 400;
   line-height: 18px;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.chatContent span {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .messagePreview .messagePreview span {
@@ -129,7 +144,8 @@
 }
 
 .chatMessageImage {
-  max-width: 220px;
+  display: block;
+  max-width: min(100%, 220px);
   max-height: 220px;
   border-radius: 8px;
   object-fit: cover;

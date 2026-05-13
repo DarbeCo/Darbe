@@ -9,9 +9,31 @@ import {
   useGetEventsQuery,
   useGetVolunteerMatchesQuery,
 } from "../../services/api/endpoints/events/events.api";
+import { ShortEventState } from "../../services/api/endpoints/types/events.api.types";
 import { getUserStateFromZip } from "../../utils/CommonFunctions";
+import {
+  parseEventDateAsLocalDate,
+  parseEventDateTimeAsLocalDate,
+} from "../../utils/eventDateUtils";
 
 import styles from "./styles/volunteerStats.module.css";
+
+const getDateOnlyTime = (date: Date) =>
+  new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+
+const isCurrentEventMatch = (
+  event: Pick<ShortEventState, "eventDate" | "endTime">
+) => {
+  if (event.endTime !== undefined) {
+    return new Date() <= parseEventDateTimeAsLocalDate(
+      event.eventDate,
+      event.endTime
+    );
+  }
+
+  return getDateOnlyTime(parseEventDateAsLocalDate(event.eventDate)) >=
+    getDateOnlyTime(new Date());
+};
 
 export const VolunteerCurrentMatches = ({
   simpleMode,
@@ -34,7 +56,10 @@ export const VolunteerCurrentMatches = ({
     ? eventMatchesLoading
     : volunteerMatchesLoading;
   const currentMatches = isIndividual
-    ? (eventMatches ?? []).slice(0, simpleMode ? 2 : 3).map((event) => {
+    ? (eventMatches ?? [])
+        .filter(isCurrentEventMatch)
+        .slice(0, simpleMode ? 2 : 3)
+        .map((event) => {
         const state = getUserStateFromZip(event.eventAddress.zipCode)?.st;
         const location = [event.eventAddress.city, state]
           .filter(Boolean)

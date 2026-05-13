@@ -310,6 +310,7 @@
 .incomingMessageBubble,
 .outgoingMessageBubble {
   max-width: 72%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -318,6 +319,18 @@
   font-family: "Open Sans", sans-serif;
   font-size: 13px;
   line-height: 18px;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.incomingMessageBubble span,
+.outgoingMessageBubble span {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .incomingMessageBubble {
@@ -387,7 +400,8 @@
 }
 
 .chatImage {
-  max-width: 210px;
+  display: block;
+  max-width: min(100%, 210px);
   max-height: 180px;
   border-radius: 8px;
   object-fit: cover;
