@@ -221,3 +221,60 @@
     padding: 16px var(--profile-dialog-inline-padding);
   }
 }
+
+.modalContent,
+.profileModalContent,
+.modalContent button,
+.profileModalContent button,
+.modalContent input,
+.profileModalContent input,
+.modalContent textarea,
+.profileModalContent textarea,
+.modalContent select,
+.profileModalContent select {
+  font-family: "Open Sans", sans-serif;
+}
+
+.modalContent p,
+.modalContent span,
+.modalContent label,
+.modalContent li,
+.profileModalContent p,
+.profileModalContent span,
+.profileModalContent label,
+.profileModalContent li {
+  font-family: "Open Sans", sans-serif;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.modalHeaderText,
+.profileModalHeaderText {
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: normal;
+}
+
+.modalContent :global(.MuiButton-root),
+.profileModalContent :global(.MuiButton-root),
+.modalContent button,
+.profileModalContent button {
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.modalContent :global(.MuiInputBase-input),
+.profileModalContent :global(.MuiInputBase-input),
+.modalContent input,
+.profileModalContent input,
+.modalContent textarea,
+.profileModalContent textarea,
+.modalContent select,
+.profileModalContent select {
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  line-height: 18px;
+}

@@ -1,5 +1,6 @@
 import { MenuItem } from "@mui/material";
 import { splitStringndCapitalize } from "../../utils/CommonFunctions";
+import styles from "./styles/miniMenu.module.css";
 
 interface MiniMenuItemsProps {
   onClick: (route: string) => void;
@@ -8,7 +9,10 @@ interface MiniMenuItemsProps {
 
 export const MiniMenuItems = ({ onClick, routeName }: MiniMenuItemsProps) => {
   return (
-    <MenuItem onClick={() => onClick(routeName)}>
+    <MenuItem
+      className={styles.menuItem}
+      onClick={() => onClick(routeName)}
+    >
       {splitStringndCapitalize(routeName, true)}
     </MenuItem>
   );

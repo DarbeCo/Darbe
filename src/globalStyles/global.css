@@ -1,8 +1,83 @@
 /* Global properties should live here for the whole page, IE fonts, etc */
+:root {
+  --darbe-font-family: "Open Sans", sans-serif;
+  --darbe-text-color: #000000;
+  --darbe-body-color: #303030;
+  --darbe-link-color: #2c77e7;
+  --darbe-primary-font-size: 13px;
+  --darbe-primary-line-height: 18px;
+  --darbe-supporting-font-size: 12px;
+  --darbe-supporting-line-height: 17px;
+  --darbe-section-title-size: 20px;
+  --darbe-section-title-line-height: normal;
+}
+
+html {
+  font-family: var(--darbe-font-family);
+  color: var(--darbe-text-color);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 body {
   margin: 0;
-  font-family: "Open Sans", sans-serif;
-  color: #000;
+  font-family: var(--darbe-font-family);
+  color: var(--darbe-text-color);
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font-family: var(--darbe-font-family);
+}
+
+button,
+input,
+textarea,
+select,
+p,
+span,
+small,
+label,
+li,
+a,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+a,
+button.clickable {
+  color: var(--darbe-link-color);
+}
+
+.MuiTypography-root,
+.MuiButtonBase-root,
+.MuiInputBase-root,
+.MuiFormLabel-root {
+  font-family: var(--darbe-font-family) !important;
+}
+
+.MuiCardHeader-title {
+  color: var(--darbe-text-color);
+  font-size: var(--darbe-section-title-size) !important;
+  font-weight: 700 !important;
+  line-height: var(--darbe-section-title-line-height) !important;
+}
+
+.MuiCardHeader-subheader,
+.MuiInputBase-input,
+.MuiFormLabel-root {
+  font-size: var(--darbe-primary-font-size) !important;
+  line-height: var(--darbe-primary-line-height) !important;
 }
 
 .paddingLeft {

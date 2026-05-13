@@ -7,9 +7,10 @@
 }
 
 .matchesTitle {
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 22px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 18px;
   color: #000000;
   margin: 0;
 }
@@ -19,9 +20,9 @@
   margin: 0;
   color: #263238;
   font-family: "Open Sans", sans-serif;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
-  line-height: 33px;
+  line-height: normal;
 }
 
 .matchesSummaryPanel {
@@ -63,29 +64,37 @@
   background: transparent;
   border: none;
   color: #2c77e7;
-  font-size: 14px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
   font-weight: 700;
+  line-height: 17px;
   cursor: pointer;
   padding: 0;
 }
 
 .summaryCardLabel {
-  font-size: 18px;
+  color: #303030;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
   font-weight: 400;
-  color: #263238;
+  line-height: 17px;
   margin: 0;
   text-align: center;
 }
 
 .summaryCardNumber {
-  font-size: 24px;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 20px;
   font-weight: 700;
-  color: #263238;
+  line-height: normal;
 }
 
 .summaryCardDelta {
+  font-family: "Open Sans", sans-serif;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 400;
+  line-height: 17px;
   color: #088f26;
 }
 
@@ -120,9 +129,10 @@
 
 .matchesFilterTitle {
   color: #000000;
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 25px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
 }
 
 .matchesFilterControls {
@@ -145,10 +155,10 @@
   color: #717070;
   background: transparent;
   border: 0;
-  font-family: Roboto, sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 21px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 17px;
   cursor: pointer;
 }
 
@@ -210,10 +220,10 @@
   color: #202020;
   background: transparent;
   border: 0;
-  font-family: Roboto, sans-serif;
-  font-size: 16px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
   font-weight: 400;
-  line-height: 22px;
+  line-height: 17px;
   text-align: center;
   white-space: nowrap;
   cursor: pointer;
@@ -226,9 +236,10 @@
 .matchesSectionTitle {
   margin: 0;
   color: #000000;
-  font-size: 24px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 20px;
   font-weight: 700;
-  line-height: 33px;
+  line-height: normal;
 }
 
 .showAllButton {
@@ -237,9 +248,10 @@
   color: #2c77e7;
   background: transparent;
   border: 0;
-  font-size: 20px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
   font-weight: 700;
-  line-height: 27px;
+  line-height: 17px;
   cursor: pointer;
 }
 
@@ -264,9 +276,9 @@
 
   .matchesTitle {
     font-family: "Open Sans", sans-serif;
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 22px;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 18px;
   }
 
   .matchesCards {
@@ -281,7 +293,7 @@
   }
 
   .summaryCardLabel {
-    font-size: 16px;
+    font-size: 12px;
   }
 
   .summaryCardNumber {
@@ -297,8 +309,13 @@
   .matchesFilterTitle,
   .matchesFilterButton {
     font-family: "Open Sans", sans-serif;
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 400;
+  }
+
+  .matchesFilterTitle {
+    font-size: 13px;
+    font-weight: 700;
   }
 
   .matchesFilterControls {
@@ -331,8 +348,8 @@
 
   .matchesTitle {
     margin: 0;
-    font-size: 14px;
-    line-height: 19px;
+    font-size: 13px;
+    line-height: 18px;
   }
 
   .matchesCards {
@@ -364,16 +381,16 @@
     background-color: #ffffff;
     box-shadow: 0 0 8px rgba(0, 0, 0, 0.15);
     color: #000000;
-    font-family: Roboto, sans-serif;
-    font-size: 25px;
+    font-family: "Open Sans", sans-serif;
+    font-size: 20px;
   }
 
   .summaryCardLabel {
     order: 2;
     width: 76px;
     color: #000000;
-    font-family: Roboto, sans-serif;
-    font-size: 14px;
+    font-family: "Open Sans", sans-serif;
+    font-size: 12px;
     line-height: 17px;
   }
 
@@ -427,9 +444,9 @@
 
   .matchesFilterButton {
     gap: 6px;
-    font-family: Roboto, sans-serif;
-    font-size: 16px;
-    font-weight: 500;
+    font-family: "Open Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 400;
   }
 
   .matchesFilterCaret {
@@ -455,7 +472,7 @@
     width: 100%;
     padding: 18px 0;
     background-color: #ffffff;
-    font-size: 16px;
-    line-height: 22px;
+    font-size: 12px;
+    line-height: 17px;
   }
 }

@@ -1307,3 +1307,141 @@
     width: min(100%, calc(100vw - 28px));
   }
 }
+
+.modalContent,
+.organizationDialog,
+.inlineOrganizationForm,
+.inlineQualificationFrame,
+.pictureModalContent,
+.licenseDeleteDialog,
+.modalContent button,
+.organizationDialog button,
+.inlineOrganizationForm button,
+.inlineQualificationFrame button,
+.pictureModalContent button,
+.licenseDeleteDialog button,
+.modalContent input,
+.organizationDialog input,
+.inlineOrganizationForm input,
+.inlineQualificationFrame input,
+.modalContent textarea,
+.organizationDialog textarea,
+.inlineOrganizationForm textarea,
+.inlineQualificationFrame textarea,
+.modalContent select,
+.organizationDialog select,
+.inlineOrganizationForm select,
+.inlineQualificationFrame select {
+  font-family: "Open Sans", sans-serif;
+}
+
+.organizationFormHeader,
+.modalHeaderText,
+.inlineQualificationTitle,
+.pictureModalHeaderText {
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.organizationCompactField label,
+.inlineOrganizationForm .organizationCompactField label,
+.organizationDialogDateLabel,
+.licenseDeleteTitle,
+.pictureModalConfirmText,
+.pictureModalAdjustHint {
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.organizationCompactSelect,
+.organizationCompactInput,
+.organizationCompactDropdownButton,
+.organizationCompactDropdownOption,
+.inlineOrganizationForm .organizationCompactSelect,
+.inlineOrganizationForm .organizationCompactInput,
+.inlineOrganizationForm .organizationCompactDropdownButton,
+.inlineOrganizationForm .organizationCompactDropdownOption,
+.inlineOrganizationForm .modalContentDropdowns :global(.MuiSelect-select),
+.skillSearchInput {
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.organizationCompactSave,
+.inlineOrganizationForm .organizationCompactSave,
+.inlineOrganizationCancelButton,
+.licenseDeleteYesButton,
+.licenseDeleteCancelButton,
+.pictureModalConfirmButton,
+.pictureModalAction {
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.organizationActiveMember,
+.inlineOrganizationForm .organizationActiveMember,
+.organizationName,
+.organizationParentName,
+.organizationPosition,
+.licenseTitle,
+.licenseMeta,
+.emptyQualificationsText,
+.pictureModalEmptyState {
+  font-family: "Open Sans", sans-serif;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.organizationName,
+.licenseTitle {
+  color: #000000;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.organizationParentName,
+.organizationPosition,
+.licenseMeta,
+.emptyQualificationsText,
+.organizationActiveMember,
+.inlineOrganizationForm .organizationActiveMember,
+.pictureModalEmptyState {
+  color: #303030;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 17px;
+}
+
+.pictureModalHeader {
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+}
+
+.pictureModalHeaderText {
+  color: #ffffff;
+  font-size: 20px;
+  line-height: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+  white-space: nowrap;
+}
+
+.pictureModalHeaderSave {
+  min-width: 40px;
+  width: auto;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+  word-break: normal;
+}

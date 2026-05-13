@@ -56,7 +56,9 @@ export const VolunteerMatches = ({
     <div className={styles.volunteerMatchesList}>
       {isLoading && !hideLoadingSpinner && <CircularProgress />}
       {!isLoading && filteredMatches.length === 0 && (
-        <p>No volunteer matches found.</p>
+        <p className={styles.volunteerMatchesEmpty}>
+          No volunteer matches found.
+        </p>
       )}
       {!isLoading && filteredMatches.length > 0 && (
         <>

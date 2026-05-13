@@ -40,19 +40,22 @@
   }
 
   .navBarItemText {
+    color: #000000;
+    font-family: "Open Sans", sans-serif;
     font-size: 12px;
     font-style: normal;
-    font-weight: 600;
-    line-height: 16px;
+    font-weight: 400;
+    line-height: 17px;
     text-align: center;
   }
 
   .navBarItemTextSelected {
     color: #2c77e7;
+    font-family: "Open Sans", sans-serif;
     font-size: 12px;
     font-style: normal;
-    font-weight: 600;
-    line-height: 16px;
+    font-weight: 700;
+    line-height: 17px;
     text-align: center;
   }
 
@@ -105,6 +108,7 @@
   .leftSide {
     width: 280px;
     background-color: #fff;
+    overflow-x: hidden;
   }
 
   .profileEditDesktopLayout .leftSide {
@@ -162,9 +166,37 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: start;
-    margin-left: 130px;
-    width: 100%;
+    justify-content: flex-start;
+    column-gap: 2px;
+    width: calc(100% - 32px);
+    min-width: 0;
+    margin: 0 16px;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  .leftDesktopPanelAvatarMenu a {
+    min-width: 0;
+    max-width: calc(100% - 40px);
+    overflow: hidden;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .leftDesktopPanelAvatarMenu :global(.MuiIconButton-root) {
+    justify-content: flex-start;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .leftDesktopPanelAvatarMenu span {
+    max-width: 145px;
+    overflow: hidden;
+    word-break: normal;
+    overflow-wrap: normal;
   }
 
   .sideNavBar {
@@ -196,10 +228,11 @@
   }
 
   .navBarItemText {
-    font-size: 18px;
+    font-family: "Open Sans", sans-serif;
+    font-size: 13px;
     font-style: normal;
-    font-weight: 600;
-    line-height: 16px;
+    font-weight: 400;
+    line-height: 18px;
     text-align: center;
     padding-top: 3px;
     color: #000;
@@ -207,10 +240,11 @@
 
   .navBarItemTextSelected {
     color: #2c77e7;
-    font-size: 18px;
+    font-family: "Open Sans", sans-serif;
+    font-size: 13px;
     font-style: normal;
-    font-weight: 600;
-    line-height: 16px;
+    font-weight: 700;
+    line-height: 18px;
     padding-top: 3px;
     text-align: center;
   }

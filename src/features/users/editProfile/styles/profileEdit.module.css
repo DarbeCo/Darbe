@@ -1349,3 +1349,62 @@
     padding-top: 8px;
   }
 }
+
+.profileDialogContent,
+.profileDialogContent button,
+.profileDialogContent input,
+.profileDialogContent textarea,
+.profileDialogContent select,
+.profileOrganizationDeleteDialog,
+.profileOrganizationDeleteDialog button {
+  font-family: "Open Sans", sans-serif;
+}
+
+.profileDialogLabel,
+.profileDateSelectLabel,
+.profileAboutForm :global(.MuiInputLabel-root),
+.profileOrganizationDeleteTitle {
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.profileDialogInput,
+.profileDialogTextarea,
+.profileDialogSelect,
+.profileDialogMuiSelect :global(.MuiSelect-select),
+.profileAboutForm .profileDialogInput,
+.profileAboutForm .profileDialogTextarea,
+.profileAboutForm .profileDialogSelect,
+.profileAboutFooter :global(.MuiButton-root),
+.profileDialogMenuList :global(.MuiMenuItem-root),
+.profileDialogDateMenuList :global(.MuiMenuItem-root) {
+  font-family: "Open Sans", sans-serif !important;
+  font-size: 13px !important;
+  line-height: 18px !important;
+}
+
+.profileOrganizationDeleteYesButton,
+.profileOrganizationDeleteCancelButton,
+.profileDialogBottomActions :global(.MuiButton-root),
+.profileDialogFooter :global(.MuiButton-root),
+.profileDialogCausesFooter :global(.MuiButton-root),
+.profileDialogCenteredFooter :global(.MuiButton-root) {
+  font-family: "Open Sans", sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 600;
+  line-height: 17px !important;
+}
+
+.profileDialogCheckboxLabel,
+.profileDialogCounter,
+.profileDialogError,
+.profileDialogFieldMessage {
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  line-height: 17px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}

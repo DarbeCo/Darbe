@@ -23,6 +23,15 @@
   line-height: normal;
 }
 
+.volunteerMatchesEmpty {
+  margin: 0;
+  color: #303030;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 17px;
+}
+
 .volunteerMatchGroup {
   display: flex;
   flex-direction: column;

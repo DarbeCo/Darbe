@@ -71,10 +71,6 @@ export const EventDetailCard = ({
   const [passOnEvent, { isLoading: isPassing }] = usePassOnEventMutation();
   const [volunteerForEvent, { isLoading: isVolunteering }] =
     useVolunteerForEventMutation();
-  const [userAgreesToWaiver, setUserAgreesToWaiver] = useState({
-    adultWaiver: false,
-    minorWaiver: false,
-  });
   const [hasVolunteered, setHasVolunteered] = useState(false);
   const [showVolunteerDialog, setShowVolunteerDialog] = useState(false);
   const [showPassConfirmDialog, setShowPassConfirmDialog] = useState(false);
@@ -86,14 +82,6 @@ export const EventDetailCard = ({
     : event?.eventCoordinator.id;
   const { data: eventCoordinatorData } =
     useGetSimpleUserInfoQuery(eventCoordinatorId);
-
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    setUserAgreesToWaiver((prevState) => ({
-      ...prevState,
-      [name]: checked,
-    }));
-  };
 
   useEffect(() => {
     if (!isShareMenuOpen) {
@@ -476,29 +464,6 @@ export const EventDetailCard = ({
             fullName={eventCoordinatorName}
           />
         </button>
-      </section>
-
-      <section className={styles.eventDetailWaivers}>
-        <label>
-          <input
-            type="checkbox"
-            name="adultWaiver"
-            checked={userAgreesToWaiver.adultWaiver}
-            disabled={!!isPreview}
-            onChange={handleCheckboxChange}
-          />
-          Adult waiver
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            name="minorWaiver"
-            checked={userAgreesToWaiver.minorWaiver}
-            disabled={!!isPreview}
-            onChange={handleCheckboxChange}
-          />
-          Minor waiver
-        </label>
       </section>
 
       {!isEventOwner && !isPreview && !isMoreThanTwentyFourHoursPast && (

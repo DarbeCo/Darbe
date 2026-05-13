@@ -608,13 +608,18 @@ export const EventCard = ({
         </div>
       </div>
       <div className={styles.eventMatchBodyDescription}>
-        <Typography variant="header" textToDisplay={event.eventName} />
+        <Typography
+          variant="sectionTitle"
+          textToDisplay={event.eventName}
+          extraClass={styles.eventCardEventName}
+        />
         <Typography variant="locationSmall" textToDisplay={locationText} />
         <Typography variant="text" textToDisplay={event.eventDescription} />
         <div>
           <Typography
-            variant="sectionTitle"
+            variant="text"
             textToDisplay="Volunteer Impact:"
+            extraClass={styles.eventCardImpactLabel}
           />
           <Typography variant="text" textToDisplay={eventImpactText} />
         </div>

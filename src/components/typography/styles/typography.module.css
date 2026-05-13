@@ -1,106 +1,145 @@
 .text {
-  font-size: 14px;
+  font-family: var(--darbe-font-family);
+  font-size: var(--darbe-primary-font-size);
   font-weight: 400;
-  line-height: 16.41px;
-  color: #000;
+  line-height: var(--darbe-primary-line-height);
+  color: var(--darbe-body-color);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .whiteBoldText {
-  font-size: 16px;
+  font-family: var(--darbe-font-family);
+  font-size: var(--darbe-primary-font-size);
   font-weight: 700;
-  line-height: 16.41px;
-  color: #fff;
+  line-height: var(--darbe-primary-line-height);
+  color: #ffffff;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .smallTimeStamp {
 }
 
 .nameHeader {
-  font-size: 24px;
+  font-family: var(--darbe-font-family);
+  font-size: var(--darbe-section-title-size);
   font-weight: 700;
-  line-height: 32.68px;
-  color: #263238;
+  line-height: var(--darbe-section-title-line-height);
+  color: var(--darbe-text-color);
   padding-top: 30px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .header {
-  font-size: 24px;
+  font-family: var(--darbe-font-family);
+  font-size: var(--darbe-section-title-size);
   font-weight: 700;
-  line-height: 32.68px;
-  color: #000;
+  line-height: var(--darbe-section-title-line-height);
+  color: var(--darbe-text-color);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .tagline {
-  font-size: 14px;
+  font-family: var(--darbe-font-family);
+  font-size: var(--darbe-primary-font-size);
   font-weight: 700;
-  line-height: 19.07px;
-  color: #263238;
+  line-height: var(--darbe-primary-line-height);
+  color: var(--darbe-text-color);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .informational {
-  font-size: 14px;
+  font-family: var(--darbe-font-family);
+  font-size: var(--darbe-primary-font-size);
   font-weight: 400;
-  line-height: 19.07px;
-  color: #000000;
+  line-height: var(--darbe-primary-line-height);
+  color: var(--darbe-body-color);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .grayText {
-  font-size: 12px;
+  font-family: var(--darbe-font-family);
+  font-size: var(--darbe-supporting-font-size);
   font-weight: 400;
-  line-height: 16.34px;
-  color: #717070;
+  line-height: var(--darbe-supporting-line-height);
+  color: var(--darbe-text-color);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .locationSmall {
-  font-size: 12px;
+  font-family: var(--darbe-font-family);
+  font-size: var(--darbe-supporting-font-size);
   font-weight: 400;
-  line-height: 16.34px;
-  color: #263238;
+  line-height: var(--darbe-supporting-line-height);
+  color: var(--darbe-text-color);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .locationRegular {
 }
 
 .sectionTitle {
-  font-size: 16px;
+  font-family: var(--darbe-font-family);
+  font-size: var(--darbe-section-title-size);
   font-weight: 700;
-  line-height: 21.79px;
+  line-height: var(--darbe-section-title-line-height);
   text-align: left;
-  color: #000000;
+  color: var(--darbe-text-color);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .tabs {
-  font-size: 16px;
+  font-family: var(--darbe-font-family);
+  font-size: var(--darbe-primary-font-size);
   font-weight: 700;
-  line-height: 21.79px;
+  line-height: var(--darbe-primary-line-height);
   text-align: left;
-  color: #000000;
+  color: var(--darbe-text-color);
   cursor: pointer;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .entityTitleSmall {
 }
 
 .blueTextSmall {
-  font-size: 12px;
+  font-family: var(--darbe-font-family);
+  font-size: var(--darbe-supporting-font-size);
   font-weight: 700;
-  line-height: 16.34px;
-  color: #2c77e7;
+  line-height: var(--darbe-supporting-line-height);
+  color: var(--darbe-link-color);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .blueTextNormal {
-  font-size: 16px;
+  font-family: var(--darbe-font-family);
+  font-size: var(--darbe-primary-font-size);
   font-weight: 700;
-  line-height: 21.79px;
-  color: #2c77e7;
+  line-height: var(--darbe-primary-line-height);
+  color: var(--darbe-link-color);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .boldTextSmall {
 }
 
 .greenTextSmall {
-  font-size: 12px;
+  font-family: var(--darbe-font-family);
+  font-size: var(--darbe-supporting-font-size);
   font-weight: 400;
-  line-height: 16.34px;
+  line-height: var(--darbe-supporting-line-height);
   color: #088f26;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
