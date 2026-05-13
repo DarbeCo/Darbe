@@ -85,7 +85,7 @@
     column-gap: 10px;
     width: 100%;
     min-height: 100vh;
-    background-color: #faf9f9;
+    background-color: #e7e2e2;
   }
 
   .profileEditDesktopLayout {
@@ -125,7 +125,7 @@
     width: 900px;
     min-height: 100vh;
     padding-top: 18px;
-    background-color: #faf9f9;
+    background-color: #e7e2e2;
     box-sizing: border-box;
   }
 
@@ -265,7 +265,7 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    background-color: #faf9f9;
+    background-color: #e7e2e2;
   }
 
   .messageHeader {

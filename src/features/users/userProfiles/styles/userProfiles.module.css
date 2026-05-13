@@ -290,6 +290,10 @@
     padding-left: 45px;
   }
 
+  .profileRowDates{
+    margin-right: 20px;
+  }
+  
   .profileRow {
     display: flex;
     flex-direction: row;
@@ -356,6 +360,12 @@
     justify-content: space-between;
     align-items: center;
     width: 99%;
+  }
+
+  .userOrganizationName {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 22px;
   }
 }
 

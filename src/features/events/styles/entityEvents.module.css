@@ -114,9 +114,9 @@
     background: transparent;
     color: #000000;
     font-family: "Open Sans", sans-serif;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: 700;
-    line-height: 18px;
+    line-height: 22px;
     cursor: pointer;
   }
 
@@ -369,8 +369,8 @@
   .volunteerEventsTabs button {
     min-width: max-content;
     padding: 0 8px;
-    font-size: 13px;
-    line-height: 18px;
+    font-size: 16px;
+    line-height: 22px;
   }
 
   .volunteerSummaryCard {

@@ -69,6 +69,7 @@ export const UserOrganizations = ({
                   textToDisplay={capitalizeFirstLetter(
                     organization?.organizationName
                   )}
+                  extraClass={styles.userOrganizationName}
                 />
                 <div className={styles.profileRowDates}>
                   <Typography

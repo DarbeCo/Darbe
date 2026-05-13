@@ -4,7 +4,7 @@
     flex-direction: column;
     justify-content: start;
     align-items: center;
-    background-color: #f5f5f5;
+    background-color: #faf9f9;
     width: 100%;
   }
 
@@ -128,7 +128,7 @@
     flex-direction: column;
     justify-content: start;
     align-items: center;
-    background-color: #f5f5f5;
+    background-color: #faf9f9;
     width: 100%;
   }
 
@@ -272,4 +272,27 @@
     width: 700px;
     padding-bottom: 30px;
   }
+}
+
+.signUpPage,
+.signUpPage span,
+.signUpPage a,
+.signUpPage label,
+.signUpPage input,
+.signUpPage select,
+.signUpPage button {
+  font-family: Roboto, Arial, sans-serif;
+}
+
+.signUpPage :global(.MuiFormLabel-root) {
+  font-family: Roboto, Arial, sans-serif !important;
+  font-size: 20px !important;
+  line-height: 24px !important;
+}
+
+.signUpPage :global(.MuiInputBase-input),
+.signUpPage :global(.MuiSelect-select) {
+  font-family: Roboto, Arial, sans-serif !important;
+  font-size: 16px !important;
+  line-height: 20px !important;
 }

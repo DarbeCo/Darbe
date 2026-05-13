@@ -10,7 +10,7 @@
   width: 100%;
   min-height: 100vh;
   padding-top: 32px;
-  background-color: #faf9f9;
+  background-color: #e7e2e2;
   box-sizing: border-box;
 }
 
@@ -788,6 +788,7 @@
   color: #ff0000;
 }
 
+
 .profileDialogInput,
 .profileDialogTextarea,
 .profileDialogSelect {
@@ -823,7 +824,8 @@
 }
 
 .profileDialogTextarea {
-  min-height: var(--profile-control-height);
+  min-height: 200px;
+  
   resize: vertical;
 }
 
