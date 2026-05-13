@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 import {
   ArrowBack,
   CameraAlt,
@@ -110,6 +111,7 @@ const buildThreadSummary = (
 };
 
 export const Messaging = () => {
+  const { userId: routeUserId } = useParams<{ userId?: string }>();
   const currentUserId = useAppSelector(selectCurrentUserId);
   const currentFriends = useAppSelector(selectCurrentFriends) ?? [];
   const { isDesktop } = useScreenWidthHook();
@@ -151,12 +153,12 @@ export const Messaging = () => {
   );
 
   useEffect(() => {
-    if (!isDesktop || selectedThreadId || !threadSummaries.length) {
+    if (routeUserId || !isDesktop || selectedThreadId || !threadSummaries.length) {
       return;
     }
 
     setSelectedThreadId(threadSummaries[0].id);
-  }, [isDesktop, selectedThreadId, threadSummaries]);
+  }, [isDesktop, routeUserId, selectedThreadId, threadSummaries]);
 
   useEffect(() => {
     if (!draftThread) {
@@ -190,6 +192,42 @@ export const Messaging = () => {
       ),
     [threadSummaries]
   );
+
+  useEffect(() => {
+    if (!routeUserId) {
+      return;
+    }
+
+    const existingThread = threadSummaryByFriendId.get(routeUserId);
+
+    if (existingThread) {
+      setSelectedThreadId(existingThread.id);
+      setDraftThread(null);
+      setIsMobileConversationOpen(true);
+      return;
+    }
+
+    const friend = currentFriends.find(
+      (currentFriend) => currentFriend.id === routeUserId
+    );
+
+    if (!friend) {
+      return;
+    }
+
+    const nextDraftThread = {
+      id: `draft-${friend.id}`,
+      friendId: friend.id,
+      fullName: getFriendDisplayName(friend),
+      profilePicture: friend.profilePicture,
+      lastMessage: "",
+      dateSent: "",
+    };
+
+    setDraftThread(nextDraftThread);
+    setSelectedThreadId(nextDraftThread.id);
+    setIsMobileConversationOpen(true);
+  }, [currentFriends, routeUserId, threadSummaryByFriendId]);
 
   const filteredMobileFriends = currentFriends.filter((friend) => {
     const searchValue = searchTerm.trim().toLowerCase();

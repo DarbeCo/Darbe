@@ -6,7 +6,7 @@ import {
   useSendFriendRequestMutation,
 } from "../../../../services/api/endpoints/friends/friends.api";
 import useScreenWidthHook from "../../../../utils/commonHooks/UseScreenWidth";
-import { FRIEND_MESSAGE_ROUTE } from "../../../../routes/route.constants";
+import { MESSAGING_ROUTE } from "../../../../routes/route.constants";
 
 import styles from "../styles/userProfiles.module.css";
 import { useAppDispatch } from "../../../../services/hooks";
@@ -50,7 +50,7 @@ export const UserProfileConnectionButtons = ({
   };
 
   const handleMessage = () => {
-    navigate(FRIEND_MESSAGE_ROUTE(userId));
+    navigate(`${MESSAGING_ROUTE}/${userId}`);
   };
 
   const friendtTextToShow = hasSentRequest ? "Pending" : "Connect";
