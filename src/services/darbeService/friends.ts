@@ -255,13 +255,38 @@ export const getFriends = async (userId: string): Promise<ProfileFriendState[]> 
 };
 
 export const getMutualFriends = async (userId: string): Promise<ProfileFriendState[]> => {
-  const { data, error } = await supabase.rpc("get_mutual_friends", {
-    target_user_id: userId,
-  });
+  const currentUserId = await ensureUserId();
+
+  if (currentUserId === userId) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("friendships")
+    .select("user_id, friend_id")
+    .in("user_id", [currentUserId, userId]);
 
   if (error) throw error;
 
-  const friendIds = uniqueIds((data ?? []).map((row) => row.friend_id));
+  const currentUserFriendIds = new Set(
+    (data ?? [])
+      .filter((row) => row.user_id === currentUserId)
+      .map((row) => row.friend_id)
+  );
+  const targetUserFriendIds = new Set(
+    (data ?? [])
+      .filter((row) => row.user_id === userId)
+      .map((row) => row.friend_id)
+  );
+
+  const friendIds = uniqueIds(
+    [...currentUserFriendIds].filter(
+      (friendId) =>
+        targetUserFriendIds.has(friendId) &&
+        friendId !== currentUserId &&
+        friendId !== userId
+    )
+  );
   const friendProfiles = await getProfilesByIds(friendIds);
 
   return friendProfiles.map(mapProfileToFriend);
