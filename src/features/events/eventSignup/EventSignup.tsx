@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  type KeyboardEvent,
+  type MouseEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { CircularProgress } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -12,7 +19,7 @@ import { useAppSelector } from "../../../services/hooks";
 import { selectCurrentUserId, selectUserType } from "../../users/selectors";
 import { CustomSvgs } from "../../../components/customSvgs/CustomSvgs";
 import { UserAvatars } from "../../../components/avatars/UserAvatars";
-import { CREATE_EVENT_ROUTE } from "../../../routes/route.constants";
+import { CREATE_EVENT_ROUTE, PROFILE_ROUTE } from "../../../routes/route.constants";
 import {
   getIncompletePostNeedEventsForUser,
   incompletePostNeedEventToShortEvent,
@@ -271,6 +278,26 @@ export const EventSignup = () => {
     });
   };
 
+  const handleSummaryEventKeyDown = (
+    keyDownEvent: KeyboardEvent<HTMLDivElement>,
+    eventId: string
+  ) => {
+    if (keyDownEvent.key !== "Enter" && keyDownEvent.key !== " ") {
+      return;
+    }
+
+    keyDownEvent.preventDefault();
+    handleSummaryEventClick(eventId);
+  };
+
+  const handleSummaryCoordinatorClick = (
+    clickEvent: MouseEvent<HTMLButtonElement>,
+    coordinatorId: string
+  ) => {
+    clickEvent.stopPropagation();
+    navigate(`${PROFILE_ROUTE}/${coordinatorId}`);
+  };
+
   const handleFinishIncompleteEvent = (eventId: string) => {
     navigate(CREATE_EVENT_ROUTE, {
       state: { incompleteEventId: eventId },
@@ -374,11 +401,15 @@ export const EventSignup = () => {
                   );
 
                   return (
-                    <button
-                      type="button"
+                    <div
+                      role="button"
+                      tabIndex={0}
                       className={styles.volunteerSummaryRow}
                       key={event.id}
                       onClick={() => handleSummaryEventClick(event.id)}
+                      onKeyDown={(keyDownEvent) =>
+                        handleSummaryEventKeyDown(keyDownEvent, event.id)
+                      }
                     >
                       <span className={styles.volunteerSummaryDate}>
                         {formatSummaryDate(event.eventDate)}
@@ -392,23 +423,32 @@ export const EventSignup = () => {
                         {event.maxVolunteerCount}{" "}
                         Volunteers
                       </span>
-                      <div className={styles.volunteerSummaryCoordinator}>
-                        {hasCoordinator ? (
-                          <>
-                            <UserAvatars
-                              variant="small"
-                              userId={event.eventCoordinator?.id}
-                              profilePicture={
-                                event.eventCoordinator?.profilePicture
-                              }
-                            />
-                            <span>{coordinatorName}</span>
-                          </>
-                        ) : (
+                      {hasCoordinator ? (
+                        <button
+                          type="button"
+                          className={styles.volunteerSummaryCoordinator}
+                          onClick={(clickEvent) =>
+                            handleSummaryCoordinatorClick(
+                              clickEvent,
+                              event.eventCoordinator!.id
+                            )
+                          }
+                        >
+                          <UserAvatars
+                            variant="small"
+                            userId={event.eventCoordinator?.id}
+                            profilePicture={
+                              event.eventCoordinator?.profilePicture
+                            }
+                          />
+                          <span>{coordinatorName}</span>
+                        </button>
+                      ) : (
+                        <div className={styles.volunteerSummaryCoordinator}>
                           <span>No Volunteer Coordinator</span>
-                        )}
-                      </div>
-                    </button>
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>

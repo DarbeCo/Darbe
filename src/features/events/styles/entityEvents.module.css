@@ -234,7 +234,32 @@
     align-items: center;
     gap: 8px;
     min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
     overflow: hidden;
+  }
+
+  div.volunteerSummaryCoordinator {
+    cursor: default;
+  }
+
+  button.volunteerSummaryCoordinator:hover span,
+  button.volunteerSummaryCoordinator:focus-visible span {
+    text-decoration: underline;
+  }
+
+  button.volunteerSummaryCoordinator span {
+    color: #2c77e7;
+  }
+
+  button.volunteerSummaryCoordinator:focus-visible {
+    outline: 2px solid #2c77e7;
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 
   .volunteerSummaryCoordinator span {
