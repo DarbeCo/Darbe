@@ -34,9 +34,9 @@ const searchProfiles = async (term: string, ids?: string[]) => {
     .select(
       "id, first_name, last_name, full_name, profile_picture_url, nonprofit_name, organization_name, user_type, city, zip"
     )
-    .in("user_type", ["individual", "nonprofit"])
+    .in("user_type", ["individual", "nonprofit", "organization"])
     .or(
-      `first_name.ilike.%${term}%,last_name.ilike.%${term}%,full_name.ilike.%${term}%,nonprofit_name.ilike.%${term}%`
+      `first_name.ilike.%${term}%,last_name.ilike.%${term}%,full_name.ilike.%${term}%,nonprofit_name.ilike.%${term}%,organization_name.ilike.%${term}%`
     );
 
   if (ids && ids.length) {

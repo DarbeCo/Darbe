@@ -1,25 +1,284 @@
-@media (min-width: 250px) and (max-width: 560px) {
+.impact {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: min(672px, 100%);
+  padding: 24px 0 96px;
+  box-sizing: border-box;
+}
+
+.impactTitle {
+  margin: 0;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: normal;
+}
+
+.impactLoading,
+.impactEmpty {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 32px 0;
+}
+
+.impactEmpty {
+  margin: 0;
+  color: #303030;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.impactCard {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 100%;
+  border-radius: 8px;
+  background-color: #f5f5f5;
+}
+
+.impactCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 65px;
+  padding: 0 16px;
+  border-bottom: 1px solid #d8d8d8;
+  box-sizing: border-box;
+}
+
+.impactOwner,
+.impactSeeMore {
+  border: 0;
+  background: transparent;
+  font-family: "Open Sans", sans-serif;
+  cursor: pointer;
+}
+
+.impactOwner {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+  padding: 0;
+  color: #263238;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: normal;
+  text-align: left;
+}
+
+.impactOwner img {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.impactOwner span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.impactSeeMore {
+  flex: 0 0 auto;
+  padding: 0;
+  color: #2c77e7;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: normal;
+}
+
+.impactEvent {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr);
+  gap: 16px;
+  min-height: 160px;
+  padding: 16px;
+  border-bottom: 1px solid #d8d8d8;
+  box-sizing: border-box;
+}
+
+.impactEventImage {
+  width: 128px;
+  height: 128px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.impactEventText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.impactEventText h2 {
+  margin: 0;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: normal;
+}
+
+.impactEventText time {
+  margin-top: 4px;
+  color: #717070;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 21px;
+}
+
+.impactEventText p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 24px 0 0;
+  color: #000000;
+  font-family: Roboto, "Open Sans", sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.impactStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  min-height: 81px;
+  margin: 0;
+}
+
+.impactStats div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 10px 12px;
+  border-right: 1px solid #d8d8d8;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.impactStats div:last-child {
+  border-right: 0;
+}
+
+.impactStats dt {
+  overflow: hidden;
+  max-width: 100%;
+  color: #000000;
+  font-family: Roboto, "Open Sans", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.impactStats dd {
+  overflow: hidden;
+  max-width: 100%;
+  margin: 4px 0 0;
+  color: #000000;
+  font-family: Roboto, "Open Sans", sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 1259px) {
   .impact {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: 100%;
-    align-items: center;
-    background-color: #fff;
-    padding-bottom: 60px;
+    width: min(672px, calc(100vw - 96px));
+    padding-top: 24px;
   }
 }
 
-@media (min-width: 560px) {
+@media (max-width: 699px) {
   .impact {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
-    height: 100vh;
-    padding-top: 20px;
-    align-items: center;
-    background-color: #e7e2e2;
-    padding-bottom: 70px;
+    padding: 16px 16px 96px;
+    background-color: #ffffff;
+  }
+
+  .impactTitle {
+    font-size: 20px;
+  }
+
+  .impactCardHeader {
+    min-height: 49px;
+    padding: 0 8px;
+  }
+
+  .impactOwner {
+    font-size: 16px;
+  }
+
+  .impactOwner img {
+    width: 24px;
+    height: 24px;
+  }
+
+  .impactSeeMore {
+    font-size: 12px;
+  }
+
+  .impactEvent {
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 8px;
+    min-height: 104px;
+    padding: 8px;
+  }
+
+  .impactEventImage {
+    width: 56px;
+    height: 56px;
+  }
+
+  .impactEventText h2 {
+    font-size: 14px;
+  }
+
+  .impactEventText time {
+    margin-top: 2px;
+    font-size: 8px;
+    line-height: 12px;
+  }
+
+  .impactEventText p {
+    margin-top: 8px;
+    font-size: 10px;
+    line-height: 1.3;
+    -webkit-line-clamp: 2;
+  }
+
+  .impactStats {
+    min-height: 56px;
+  }
+
+  .impactStats div {
+    padding: 6px 8px;
+  }
+
+  .impactStats dt {
+    font-size: 14px;
+  }
+
+  .impactStats dd {
+    margin-top: 2px;
+    font-size: 8px;
   }
 }
