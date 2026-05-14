@@ -286,7 +286,9 @@ export const useEditEntityProfileInformation = () => {
     nonprofitName:
       profileInformation?.nonprofitName ||
       profileInformation?.user?.nonprofitName,
-    organizationName: profileInformation?.organizationName,
+    organizationName:
+      profileInformation?.organizationName ||
+      profileInformation?.user?.organizationName,
     parentEntity: profileInformation?.parentEntity
       ? profileInformation?.parentEntity
       : undefined,
