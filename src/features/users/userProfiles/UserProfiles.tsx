@@ -190,7 +190,7 @@ export const UserProfiles = () => {
           canEdit={canEdit}
         />
       )}
-      <UserVolunteerImpacts />
+      <UserVolunteerImpacts userId={userId} />
       {userId && <UserRecentActivity canEdit={canEdit} userId={userId} />}
       {isEntityProfile && (
         <>
