@@ -113,6 +113,7 @@ export const EventMatches = ({
             key={event.id}
             event={event}
             variant="match"
+            canExpandVolunteers
             showVolunteerAndPassActions
             onVolunteerSuccess={handleDismissMatch}
             onPassSuccess={handleDismissMatch}
