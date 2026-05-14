@@ -89,7 +89,11 @@ export const EditEntityProfileInfo = () => {
   const saveProfile = useCallback(async () => {
     const payload = {
       ...editProfileInfo,
-      user: { id: userId },
+      user: {
+        id: userId,
+        nonprofitName: editProfileInfo.nonprofitName,
+        organizationName: editProfileInfo.organizationName,
+      },
     };
 
     await updateUserProfile(payload);
