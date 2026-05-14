@@ -18,6 +18,7 @@ const ImpactApi = darbeBaseApi.injectEndpoints({
           };
         }
       },
+      providesTags: ["Impact"],
     }),
   }),
 });

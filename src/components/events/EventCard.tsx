@@ -58,6 +58,7 @@ interface EventCardProps {
   showVolunteerAndPassActions?: boolean;
   onVolunteerSuccess?: (eventId: string) => void;
   onPassSuccess?: (eventId: string) => void;
+  allowCoordinatorVolunteerManagement?: boolean;
 }
 
 const formatCheckTimestamp = (timestamp?: string) => {
@@ -130,6 +131,7 @@ export const EventCard = ({
   showVolunteerAndPassActions = false,
   onVolunteerSuccess,
   onPassSuccess,
+  allowCoordinatorVolunteerManagement = true,
 }: EventCardProps) => {
   const navigate = useNavigate();
   const currentUserId = useAppSelector(selectCurrentUserId);
@@ -159,6 +161,7 @@ export const EventCard = ({
   const [showVolunteerDialog, setShowVolunteerDialog] = useState(false);
   const [showPassConfirmDialog, setShowPassConfirmDialog] = useState(false);
   const [showPassRejectedDialog, setShowPassRejectedDialog] = useState(false);
+  const [approvalDialogMessage, setApprovalDialogMessage] = useState("");
   const [isVolunteerListOpen, setIsVolunteerListOpen] = useState(false);
   const [isAddVolunteerOpen, setIsAddVolunteerOpen] = useState(false);
   const [addVolunteerSearch, setAddVolunteerSearch] = useState("");
@@ -278,6 +281,8 @@ export const EventCard = ({
         eventId: event.id,
         userId: targetUserId,
       }).unwrap();
+      setApprovalDialogMessage("Volunteer Approved");
+      setTimeout(() => setApprovalDialogMessage(""), 1400);
     } catch (error) {
       console.error("Error approving volunteer impact", error);
     }
@@ -297,6 +302,8 @@ export const EventCard = ({
   const handleApproveAllVolunteers = async () => {
     try {
       await approveAllEventVolunteers(event.id).unwrap();
+      setApprovalDialogMessage("Volunteers Approved");
+      setTimeout(() => setApprovalDialogMessage(""), 1400);
     } catch (error) {
       console.error("Error approving all volunteer impacts", error);
     }
@@ -389,9 +396,11 @@ export const EventCard = ({
   }`;
   const isEventPoster = currentUserId === event.eventOwner.id;
   const isEventCoordinator = currentUserId === event.eventCoordinator?.id;
+  const isEntityUser =
+    currentUserType === "organization" || currentUserType === "nonprofit";
   const canManageVolunteerCheckIns =
-    (currentUserType === "organization" || currentUserType === "nonprofit") &&
-    (isEventPoster || isEventCoordinator);
+    (isEntityUser && isEventPoster) ||
+    (allowCoordinatorVolunteerManagement && isEventCoordinator);
   const isPastEvent =
     hasEventEnded !== undefined ? hasEventEnded : eventDateTime < todayTime;
   const isVolunteerLocked = hasVolunteered || isVolunteering;
@@ -1123,6 +1132,19 @@ export const EventCard = ({
                 aria-hidden="true"
               />
               <span>Event Rejected</span>
+            </h2>
+          </div>
+        </div>
+      ) : null}
+      {approvalDialogMessage ? (
+        <div className={styles.eventVolunteerDialogOverlay}>
+          <div className={styles.eventVolunteerDialog} role="status">
+            <h2 className={styles.eventVolunteerDialogTitle}>
+              <span
+                className={styles.eventVolunteerDialogIcon}
+                aria-hidden="true"
+              />
+              <span>{approvalDialogMessage}</span>
             </h2>
           </div>
         </div>

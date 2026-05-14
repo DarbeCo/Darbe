@@ -54,6 +54,11 @@ const getCoordinatorName = (event: ShortEventState) =>
   event.eventCoordinator?.nonprofitName ||
   "";
 
+const getVolunteerCount = (
+  event: ShortEventState,
+  signupCount?: number
+) => event.signups?.length ?? signupCount ?? 0;
+
 const getDateOnlyTime = (date: Date) =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 
@@ -112,21 +117,9 @@ export const EventSignup = () => {
   const currentUserId = useAppSelector(selectCurrentUserId);
   const isPostNeedAdmin =
     userType === "organization" || userType === "nonprofit";
-  const availableTabs: readonly EventsTab[] = userType === "organization"
-    ? adminTabs
-    : userType === "nonprofit"
-    ? nonprofitTabs
-    : nonAdminTabs;
   const location = useLocation();
   const restoredTab = (location.state as { activeEventsTab?: string } | null)
     ?.activeEventsTab;
-  const [activeTab, setActiveTab] = useState<EventsTab>(
-    availableTabs.includes(restoredTab as EventsTab)
-      ? (restoredTab as EventsTab)
-      : availableTabs.includes("Current")
-      ? "Current"
-      : availableTabs[0]
-  );
   const [showAllSummaryRows, setShowAllSummaryRows] = useState(false);
   const [incompleteDraftEvents, setIncompleteDraftEvents] = useState<
     ShortEventState[]
@@ -144,6 +137,35 @@ export const EventSignup = () => {
       { when: "past" },
       { skip: userType !== "individual" }
     );
+  const hasCoordinatorEvents = Boolean(
+    currentUserId &&
+      events?.some((event) => event.eventCoordinator?.id === currentUserId)
+  );
+  const availableTabs: readonly EventsTab[] = userType === "organization"
+    ? adminTabs
+    : userType === "nonprofit"
+    ? nonprofitTabs
+    : hasCoordinatorEvents
+    ? ["Current", "Past", "Admin"]
+    : nonAdminTabs;
+  const [activeTab, setActiveTab] = useState<EventsTab>("Current");
+
+  useEffect(() => {
+    if (
+      restoredTab &&
+      availableTabs.includes(restoredTab as EventsTab) &&
+      activeTab !== restoredTab
+    ) {
+      setActiveTab(restoredTab as EventsTab);
+      return;
+    }
+
+    if (!availableTabs.includes(activeTab)) {
+      setActiveTab(
+        availableTabs.includes("Current") ? "Current" : availableTabs[0]
+      );
+    }
+  }, [activeTab, availableTabs, restoredTab]);
 
   useEffect(() => {
     if (!currentUserId || !isPostNeedAdmin) {
@@ -166,25 +188,43 @@ export const EventSignup = () => {
         event.eventOwner.id === currentUserId ||
         event.eventCoordinator?.id === currentUserId
     );
-    const sourceEvents = isPostNeedAdmin ? adminManagedEvents : eventsToDisplay;
+    const coordinatorManagedEvents = eventsToDisplay.filter(
+      (event) => event.eventCoordinator?.id === currentUserId
+    );
+    const sourceEvents =
+      isPostNeedAdmin || activeTab === "Admin"
+        ? adminManagedEvents
+        : eventsToDisplay;
 
     if (activeTab === "Past") {
       if (!isPostNeedAdmin) {
-        return [...(pastSignedUpEvents ?? [])]
+        const signedUpPastEvents = [...(pastSignedUpEvents ?? [])]
           .filter(
             ({ event }) =>
               isPastEvent(event) && !hiddenEventIdSet.has(event.id)
-          )
-          .sort(
-            (first, second) =>
-              getEventDateOnlyTime(second.event.eventDate) -
-              getEventDateOnlyTime(first.event.eventDate)
           )
           .map(({ event, signupCount }) => ({
             event,
             signupCount,
             isSignedUp: true,
           }));
+        const signedUpPastEventIds = new Set(
+          signedUpPastEvents.map(({ event }) => event.id)
+        );
+        const coordinatedPastEvents = coordinatorManagedEvents
+          .filter(
+            (event) =>
+              isPastEvent(event) &&
+              !hiddenEventIdSet.has(event.id) &&
+              !signedUpPastEventIds.has(event.id)
+          )
+          .map((event) => ({ event }));
+
+        return [...signedUpPastEvents, ...coordinatedPastEvents].sort(
+          (first, second) =>
+            getEventDateOnlyTime(second.event.eventDate) -
+            getEventDateOnlyTime(first.event.eventDate)
+        );
       }
 
       return sourceEvents
@@ -243,6 +283,20 @@ export const EventSignup = () => {
             getEventDateOnlyTime(second.event.eventDate) -
             getEventDateOnlyTime(first.event.eventDate)
         );
+    }
+
+    if (activeTab === "Admin") {
+      const eventsForAdminTab = isPostNeedAdmin
+        ? adminManagedEvents
+        : coordinatorManagedEvents;
+
+      return eventsForAdminTab
+        .sort(
+          (first, second) =>
+            getEventDateOnlyTime(second.eventDate) -
+            getEventDateOnlyTime(first.eventDate)
+        )
+        .map((event) => ({ event }));
     }
 
     return sourceEvents
@@ -419,7 +473,7 @@ export const EventSignup = () => {
                         <span>{getOwnerName(event)}</span>
                       </div>
                       <span className={styles.volunteerSummaryVolunteerCount}>
-                        {signupCount ?? event.signups?.length ?? 0}/
+                        {getVolunteerCount(event, signupCount)}/
                         {event.maxVolunteerCount}{" "}
                         Volunteers
                       </span>
@@ -480,11 +534,16 @@ export const EventSignup = () => {
                       isSignedUp={isSignedUp}
                       signupCount={signupCount}
                       hideVolunteerActions={
-                        isPostNeedAdmin || activeTab === "Past"
+                        isPostNeedAdmin ||
+                        activeTab === "Past" ||
+                        activeTab === "Admin"
                       }
                       hideDetailsAction={activeTab === "Incomplete"}
                       returnToEventsTab={activeTab}
                       canExpandVolunteers
+                      allowCoordinatorVolunteerManagement={
+                        isPostNeedAdmin || activeTab === "Admin"
+                      }
                       useCurrentEventTimingActions={
                         userType === "individual" && activeTab === "Current"
                       }

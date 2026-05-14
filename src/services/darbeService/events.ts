@@ -393,6 +393,75 @@ const incrementImpact = async (
   if (error) throw error;
 };
 
+const getHoursBetweenTimestamps = (start?: string | null, end?: string | null) => {
+  if (!start || !end) return 0;
+
+  const startTime = new Date(start).getTime();
+  const endTime = new Date(end).getTime();
+
+  if (!Number.isFinite(startTime) || !Number.isFinite(endTime)) {
+    return 0;
+  }
+
+  return Math.max((endTime - startTime) / 3600000, 0);
+};
+
+const ensureApprovedVolunteerImpact = async (
+  eventId: string,
+  userId: string
+): Promise<void> => {
+  const { data: existingImpact, error: existingImpactError } = await supabase
+    .from("impact")
+    .select("id")
+    .eq("impact_owner_id", userId)
+    .eq("event_id", eventId)
+    .maybeSingle();
+
+  if (existingImpactError) throw existingImpactError;
+  if (existingImpact) return;
+
+  const { data: signup, error: signupError } = await supabase
+    .from("event_signups")
+    .select("check_in_at, check_out_at")
+    .eq("event_id", eventId)
+    .eq("user_id", userId)
+    .eq("status", "approved")
+    .not("check_in_at", "is", null)
+    .not("check_out_at", "is", null)
+    .order("event_action_timestamp", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (signupError) throw signupError;
+  if (!signup) return;
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("user_type")
+    .eq("id", userId)
+    .single();
+
+  if (profileError || !profile) {
+    throw profileError ?? new Error("Volunteer profile not found");
+  }
+
+  const { error: insertError } = await supabase.from("impact").insert({
+    impact_owner_id: userId,
+    user_type: profile.user_type,
+    event_id: eventId,
+    events_created: 0,
+    events_attended: 1,
+    events_passed: 0,
+    events_coordinated: 0,
+    hours_volunteered: getHoursBetweenTimestamps(
+      signup.check_in_at,
+      signup.check_out_at
+    ),
+  });
+
+  if (insertError) throw insertError;
+};
+
 export const getEvents = async (): Promise<ShortEventState[]> => {
   const userId = await ensureUserId();
   const { data: profile, error: profileError } = await supabase
@@ -442,6 +511,7 @@ export const getEvents = async (): Promise<ShortEventState[]> => {
     const followingIds = new Set((following ?? []).map((row) => row.following_id));
 
     filteredEvents = filteredEvents.filter((event) => {
+      if (event.event_coordinator_id === userId) return true;
       if (blockedEventIds.has(event.id)) return false;
       if (event.is_followers_only) {
         return followingIds.has(event.event_owner_id);
@@ -770,6 +840,8 @@ export const approveEventVolunteer = async (
   });
 
   if (error) throw error;
+
+  await ensureApprovedVolunteerImpact(action.eventId, action.userId);
 };
 
 export const denyEventVolunteer = async (
@@ -800,6 +872,20 @@ export const approveAllEventVolunteers = async (
   });
 
   if (error) throw error;
+
+  const { data: approvedSignups, error: approvedSignupsError } = await supabase
+    .from("event_signups")
+    .select("user_id")
+    .eq("event_id", eventId)
+    .eq("status", "approved");
+
+  if (approvedSignupsError) throw approvedSignupsError;
+
+  await Promise.all(
+    (approvedSignups ?? []).map((signup) =>
+      ensureApprovedVolunteerImpact(eventId, signup.user_id)
+    )
+  );
 };
 
 export type EventSignupImpactDetails = {
