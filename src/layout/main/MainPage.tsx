@@ -10,8 +10,13 @@ import { VolunteerCarouselCards } from "../../components/volunteerStats/Voluntee
 import { Feed } from "../../features/feed/Feed";
 import { useAppSelector } from "../../services/hooks";
 import { selectUser } from "../../features/users/selectors";
-import { MESSAGING_ROUTE, POST_A_NEED } from "../../routes/route.constants";
+import {
+  MESSAGING_ROUTE,
+  POST_A_NEED,
+  PROFILE_ROUTE,
+} from "../../routes/route.constants";
 import { DesktopMessagingDrawer } from "../../components/messaging/DesktopMessagingDrawer";
+import { useGetUserProfileQuery } from "../../services/api/endpoints/profiles/profiles.api";
 
 import styles from "./styles/mainPage.module.css";
 
@@ -29,8 +34,49 @@ export const Home = () => {
   const hideNavBar = isProfileEditPage;
   const hideBottomNavBar = isProfileEditPage;
   const hideDesktopMessagingDrawer = isMessagingPage;
+
+  const isProfileRoute = location.pathname.startsWith(`${PROFILE_ROUTE}/`);
+  const viewedProfileUserId = isProfileRoute ? pathName[3] : undefined;
+  const { data: viewedProfile } = useGetUserProfileQuery(
+    viewedProfileUserId ?? "",
+    { skip: !viewedProfileUserId }
+  );
+  const { data: currentUserProfile } = useGetUserProfileQuery(
+    user.user?.id ?? "",
+    { skip: !user.user?.id }
+  );
+  const viewedProfileIsEntity =
+    !!viewedProfile && viewedProfile.user?.userType !== "individual";
+  const viewedEntityName =
+    viewedProfile?.user?.organizationName ||
+    viewedProfile?.user?.nonprofitName ||
+    viewedProfile?.organizationName ||
+    viewedProfile?.nonprofitName;
+  const normalizeOrgName = (name?: string) => name?.trim().toLowerCase();
+  const normalizedViewedEntityName = normalizeOrgName(viewedEntityName);
+  const currentUserIsViewedProfile = user.user?.id === viewedProfileUserId;
+  const currentUserIsOrgMember =
+    currentUserIsViewedProfile ||
+    currentUserProfile?.organizations?.some((organization) => {
+      const organizationNameMatches =
+        !!normalizedViewedEntityName &&
+        normalizeOrgName(organization.organizationName) ===
+          normalizedViewedEntityName;
+      const parentOrganizationMatches =
+        organization.parentOrganization?.id === viewedProfileUserId ||
+        (!!normalizedViewedEntityName &&
+          normalizeOrgName(organization.parentOrganization?.organizationName) ===
+            normalizedViewedEntityName);
+
+      return organizationNameMatches || parentOrganizationMatches;
+    }) ||
+    false;
+
+  const showOrgOverview = isProfileRoute && viewedProfileIsEntity;
   const showSuggestedFriends =
-    isPostNeedPage || (pathName.length > 2 && user.user?.userType === "individual");
+    !showOrgOverview &&
+    (isPostNeedPage ||
+      (pathName.length > 2 && user.user?.userType === "individual"));
 
   return (
     <div className={styles.homePage}>
@@ -84,7 +130,11 @@ export const Home = () => {
                 isProfileEditPage ? styles.profileEditRightSide : ""
               }`}
             >
-              <RightPanel showSuggestedFriends={showSuggestedFriends} />
+              <RightPanel
+                showSuggestedFriends={showSuggestedFriends}
+                showOrgOverview={showOrgOverview}
+                orgOverviewProps={{ canViewRoster: currentUserIsOrgMember }}
+              />
             </div>
           )}
           {!hideDesktopMessagingDrawer && <DesktopMessagingDrawer />}

@@ -1,0 +1,133 @@
+.orgOverviewWrapper {
+  display: flex;
+  flex-direction: column;
+  row-gap: 16px;
+  width: 100%;
+}
+
+.orgOverviewCard {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 16px 20px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.orgOverviewHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.orgOverviewTitle {
+  margin: 0;
+  color: #000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.orgOverviewHeaderButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid #d8d8d8;
+  border-radius: 50%;
+  background: transparent;
+  color: #000;
+  cursor: pointer;
+}
+
+.orgOverviewRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.orgOverviewRow:last-child {
+  border-bottom: 0;
+}
+
+.orgOverviewRowText {
+  color: #2c77e7;
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+.orgOverviewRowTextMuted {
+  color: #000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+.orgOverviewMutual {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #2c77e7;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.orgOverviewMutualAvatars {
+  display: inline-flex;
+}
+
+.orgOverviewMutualAvatars img {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid #fff;
+  object-fit: cover;
+}
+
+.orgOverviewMutualAvatars img + img {
+  margin-left: -6px;
+}
+
+.orgOverviewRosterButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 14px 20px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #fff;
+  color: #2c77e7;
+  font-family: "Open Sans", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+  cursor: pointer;
+}
+
+.orgOverviewRosterButton:hover {
+  background: #f7faff;
+}
+
+.orgOverviewRosterButtonDisabled,
+.orgOverviewRosterButtonDisabled:hover {
+  background: #f5f5f5;
+  color: #8a8a8a;
+  cursor: not-allowed;
+}
