@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { FormControl, FormHelperText, Input, InputLabel } from "@mui/material";
-import { standardInput, shortInput, textAreaInput } from "./inputStyles";
+import { standardInput, shortInput, textAreaInput, textBoxInput } from "./inputStyles";
 import { EndPasswordAdornment } from "./EndPasswordAdornment";
 
 import styles from "./styles/darbeInputs.module.css";
 
-type DarbeInputType = "standardInput" | "shortInput" | "textAreaInput";
+type DarbeInputType = "standardInput" | "shortInput" | "textAreaInput" | "textBoxInput" ;
 
 interface InputsProps {
   label: string;
@@ -43,6 +43,7 @@ export const Inputs = ({
     standardInput,
     shortInput,
     textAreaInput,
+    textBoxInput,
   };
   const darbeInputSx = sxDefinitions[darbeInputType];
   const isPassword = type === "password";

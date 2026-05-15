@@ -19,7 +19,7 @@
   padding: 20px 20px;
   border-radius: 5px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  width: 80%;
+  width: 100%;
   max-height: 80%;
   row-gap: 10px;
   display: flex;
@@ -161,12 +161,12 @@
   .modalContent {
     background-color: white;
     padding: 20px;
-    border-radius: 5px;
+    border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    width: 75%;
-    max-height: 80%;
-    overflow-y: auto;
-
+    width: 664px;
+    height: 240px;
+    max-height: 100%;
+    overflow-y: hidden;
     row-gap: 10px;
     display: flex;
     flex-direction: column;
@@ -277,4 +277,7 @@
   font-family: "Open Sans", sans-serif;
   font-size: 13px;
   line-height: 18px;
+  .modalContent button:nth-of-type(1) {
+    margin-right: -16px;
+  }
 }

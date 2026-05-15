@@ -79,10 +79,10 @@ export const CreatePost = ({ handleSubmit, initialText = "" }: CreatePostProps) 
     <div className={styles.createPostContainer}>
       <Inputs
         label=""
-        darbeInputType="textAreaInput"
+        darbeInputType="textBoxInput"
         handleChange={handleChange}
         name="createPost"
-        placeholder="Write something..."
+        placeholder="Write something or add hashtags..."
         value={post}
         isTextArea
       />

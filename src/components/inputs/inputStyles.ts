@@ -26,4 +26,20 @@ export const textAreaInput = {
   resize: "none",
   maxHeight: "300px",
   overflow: "auto",
+  paddingTop: 0,
 };
+
+export const textBoxInput = {
+  width: "584px",
+  height: "111px",
+  borderRadius: "4px",
+  border: "2px solid #717070",
+  resize: "none",
+  overflow: "hidden",
+  margin: "59px 16px 3px 64px",
+  paddingTop: 0,
+  textArea: {
+    marginTop: "-60px",
+  }
+};
+
