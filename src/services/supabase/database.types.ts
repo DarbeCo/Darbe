@@ -1118,6 +1118,14 @@ export interface Database {
           user_type: string | null;
         }[];
       };
+      get_public_user_impact: {
+        Args: { target_user_id: string };
+        Returns: {
+          id: string;
+          event_id: string;
+          hours_volunteered: number;
+        }[];
+      };
       send_message: {
         Args: { target_receiver_id: string; message_body: string };
         Returns: {

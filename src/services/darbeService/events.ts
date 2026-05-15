@@ -411,16 +411,6 @@ const ensureApprovedVolunteerImpact = async (
   eventId: string,
   userId: string
 ): Promise<void> => {
-  const { data: existingImpact, error: existingImpactError } = await supabase
-    .from("impact")
-    .select("id")
-    .eq("impact_owner_id", userId)
-    .eq("event_id", eventId)
-    .maybeSingle();
-
-  if (existingImpactError) throw existingImpactError;
-  if (existingImpact) return;
-
   const { data: signup, error: signupError } = await supabase
     .from("event_signups")
     .select("check_in_at, check_out_at")
@@ -446,6 +436,33 @@ const ensureApprovedVolunteerImpact = async (
     throw profileError ?? new Error("Volunteer profile not found");
   }
 
+  const hoursVolunteered = getHoursBetweenTimestamps(
+    signup.check_in_at,
+    signup.check_out_at
+  );
+  const { data: existingImpact, error: existingImpactError } = await supabase
+    .from("impact")
+    .select("id")
+    .eq("impact_owner_id", userId)
+    .eq("event_id", eventId)
+    .maybeSingle();
+
+  if (existingImpactError) throw existingImpactError;
+
+  if (existingImpact) {
+    const { error: updateError } = await supabase
+      .from("impact")
+      .update({
+        user_type: profile.user_type,
+        events_attended: 1,
+        hours_volunteered: hoursVolunteered,
+      })
+      .eq("id", existingImpact.id);
+
+    if (updateError) throw updateError;
+    return;
+  }
+
   const { error: insertError } = await supabase.from("impact").insert({
     impact_owner_id: userId,
     user_type: profile.user_type,
@@ -454,13 +471,87 @@ const ensureApprovedVolunteerImpact = async (
     events_attended: 1,
     events_passed: 0,
     events_coordinated: 0,
-    hours_volunteered: getHoursBetweenTimestamps(
-      signup.check_in_at,
-      signup.check_out_at
-    ),
+    hours_volunteered: hoursVolunteered,
   });
 
   if (insertError) throw insertError;
+};
+
+const syncApprovedVolunteerImpactSummary = async (
+  userId: string
+): Promise<void> => {
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("user_type")
+    .eq("id", userId)
+    .single();
+
+  if (profileError || !profile) {
+    throw profileError ?? new Error("Volunteer profile not found");
+  }
+
+  const { data: approvedImpacts, error: impactError } = await supabase
+    .from("impact")
+    .select("hours_volunteered, events_attended")
+    .eq("impact_owner_id", userId)
+    .not("event_id", "is", null)
+    .gt("events_attended", 0);
+
+  if (impactError) throw impactError;
+
+  const summary = (approvedImpacts ?? []).reduce(
+    (totals, impact) => ({
+      eventsAttended:
+        totals.eventsAttended + Number(impact.events_attended ?? 0),
+      hoursVolunteered:
+        totals.hoursVolunteered + Number(impact.hours_volunteered ?? 0),
+    }),
+    { eventsAttended: 0, hoursVolunteered: 0 }
+  );
+
+  const { data: existingSummary, error: summaryError } = await supabase
+    .from("impact")
+    .select("id")
+    .eq("impact_owner_id", userId)
+    .is("event_id", null)
+    .maybeSingle();
+
+  if (summaryError) throw summaryError;
+
+  if (existingSummary) {
+    const { error: updateError } = await supabase
+      .from("impact")
+      .update({
+        events_attended: summary.eventsAttended,
+        hours_volunteered: summary.hoursVolunteered,
+      })
+      .eq("id", existingSummary.id);
+
+    if (updateError) throw updateError;
+  } else {
+    const { error: insertError } = await supabase.from("impact").insert({
+      impact_owner_id: userId,
+      user_type: profile.user_type,
+      event_id: null,
+      events_created: 0,
+      events_attended: summary.eventsAttended,
+      events_passed: 0,
+      events_coordinated: 0,
+      hours_volunteered: summary.hoursVolunteered,
+    });
+
+    if (insertError) throw insertError;
+  }
+
+  const { error: detailsError } = await supabase.from("user_details").upsert(
+    {
+      user_id: userId,
+      volunteer_hours: summary.hoursVolunteered,
+    },
+    { onConflict: "user_id" }
+  );
+
+  if (detailsError) throw detailsError;
 };
 
 export const getEvents = async (): Promise<ShortEventState[]> => {
@@ -874,6 +965,7 @@ export const approveEventVolunteer = async (
   if (error) throw error;
 
   await ensureApprovedVolunteerImpact(action.eventId, action.userId);
+  await syncApprovedVolunteerImpactSummary(action.userId);
 };
 
 export const denyEventVolunteer = async (
@@ -916,6 +1008,12 @@ export const approveAllEventVolunteers = async (
   await Promise.all(
     (approvedSignups ?? []).map((signup) =>
       ensureApprovedVolunteerImpact(eventId, signup.user_id)
+    )
+  );
+
+  await Promise.all(
+    Array.from(new Set((approvedSignups ?? []).map((signup) => signup.user_id))).map(
+      (userId) => syncApprovedVolunteerImpactSummary(userId)
     )
   );
 };

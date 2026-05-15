@@ -59,6 +59,7 @@ interface EventCardProps {
   onVolunteerSuccess?: (eventId: string) => void;
   onPassSuccess?: (eventId: string) => void;
   allowCoordinatorVolunteerManagement?: boolean;
+  enableAdminControls?: boolean;
 }
 
 const formatCheckTimestamp = (timestamp?: string) => {
@@ -132,6 +133,7 @@ export const EventCard = ({
   onVolunteerSuccess,
   onPassSuccess,
   allowCoordinatorVolunteerManagement = true,
+  enableAdminControls = false,
 }: EventCardProps) => {
   const navigate = useNavigate();
   const currentUserId = useAppSelector(selectCurrentUserId);
@@ -399,6 +401,7 @@ export const EventCard = ({
   const isEntityUser =
     currentUserType === "organization" || currentUserType === "nonprofit";
   const canManageVolunteerCheckIns =
+    enableAdminControls ||
     (isEntityUser && isEventPoster) ||
     (allowCoordinatorVolunteerManagement && isEventCoordinator);
   const isPastEvent =
@@ -414,7 +417,7 @@ export const EventCard = ({
     isApprovingAllVolunteers ||
     isUpdatingImpactDetails;
   const isSignedUpCard = Boolean(isSignedUp);
-  const canSelectVolunteers = currentUserType === "nonprofit";
+  const canSelectVolunteers = canManageVolunteerCheckIns;
   const checkedInVolunteerCount =
     event.signups?.filter((signup) => signup.checkInAt).length ?? 0;
   const currentUserSignup = event.signups?.find(
@@ -874,8 +877,12 @@ export const EventCard = ({
               !isApproved &&
               !isDenied &&
               !isNoShow;
+            const canEditImpactDetails =
+              canManageVolunteerCheckIns &&
+              isCheckableUser &&
+              (hasSignupRecord || isVolunteerCoordinator);
             const showApprovalCandidateLayout =
-              canShowApprovalActions || isApproved || isDenied;
+              canShowApprovalActions || isApproved || isDenied || canEditImpactDetails;
             const impactDetailOverride = impactDetailOverrides[signup.id];
             const candidateStartTime =
               impactDetailOverride?.startTime ||
@@ -1023,7 +1030,7 @@ export const EventCard = ({
                       </button>
                     </div>
                   )}
-                  {canShowApprovalActions && (
+                  {canEditImpactDetails && (
                     <button
                       type="button"
                       className={styles.eventVolunteerApprovalMark}

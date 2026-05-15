@@ -18,6 +18,7 @@ const getHoursBetweenTimestamps = (start?: string | null, end?: string | null) =
 
 export const getUserImpact = async (userId?: string): Promise<EventImpact[]> => {
   const currentUserId = userId ?? (await ensureUserId());
+  const signedInUserId = await ensureUserId();
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("user_type")
@@ -28,20 +29,57 @@ export const getUserImpact = async (userId?: string): Promise<EventImpact[]> => 
     throw profileError ?? new Error("User profile not found");
   }
 
+  if (currentUserId !== signedInUserId) {
+    const { data: publicImpactRows, error: publicImpactError } =
+      await supabase.rpc("get_public_user_impact", {
+        target_user_id: currentUserId,
+      });
+
+    if (publicImpactError) {
+      if ((publicImpactError as { code?: string }).code === "PGRST202") {
+        console.warn(
+          "get_public_user_impact is not available yet. Apply the latest Supabase migrations and reload the PostgREST schema cache."
+        );
+        return [];
+      }
+
+      throw publicImpactError;
+    }
+
+    const eventIds = Array.from(
+      new Set(
+        (publicImpactRows ?? [])
+          .map((row) => row.event_id)
+          .filter((eventId): eventId is string => Boolean(eventId))
+      )
+    );
+    const events = await getShortEventsByIds(eventIds);
+    const eventMap = new Map(events.map((event) => [event.id, event]));
+
+    return (publicImpactRows ?? [])
+      .filter((impact) => eventMap.has(impact.event_id))
+      .map((impact) => ({
+        id: impact.id,
+        impactType: "individual" as const,
+        hoursVolunteered: Number(impact.hours_volunteered ?? 0),
+        volunteerValue: 0,
+        event: eventMap.get(impact.event_id)!,
+      }));
+  }
+
   const { data: initialImpactRows, error } = await supabase
     .from("impact")
-    .select("id, event_id, hours_volunteered")
+    .select("id, event_id, hours_volunteered, events_attended")
     .eq("impact_owner_id", currentUserId)
     .not("event_id", "is", null)
-    .gt("events_attended", 0)
     .order("updated_at", { ascending: false });
 
   if (error) throw error;
 
-  const existingImpactEventIds = new Set(
+  const existingImpactByEventId = new Map(
     (initialImpactRows ?? [])
-      .map((impact) => impact.event_id)
-      .filter((eventId): eventId is string => Boolean(eventId))
+      .filter((impact) => Boolean(impact.event_id))
+      .map((impact) => [impact.event_id as string, impact])
   );
   const { data: approvedSignups, error: approvedSignupsError } = await supabase
     .from("event_signups")
@@ -54,13 +92,17 @@ export const getUserImpact = async (userId?: string): Promise<EventImpact[]> => 
 
   if (approvedSignupsError) throw approvedSignupsError;
 
-  const missingImpactRows = (approvedSignups ?? []).filter(
-    (signup) => !existingImpactEventIds.has(signup.event_id)
-  );
+  const impactRowsToCreate = [];
 
-  if (missingImpactRows.length) {
-    const { error: insertError } = await supabase.from("impact").insert(
-      missingImpactRows.map((signup) => ({
+  for (const signup of approvedSignups ?? []) {
+    const hoursVolunteered = getHoursBetweenTimestamps(
+      signup.check_in_at,
+      signup.check_out_at
+    );
+    const existingImpact = existingImpactByEventId.get(signup.event_id);
+
+    if (!existingImpact) {
+      impactRowsToCreate.push({
         impact_owner_id: currentUserId,
         user_type: profile.user_type,
         event_id: signup.event_id,
@@ -68,11 +110,30 @@ export const getUserImpact = async (userId?: string): Promise<EventImpact[]> => 
         events_attended: 1,
         events_passed: 0,
         events_coordinated: 0,
-        hours_volunteered: getHoursBetweenTimestamps(
-          signup.check_in_at,
-          signup.check_out_at
-        ),
-      }))
+        hours_volunteered: hoursVolunteered,
+      });
+      continue;
+    }
+
+    if (
+      Number(existingImpact.events_attended ?? 0) < 1 ||
+      Number(existingImpact.hours_volunteered ?? 0) !== hoursVolunteered
+    ) {
+      const { error: updateError } = await supabase
+        .from("impact")
+        .update({
+          events_attended: 1,
+          hours_volunteered: hoursVolunteered,
+        })
+        .eq("id", existingImpact.id);
+
+      if (updateError) throw updateError;
+    }
+  }
+
+  if (impactRowsToCreate.length) {
+    const { error: insertError } = await supabase.from("impact").insert(
+      impactRowsToCreate
     );
 
     if (insertError) throw insertError;

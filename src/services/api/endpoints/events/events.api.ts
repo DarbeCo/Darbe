@@ -236,7 +236,7 @@ const eventsApi = darbeBaseApi.injectEndpoints({
           };
         }
       },
-      invalidatesTags: ["Events", "Impact"],
+      invalidatesTags: ["Events", "Impact", "Profile"],
     }),
     denyEventVolunteer: builder.mutation<void, EventSignupAction>({
       async queryFn(action) {
@@ -268,7 +268,7 @@ const eventsApi = darbeBaseApi.injectEndpoints({
           };
         }
       },
-      invalidatesTags: ["Events", "Impact"],
+      invalidatesTags: ["Events", "Impact", "Profile"],
     }),
     updateEventSignupImpactDetails: builder.mutation<
       void,

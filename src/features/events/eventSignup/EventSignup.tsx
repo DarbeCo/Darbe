@@ -544,6 +544,7 @@ export const EventSignup = () => {
                       allowCoordinatorVolunteerManagement={
                         isPostNeedAdmin || activeTab === "Admin"
                       }
+                      enableAdminControls={activeTab === "Admin"}
                       useCurrentEventTimingActions={
                         userType === "individual" && activeTab === "Current"
                       }
