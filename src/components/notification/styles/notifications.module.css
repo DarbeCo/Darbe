@@ -146,6 +146,99 @@
   line-height: 17px;
 }
 
+.notificationActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.notificationAcceptButton,
+.notificationDenyButton {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.notificationAcceptButton {
+  border: 1px solid #2c77e7;
+  background: #2c77e7;
+  color: #fff;
+}
+
+.notificationDenyButton {
+  border: 1px solid #d8d8d8;
+  background: #fff;
+  color: #303030;
+}
+
+.notificationAcceptButton:disabled,
+.notificationDenyButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.notificationDialogOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.notificationDialog {
+  width: 240px;
+  min-height: 78px;
+  border-radius: 8px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  box-shadow: 0 0 18px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+}
+
+.notificationDialogTitle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  color: #202020;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+.notificationDialogIcon {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #088f26;
+  flex: 0 0 auto;
+}
+
+.notificationDialogIcon::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 5px;
+  width: 7px;
+  height: 12px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
 @media (max-width: 560px) {
   .notificationCard {
     grid-template-columns: 36px minmax(0, 1fr);

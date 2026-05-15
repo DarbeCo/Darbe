@@ -18,6 +18,7 @@ import {
 import { DesktopMessagingDrawer } from "../../components/messaging/DesktopMessagingDrawer";
 import { useGetUserProfileQuery } from "../../services/api/endpoints/profiles/profiles.api";
 import { useGetEntityEventCountsQuery } from "../../services/api/endpoints/events/events.api";
+import { useGetEntityRosterAccessQuery } from "../../services/api/endpoints/roster/roster.api";
 
 import styles from "./styles/mainPage.module.css";
 
@@ -61,10 +62,15 @@ export const Home = () => {
     viewedProfileUserId ?? "",
     { skip: !viewedProfileUserId || !viewedProfileIsEntity }
   );
+  const { data: viewedEntityRosterAccess } = useGetEntityRosterAccessQuery(
+    viewedProfileUserId ?? "",
+    { skip: !viewedProfileUserId || !viewedProfileIsEntity }
+  );
   const normalizeOrgName = (name?: string) => name?.trim().toLowerCase();
   const normalizedViewedEntityName = normalizeOrgName(viewedEntityName);
   const currentUserIsViewedProfile = user.user?.id === viewedProfileUserId;
   const currentUserIsOrgMember =
+    viewedEntityRosterAccess?.isMember ||
     currentUserIsViewedProfile ||
     currentUserProfile?.organizations?.some((organization) => {
       const organizationNameMatches =
@@ -94,7 +100,7 @@ export const Home = () => {
     followersCount: viewedProfileFollowers.length,
     mutualFollowers,
     mutualCount: mutualFollowers.length,
-    partnersCount: viewedProfile?.entityDetails?.staffList?.length ?? 0,
+    partnersCount: viewedEntityRosterAccess?.memberCount ?? 0,
     businessSponsorsCount:
       viewedProfile?.entityDetails?.donorList?.length ?? 0,
     upcomingProjectsCount:

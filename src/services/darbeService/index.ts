@@ -20,17 +20,21 @@ export {
 } from "./profiles";
 export {
   acceptFriendRequest,
+  acceptOrgJoinRequest,
   deleteFriend,
   deleteFriendRequest,
+  denyOrgJoinRequest,
   denyFriendRequest,
   followEntity,
   getFriendRequests,
   getFriends,
   getMutualFriends,
+  getOrgJoinRequestStatus,
   getSentFriendRequests,
   getSuggestedFriends,
   getUserFollowers,
   sendFriendRequest,
+  sendOrgJoinRequest,
 } from "./friends";
 export { deletePost, getPost, getUserPosts, submitPost } from "./posts";
 export {
@@ -61,6 +65,7 @@ export {
   passOnEvent,
   unvolunteerFromEvent,
   updateEventSignupImpactDetails,
+  updateEventTime,
   volunteerForEvent,
 } from "./events";
 export {
@@ -80,6 +85,8 @@ export {
   createRoster,
   demoteUserFromAdmin,
   getAllRosterMembers,
+  getEntityRosterAccess,
+  getRosterAdminEntityIds,
   getRosterAdmins,
   getRosterMembers,
   getRosters,

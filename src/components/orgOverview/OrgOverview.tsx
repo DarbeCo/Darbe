@@ -93,7 +93,7 @@ export const OrgOverview = ({
 
         <div className={styles.orgOverviewRow}>
           <span className={styles.orgOverviewRowText}>
-            {partnersCount} Partners
+            {partnersCount} Members
           </span>
         </div>
 

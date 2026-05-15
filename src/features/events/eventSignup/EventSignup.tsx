@@ -13,6 +13,7 @@ import {
   useGetEventsQuery,
   useGetSignedUpEventsQuery,
 } from "../../../services/api/endpoints/events/events.api";
+import { useGetRosterAdminEntityIdsQuery } from "../../../services/api/endpoints/roster/roster.api";
 import { EventCard } from "../../../components/events/EventCard";
 import { ShortEventState } from "../../../services/api/endpoints/types/events.api.types";
 import { useAppSelector } from "../../../services/hooks";
@@ -127,6 +128,7 @@ export const EventSignup = () => {
   const [hiddenEventIds, setHiddenEventIds] = useState<string[]>([]);
   const eventCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const { data: events, isLoading } = useGetEventsQuery();
+  const { data: rosterAdminEntityIds = [] } = useGetRosterAdminEntityIdsQuery();
   const { data: signedUpEvents, isLoading: isLoadingSignedUpEvents } =
     useGetSignedUpEventsQuery(
       { when: "upcoming" },
@@ -139,7 +141,11 @@ export const EventSignup = () => {
     );
   const hasCoordinatorEvents = Boolean(
     currentUserId &&
-      events?.some((event) => event.eventCoordinator?.id === currentUserId)
+      events?.some(
+        (event) =>
+          event.eventCoordinator?.id === currentUserId ||
+          rosterAdminEntityIds.includes(event.eventOwner.id)
+      )
   );
   const availableTabs: readonly EventsTab[] = userType === "organization"
     ? adminTabs
@@ -186,7 +192,8 @@ export const EventSignup = () => {
     const adminManagedEvents = eventsToDisplay.filter(
       (event) =>
         event.eventOwner.id === currentUserId ||
-        event.eventCoordinator?.id === currentUserId
+        event.eventCoordinator?.id === currentUserId ||
+        rosterAdminEntityIds.includes(event.eventOwner.id)
     );
     const coordinatorManagedEvents = eventsToDisplay.filter(
       (event) => event.eventCoordinator?.id === currentUserId
@@ -314,6 +321,7 @@ export const EventSignup = () => {
     incompleteDraftEvents,
     isPostNeedAdmin,
     pastSignedUpEvents,
+    rosterAdminEntityIds,
     signedUpEvents,
   ]);
 
@@ -544,7 +552,12 @@ export const EventSignup = () => {
                       allowCoordinatorVolunteerManagement={
                         isPostNeedAdmin || activeTab === "Admin"
                       }
-                      enableAdminControls={activeTab === "Admin"}
+                      enableAdminControls={
+                        activeTab === "Admin" &&
+                        (isPostNeedAdmin ||
+                          event.eventCoordinator?.id === currentUserId ||
+                          rosterAdminEntityIds.includes(event.eventOwner.id))
+                      }
                       useCurrentEventTimingActions={
                         userType === "individual" && activeTab === "Current"
                       }

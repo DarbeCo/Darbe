@@ -13,7 +13,9 @@ export interface Notification {
     | "comment"
     | "friendRequest"
     | "acceptedFriendRequest"
-    | "acceptedFriendRequest"
+    | "orgJoinRequest"
+    | "acceptedOrgJoinRequest"
+    | "deniedOrgJoinRequest"
     | "follow"
     | "post"
   /** Used in certain cases to send the user to that item */

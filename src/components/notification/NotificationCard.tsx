@@ -6,12 +6,17 @@ import {
   PersonAdd,
   PostAdd,
 } from "@mui/icons-material";
+import { useState } from "react";
 
 import { Notification } from "./types";
 import { formatDateTime } from "../../utils/CommonFunctions";
 import { PROFILE_ROUTE } from "../../routes/route.constants";
 import { DATE_CONSTANTS } from "../../utils/CommonConstants";
 import { assetUrl } from "../../utils/assetUrl";
+import {
+  useAcceptOrgJoinRequestMutation,
+  useDenyOrgJoinRequestMutation,
+} from "../../services/api/endpoints/friends/friends.api";
 
 import styles from "./styles/notifications.module.css";
 
@@ -21,10 +26,21 @@ interface NotificationCardProps {
 
 export const NotificationCard = ({ notification }: NotificationCardProps) => {
   const navigate = useNavigate();
-  const { senderUserId, contentType, createdAt } = notification;
+  const { senderUserId, recipientUserId, contentType, contentTypeId, createdAt } =
+    notification;
+  const [acceptOrgJoinRequest, { isLoading: isAcceptingJoinRequest }] =
+    useAcceptOrgJoinRequestMutation();
+  const [denyOrgJoinRequest, { isLoading: isDenyingJoinRequest }] =
+    useDenyOrgJoinRequestMutation();
+  const [actionDialogMessage, setActionDialogMessage] = useState("");
   const formattedDate = formatDateTime(createdAt, DATE_CONSTANTS.N_TIME_AGO);
 
   const getNotificationDetails = (type: Notification["contentType"]) => {
+    const senderIsIndividual = senderUserId.userType === "individual";
+    const recipientIsEntity =
+      recipientUserId.userType === "organization" ||
+      recipientUserId.userType === "nonprofit";
+
     switch (type) {
       case "like":
         return {
@@ -61,6 +77,45 @@ export const NotificationCard = ({ notification }: NotificationCardProps) => {
           actionText: "started following you.",
           previewText: "View their profile to see more.",
         };
+      case "orgJoinRequest":
+        return {
+          icon: <PersonAdd />,
+          iconClassName: styles.notificationFriendBadge,
+          actionText: "requested to join your organization.",
+          previewText: "Accept or deny this member request.",
+        };
+      case "acceptedOrgJoinRequest":
+        if (senderIsIndividual && recipientIsEntity) {
+          return {
+            icon: <Check />,
+            iconClassName: styles.notificationAcceptedBadge,
+            actionText: "has been accepted into your organization.",
+            previewText: "This member request is complete.",
+          };
+        }
+
+        return {
+          icon: <Check />,
+          iconClassName: styles.notificationAcceptedBadge,
+          actionText: "accepted your organization join request.",
+          previewText: "You are now a member.",
+        };
+      case "deniedOrgJoinRequest":
+        if (senderIsIndividual && recipientIsEntity) {
+          return {
+            icon: <PersonAdd />,
+            iconClassName: styles.notificationFriendBadge,
+            actionText: "has been denied from joining your organization.",
+            previewText: "This member request is complete.",
+          };
+        }
+
+        return {
+          icon: <PersonAdd />,
+          iconClassName: styles.notificationFriendBadge,
+          actionText: "declined your organization join request.",
+          previewText: "View their profile to learn more.",
+        };
       case "post":
         return {
           icon: <PostAdd />,
@@ -81,6 +136,30 @@ export const NotificationCard = ({ notification }: NotificationCardProps) => {
   const handleClick = (userId: string) => {
     navigate(`${PROFILE_ROUTE}/${userId}`);
   };
+
+  const handleAcceptOrgJoinRequest = async () => {
+    try {
+      await acceptOrgJoinRequest(contentTypeId).unwrap();
+      setActionDialogMessage("Member request accepted.");
+      setTimeout(() => setActionDialogMessage(""), 1400);
+    } catch (error) {
+      console.error("Error accepting organization join request", error);
+      setActionDialogMessage("Unable to accept this member request.");
+      setTimeout(() => setActionDialogMessage(""), 1800);
+    }
+  };
+
+  const handleDenyOrgJoinRequest = async () => {
+    try {
+      await denyOrgJoinRequest(contentTypeId).unwrap();
+      setActionDialogMessage("Member request denied.");
+      setTimeout(() => setActionDialogMessage(""), 1400);
+    } catch (error) {
+      console.error("Error denying organization join request", error);
+      setActionDialogMessage("Unable to deny this member request.");
+      setTimeout(() => setActionDialogMessage(""), 1800);
+    }
+  };
   const nameToUse =
     senderUserId?.fullName ||
     senderUserId?.organizationName ||
@@ -88,8 +167,11 @@ export const NotificationCard = ({ notification }: NotificationCardProps) => {
     senderUserId?.firstName ||
     "Someone";
   const notificationDetails = getNotificationDetails(contentType);
+  const isJoinRequest = contentType === "orgJoinRequest";
+  const isJoinActionLoading = isAcceptingJoinRequest || isDenyingJoinRequest;
 
   return (
+    <>
     <article className={styles.notificationCard}>
       <button
         type="button"
@@ -129,7 +211,38 @@ export const NotificationCard = ({ notification }: NotificationCardProps) => {
             see more
           </button>
         </p>
+        {isJoinRequest && (
+          <div className={styles.notificationActions}>
+            <button
+              type="button"
+              className={styles.notificationAcceptButton}
+              onClick={handleAcceptOrgJoinRequest}
+              disabled={isJoinActionLoading}
+            >
+              Accept
+            </button>
+            <button
+              type="button"
+              className={styles.notificationDenyButton}
+              onClick={handleDenyOrgJoinRequest}
+              disabled={isJoinActionLoading}
+            >
+              Deny
+            </button>
+          </div>
+        )}
       </div>
     </article>
+    {actionDialogMessage && (
+      <div className={styles.notificationDialogOverlay}>
+        <div className={styles.notificationDialog} role="status">
+          <h2 className={styles.notificationDialogTitle}>
+            <span className={styles.notificationDialogIcon} aria-hidden="true" />
+            <span>{actionDialogMessage}</span>
+          </h2>
+        </div>
+      </div>
+    )}
+    </>
   );
 };

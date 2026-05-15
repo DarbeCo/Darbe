@@ -22,6 +22,7 @@ const notificationsApi = darbeBaseApi.injectEndpoints({
           };
         }
       },
+      providesTags: ["Notifications"],
     }),
     getNotificationCount: builder.query<number, void>({
       async queryFn() {

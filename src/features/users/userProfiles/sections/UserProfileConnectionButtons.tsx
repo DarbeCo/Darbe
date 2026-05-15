@@ -3,6 +3,8 @@ import { DarbeButton } from "../../../../components/buttons/DarbeButton";
 import {
   useAcceptFriendRequestMutation,
   useFollowEntityMutation,
+  useGetOrgJoinRequestStatusQuery,
+  useSendOrgJoinRequestMutation,
   useSendFriendRequestMutation,
 } from "../../../../services/api/endpoints/friends/friends.api";
 import useScreenWidthHook from "../../../../utils/commonHooks/UseScreenWidth";
@@ -34,6 +36,10 @@ export const UserProfileConnectionButtons = ({
   const [sendFriendRequest] = useSendFriendRequestMutation();
   const [acceptFriendRequest] = useAcceptFriendRequestMutation();
   const [followEntity] = useFollowEntityMutation();
+  const [sendOrgJoinRequest, { isLoading: isSendingJoinRequest }] =
+    useSendOrgJoinRequestMutation();
+  const { data: orgJoinRequestStatus = "none" } =
+    useGetOrgJoinRequestStatusQuery(userId, { skip: !isEntityProfile });
   const { isMobile } = useScreenWidthHook();
 
   const handleAcceptConnection = async (friendId: string) => {
@@ -49,10 +55,8 @@ export const UserProfileConnectionButtons = ({
     followEntity(userId);
   };
 
-  const handleJoin = () => {
-    navigate(`${MESSAGING_ROUTE}/${userId}`, {
-      state: { initialMessage: "Hi, I would like to learn more about joining." },
-    });
+  const handleJoin = async () => {
+    await sendOrgJoinRequest(userId).unwrap();
   };
 
   const handleMessage = () => {
@@ -61,13 +65,22 @@ export const UserProfileConnectionButtons = ({
 
   const friendtTextToShow = hasSentRequest ? "Pending" : "Connect";
   const followTextToShow = isFollowing ? "Following" : "Follow";
+  const isJoinPending =
+    isSendingJoinRequest || orgJoinRequestStatus === "pending";
+  const isJoined = orgJoinRequestStatus === "approved";
+  const joinTextToShow = isJoined
+    ? "Joined"
+    : isJoinPending
+      ? "Pending"
+      : "Join";
 
   // TODO: Some refactor required to message entities
   const entityProfileButtons = (
     <>
       <DarbeButton
+        isDisabled={isJoinPending || isJoined}
         darbeButtonType="messageFriendButton"
-        buttonText="Join"
+        buttonText={joinTextToShow}
         onClick={handleJoin}
       />
       <DarbeButton

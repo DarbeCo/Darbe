@@ -220,6 +220,210 @@ export const followEntity = async (entityId: string): Promise<void> => {
   });
 };
 
+const getOrCreateDefaultRoster = async (entityId: string): Promise<string> => {
+  const { data: existingRoster, error: existingRosterError } = await supabase
+    .from("rosters")
+    .select("id")
+    .eq("roster_owner_id", entityId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (existingRosterError) throw existingRosterError;
+  if (existingRoster?.id) return existingRoster.id;
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("nonprofit_name, organization_name")
+    .eq("id", entityId)
+    .single();
+
+  if (profileError || !profile) {
+    throw profileError ?? new Error("Organization not found");
+  }
+
+  const rosterName = profile.nonprofit_name || profile.organization_name || "Default";
+  const { data: newRoster, error: newRosterError } = await supabase
+    .from("rosters")
+    .insert({
+      roster_owner_id: entityId,
+      roster_name: `${rosterName}'s Default Roster`,
+    })
+    .select("id")
+    .single();
+
+  if (newRosterError || !newRoster) {
+    throw newRosterError ?? new Error("Failed to create organization roster");
+  }
+
+  return newRoster.id;
+};
+
+export type OrgJoinRequestStatus = "none" | "pending" | "approved" | "denied";
+
+export const getOrgJoinRequestStatus = async (
+  entityId: string
+): Promise<OrgJoinRequestStatus> => {
+  const userId = await ensureUserId();
+
+  const { data: rosters, error: rosterError } = await supabase
+    .from("rosters")
+    .select("id")
+    .eq("roster_owner_id", entityId);
+
+  if (rosterError) throw rosterError;
+
+  const rosterIds = (rosters ?? []).map((roster) => roster.id);
+
+  if (rosterIds.length) {
+    const { data: membership, error: membershipError } = await supabase
+      .from("roster_members")
+      .select("user_id")
+      .eq("user_id", userId)
+      .in("roster_id", rosterIds)
+      .limit(1)
+      .maybeSingle();
+
+    if (membershipError) throw membershipError;
+    if (membership) return "approved";
+  }
+
+  const { data: request, error: requestError } = await supabase
+    .from("friend_requests")
+    .select("status")
+    .eq("requester_id", userId)
+    .eq("receiver_id", entityId)
+    .eq("request_type", "join")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (requestError) throw requestError;
+
+  if (request?.status === "pending") {
+    return "pending";
+  }
+
+  return "none";
+};
+
+export const sendOrgJoinRequest = async (entityId: string): Promise<void> => {
+  const userId = await ensureUserId();
+
+  const currentStatus = await getOrgJoinRequestStatus(entityId);
+  if (currentStatus === "pending" || currentStatus === "approved") {
+    return;
+  }
+
+  const { data, error } = await supabase.from("friend_requests").upsert(
+    {
+      requester_id: userId,
+      receiver_id: entityId,
+      request_type: "join",
+      status: "pending",
+    },
+    { onConflict: "requester_id,receiver_id,request_type" }
+  )
+  .select("id")
+  .single();
+
+  if (error) throw error;
+
+  await createNotifications({
+    recipientUserIds: [entityId],
+    senderUserId: userId,
+    contentType: "orgJoinRequest",
+    contentTypeId: data?.id ?? entityId,
+  });
+};
+
+export const acceptOrgJoinRequest = async (requestId: string): Promise<void> => {
+  const entityId = await ensureUserId();
+  const { data: request, error: requestError } = await supabase
+    .from("friend_requests")
+    .select("id, requester_id, receiver_id, request_type, status")
+    .eq("id", requestId)
+    .eq("receiver_id", entityId)
+    .eq("request_type", "join")
+    .single();
+
+  if (requestError || !request) {
+    throw requestError ?? new Error("Join request not found");
+  }
+
+  const rosterId = await getOrCreateDefaultRoster(entityId);
+  const { error: memberError } = await supabase.from("roster_members").upsert({
+    roster_id: rosterId,
+    user_id: request.requester_id,
+    is_admin: false,
+  });
+
+  if (memberError) throw memberError;
+
+  const { error: updateError } = await supabase
+    .from("friend_requests")
+    .update({ status: "accepted" })
+    .eq("id", requestId);
+
+  if (updateError) throw updateError;
+
+  const { error: notificationUpdateError } = await supabase
+    .from("notifications")
+    .update({ content_type: "acceptedOrgJoinRequest" })
+    .eq("recipient_user_id", entityId)
+    .eq("sender_user_id", request.requester_id)
+    .eq("content_type", "orgJoinRequest")
+    .eq("content_type_id", requestId);
+
+  if (notificationUpdateError) throw notificationUpdateError;
+
+  await createNotifications({
+    recipientUserIds: [request.requester_id],
+    senderUserId: entityId,
+    contentType: "acceptedOrgJoinRequest",
+    contentTypeId: requestId,
+  });
+};
+
+export const denyOrgJoinRequest = async (requestId: string): Promise<void> => {
+  const entityId = await ensureUserId();
+  const { data: request, error: requestError } = await supabase
+    .from("friend_requests")
+    .select("id, requester_id, receiver_id, request_type")
+    .eq("id", requestId)
+    .eq("receiver_id", entityId)
+    .eq("request_type", "join")
+    .single();
+
+  if (requestError || !request) {
+    throw requestError ?? new Error("Join request not found");
+  }
+
+  const { error: updateError } = await supabase
+    .from("friend_requests")
+    .update({ status: "denied" })
+    .eq("id", requestId);
+
+  if (updateError) throw updateError;
+
+  const { error: notificationUpdateError } = await supabase
+    .from("notifications")
+    .update({ content_type: "deniedOrgJoinRequest" })
+    .eq("recipient_user_id", entityId)
+    .eq("sender_user_id", request.requester_id)
+    .eq("content_type", "orgJoinRequest")
+    .eq("content_type_id", requestId);
+
+  if (notificationUpdateError) throw notificationUpdateError;
+
+  await createNotifications({
+    recipientUserIds: [request.requester_id],
+    senderUserId: entityId,
+    contentType: "deniedOrgJoinRequest",
+    contentTypeId: requestId,
+  });
+};
+
 export const getUserFollowers = async (userId: string): Promise<ProfileFollowState[]> => {
   const { data, error } = await supabase
     .from("follows")

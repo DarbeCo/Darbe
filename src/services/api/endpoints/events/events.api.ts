@@ -26,6 +26,7 @@ import {
   passOnEvent,
   unvolunteerFromEvent,
   updateEventSignupImpactDetails,
+  updateEventTime,
   volunteerForEvent,
 } from "../../../darbeService";
 
@@ -40,6 +41,13 @@ type EventSignupImpactDetails = {
   endTime: string;
   location: string;
   impact: string;
+};
+
+type EventTimeUpdate = {
+  eventId: string;
+  eventDate: string;
+  startTime: number;
+  endTime?: number;
 };
 
 const eventsApi = darbeBaseApi.injectEndpoints({
@@ -289,6 +297,22 @@ const eventsApi = darbeBaseApi.injectEndpoints({
       },
       invalidatesTags: ["Events"],
     }),
+    updateEventTime: builder.mutation<void, EventTimeUpdate>({
+      async queryFn(details) {
+        try {
+          await updateEventTime(details);
+          return { data: undefined };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      invalidatesTags: ["Events"],
+    }),
     unvolunteerFromEvent: builder.mutation<void, string>({
       async queryFn(eventId) {
         try {
@@ -363,6 +387,7 @@ export const {
   useMarkNoShowForEventMutation,
   useUnvolunteerFromEventMutation,
   useUpdateEventSignupImpactDetailsMutation,
+  useUpdateEventTimeMutation,
   useGetSignedUpEventsQuery,
   useGetVolunteerMatchesQuery,
 } = eventsApi;

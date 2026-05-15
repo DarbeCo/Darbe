@@ -259,3 +259,60 @@ export const getAllRosterMembers = async (): Promise<EligibleRosterMembers> => {
     eligibleStaff: memberInfo.filter((member) => !staffIds.has(member.id)),
   };
 };
+
+export const getEntityRosterAccess = async (
+  entityId: string
+): Promise<{ isMember: boolean; isAdmin: boolean; memberCount: number }> => {
+  const userId = await ensureUserId();
+  const { data: rosters, error: rosterError } = await supabase
+    .from("rosters")
+    .select("id")
+    .eq("roster_owner_id", entityId);
+
+  if (rosterError) throw rosterError;
+
+  const rosterIds = (rosters ?? []).map((roster) => roster.id);
+
+  if (!rosterIds.length) {
+    return { isMember: userId === entityId, isAdmin: userId === entityId, memberCount: 0 };
+  }
+
+  const { data: members, error: membersError } = await supabase
+    .from("roster_members")
+    .select("user_id, is_admin")
+    .in("roster_id", rosterIds);
+
+  if (membersError) throw membersError;
+
+  const memberIds = new Set((members ?? []).map((member) => member.user_id));
+  const currentMembership = (members ?? []).find((member) => member.user_id === userId);
+
+  return {
+    isMember: userId === entityId || memberIds.has(userId),
+    isAdmin: userId === entityId || Boolean(currentMembership?.is_admin),
+    memberCount: memberIds.size,
+  };
+};
+
+export const getRosterAdminEntityIds = async (): Promise<string[]> => {
+  const userId = await ensureUserId();
+  const { data: memberships, error: membershipsError } = await supabase
+    .from("roster_members")
+    .select("roster_id")
+    .eq("user_id", userId)
+    .eq("is_admin", true);
+
+  if (membershipsError) throw membershipsError;
+
+  const rosterIds = (memberships ?? []).map((membership) => membership.roster_id);
+  if (!rosterIds.length) return [];
+
+  const { data: rosters, error: rostersError } = await supabase
+    .from("rosters")
+    .select("roster_owner_id")
+    .in("id", rosterIds);
+
+  if (rostersError) throw rostersError;
+
+  return Array.from(new Set((rosters ?? []).map((roster) => roster.roster_owner_id)));
+};

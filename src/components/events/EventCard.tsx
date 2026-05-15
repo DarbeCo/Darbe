@@ -36,6 +36,7 @@ import {
   useMarkNoShowForEventMutation,
   useUnvolunteerFromEventMutation,
   useUpdateEventSignupImpactDetailsMutation,
+  useUpdateEventTimeMutation,
   useVolunteerForEventMutation,
 } from "../../services/api/endpoints/events/events.api";
 import { useGetSearchResultsQuery } from "../../services/api/endpoints/search/search.api";
@@ -155,6 +156,8 @@ export const EventCard = ({
     useApproveAllEventVolunteersMutation();
   const [updateImpactDetails, { isLoading: isUpdatingImpactDetails }] =
     useUpdateEventSignupImpactDetailsMutation();
+  const [updateEventTime, { isLoading: isUpdatingEventTime }] =
+    useUpdateEventTimeMutation();
   const [unvolunteerFromEvent, { isLoading: isUnvolunteering }] =
     useUnvolunteerFromEventMutation();
   const [volunteerForEvent, { isLoading: isVolunteering }] =
@@ -339,6 +342,42 @@ export const EventCard = ({
     navigator.clipboard.writeText(eventShareUrl);
   };
 
+  const handleEditEventTime = async () => {
+    const currentDateValue = event.eventDate.split("T")[0];
+    const nextDate = window.prompt("Event date (YYYY-MM-DD)", currentDateValue);
+
+    if (!nextDate) return;
+
+    const nextStartTime = window.prompt(
+      "Start time as decimal hour, e.g. 13.5 for 1:30 PM",
+      event.startTime.toString()
+    );
+
+    if (!nextStartTime) return;
+
+    const nextEndTime = window.prompt(
+      "End time as decimal hour, e.g. 15 for 3:00 PM",
+      event.endTime?.toString() ?? ""
+    );
+
+    const parsedStartTime = Number(nextStartTime);
+    const parsedEndTime = nextEndTime?.trim() ? Number(nextEndTime) : undefined;
+
+    if (
+      !Number.isFinite(parsedStartTime) ||
+      (parsedEndTime !== undefined && !Number.isFinite(parsedEndTime))
+    ) {
+      return;
+    }
+
+    await updateEventTime({
+      eventId: event.id,
+      eventDate: nextDate,
+      startTime: parsedStartTime,
+      endTime: parsedEndTime,
+    }).unwrap();
+  };
+
   const eventState = getUserStateFromZip(event.eventAddress.zipCode)?.st;
   const locationText = `${event.eventAddress.city}, ${eventState}`;
   const displayName =
@@ -415,7 +454,8 @@ export const EventCard = ({
     isApprovingVolunteer ||
     isDenyingVolunteer ||
     isApprovingAllVolunteers ||
-    isUpdatingImpactDetails;
+    isUpdatingImpactDetails ||
+    isUpdatingEventTime;
   const isSignedUpCard = Boolean(isSignedUp);
   const canSelectVolunteers = canManageVolunteerCheckIns;
   const checkedInVolunteerCount =
@@ -733,6 +773,16 @@ export const EventCard = ({
                 buttonText={incompleteActionLabel}
                 onClick={() => onIncompleteAction(event.id)}
                 darbeButtonType="nextButton"
+              />
+            </div>
+          )}
+          {canManageVolunteerCheckIns && !incompleteActionLabel && (
+            <div className={styles.eventMatchActions}>
+              <DarbeButton
+                buttonText="Edit Time"
+                onClick={handleEditEventTime}
+                darbeButtonType="secondaryNextButton"
+                isDisabled={isUpdatingEventTime}
               />
             </div>
           )}

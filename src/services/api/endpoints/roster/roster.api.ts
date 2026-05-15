@@ -6,6 +6,8 @@ import {
     createRoster,
     demoteUserFromAdmin,
     getAllRosterMembers,
+    getEntityRosterAccess,
+    getRosterAdminEntityIds,
     getRosterAdmins,
     getRosterMembers,
     getRosters,
@@ -160,6 +162,41 @@ const rosterApi = darbeBaseApi.injectEndpoints({
             },
             providesTags: ["RosterMembers"],
         }),
+        getEntityRosterAccess: builder.query<
+            { isMember: boolean; isAdmin: boolean; memberCount: number },
+            string
+        >({
+            async queryFn(entityId) {
+                try {
+                    const data = await getEntityRosterAccess(entityId);
+                    return { data };
+                } catch (error) {
+                    return {
+                        error: {
+                            status: "CUSTOM_ERROR",
+                            data: { message: (error as Error).message },
+                        },
+                    };
+                }
+            },
+            providesTags: ["Roster", "RosterMembers"],
+        }),
+        getRosterAdminEntityIds: builder.query<string[], void>({
+            async queryFn() {
+                try {
+                    const data = await getRosterAdminEntityIds();
+                    return { data };
+                } catch (error) {
+                    return {
+                        error: {
+                            status: "CUSTOM_ERROR",
+                            data: { message: (error as Error).message },
+                        },
+                    };
+                }
+            },
+            providesTags: ["Roster", "RosterMembers"],
+        }),
     }),
 });
 
@@ -172,5 +209,7 @@ export const {
     useAddFollowerToRosterMutation,
     useRemoveMemberFromRosterMutation,
     useGetRosterAdminsQuery,
-    useGetAllRosterMembersQuery
+    useGetAllRosterMembersQuery,
+    useGetEntityRosterAccessQuery,
+    useGetRosterAdminEntityIdsQuery
 } = rosterApi;

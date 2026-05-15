@@ -584,12 +584,13 @@ export const getEvents = async (): Promise<ShortEventState[]> => {
   let filteredEvents = events ?? [];
 
   if (isIndividual) {
-    const [{ data: signups }, { data: following }] = await Promise.all([
+    const [{ data: signups }, { data: following }, { data: memberships }] = await Promise.all([
       supabase
         .from("event_signups")
         .select("event_id, status")
         .eq("user_id", userId),
       supabase.from("follows").select("following_id").eq("follower_id", userId),
+      supabase.from("roster_members").select("roster_id").eq("user_id", userId),
     ]);
 
     const blockedEventIds = new Set(
@@ -601,12 +602,28 @@ export const getEvents = async (): Promise<ShortEventState[]> => {
     );
 
     const followingIds = new Set((following ?? []).map((row) => row.following_id));
+    const rosterIds = (memberships ?? []).map((row) => row.roster_id);
+    const { data: memberRosters, error: memberRostersError } = rosterIds.length
+      ? await supabase
+          .from("rosters")
+          .select("roster_owner_id")
+          .in("id", rosterIds)
+      : { data: [], error: null };
+
+    if (memberRostersError) throw memberRostersError;
+
+    const memberEntityIds = new Set(
+      (memberRosters ?? []).map((row) => row.roster_owner_id)
+    );
 
     filteredEvents = filteredEvents.filter((event) => {
       if (event.event_coordinator_id === userId) return true;
       if (blockedEventIds.has(event.id)) return false;
       if (event.is_followers_only) {
-        return followingIds.has(event.event_owner_id);
+        return (
+          followingIds.has(event.event_owner_id) ||
+          memberEntityIds.has(event.event_owner_id)
+        );
       }
       return true;
     });
@@ -786,6 +803,69 @@ export const createEvent = async (newEvent: CreateEvent): Promise<SimpleEventSta
     startTime: timeToDecimal(event.start_time) ?? 0,
     endTime: timeToDecimal(event.end_time),
   };
+};
+
+export const updateEventTime = async ({
+  eventId,
+  eventDate,
+  startTime,
+  endTime,
+}: {
+  eventId: string;
+  eventDate: string;
+  startTime: number;
+  endTime?: number;
+}): Promise<void> => {
+  const userId = await ensureUserId();
+  const { data: event, error: eventError } = await supabase
+    .from("events")
+    .select("event_owner_id, event_coordinator_id")
+    .eq("id", eventId)
+    .single();
+
+  if (eventError || !event) throw eventError ?? new Error("Event not found");
+
+  let canEdit =
+    event.event_owner_id === userId || event.event_coordinator_id === userId;
+
+  if (!canEdit) {
+    const { data: rosters, error: rosterError } = await supabase
+      .from("rosters")
+      .select("id")
+      .eq("roster_owner_id", event.event_owner_id);
+
+    if (rosterError) throw rosterError;
+
+    const rosterIds = (rosters ?? []).map((roster) => roster.id);
+    if (rosterIds.length) {
+      const { data: adminMembership, error: adminError } = await supabase
+        .from("roster_members")
+        .select("user_id")
+        .eq("user_id", userId)
+        .eq("is_admin", true)
+        .in("roster_id", rosterIds)
+        .limit(1)
+        .maybeSingle();
+
+      if (adminError) throw adminError;
+      canEdit = Boolean(adminMembership);
+    }
+  }
+
+  if (!canEdit) {
+    throw new Error("You do not have permission to edit this event");
+  }
+
+  const { error: updateError } = await supabase
+    .from("events")
+    .update({
+      event_date: toDatabaseDateString(eventDate),
+      start_time: startTime.toString(),
+      end_time: endTime === undefined ? null : endTime.toString(),
+    })
+    .eq("id", eventId);
+
+  if (updateError) throw updateError;
 };
 
 export const deleteEvent = async (eventId: string): Promise<void> => {

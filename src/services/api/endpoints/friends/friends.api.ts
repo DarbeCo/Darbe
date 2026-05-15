@@ -8,17 +8,21 @@ import {
 import { darbeBaseApi } from "../darbe.api";
 import {
   acceptFriendRequest,
+  acceptOrgJoinRequest,
   deleteFriend,
   deleteFriendRequest,
+  denyOrgJoinRequest,
   denyFriendRequest,
   followEntity,
   getFriendRequests,
   getFriends,
   getMutualFriends,
+  getOrgJoinRequestStatus,
   getSentFriendRequests,
   getSuggestedFriends,
   getUserFollowers,
   sendFriendRequest,
+  sendOrgJoinRequest,
 } from "../../../darbeService";
 
 const friendsApi = darbeBaseApi.injectEndpoints({
@@ -170,6 +174,73 @@ const friendsApi = darbeBaseApi.injectEndpoints({
       },
       invalidatesTags: ["Profiles", "Followers", "Friends", "FriendRequests", "Profile"],
     }),
+    sendOrgJoinRequest: builder.mutation<void, string>({
+      async queryFn(entityId) {
+        try {
+          await sendOrgJoinRequest(entityId);
+          return { data: undefined };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      invalidatesTags: ["FriendRequests", "Notifications", "NotificationCount"],
+    }),
+    getOrgJoinRequestStatus: builder.query<
+      "none" | "pending" | "approved" | "denied",
+      string
+    >({
+      async queryFn(entityId) {
+        try {
+          const data = await getOrgJoinRequestStatus(entityId);
+          return { data };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      providesTags: ["FriendRequests", "Roster", "RosterMembers"],
+    }),
+    acceptOrgJoinRequest: builder.mutation<void, string>({
+      async queryFn(requestId) {
+        try {
+          await acceptOrgJoinRequest(requestId);
+          return { data: undefined };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      invalidatesTags: ["Roster", "RosterMembers", "FriendRequests", "Notifications", "NotificationCount", "Profile"],
+    }),
+    denyOrgJoinRequest: builder.mutation<void, string>({
+      async queryFn(requestId) {
+        try {
+          await denyOrgJoinRequest(requestId);
+          return { data: undefined };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      invalidatesTags: ["FriendRequests", "Notifications", "NotificationCount"],
+    }),
     getUserFollowers: builder.query<ProfileFollowState[], string>({
       async queryFn(userId) {
         try {
@@ -232,6 +303,10 @@ export const {
   useAcceptFriendRequestMutation,
   useGetSentFriendRequestsQuery,
   useFollowEntityMutation,
+  useSendOrgJoinRequestMutation,
+  useGetOrgJoinRequestStatusQuery,
+  useAcceptOrgJoinRequestMutation,
+  useDenyOrgJoinRequestMutation,
   useGetUserFollowersQuery,
   useLazyGetUserFollowersQuery,
   useGetMutualFriendsQuery,
