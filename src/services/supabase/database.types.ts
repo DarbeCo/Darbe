@@ -982,18 +982,30 @@ export interface Database {
           roster_id: string;
           user_id: string;
           is_admin: boolean;
+          can_edit_assigned_roster: boolean;
+          can_assign_volunteer_coordinators: boolean;
+          can_edit_internal_events: boolean;
+          can_edit_external_events: boolean;
           created_at: string;
         };
         Insert: {
           roster_id: string;
           user_id: string;
           is_admin?: boolean;
+          can_edit_assigned_roster?: boolean;
+          can_assign_volunteer_coordinators?: boolean;
+          can_edit_internal_events?: boolean;
+          can_edit_external_events?: boolean;
           created_at?: string;
         };
         Update: {
           roster_id?: string;
           user_id?: string;
           is_admin?: boolean;
+          can_edit_assigned_roster?: boolean;
+          can_assign_volunteer_coordinators?: boolean;
+          can_edit_internal_events?: boolean;
+          can_edit_external_events?: boolean;
           created_at?: string;
         };
         Relationships: [];

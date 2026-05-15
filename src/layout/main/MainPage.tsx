@@ -14,6 +14,7 @@ import {
   MESSAGING_ROUTE,
   POST_A_NEED,
   PROFILE_ROUTE,
+  ROSTER_ROUTE,
 } from "../../routes/route.constants";
 import { DesktopMessagingDrawer } from "../../components/messaging/DesktopMessagingDrawer";
 import { useGetUserProfileQuery } from "../../services/api/endpoints/profiles/profiles.api";
@@ -30,6 +31,7 @@ export const Home = () => {
   const pathName = location.pathname.split("/");
   const isHomePage = pathName.length === 2;
   const isPostNeedPage = location.pathname === POST_A_NEED;
+  const isRosterPage = location.pathname === ROSTER_ROUTE;
   const isMessagingPage = location.pathname.startsWith(MESSAGING_ROUTE);
   const isProfileEditPage = pathName.includes("profile_edit");
   const hideSearchBar = isProfileEditPage || isPostNeedPage || isMessagingPage;
@@ -170,6 +172,7 @@ export const Home = () => {
               <RightPanel
                 showSuggestedFriends={showSuggestedFriends}
                 showOrgOverview={showOrgOverview}
+                showRosterPanel={isRosterPage}
                 orgOverviewProps={orgOverviewProps}
               />
             </div>

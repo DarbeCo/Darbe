@@ -1,5 +1,11 @@
 import { darbeBaseApi } from "../darbe.api";
-import { EligibleRosterMembers, NewRoster, Roster, RosterMember } from "../types/roster.api.types";
+import {
+    EligibleRosterMembers,
+    NewRoster,
+    Roster,
+    RosterAdminPermissions,
+    RosterMember,
+} from "../types/roster.api.types";
 import { SimpleUserInfo } from "../types/user.api.types";
 import {
     addToRoster,
@@ -66,10 +72,13 @@ const rosterApi = darbeBaseApi.injectEndpoints({
             },
             invalidatesTags: ["Roster"],
         }),
-        promoteUserToAdmin: builder.mutation<void, { userId: string; rosterId: string }>({
-            async queryFn({ userId, rosterId }) {
+        promoteUserToAdmin: builder.mutation<
+            void,
+            { userId: string; rosterId: string; permissions?: RosterAdminPermissions }
+        >({
+            async queryFn({ userId, rosterId, permissions }) {
                 try {
-                    await promoteUserToAdmin(userId, rosterId);
+                    await promoteUserToAdmin(userId, rosterId, permissions);
                     return { data: undefined };
                 } catch (error) {
                     return {
