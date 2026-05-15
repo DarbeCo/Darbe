@@ -24,7 +24,6 @@ import { setReceivedFriendRequests, setUserProfile } from "../userSlice";
 import { useAppDispatch, useAppSelector } from "../../../services/hooks";
 import { useLazyGetUserProfileQuery } from "../../../services/api/endpoints/profiles/profiles.api";
 import { UserDonors } from "./sections/entity/UserDonors";
-import { UserDocuments } from "./sections/entity/UserDocuments";
 import { UserEntityStaff } from "./sections/entity/UserEntityStaff";
 import { UserEntityProfileInformation } from "./sections/entity/UserEntityProfileInformation";
 
@@ -207,10 +206,6 @@ export const UserProfiles = () => {
           <UserEntityStaff
             canEdit={canEdit}
             staff={userInformation?.entityDetails?.staffList}
-          />
-          <UserDocuments
-            canEdit={canEdit}
-            documents={userInformation?.entityDetails?.documents}
           />
         </>
       )}
