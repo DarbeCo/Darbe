@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import { ExpandMore } from "@mui/icons-material";
 
 import { useGetEntityEventCountsQuery } from "../../services/api/endpoints/events/events.api";
 import { useGetDonorsAndStaffQuery } from "../../services/api/endpoints/profiles/profiles.api";
@@ -64,6 +65,9 @@ export const RosterRightPanel = () => {
       <section className={styles.rosterRailCard}>
         <label className={styles.rosterRailSelect}>
           <span>Select Roster</span>
+          <span className={styles.rosterRailSelectIcon} aria-hidden="true">
+            <ExpandMore fontSize="small" />
+          </span>
           <select
             value={currentRoster?.id ?? ""}
             onChange={(event) => {
