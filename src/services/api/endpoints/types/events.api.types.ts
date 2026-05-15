@@ -58,6 +58,11 @@ export interface SimpleEventState {
   endTime?: number;
 }
 
+export interface EntityEventCounts {
+  upcomingProjectsCount: number;
+  completedProjectsCount: number;
+}
+
 export interface CreateEvent extends Omit<EventsState, "eventOwner" | "eventCoordinator"> {
   eventOwner: string;
   eventCoordinator: string;

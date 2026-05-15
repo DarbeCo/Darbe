@@ -1,6 +1,7 @@
 import { darbeBaseApi } from "../darbe.api";
 import {
   CreateEvent,
+  EntityEventCounts,
   EventsState,
   ShortEventState,
   SimpleEventState,
@@ -14,6 +15,7 @@ import {
   createEvent,
   deleteEvent,
   denyEventVolunteer,
+  getEntityEventCounts,
   getEventDetails,
   getEvents,
   getSignedUpEvents,
@@ -74,6 +76,23 @@ const eventsApi = darbeBaseApi.injectEndpoints({
         }
       },
       providesTags: ["Events"],
+    }),
+    getEntityEventCounts: builder.query<EntityEventCounts, string>({
+      async queryFn(entityId) {
+        try {
+          const data = await getEntityEventCounts(entityId);
+          return { data };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      providesTags: ["Events"],
+      keepUnusedDataFor: 10,
     }),
     createEvent: builder.mutation<SimpleEventState, CreateEvent>({
       async queryFn(newEvent) {
@@ -330,6 +349,7 @@ const eventsApi = darbeBaseApi.injectEndpoints({
 export const {
   useGetEventsQuery,
   useGetEventDetailsQuery,
+  useGetEntityEventCountsQuery,
   useAddEventVolunteerMutation,
   useApproveAllEventVolunteersMutation,
   useApproveEventVolunteerMutation,

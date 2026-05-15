@@ -1,5 +1,6 @@
 import type {
   CreateEvent,
+  EntityEventCounts,
   EventsState,
   ShortEventState,
   SimpleEventState,
@@ -521,6 +522,37 @@ export const getEvents = async (): Promise<ShortEventState[]> => {
   }
 
   return buildShortEvents(filteredEvents as EventRow[]);
+};
+
+export const getEntityEventCounts = async (
+  entityId: string
+): Promise<EntityEventCounts> => {
+  const { data, error } = await supabase
+    .from("events")
+    .select("event_date, end_time")
+    .eq("event_owner_id", entityId);
+
+  if (error) throw error;
+
+  const now = new Date();
+
+  return (data ?? []).reduce<EntityEventCounts>(
+    (counts, event) => {
+      const eventEnd = parseEventDateTimeAsLocalDate(
+        event.event_date,
+        Number(event.end_time ?? 0)
+      );
+
+      if (eventEnd >= now) {
+        counts.upcomingProjectsCount += 1;
+      } else {
+        counts.completedProjectsCount += 1;
+      }
+
+      return counts;
+    },
+    { upcomingProjectsCount: 0, completedProjectsCount: 0 }
+  );
 };
 
 export const getEventDetails = async (eventId: string): Promise<EventsState> => {

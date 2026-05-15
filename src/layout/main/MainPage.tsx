@@ -17,6 +17,7 @@ import {
 } from "../../routes/route.constants";
 import { DesktopMessagingDrawer } from "../../components/messaging/DesktopMessagingDrawer";
 import { useGetUserProfileQuery } from "../../services/api/endpoints/profiles/profiles.api";
+import { useGetEntityEventCountsQuery } from "../../services/api/endpoints/events/events.api";
 
 import styles from "./styles/mainPage.module.css";
 
@@ -45,13 +46,21 @@ export const Home = () => {
     user.user?.id ?? "",
     { skip: !user.user?.id }
   );
-  const viewedProfileIsEntity =
-    !!viewedProfile && viewedProfile.user?.userType !== "individual";
   const viewedEntityName =
     viewedProfile?.user?.organizationName ||
     viewedProfile?.user?.nonprofitName ||
     viewedProfile?.organizationName ||
     viewedProfile?.nonprofitName;
+  const viewedProfileUserType = viewedProfile?.user?.userType;
+  const viewedProfileIsEntity =
+    !!viewedProfile &&
+    (viewedProfileUserType
+      ? viewedProfileUserType !== "individual"
+      : !!viewedEntityName);
+  const { data: viewedProfileEventCounts } = useGetEntityEventCountsQuery(
+    viewedProfileUserId ?? "",
+    { skip: !viewedProfileUserId || !viewedProfileIsEntity }
+  );
   const normalizeOrgName = (name?: string) => name?.trim().toLowerCase();
   const normalizedViewedEntityName = normalizeOrgName(viewedEntityName);
   const currentUserIsViewedProfile = user.user?.id === viewedProfileUserId;
@@ -73,8 +82,30 @@ export const Home = () => {
     false;
 
   const showOrgOverview = isProfileRoute && viewedProfileIsEntity;
+  const isProfileEntityPending = isProfileRoute && !viewedProfile;
+  const viewedProfileFollowers = viewedProfile?.followers ?? [];
+  const currentUserFollowingIds = new Set(
+    currentUserProfile?.following?.map((following) => following.id) ?? []
+  );
+  const mutualFollowers = viewedProfileFollowers.filter((follower) =>
+    currentUserFollowingIds.has(follower.id)
+  );
+  const orgOverviewProps = {
+    followersCount: viewedProfileFollowers.length,
+    mutualFollowers,
+    mutualCount: mutualFollowers.length,
+    partnersCount: viewedProfile?.entityDetails?.staffList?.length ?? 0,
+    businessSponsorsCount:
+      viewedProfile?.entityDetails?.donorList?.length ?? 0,
+    upcomingProjectsCount:
+      viewedProfileEventCounts?.upcomingProjectsCount ?? 0,
+    completedProjectsCount:
+      viewedProfileEventCounts?.completedProjectsCount ?? 0,
+    canViewRoster: currentUserIsOrgMember,
+  };
   const showSuggestedFriends =
     !showOrgOverview &&
+    !isProfileEntityPending &&
     (isPostNeedPage ||
       (pathName.length > 2 && user.user?.userType === "individual"));
 
@@ -133,7 +164,7 @@ export const Home = () => {
               <RightPanel
                 showSuggestedFriends={showSuggestedFriends}
                 showOrgOverview={showOrgOverview}
-                orgOverviewProps={{ canViewRoster: currentUserIsOrgMember }}
+                orgOverviewProps={orgOverviewProps}
               />
             </div>
           )}

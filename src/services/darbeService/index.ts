@@ -54,6 +54,7 @@ export {
   checkOutFromEvent,
   markNoShowForEvent,
   getEventDetails,
+  getEntityEventCounts,
   getEvents,
   getSignedUpEvents,
   getVolunteerMatches,
