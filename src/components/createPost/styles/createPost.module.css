@@ -1,15 +1,19 @@
 .createPostContainer {
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
   row-gap: 10px;
   width: 100%;
+  font-family: Roboto;
+  /* background-color: #a09292; */
 }
 
 .darbePostActions {
   display: flex;
   justify-content: space-between;
   width: 100%;
+  column-gap: 10px;
+  padding-bottom: 10px;
 }
 
 @media (min-width: 560px) {
@@ -19,11 +23,26 @@
     align-items: center;
     row-gap: 10px;
     width: 100%;
+    height: auto;
+    position: relative;
+    top: -60px;
+    left: 10px;
   }
 
   .darbePostActions {
-    display: flex;
+    /* display: flex;
     justify-content: space-between;
-    width: 100%;
+    align-content: center;
+    width: 85%;
+    column-gap: 10px;
+    padding-bottom: 10px;
+    position: relative;
+    bottom: 65px;
+    left: 15px; */
+    button:nth-of-type(1) {
+    position: relative;
+    left: 68px;
   }
+}
+
 }

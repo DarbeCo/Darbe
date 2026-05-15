@@ -153,7 +153,7 @@ export const Modal = () => {
                 // TODO: This should be its own component
                 <div className={styles.createPostModalContent}>
                   <UserAvatars
-                    fullName={currentUser?.fullName}
+                    // fullName={currentUser?.fullName}
                     profilePicture={currentUser?.profilePicture}
                     organizationName={currentUser?.organizationName}
                   />

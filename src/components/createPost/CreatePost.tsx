@@ -73,10 +73,10 @@ export const CreatePost = ({ handleSubmit }: CreatePostProps) => {
     <div className={styles.createPostContainer}>
       <Inputs
         label=""
-        darbeInputType="textAreaInput"
+        darbeInputType="textBoxInput"
         handleChange={handleChange}
         name="createPost"
-        placeholder="Write something..."
+        placeholder="Write something or add hashtags..."
         isTextArea
       />
       <FilePreviews
