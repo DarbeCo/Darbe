@@ -23,6 +23,7 @@ import {
 import { DATE_CONSTANTS } from "../../../../utils/CommonConstants";
 
 import styles from "../styles/userProfiles.module.css";
+import entityStyles from "./entity/styles/entityDetails.module.css";
 
 type SimpleEntityData = Partial<{
   [key: string]: string;
@@ -332,30 +333,30 @@ export const ProfileSection = ({
           <>
             {data.map((value, index) => {
               return (
-                <div key={index} className={styles.profileSectionEntity}>
-                  <div className={styles.profileRowEntity}>
-                    <Typography
-                      variant="sectionTitle"
-                      textToDisplay="Motto"
-                      extraClass="paddingTop"
-                    />
-                    <Typography variant="text" textToDisplay={value.motto} />
+                <div key={index}>
+                  <div className={entityStyles.entitySubsection}>
+                    <div className={entityStyles.entitySubsectionHeader}>
+                      Motto
+                    </div>
+                    <div className={entityStyles.entitySubsectionBody}>
+                      {value.motto}
+                    </div>
                   </div>
-                  <div className={styles.profileRowEntity}>
-                    <Typography
-                      variant="sectionTitle"
-                      textToDisplay="Mission"
-                      extraClass="paddingTop"
-                    />
-                    <Typography variant="text" textToDisplay={value.mission} />
+                  <div className={entityStyles.entitySubsection}>
+                    <div className={entityStyles.entitySubsectionHeader}>
+                      Mission
+                    </div>
+                    <div className={entityStyles.entitySubsectionBody}>
+                      {value.mission}
+                    </div>
                   </div>
-                  <div className={styles.profileRowEntity}>
-                    <Typography
-                      variant="sectionTitle"
-                      textToDisplay="Values"
-                      extraClass="paddingTop"
-                    />
-                    <Typography variant="text" textToDisplay={value.values} />
+                  <div className={entityStyles.entitySubsection}>
+                    <div className={entityStyles.entitySubsectionHeader}>
+                      Value
+                    </div>
+                    <div className={entityStyles.entitySubsectionBody}>
+                      {value.values}
+                    </div>
                   </div>
                 </div>
               );

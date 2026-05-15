@@ -49,6 +49,12 @@ export const UserProfileConnectionButtons = ({
     followEntity(userId);
   };
 
+  const handleJoin = () => {
+    navigate(`${MESSAGING_ROUTE}/${userId}`, {
+      state: { initialMessage: "Hi, I would like to learn more about joining." },
+    });
+  };
+
   const handleMessage = () => {
     navigate(`${MESSAGING_ROUTE}/${userId}`);
   };
@@ -60,17 +66,21 @@ export const UserProfileConnectionButtons = ({
   const entityProfileButtons = (
     <>
       <DarbeButton
+        darbeButtonType="messageFriendButton"
+        buttonText="Join"
+        onClick={handleJoin}
+      />
+      <DarbeButton
         isDisabled={hasSentRequest || isFollowing}
         darbeButtonType="friendRequestButton"
         buttonText={followTextToShow}
         onClick={handleFollow}
       />
-      {!isFollowing}
-      {/* <DarbeButton
+      <DarbeButton
         darbeButtonType="messageFriendButton"
         buttonText="Message"
         onClick={handleMessage}
-      /> */}
+      />
     </>
   );
 

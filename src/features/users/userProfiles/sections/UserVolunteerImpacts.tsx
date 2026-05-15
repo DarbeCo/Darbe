@@ -12,6 +12,7 @@ import styles from "../styles/userProfiles.module.css";
 
 interface UserVolunteerImpactsProps {
   userId?: string;
+  title?: string;
 }
 
 const VOLUNTEER_VALUE_PER_HOUR = 33.49;
@@ -57,7 +58,10 @@ const getImpactMetric = (impact: EventImpact) => {
   };
 };
 
-export const UserVolunteerImpacts = ({ userId }: UserVolunteerImpactsProps) => {
+export const UserVolunteerImpacts = ({
+  userId,
+  title = "Volunteer Experiences and Impacts",
+}: UserVolunteerImpactsProps) => {
   const navigate = useNavigate();
   const [showAll, setShowAll] = useState(false);
   const { data: userImpacts = [], isLoading } = useGetUserImpactQuery(
@@ -70,9 +74,7 @@ export const UserVolunteerImpacts = ({ userId }: UserVolunteerImpactsProps) => {
 
   return (
     <section className={styles.userVolunteerImpacts}>
-      <h2 className={styles.userVolunteerImpactsTitle}>
-        Volunteer Experiences and Impacts
-      </h2>
+      <h2 className={styles.userVolunteerImpactsTitle}>{title}</h2>
 
       {isLoading && (
         <div className={styles.profileImpactLoading}>

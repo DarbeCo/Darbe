@@ -140,6 +140,9 @@ export const UserProfiles = () => {
           nonprofitType={userInformation?.nonprofitType}
           contactNumber={userInformation?.phoneNumber}
           isMobile={isMobile}
+          userType={userInformation?.user?.userType}
+          parentEntityName={userInformation?.parentEntity?.fullName}
+          associatedEntityName={userInformation?.associatedEntity?.fullName}
           friendCount={currentFriendCount}
           causesCount={currentCausesCount}
           mutualCauses={mutualCauses}
@@ -190,7 +193,10 @@ export const UserProfiles = () => {
           canEdit={canEdit}
         />
       )}
-      <UserVolunteerImpacts userId={userId} />
+      <UserVolunteerImpacts
+        userId={userId}
+        title={isEntityProfile ? "Our Impacts" : undefined}
+      />
       {userId && <UserRecentActivity canEdit={canEdit} userId={userId} />}
       {isEntityProfile && (
         <>

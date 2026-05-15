@@ -30,6 +30,9 @@ interface UserQuickInfoProps {
   nonprofitType?: string;
   contactNumber?: string;
   state?: string;
+  userType?: string;
+  parentEntityName?: string;
+  associatedEntityName?: string;
   friendCount?: number;
   causesCount?: number;
   mutualCauses?: number;
@@ -56,6 +59,9 @@ export const UserQuickInfo = ({
   nonprofitType,
   contactNumber,
   state,
+  userType,
+  parentEntityName,
+  associatedEntityName,
   friendCount,
   causesCount,
   mutualCauses,
@@ -75,6 +81,11 @@ export const UserQuickInfo = ({
 
     dispatch(showModal());
   };
+  const handleContactClick = () => {
+    if (contactNumber) {
+      window.location.href = `tel:${contactNumber}`;
+    }
+  };
 
   const isFullStateName = state?.length && state?.length > 2;
   const stateDisplay = isFullStateName
@@ -83,9 +94,18 @@ export const UserQuickInfo = ({
   const monetaryVolunteerValue = volunteerHours
     ? Math.floor(volunteerHours * 33.49)
     : 0;
+  const entityName = organizationName || nonprofitName;
+  const isOrganizationProfile = userType === "organization";
+  const locationDisplay = [city, stateDisplay].filter(Boolean).join(", ");
   const userClassOverride = isEntity
     ? styles.entityQuickInfoGroupsNonMobile
     : styles.userQuickInfoOverride;
+  const organizationDetails = [
+    parentEntityName,
+    locationDisplay,
+    website,
+    associatedEntityName,
+  ].filter(Boolean);
 
   const userInfoDisplay = (
     <>
@@ -121,13 +141,22 @@ export const UserQuickInfo = ({
             altText="Location Icon"
             variant="tiny"
           />
-          <Typography
-            variant="locationSmall"
-            textToDisplay={`${city}, ${stateDisplay}`}
-          />
+            <Typography
+              variant="locationSmall"
+              textToDisplay={locationDisplay}
+            />
+          </div>
+          {isOrganizationProfile && (
+            <button
+              type="button"
+              className={styles.entityContactButton}
+              onClick={handleContactClick}
+            >
+              Contact Us
+            </button>
+          )}
         </div>
-      </div>
-      {(organizationName || nonprofitName) && (
+      {entityName && !isOrganizationProfile && (
         <div className={styles.userQuickInfoGroupsEntity}>
           <Typography
             variant="blueTextSmall"
@@ -163,6 +192,41 @@ export const UserQuickInfo = ({
           </a>
         </div>
       )}
+      {entityName && isOrganizationProfile && (
+        <div className={styles.userQuickInfoGroupsEntity}>
+          {organizationDetails.length ? (
+            organizationDetails.map((detail) =>
+              detail === website ? (
+                <a
+                  key={detail}
+                  href={website ? website : "#"}
+                  target="_blank"
+                  className="paddingTop"
+                  rel="noopener noreferrer"
+                >
+                  <Typography
+                    variant="blueTextSmall"
+                    textToDisplay={detail}
+                  />
+                </a>
+              ) : (
+                <Typography
+                  key={detail}
+                  variant="blueTextSmall"
+                  textToDisplay={detail}
+                  extraClass="paddingTop"
+                />
+              )
+            )
+          ) : (
+            <Typography
+              variant="blueTextSmall"
+              textToDisplay="Organization details unavailable"
+              extraClass="paddingTop"
+            />
+          )}
+        </div>
+      )}
     </>
   );
 
@@ -172,7 +236,7 @@ export const UserQuickInfo = ({
         <div className={styles.userHeaderTitle}>
           <Typography
             variant="nameHeader"
-            textToDisplay={fullName || organizationName || nonprofitName}
+            textToDisplay={fullName || entityName}
             extraClass="paddingLeft"
           />
           {canEdit && <EditProfileIcon onClick={handleEditProfile} />}

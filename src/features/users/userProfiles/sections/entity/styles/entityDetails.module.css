@@ -1,28 +1,76 @@
 .entityUserDisplay {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   justify-content: start;
+  row-gap: 8px;
   width: 100%;
+  padding: 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
   background: #fff;
+  box-sizing: border-box;
 }
 
 .entityUserRow {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: start;
-  width: 95%;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 4px;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.entityUserRow:last-child {
+  border-bottom: 0;
+}
+
+.entityUserRowAddButton {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #2c77e7;
+  cursor: pointer;
+}
+
+.entityUserRowAddButton svg {
+  width: 20px;
+  height: 20px;
+}
+
+.entityUserShowAll {
+  align-self: center;
+  padding: 4px 0 0;
+  border: 0;
+  background: transparent;
+  color: #2c77e7;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+  cursor: pointer;
 }
 
 .entityDocuments {
   display: flex;
   flex-direction: column;
-  row-gap: 10px;
-  align-items: center;
+  row-gap: 12px;
+  align-items: stretch;
   justify-content: start;
   width: 100%;
+  padding: 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
   background: #fff;
+  box-sizing: border-box;
 }
 
 .entityDocumentsRow {
@@ -30,8 +78,12 @@
   flex-direction: column;
   align-items: start;
   justify-content: start;
-  width: 93%;
-  border-bottom: 1px solid #d8d8d8;
+  width: 100%;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.entityDocumentsRow:last-child {
+  border-bottom: 0;
 }
 
 .entityDocumentRowList {
@@ -55,14 +107,19 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  margin-bottom: 4px;
 }
 
 .profileInformation {
   display: flex;
   flex-direction: column;
-  row-gap: 10px;
+  row-gap: 12px;
   width: 100%;
+  padding: 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
   background: #fff;
+  box-sizing: border-box;
 }
 
 .emptyProfileHeader {
@@ -77,5 +134,40 @@
   flex-direction: column;
   row-gap: 10px;
   background: #fff;
-  padding: 8px 16px;
+  padding: 0;
+}
+
+/* Motto / Mission / Value gray-header subsections within the About tab */
+.entitySubsection {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-bottom: 12px;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.entitySubsection:last-child {
+  margin-bottom: 0;
+}
+
+.entitySubsectionHeader {
+  padding: 10px 14px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #e5e5e5;
+  color: #000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+.entitySubsectionBody {
+  padding: 12px 14px;
+  color: #000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  line-height: 18px;
+  white-space: pre-wrap;
 }
