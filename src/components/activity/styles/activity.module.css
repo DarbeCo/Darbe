@@ -87,14 +87,17 @@
   width: 100%;
   padding: 0 8px 8px 8px;
   box-sizing: border-box;
+  background: #f7f7f7;
+  border-radius: 6px;
 }
 
 .activityImage {
   width: 100%;
-  max-height: 220px;
-  object-fit: cover;
+  max-height: min(70vh, 520px);
+  object-fit: contain;
   border-radius: 6px;
   display: block;
+  background: #f7f7f7;
 }
 
 .activityImageCount {
