@@ -6,6 +6,7 @@ import { useUpdateEntityProfileMutation } from "../../../../services/api/endpoin
 import { useAppDispatch, useAppSelector } from "../../../../services/hooks";
 import { splitStringndCapitalize } from "../../../../utils/CommonFunctions";
 import { selectCurrentUserId, selectUser } from "../../selectors";
+import { setUserProfile } from "../../userSlice";
 import { useEditEntityProfileInformation } from "../hooks";
 import { registerProfileEditAutosave } from "../profileEditAutosave";
 
@@ -37,6 +38,26 @@ export const EditEntityProfileInfo = () => {
   );
 
   const [updateUserProfile] = useUpdateEntityProfileMutation();
+
+  useEffect(() => {
+    setEditProfileInfo(editEntityProfileState);
+  }, [
+    editEntityProfileState.nonprofitName,
+    editEntityProfileState.organizationName,
+    editEntityProfileState.parentEntity?.id,
+    editEntityProfileState.parentEntity?.fullName,
+    editEntityProfileState.nonprofitType,
+    editEntityProfileState.tagLine,
+    editEntityProfileState.ein,
+    editEntityProfileState.address,
+    editEntityProfileState.state,
+    editEntityProfileState.city,
+    editEntityProfileState.zip,
+    editEntityProfileState.phoneNumber,
+    editEntityProfileState.website,
+    editEntityProfileState.associatedEntity?.id,
+    editEntityProfileState.associatedEntity?.fullName,
+  ]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -96,8 +117,9 @@ export const EditEntityProfileInfo = () => {
       },
     };
 
-    await updateUserProfile(payload);
-  }, [editProfileInfo, updateUserProfile, userId]);
+    const updatedProfile = await updateUserProfile(payload).unwrap();
+    dispatch(setUserProfile(updatedProfile));
+  }, [dispatch, editProfileInfo, updateUserProfile, userId]);
 
   useEffect(() => {
     return registerProfileEditAutosave(saveProfile);

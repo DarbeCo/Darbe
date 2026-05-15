@@ -84,6 +84,7 @@ export interface Database {
           about_us: string | null;
           programs: string | null;
           parent_entity_id: string | null;
+          parent_entity_name: string | null;
           associated_entity_id: string | null;
           emergency_contact_name: string | null;
           emergency_contact_phone: string | null;
@@ -111,6 +112,7 @@ export interface Database {
           about_us?: string | null;
           programs?: string | null;
           parent_entity_id?: string | null;
+          parent_entity_name?: string | null;
           associated_entity_id?: string | null;
           emergency_contact_name?: string | null;
           emergency_contact_phone?: string | null;
@@ -138,6 +140,7 @@ export interface Database {
           about_us?: string | null;
           programs?: string | null;
           parent_entity_id?: string | null;
+          parent_entity_name?: string | null;
           associated_entity_id?: string | null;
           emergency_contact_name?: string | null;
           emergency_contact_phone?: string | null;

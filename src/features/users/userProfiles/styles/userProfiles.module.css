@@ -140,6 +140,10 @@
     align-items: center;
   }
 
+  .parentOrganizationName {
+    padding-left: 16px;
+  }
+
   .emptyProfileHeader {
     display: flex;
     flex-direction: row;

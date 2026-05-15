@@ -101,7 +101,6 @@ export const UserQuickInfo = ({
     ? styles.entityQuickInfoGroupsNonMobile
     : styles.userQuickInfoOverride;
   const organizationDetails = [
-    parentEntityName,
     locationDisplay,
     website,
     associatedEntityName,
@@ -241,6 +240,13 @@ export const UserQuickInfo = ({
           />
           {canEdit && <EditProfileIcon onClick={handleEditProfile} />}
         </div>
+        {isEntity && parentEntityName && (
+          <Typography
+            variant="tagline"
+            textToDisplay={`${parentEntityName}`}
+            extraClass={styles.parentOrganizationName}
+          />
+        )}
         <Typography
           variant="tagline"
           textToDisplay={tagLine}

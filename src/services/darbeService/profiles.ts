@@ -185,12 +185,84 @@ export const mapProfileToSimpleUserState = (
     id: string;
     full_name: string | null;
     profile_picture_url: string | null;
+    nonprofit_name?: string | null;
+    organization_name?: string | null;
   }
 ): SimpleUserState => ({
   id: profile.id,
-  fullName: profile.full_name ?? "",
+  fullName:
+    profile.full_name ??
+    profile.organization_name ??
+    profile.nonprofit_name ??
+    "",
   profilePicture: profile.profile_picture_url ?? "",
 });
+
+const resolveEntityId = async (
+  entity: SimpleUserState | string | undefined
+): Promise<string | null | undefined> => {
+  if (entity === undefined) {
+    return undefined;
+  }
+
+  if (typeof entity !== "string") {
+    return entity.id || null;
+  }
+
+  const entityName = entity.trim();
+
+  if (!entityName) {
+    return null;
+  }
+
+  if (isUuid(entityName)) {
+    return entityName;
+  }
+
+  const entityNamePattern = entityName.replace(/[%_]/g, "\\$&");
+  const entityFields = ["organization_name", "nonprofit_name", "full_name"] as const;
+
+  for (const field of entityFields) {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id")
+      .neq("user_type", "individual")
+      .ilike(field, entityNamePattern)
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (data?.id) return data.id;
+  }
+
+  for (const field of entityFields) {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id")
+      .neq("user_type", "individual")
+      .ilike(field, `%${entityNamePattern}%`)
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (data?.id) return data.id;
+  }
+
+  return null;
+};
+
+const getEntityName = (
+  entity: SimpleUserState | string | undefined
+): string | null | undefined => {
+  if (entity === undefined) {
+    return undefined;
+  }
+
+  const entityName =
+    typeof entity === "string" ? entity.trim() : entity.fullName.trim();
+
+  return entityName || null;
+};
 
 export const mapProfileToFriend = (
   profile: {
@@ -482,6 +554,9 @@ export const updateUserProfile = async (
 ): Promise<DarbeProfileSharedState> => {
   const userId = profile.user?.id ?? (await ensureUserId());
   const availability = profile.user?.availability;
+  const parentEntityId = await resolveEntityId(profile.parentEntity);
+  const associatedEntityId = await resolveEntityId(profile.associatedEntity);
+  const parentEntityName = getEntityName(profile.parentEntity);
 
   if (profile.user) {
     const { error } = await supabase
@@ -524,6 +599,9 @@ export const updateUserProfile = async (
         values: profile.values ?? undefined,
         about_us: profile.aboutUs ?? undefined,
         programs: profile.programs ?? undefined,
+        parent_entity_id: parentEntityId,
+        parent_entity_name: parentEntityName,
+        associated_entity_id: associatedEntityId,
       },
       { onConflict: "user_id" }
     );
@@ -698,6 +776,35 @@ export const getUserProfile = async (userId: string): Promise<DarbeProfileShared
   const availabilityRows = availabilityRes.data ?? [];
 
   const base = mapUserDetailsToProfile(profile, details, causeIds, availabilityRows);
+  const entityRelationshipIds = [
+    details.parent_entity_id,
+    details.associated_entity_id,
+  ].filter(Boolean) as string[];
+  const entityRelationshipProfiles = await getProfilesByIds(entityRelationshipIds);
+  const entityRelationshipMap = new Map(
+    entityRelationshipProfiles.map((entityProfile) => [
+      entityProfile.id,
+      mapProfileToSimpleUserState(entityProfile),
+    ])
+  );
+
+  const savedParentEntity = details.parent_entity_id
+    ? entityRelationshipMap.get(details.parent_entity_id)
+    : undefined;
+  const savedParentEntityName = details.parent_entity_name?.trim();
+
+  base.parentEntity =
+    savedParentEntity ??
+    (savedParentEntityName
+      ? {
+          id: details.parent_entity_id ?? "",
+          fullName: savedParentEntityName,
+          profilePicture: "",
+        }
+      : undefined);
+  base.associatedEntity = details.associated_entity_id
+    ? entityRelationshipMap.get(details.associated_entity_id)
+    : undefined;
 
   const [skillsRes, licensesRes, educationRes, jobRes, volunteerRes, militaryRes, orgRes] =
     await Promise.all([
