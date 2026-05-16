@@ -1,7 +1,8 @@
 import { useParams } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 import { selectUser } from "../selectors";
+import { useGetUserImpactQuery } from "../../../services/api/endpoints/impact/impact.api";
 import { CoverPhoto } from "./sections/CoverPhoto";
 import { UserProfilePicture } from "./sections/UserProfilePicture";
 import { UserQuickInfo } from "./sections/UserQuickInfo";
@@ -52,6 +53,18 @@ export const UserProfiles = () => {
     triggerFriends(userId);
     triggerFollowingData(userId);
   }, [userId, triggerUserProfile, triggerFriends]);
+
+  const { data: userImpacts } = useGetUserImpactQuery(userId ?? "", {
+    skip: !userId,
+  });
+  const totalVolunteerHours = useMemo(
+    () =>
+      (userImpacts ?? []).reduce(
+        (sum, impact) => sum + (impact.hoursVolunteered ?? 0),
+        0
+      ),
+    [userImpacts]
+  );
 
   // This gets the currently logged in user sent friend requests
   const { data: sentFriendRequests } = useGetSentFriendRequestsQuery();
@@ -126,7 +139,7 @@ export const UserProfiles = () => {
         </div>
         <UserQuickInfo
           canEdit={canEdit}
-          volunteerHours={userInformation?.volunteerHours || 0}
+          volunteerHours={totalVolunteerHours}
           city={userInformation?.user?.city}
           zipCode={userInformation?.user?.zip}
           fullName={userInformation?.user?.fullName}

@@ -94,6 +94,9 @@ export const UserQuickInfo = ({
   const monetaryVolunteerValue = volunteerHours
     ? Math.floor(volunteerHours * 33.49)
     : 0;
+  const formattedVolunteerHours = Number.isInteger(volunteerHours ?? 0)
+    ? `${volunteerHours ?? 0}`
+    : (volunteerHours ?? 0).toFixed(1);
   const entityName = organizationName || nonprofitName;
   const isOrganizationProfile = userType === "organization";
   const locationDisplay = [city, stateDisplay].filter(Boolean).join(", ");
@@ -118,7 +121,7 @@ export const UserQuickInfo = ({
             />
             <Typography
               variant="informational"
-              textToDisplay={`${volunteerHours} Hours`}
+              textToDisplay={`${formattedVolunteerHours} Hours`}
             />
           </div>
           <div className={styles.userQuickInfoGroups}>
@@ -130,7 +133,7 @@ export const UserQuickInfo = ({
             />
             <Typography
               variant="informational"
-              textToDisplay={`$${monetaryVolunteerValue} Volunteer Value`}
+              textToDisplay={`$${monetaryVolunteerValue.toLocaleString("en-US")} Volunteer Value`}
             />
           </div>
         </div>
