@@ -1,26 +1,32 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { ExpandMore } from "@mui/icons-material";
+import {
+  Add,
+  ChevronRight,
+  KeyboardArrowDown,
+} from "@mui/icons-material";
 
 import { useGetEntityEventCountsQuery } from "../../services/api/endpoints/events/events.api";
 import { useGetDonorsAndStaffQuery } from "../../services/api/endpoints/profiles/profiles.api";
-import { useGetRostersQuery } from "../../services/api/endpoints/roster/roster.api";
 import {
-  setModalType,
-  showModal,
-} from "../../components/modal/modalSlice";
-import { useAppDispatch, useAppSelector } from "../../services/hooks";
+  useDeleteRosterMutation,
+  useGetRostersQuery,
+} from "../../services/api/endpoints/roster/roster.api";
+import { useAppSelector } from "../../services/hooks";
 import { selectCurrentUserId } from "../users/selectors";
-import { EDIT_SECTIONS } from "../users/userProfiles/constants";
 
 import styles from "./styles/roster.module.css";
 
 export const RosterRightPanel = () => {
   const currentUserId = useAppSelector(selectCurrentUserId);
-  const dispatch = useAppDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [isRosterMenuOpen, setIsRosterMenuOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const rosterMenuRef = useRef<HTMLDivElement | null>(null);
   const selectedRosterId = searchParams.get("rosterId");
   const { data: rosters } = useGetRostersQuery();
+  const [deleteRoster, { isLoading: isDeletingRoster }] =
+    useDeleteRosterMutation();
   const { data: eventCounts } = useGetEntityEventCountsQuery(currentUserId, {
     skip: !currentUserId,
   });
@@ -45,14 +51,67 @@ export const RosterRightPanel = () => {
     }
   }, [rosters, selectedRosterId, setSearchParams]);
 
+  useEffect(() => {
+    if (!isRosterMenuOpen) return;
+
+    const handleClickAway = (event: MouseEvent) => {
+      if (
+        rosterMenuRef.current &&
+        !rosterMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsRosterMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickAway);
+
+    return () => document.removeEventListener("mousedown", handleClickAway);
+  }, [isRosterMenuOpen]);
+
   const currentRoster =
     rosters?.find((roster) => roster.id === selectedRosterId) ?? rosters?.[0];
   const rosterMembers = currentRoster?.members ?? [];
   const hasMultipleRosters = (rosters?.length ?? 0) > 1;
+  const canDeleteRoster = Boolean(currentRoster?.id && hasMultipleRosters);
+
+  const handleSelectRoster = (rosterId: string) => {
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams);
+      nextParams.set("rosterId", rosterId);
+      return nextParams;
+    });
+    setIsRosterMenuOpen(false);
+  };
 
   const handleCreateRoster = () => {
-    dispatch(setModalType(EDIT_SECTIONS.createRoster));
-    dispatch(showModal());
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams);
+      nextParams.set("view", "createRoster");
+      if (currentRoster?.id) {
+        nextParams.set("rosterId", currentRoster.id);
+      }
+      return nextParams;
+    });
+  };
+
+  const handleDeleteRoster = async () => {
+    if (!currentRoster?.id || !rosters?.length) return;
+
+    const nextRoster = rosters.find((roster) => roster.id !== currentRoster.id);
+
+    await deleteRoster(currentRoster.id).unwrap();
+    setShowDeleteConfirm(false);
+
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams);
+      if (nextRoster?.id) {
+        nextParams.set("rosterId", nextRoster.id);
+      } else {
+        nextParams.delete("rosterId");
+      }
+      nextParams.delete("view");
+      return nextParams;
+    });
   };
 
   return (
@@ -62,31 +121,41 @@ export const RosterRightPanel = () => {
         <span>Member Roster</span>
       </section>
 
-      <section className={styles.rosterRailCard}>
-        <label className={styles.rosterRailSelect}>
-          <span>Select Roster</span>
-          <span className={styles.rosterRailSelectIcon} aria-hidden="true">
-            <ExpandMore fontSize="small" />
-          </span>
-          <select
-            value={currentRoster?.id ?? ""}
-            onChange={(event) => {
-              setSearchParams((currentParams) => {
-                const nextParams = new URLSearchParams(currentParams);
-                nextParams.set("rosterId", event.target.value);
-                return nextParams;
-              });
-            }}
+      <section className={styles.rosterRailCard} ref={rosterMenuRef}>
+        <div className={styles.rosterRailSelect}>
+          <button
+            type="button"
+            className={styles.rosterRailSelectButton}
+            onClick={() =>
+              hasMultipleRosters &&
+              setIsRosterMenuOpen((currentValue) => !currentValue)
+            }
             disabled={!hasMultipleRosters}
-            aria-label="Select roster"
+            aria-expanded={isRosterMenuOpen}
+            aria-haspopup="listbox"
           >
-            {rosters?.map((roster) => (
-              <option key={roster.id} value={roster.id}>
-                {roster.rosterName}
-              </option>
-            ))}
-          </select>
-        </label>
+            <span>Select Roster</span>
+            <span className={styles.rosterRailSelectIcon} aria-hidden="true">
+              <KeyboardArrowDown fontSize="small" />
+            </span>
+          </button>
+
+          {isRosterMenuOpen && (
+            <div className={styles.rosterRailRosterMenu} role="listbox">
+              {rosters?.map((roster) => (
+                <button
+                  type="button"
+                  key={roster.id}
+                  role="option"
+                  aria-selected={roster.id === currentRoster?.id}
+                  onClick={() => handleSelectRoster(roster.id)}
+                >
+                  {roster.rosterName}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </section>
 
       <button
@@ -95,12 +164,25 @@ export const RosterRightPanel = () => {
         onClick={handleCreateRoster}
       >
         <span>Create Roster</span>
-        <strong>+</strong>
+        <span className={styles.rosterRailActionIcon} aria-hidden="true">
+          <Add fontSize="small" />
+        </span>
       </button>
 
       <button type="button" className={styles.rosterRailAction}>
         <span>Pending Requests</span>
-        <strong>{">"}</strong>
+        <span className={styles.rosterRailActionIcon} aria-hidden="true">
+          <ChevronRight fontSize="small" />
+        </span>
+      </button>
+
+      <button
+        type="button"
+        className={`${styles.rosterRailAction} ${styles.rosterRailRemoveAction}`}
+        onClick={() => setShowDeleteConfirm(true)}
+        disabled={!canDeleteRoster || isDeletingRoster}
+      >
+        <span>Remove Roster</span>
       </button>
 
       <section className={styles.rosterRailOverview}>
@@ -132,6 +214,36 @@ export const RosterRightPanel = () => {
           </div>
         </dl>
       </section>
+
+      {showDeleteConfirm && currentRoster && (
+        <div className={styles.rosterRailConfirmOverlay}>
+          <div
+            className={styles.rosterRailConfirm}
+            role="dialog"
+            aria-modal="true"
+          >
+            <p>
+              Are you sure you want to remove {currentRoster.rosterName}?
+            </p>
+            <div className={styles.rosterRailConfirmActions}>
+              <button
+                type="button"
+                onClick={handleDeleteRoster}
+                disabled={isDeletingRoster}
+              >
+                Yes
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeletingRoster}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 };

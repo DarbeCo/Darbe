@@ -7,7 +7,11 @@ import { MiniMenu } from "../../../components/miniMenu/MiniMenu";
 
 import styles from "../styles/mainPage.module.css";
 
-export const NavBar = () => {
+interface NavBarProps {
+  hideSearchBar?: boolean;
+}
+
+export const NavBar = ({ hideSearchBar = false }: NavBarProps) => {
   const { isMobile, isTablet } = useScreenWidthHook();
 
   return (
@@ -22,7 +26,9 @@ export const NavBar = () => {
       {isTablet && (
         <>
           <img src={assetUrl(darbeLogo)} alt="Darbe logo" />
-          <SearchBar isTabletMode showMessageIcon={false} showAvatar={false} />
+          {!hideSearchBar && (
+            <SearchBar isTabletMode showMessageIcon={false} showAvatar={false} />
+          )}
           <Notifications />
           <MiniMenu />
         </>

@@ -271,6 +271,35 @@ export const createRoster = async (newRoster: NewRoster): Promise<Roster> => {
   };
 };
 
+export const deleteRoster = async (rosterId: string): Promise<void> => {
+  const userId = await ensureUserId();
+  const { data: roster, error: rosterError } = await supabase
+    .from("rosters")
+    .select("id")
+    .eq("id", rosterId)
+    .eq("roster_owner_id", userId)
+    .single();
+
+  if (rosterError || !roster) {
+    throw rosterError ?? new Error("Roster not found");
+  }
+
+  const { error: membersError } = await supabase
+    .from("roster_members")
+    .delete()
+    .eq("roster_id", rosterId);
+
+  if (membersError) throw membersError;
+
+  const { error } = await supabase
+    .from("rosters")
+    .delete()
+    .eq("id", rosterId)
+    .eq("roster_owner_id", userId);
+
+  if (error) throw error;
+};
+
 export const promoteUserToAdmin = async (
   userId: string,
   rosterId: string,

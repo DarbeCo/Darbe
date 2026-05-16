@@ -10,6 +10,7 @@ import { SimpleUserInfo } from "../types/user.api.types";
 import {
     addToRoster,
     createRoster,
+    deleteRoster,
     demoteUserFromAdmin,
     getAllRosterMembers,
     getEntityRosterAccess,
@@ -71,6 +72,22 @@ const rosterApi = darbeBaseApi.injectEndpoints({
                 }
             },
             invalidatesTags: ["Roster"],
+        }),
+        deleteRoster: builder.mutation<void, string>({
+            async queryFn(rosterId) {
+                try {
+                    await deleteRoster(rosterId);
+                    return { data: undefined };
+                } catch (error) {
+                    return {
+                        error: {
+                            status: "CUSTOM_ERROR",
+                            data: { message: (error as Error).message },
+                        },
+                    };
+                }
+            },
+            invalidatesTags: ["Roster", "RosterMembers"],
         }),
         promoteUserToAdmin: builder.mutation<
             void,
@@ -212,6 +229,7 @@ const rosterApi = darbeBaseApi.injectEndpoints({
 export const {
     useGetRostersQuery,
     useCreateRosterMutation,
+    useDeleteRosterMutation,
     usePromoteUserToAdminMutation,
     useDemoteUserFromAdminMutation,
     useGetRosterMembersQuery,

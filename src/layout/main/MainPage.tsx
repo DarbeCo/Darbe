@@ -31,10 +31,18 @@ export const Home = () => {
   const pathName = location.pathname.split("/");
   const isHomePage = pathName.length === 2;
   const isPostNeedPage = location.pathname === POST_A_NEED;
-  const isRosterPage = location.pathname === ROSTER_ROUTE;
+  const isRosterPage = location.pathname.startsWith(ROSTER_ROUTE);
+  const isCreateRosterView =
+    isRosterPage &&
+    new URLSearchParams(location.search).get("view") === "createRoster";
   const isMessagingPage = location.pathname.startsWith(MESSAGING_ROUTE);
   const isProfileEditPage = pathName.includes("profile_edit");
-  const hideSearchBar = isProfileEditPage || isPostNeedPage || isMessagingPage;
+  const hideSearchBar =
+    isProfileEditPage ||
+    isPostNeedPage ||
+    isMessagingPage ||
+    isRosterPage ||
+    isCreateRosterView;
   const hideNavBar = isProfileEditPage;
   const hideBottomNavBar = isProfileEditPage;
   const hideDesktopMessagingDrawer = isMessagingPage;
@@ -121,7 +129,7 @@ export const Home = () => {
     <div className={styles.homePage}>
       {isMobile && (
         <>
-          {!hideNavBar && <NavBar />}
+          {!hideNavBar && <NavBar hideSearchBar={hideSearchBar} />}
           {!hideSearchBar && (
             <SearchBar showMessageIcon={true} showAvatar={true} />
           )}
@@ -134,7 +142,7 @@ export const Home = () => {
       )}
       {isTablet && (
         <>
-          {!hideNavBar && <NavBar />}
+          {!hideNavBar && <NavBar hideSearchBar={hideSearchBar} />}
           {isHomePage && <VolunteerCarouselCards />}
           <Outlet />
           {isHomePage && <Feed />}

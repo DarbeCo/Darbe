@@ -1,23 +1,34 @@
-import { useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { AddCircle, CheckCircle } from "@mui/icons-material";
 import { CircularProgress, IconButton } from "@mui/material";
-import { AddCircle, Remove } from "@mui/icons-material";
 
-import { Typography } from "../typography/Typography";
 import { NewRoster } from "../../services/api/endpoints/types/roster.api.types";
-import { DarbeButton } from "../buttons/DarbeButton";
-import { Inputs } from "../inputs/Inputs";
 import { useGetEntityFollowersQuery } from "../../services/api/endpoints/profiles/profiles.api";
 import { useAppDispatch, useAppSelector } from "../../services/hooks";
 import { selectCurrentUserId } from "../../features/users/selectors";
 import { SimpleUserInfo } from "../../services/api/endpoints/types/user.api.types";
-import { UserAvatars } from "../avatars/UserAvatars";
 import { useCreateRosterMutation } from "../../services/api/endpoints/roster/roster.api";
 import { hideModal } from "../modal/modalSlice";
+import { assetUrl } from "../../utils/assetUrl";
 
 import styles from "./rosterComponents.module.css";
 
-// TODO: Probably some css but keep the modal setup
-export const SimpleCreateRoster = () => {
+const getDisplayName = (member: SimpleUserInfo) =>
+  member.fullName || member.nonprofitName || member.organizationName || "Member";
+
+interface SimpleCreateRosterProps {
+  embedded?: boolean;
+  memberSearchQuery?: string;
+  onCancel?: () => void;
+  onComplete?: (createdRosterId?: string) => void;
+}
+
+export const SimpleCreateRoster = ({
+  embedded = false,
+  memberSearchQuery = "",
+  onCancel,
+  onComplete,
+}: SimpleCreateRosterProps) => {
   const dispatch = useAppDispatch();
   const userId = useAppSelector(selectCurrentUserId);
   const [newRosterData, setNewRosterData] = useState<NewRoster>({
@@ -26,174 +37,156 @@ export const SimpleCreateRoster = () => {
     members: [],
   });
   const { data: followers, isLoading } = useGetEntityFollowersQuery(userId);
-  const [createNewRoster] = useCreateRosterMutation();
-  const [availableFollowers, setAvailableFollowers] = useState<
-    SimpleUserInfo[] | undefined
-  >(followers);
-  const [selectedRosterMembers, setSelectedRosterMembers] = useState<
-    SimpleUserInfo[]
-  >([]);
-  const [modalStep, setModalStep] = useState(1);
+  const [createNewRoster, { isLoading: isCreatingRoster }] =
+    useCreateRosterMutation();
+  const recentMembers = useMemo(() => {
+    const query = memberSearchQuery.trim().toLowerCase();
 
-  const handleNext = () => {
-    setModalStep((prev) => prev + 1);
+    return [...(followers ?? [])]
+      .filter((member) => {
+        if (!query) return true;
+
+        return `${getDisplayName(member)} ${member.jobTitle ?? ""}`
+          .toLowerCase()
+          .includes(query);
+      })
+      .slice(0, 5);
+  }, [followers, memberSearchQuery]);
+  const selectedMemberIds = new Set(newRosterData.members);
+
+  useEffect(() => {
+    setNewRosterData((currentData) => ({
+      ...currentData,
+      rosterOwner: userId,
+    }));
+  }, [userId]);
+
+  const handleRosterNameChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setNewRosterData((currentData) => ({
+      ...currentData,
+      rosterName: event.target.value,
+    }));
   };
 
-  const handleBack = () => {
-    setModalStep((prev) => prev - 1);
+  const handleToggleMember = (memberId: string) => {
+    setNewRosterData((currentData) => {
+      const memberIsSelected = currentData.members.includes(memberId);
+
+      return {
+        ...currentData,
+        members: memberIsSelected
+          ? currentData.members.filter((id) => id !== memberId)
+          : [...currentData.members, memberId],
+      };
+    });
   };
 
   const handleSubmit = async () => {
+    if (!newRosterData.rosterName.trim()) return;
+
     try {
-      await createNewRoster(newRosterData);
-      dispatch(hideModal());
+      const createdRoster = await createNewRoster({
+        ...newRosterData,
+        rosterName: newRosterData.rosterName.trim(),
+      }).unwrap();
+      onComplete?.(createdRoster.id);
+      if (!embedded) {
+        dispatch(hideModal());
+      }
     } catch (error) {
       console.error("Error creating new roster:", error);
     }
   };
 
-  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewRosterData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleAddToNewRoster = (followerId: string) => {
-    setNewRosterData((prev) => ({
-      ...prev,
-      members: [...prev.members, followerId],
-    }));
-
-    const rosterMemberDisplayInfo = followers?.filter(
-      (follower) => follower.id === followerId
-    );
-
-    if (rosterMemberDisplayInfo?.length) {
-      setSelectedRosterMembers((rosterMembers) => [
-        ...rosterMembers,
-        ...rosterMemberDisplayInfo,
-      ]);
-
-      setAvailableFollowers((prev) =>
-        prev?.filter((follower) => follower.id !== followerId)
-      );
-    }
-  };
-
-  const handleMoveOutOfNewRoster = (followerId: string) => {
-    setNewRosterData((prev) => ({
-      ...prev,
-      members: prev.members.filter((id) => id !== followerId),
-    }));
-
-    const rosterMemberDisplayInfo = selectedRosterMembers?.filter(
-      (member) => member.id === followerId
-    );
-
-    if (rosterMemberDisplayInfo?.length) {
-      setAvailableFollowers((prev) => [
-        ...(prev || []),
-        ...rosterMemberDisplayInfo,
-      ]);
-      setSelectedRosterMembers((members) =>
-        members.filter((member) => member.id !== followerId)
-      );
-    }
-  };
-
-  const firstStepContent = (
-    <div className={styles.stepOneContent}>
-      <Inputs
-        darbeInputType="standardInput"
-        label="Roster Name"
-        name="rosterName"
-        handleChange={onChange}
-      />
-    </div>
-  );
-
-  const secondStepContent = (
-    <div className={styles.stepTwoContent}>
-      {isLoading && <CircularProgress />}
-      <div className={styles.organizationFollowers}>
-        <Typography variant="sectionTitle" textToDisplay={"Your Followers"} />
-        {availableFollowers?.map((follower) => (
-          <div className={styles.rosterRow} key={follower.id}>
-            <UserAvatars
-              key={follower.id}
-              userId={follower.id}
-              fullName={
-                follower.fullName ||
-                follower.nonprofitName ||
-                follower.organizationName
-              }
-              profilePicture={follower.profilePicture}
-            />
-            <IconButton
-              sx={{ backgroundColor: "white" }}
-              onClick={() => handleAddToNewRoster(follower.id)}
-            >
-              <AddCircle sx={{ color: "#2c77e7" }} />
-            </IconButton>
-          </div>
-        ))}
-      </div>
-      <div className={styles.rosterMembers}>
-        <Typography
-          variant="sectionTitle"
-          textToDisplay={"Current Roster Members"}
-        />
-        {selectedRosterMembers.map((member: SimpleUserInfo) => (
-          <div className={styles.rosterRow} key={member.id}>
-            <UserAvatars
-              userId={member.id}
-              fullName={
-                member.fullName ||
-                member.nonprofitName ||
-                member.organizationName
-              }
-              profilePicture={member.profilePicture}
-            />
-            <IconButton
-              sx={{ backgroundColor: "white" }}
-              onClick={() => handleMoveOutOfNewRoster(member.id)}
-            >
-              <Remove sx={{ color: "#FF0000" }} />
-            </IconButton>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
   return (
-    <div className={styles.createRosterContent}>
-      {modalStep === 1 && firstStepContent}
-      {modalStep === 2 && secondStepContent}
-      <div className={styles.modalFooter}>
-        {modalStep > 1 && (
-          <DarbeButton
-            buttonText="Back"
-            darbeButtonType="postActionButton"
-            onClick={handleBack}
-          />
-        )}
-        {modalStep < 2 && (
-          <DarbeButton
-            buttonText="Next"
-            darbeButtonType="secondaryNextButton"
-            onClick={handleNext}
-          />
-        )}
-        {modalStep === 2 && (
-          <DarbeButton
-            buttonText="Create"
-            darbeButtonType="saveButton"
-            onClick={handleSubmit}
-          />
-        )}
+    <div
+      className={`${styles.createRosterContent} ${
+        embedded ? styles.createRosterEmbedded : ""
+      }`}
+    >
+      {embedded && (
+        <div className={styles.createRosterEmbeddedHeader}>
+          <span aria-hidden="true" />
+          <h1>Create Roster</h1>
+          <button
+            type="button"
+            onClick={onCancel}
+            aria-label="Close create roster"
+          >
+            x
+          </button>
+        </div>
+      )}
+
+      <label className={styles.createRosterField}>
+        <span>
+          Create Roster Name<strong>*</strong>
+        </span>
+        <input
+          name="rosterName"
+          type="text"
+          placeholder="Create Roster Name"
+          value={newRosterData.rosterName}
+          onChange={handleRosterNameChange}
+        />
+      </label>
+
+      <section className={styles.createRosterRecentSection}>
+        <h2>Most Recent Members Joined</h2>
+        <div className={styles.createRosterRecentList}>
+          {isLoading && (
+            <div className={styles.createRosterLoading}>
+              <CircularProgress size={28} />
+            </div>
+          )}
+          {!isLoading &&
+            recentMembers.map((member) => {
+              const memberIsSelected = selectedMemberIds.has(member.id);
+
+              return (
+                <article className={styles.createRosterMemberRow} key={member.id}>
+                  <div className={styles.createRosterMemberIdentity}>
+                    <img
+                      src={
+                        member.profilePicture ||
+                        assetUrl("/images/defaultProfilePicture.jpg")
+                      }
+                      alt=""
+                    />
+                    <span>
+                      <strong>{getDisplayName(member)}</strong>
+                      <em>{member.jobTitle || "Volunteer"}</em>
+                    </span>
+                  </div>
+                  <IconButton
+                    aria-label={
+                      memberIsSelected
+                        ? `Remove ${getDisplayName(member)}`
+                        : `Add ${getDisplayName(member)}`
+                    }
+                    onClick={() => handleToggleMember(member.id)}
+                    className={styles.createRosterMemberAction}
+                  >
+                    {memberIsSelected ? <CheckCircle /> : <AddCircle />}
+                  </IconButton>
+                </article>
+              );
+            })}
+          {!isLoading && recentMembers.length === 0 && (
+            <p className={styles.createRosterEmpty}>No members available.</p>
+          )}
+        </div>
+      </section>
+
+      <div className={styles.createRosterFooter}>
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={!newRosterData.rosterName.trim() || isCreatingRoster}
+        >
+          Add Members
+          <span aria-hidden="true">&gt;</span>
+        </button>
       </div>
     </div>
   );

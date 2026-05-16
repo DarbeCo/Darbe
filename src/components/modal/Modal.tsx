@@ -108,6 +108,7 @@ export const Modal = () => {
     modalType === MODAL_TYPE.entityAbout ||
     modalType === MODAL_TYPE.values ||
     modalType === MODAL_TYPE.programs;
+  const isCreateRosterModal = modalType === MODAL_TYPE.createRoster;
   const profileBackTargets: Partial<Record<string, string>> = {
     [MODAL_TYPE.causes]: MODAL_TYPE.profile,
     [MODAL_TYPE.availability]: MODAL_TYPE.causes,
@@ -137,6 +138,7 @@ export const Modal = () => {
       <div
         className={`${styles.modalContent} ${
           isProfileModal ? styles.profileModalContent : ""
+        } ${isCreateRosterModal ? styles.createRosterModalContent : ""
         }`.trim()}
       >
         <div

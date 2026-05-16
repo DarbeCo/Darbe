@@ -83,6 +83,7 @@ export {
 export {
   addToRoster,
   createRoster,
+  deleteRoster,
   demoteUserFromAdmin,
   getAllRosterMembers,
   getEntityRosterAccess,

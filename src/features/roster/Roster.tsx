@@ -9,22 +9,20 @@ import {
   usePromoteUserToAdminMutation,
   useRemoveMemberFromRosterMutation,
 } from "../../services/api/endpoints/roster/roster.api";
-import { useGetEntityEventCountsQuery } from "../../services/api/endpoints/events/events.api";
-import { useGetDonorsAndStaffQuery } from "../../services/api/endpoints/profiles/profiles.api";
 import {
   RosterAdminPermissions,
   RosterMember,
 } from "../../services/api/endpoints/types/roster.api.types";
-import { useAppDispatch, useAppSelector } from "../../services/hooks";
+import { useAppDispatch } from "../../services/hooks";
 import {
   setExternalData,
   setModalType,
   showModal,
 } from "../../components/modal/modalSlice";
 import { EDIT_SECTIONS } from "../users/userProfiles/constants";
-import { selectCurrentUserId } from "../users/selectors";
 import { PROFILE_ROUTE } from "../../routes/route.constants";
 import { assetUrl } from "../../utils/assetUrl";
+import { SimpleCreateRoster } from "../../components/roster/SimpleCreateNewRoster";
 
 import styles from "./styles/roster.module.css";
 
@@ -55,15 +53,7 @@ const emptyPermissions: RosterAdminPermissions = {
 type PermissionKey = keyof RosterAdminPermissions;
 
 export const Roster = () => {
-  const currentUserId = useAppSelector(selectCurrentUserId);
   const { data, isLoading } = useGetRostersQuery();
-  const { data: eventCounts } = useGetEntityEventCountsQuery(currentUserId, {
-    skip: !currentUserId,
-  });
-  const { data: donorsAndStaff } = useGetDonorsAndStaffQuery(
-    { userId: currentUserId },
-    { skip: !currentUserId }
-  );
   const [promoteToAdmin, { isLoading: isPromoting }] =
     usePromoteUserToAdminMutation();
   const [removeFromAdmin, { isLoading: isDemoting }] =
@@ -83,6 +73,7 @@ export const Roster = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const selectedRosterId = searchParams.get("rosterId");
+  const isCreateRosterView = searchParams.get("view") === "createRoster";
 
   useEffect(() => {
     if (!data?.length) return;
@@ -101,9 +92,7 @@ export const Roster = () => {
   }, [data, selectedRosterId, setSearchParams]);
 
   const currentRoster = useMemo(
-    () =>
-      data?.find((roster) => roster.id === selectedRosterId) ??
-      data?.[0],
+    () => data?.find((roster) => roster.id === selectedRosterId) ?? data?.[0],
     [data, selectedRosterId]
   );
   const rosterId = currentRoster?.id;
@@ -126,7 +115,6 @@ export const Roster = () => {
     });
   }, [rosterMembers, searchText]);
   const emptyRoster = !filteredMembers.length;
-  const hasMultipleRosters = (data?.length ?? 0) > 1;
   const isAdminMutationLoading = isPromoting || isDemoting;
   const isRosterActionLoading = isAdminMutationLoading || isRemovingMember;
 
@@ -135,11 +123,6 @@ export const Roster = () => {
 
     dispatch(setModalType(EDIT_SECTIONS.editRoster));
     dispatch(setExternalData(rosterId));
-    dispatch(showModal());
-  };
-
-  const handleCreateRoster = () => {
-    dispatch(setModalType(EDIT_SECTIONS.createRoster));
     dispatch(showModal());
   };
 
@@ -188,7 +171,11 @@ export const Roster = () => {
 
     closeAdminDialog();
     setAdminStatusMessage(
-      removeAsAdmin ? "Admin Removed" : wasAdmin ? "Admin Updated" : "Admin Created"
+      removeAsAdmin
+        ? "Admin Removed"
+        : wasAdmin
+          ? "Admin Updated"
+          : "Admin Created"
     );
     setTimeout(() => setAdminStatusMessage(""), 1400);
   };
@@ -207,6 +194,14 @@ export const Roster = () => {
     setInviteText("");
   };
 
+  const exitCreateRosterView = () => {
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams);
+      nextParams.delete("view");
+      return nextParams;
+    });
+  };
+
   return (
     <div className={styles.rostersContainer}>
       <div className={styles.rosterMainColumn}>
@@ -220,229 +215,190 @@ export const Roster = () => {
           />
         </label>
 
-        <div className={styles.rosterInviteBar}>
-          <input
-            type="text"
-            placeholder="Email Invite: johndoe@gmail.com, janedoe@yahoo.com"
-            value={inviteText}
-            onChange={(event) => setInviteText(event.target.value)}
-          />
-          <button type="button" onClick={handleInvite} disabled={!inviteText.trim()}>
-            Invite
-          </button>
-        </div>
-
-        <section className={styles.rosterPanel}>
-          <div className={styles.rosterMembersHeader}>
-            <h1>Member Roster</h1>
-            <button type="button" onClick={handleEditRoster}>
-              Edit Roster
+        {!isCreateRosterView && (
+          <div className={styles.rosterInviteBar}>
+            <input
+              type="text"
+              placeholder="Email Invite: johndoe@gmail.com, janedoe@yahoo.com"
+              value={inviteText}
+              onChange={(event) => setInviteText(event.target.value)}
+            />
+            <button
+              type="button"
+              onClick={handleInvite}
+              disabled={!inviteText.trim()}
+            >
+              Invite
             </button>
           </div>
+        )}
 
-          {isLoading && (
-            <div className={styles.rosterLoading}>
-              <CircularProgress />
+        {isCreateRosterView ? (
+          <SimpleCreateRoster
+            embedded
+            memberSearchQuery={searchText}
+            onCancel={exitCreateRosterView}
+            onComplete={(createdRosterId) => {
+              setSearchParams((currentParams) => {
+                const nextParams = new URLSearchParams(currentParams);
+                nextParams.delete("view");
+                if (createdRosterId) {
+                  nextParams.set("rosterId", createdRosterId);
+                }
+                return nextParams;
+              });
+            }}
+          />
+        ) : (
+          <section className={styles.rosterPanel}>
+            <div className={styles.rosterMembersHeader}>
+              <h1>Member Roster</h1>
+              <button type="button" onClick={handleEditRoster}>
+                Edit Roster
+              </button>
             </div>
-          )}
 
-          {!isLoading && emptyRoster && (
-            <p className={styles.rosterEmpty}>No members in this roster</p>
-          )}
+            {isLoading && (
+              <div className={styles.rosterLoading}>
+                <CircularProgress />
+              </div>
+            )}
 
-          {!isLoading && !emptyRoster && (
-            <div className={styles.rosterMembers}>
-              {filteredMembers.map((member) => {
-                const memberName =
-                  member.user.fullName ||
-                  member.user.organizationName ||
-                  member.user.nonprofitName ||
-                  "Roster Member";
-                const visibleCauses = member.causes?.slice(0, 3) ?? [];
-                const extraCauses = Math.max((member.causes?.length ?? 0) - 3, 0);
-                const summary = member.volunteerSummary;
+            {!isLoading && emptyRoster && (
+              <p className={styles.rosterEmpty}>No members in this roster</p>
+            )}
 
-                return (
-                  <article className={styles.rosterMemberCard} key={member.user.id}>
-                    <div className={styles.rosterMemberTopRow}>
-                      <button
-                        type="button"
-                        className={styles.rosterMemberIdentity}
-                        onClick={() => handleMemberClick(member)}
-                      >
-                        <img
-                          src={
-                            member.user.profilePicture ||
-                            assetUrl("/images/defaultProfilePicture.jpg")
-                          }
-                          alt=""
-                        />
-                        <span>
-                          <strong>{memberName}</strong>
-                          <em>{member.user.jobTitle || "Volunteer"}</em>
-                        </span>
-                      </button>
+            {!isLoading && !emptyRoster && (
+              <div className={styles.rosterMembers}>
+                {filteredMembers.map((member) => {
+                  const memberName =
+                    member.user.fullName ||
+                    member.user.organizationName ||
+                    member.user.nonprofitName ||
+                    "Roster Member";
+                  const visibleCauses = member.causes?.slice(0, 3) ?? [];
+                  const extraCauses = Math.max(
+                    (member.causes?.length ?? 0) - 3,
+                    0
+                  );
+                  const summary = member.volunteerSummary;
 
-                      <div className={styles.rosterMemberActions}>
-                        {member.isAdmin && (
-                          <span className={styles.rosterAdminLabel}>Admin</span>
-                        )}
+                  return (
+                    <article
+                      className={styles.rosterMemberCard}
+                      key={member.user.id}
+                    >
+                      <div className={styles.rosterMemberTopRow}>
                         <button
                           type="button"
-                          className={
-                            member.isAdmin
-                              ? styles.rosterSecondaryAction
-                              : styles.rosterPrimaryAction
-                          }
-                          onClick={() => openAdminDialog(member)}
-                          disabled={isRosterActionLoading}
+                          className={styles.rosterMemberIdentity}
+                          onClick={() => handleMemberClick(member)}
                         >
-                          {member.isAdmin ? "Edit Admin" : "Make Admin"}
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.rosterRemoveAction}
-                          onClick={() => handleRemoveMember(member.user.id)}
-                          disabled={isRosterActionLoading}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-
-                    <p className={styles.rosterMemberSince}>
-                      {formatMemberSince(member.memberSince)}:{" "}
-                      <strong>{formatHours(summary?.hoursVolunteered)} vol hours</strong>
-                    </p>
-
-                    <div className={styles.rosterMemberGrid}>
-                      <section className={styles.rosterInfoCard}>
-                        <h2>Total Volunteer Summary</h2>
-                        <dl>
-                          <div>
-                            <dt>{formatHours(summary?.hoursVolunteered)}</dt>
-                            <dd>Hours Volunteered</dd>
-                          </div>
-                          <div>
-                            <dt>{formatCurrency(summary?.volunteerValue)}</dt>
-                            <dd>Volunteer Value</dd>
-                          </div>
-                          <div>
-                            <dt>{summary?.eventsAttended ?? 0}</dt>
-                            <dd>Events Attended</dd>
-                          </div>
-                        </dl>
-                      </section>
-
-                      <section className={styles.rosterInfoCard}>
-                        <h2>Interested Causes</h2>
-                        {visibleCauses.length ? (
-                          <ul className={styles.rosterCauseList}>
-                            {visibleCauses.map((cause) => (
-                              <li key={cause.id}>
-                                <img
-                                  src={
-                                    cause.imageUrl ||
-                                    assetUrl("/images/defaultCoverPhoto.jpg")
-                                  }
-                                  alt=""
-                                />
-                                <span>{cause.name}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className={styles.rosterNoCauses}>No causes added</p>
-                        )}
-                        {extraCauses > 0 && (
-                          <span className={styles.rosterExtraCauses}>
-                            +{extraCauses} more
+                          <img
+                            src={
+                              member.user.profilePicture ||
+                              assetUrl("/images/defaultProfilePicture.jpg")
+                            }
+                            alt=""
+                          />
+                          <span>
+                            <strong>{memberName}</strong>
+                            <em>{member.user.jobTitle || "Volunteer"}</em>
                           </span>
-                        )}
-                      </section>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-        </section>
+                        </button>
+
+                        <div className={styles.rosterMemberActions}>
+                          {member.isAdmin && (
+                            <span className={styles.rosterAdminLabel}>
+                              Admin
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            className={
+                              member.isAdmin
+                                ? styles.rosterSecondaryAction
+                                : styles.rosterPrimaryAction
+                            }
+                            onClick={() => openAdminDialog(member)}
+                            disabled={isRosterActionLoading}
+                          >
+                            {member.isAdmin ? "Edit Admin" : "Make Admin"}
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.rosterRemoveAction}
+                            onClick={() => handleRemoveMember(member.user.id)}
+                            disabled={isRosterActionLoading}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+
+                      <p className={styles.rosterMemberSince}>
+                        {formatMemberSince(member.memberSince)}:{" "}
+                        <strong>
+                          {formatHours(summary?.hoursVolunteered)} vol hours
+                        </strong>
+                      </p>
+
+                      <div className={styles.rosterMemberGrid}>
+                        <section className={styles.rosterInfoCard}>
+                          <h2>Total Volunteer Summary</h2>
+                          <dl>
+                            <div>
+                              <dt>{formatHours(summary?.hoursVolunteered)}</dt>
+                              <dd>Hours Volunteered</dd>
+                            </div>
+                            <div>
+                              <dt>{formatCurrency(summary?.volunteerValue)}</dt>
+                              <dd>Volunteer Value</dd>
+                            </div>
+                            <div>
+                              <dt>{summary?.eventsAttended ?? 0}</dt>
+                              <dd>Events Attended</dd>
+                            </div>
+                          </dl>
+                        </section>
+
+                        <section className={styles.rosterInfoCard}>
+                          <h2>Interested Causes</h2>
+                          {visibleCauses.length ? (
+                            <ul className={styles.rosterCauseList}>
+                              {visibleCauses.map((cause) => (
+                                <li key={cause.id}>
+                                  <img
+                                    src={
+                                      cause.imageUrl ||
+                                      assetUrl("/images/defaultCoverPhoto.jpg")
+                                    }
+                                    alt=""
+                                  />
+                                  <span>{cause.name}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className={styles.rosterNoCauses}>
+                              No causes added
+                            </p>
+                          )}
+                          {extraCauses > 0 && (
+                            <span className={styles.rosterExtraCauses}>
+                              +{extraCauses} more
+                            </span>
+                          )}
+                        </section>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
       </div>
-
-      <aside className={styles.rosterRightRail}>
-        <section className={styles.rosterRailCard}>
-          <h2>{currentRoster?.rosterName ?? "Default"}</h2>
-          <span>Member Roster</span>
-        </section>
-
-        <section className={styles.rosterRailCard}>
-          <label className={styles.rosterRailSelect}>
-            <span>Select Roster</span>
-            <select
-              value={currentRoster?.id ?? ""}
-              onChange={(event) => {
-                setSearchParams((currentParams) => {
-                  const nextParams = new URLSearchParams(currentParams);
-                  nextParams.set("rosterId", event.target.value);
-                  return nextParams;
-                });
-              }}
-              disabled={!hasMultipleRosters}
-              aria-label="Select roster"
-            >
-              {data?.map((roster) => (
-                  <option key={roster.id} value={roster.id}>
-                  {roster.rosterName}
-                </option>
-              ))}
-            </select>
-          </label>
-        </section>
-
-        <button
-          type="button"
-          className={styles.rosterRailAction}
-          onClick={handleCreateRoster}
-        >
-          <span>Create Roster</span>
-          <strong>+</strong>
-        </button>
-
-        <button type="button" className={styles.rosterRailAction}>
-          <span>Pending Requests</span>
-          <strong>›</strong>
-        </button>
-
-        <section className={styles.rosterRailOverview}>
-          <h2>Org Overview</h2>
-          <dl>
-            <div>
-              <dt>{rosterMembers.length}</dt>
-              <dd>Members</dd>
-            </div>
-            <div>
-              <dt>{donorsAndStaff?.staff.length ?? 0}</dt>
-              <dd>Non-Profit Partners</dd>
-            </div>
-            <div>
-              <dt>{donorsAndStaff?.donors.length ?? 0}</dt>
-              <dd>Business Sponsors</dd>
-            </div>
-            <div>
-              <dt>{rosterMembers.length}</dt>
-              <dd>Active Volunteers</dd>
-            </div>
-            <div>
-              <dt>{eventCounts?.completedProjectsCount ?? 0}</dt>
-              <dd>Completed Projects</dd>
-            </div>
-            <div>
-              <dt>{eventCounts?.upcomingProjectsCount ?? 0}</dt>
-              <dd>Upcoming Projects</dd>
-            </div>
-          </dl>
-        </section>
-      </aside>
 
       {adminDialogMember && (
         <div className={styles.rosterAdminDialogOverlay}>
@@ -546,9 +502,7 @@ export const Roster = () => {
             role="dialog"
             aria-modal="true"
           >
-            <p>
-              Are you sure you want to remove this person an admin?
-            </p>
+            <p>Are you sure you want to remove this person an admin?</p>
             <div className={styles.rosterRemoveAdminConfirmActions}>
               <button
                 type="button"

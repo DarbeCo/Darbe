@@ -45,6 +45,18 @@
   background: #fff;
 }
 
+.createRosterModalContent {
+  width: min(675px, calc(100dvw - 24px));
+  height: min(812px, calc(100dvh - 24px));
+  max-height: calc(100dvh - 24px);
+  padding: 16px;
+  border: 1px solid #d8d8d8;
+  border-radius: 8px 8px 0 0;
+  background: #ffffff;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
 .modalContentHeader {
   display: flex;
   flex-direction: column;
@@ -57,6 +69,22 @@
   align-items: center;
   column-gap: 16px;
   width: 100%;
+}
+
+.createRosterModalContent .modalHeaderInner {
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
+}
+
+.createRosterModalContent .modalHeaderText {
+  grid-column: 2;
+  justify-content: center;
+  color: #263238;
+  font-size: 24px;
+  line-height: 33px;
+}
+
+.createRosterModalContent .modalHeaderInner > div:last-child {
+  grid-column: 3;
 }
 
 .profileModalHeader {
@@ -178,6 +206,12 @@
     max-height: calc(100dvh - 48px);
     background: #fff;
   }
+
+  .createRosterModalContent {
+    width: min(675px, calc(100dvw - 48px));
+    height: min(812px, calc(100dvh - 48px));
+    max-height: calc(100dvh - 48px);
+  }
 }
 
 @media (max-width: 640px) {
@@ -191,6 +225,13 @@
     height: auto;
     max-height: calc(100dvh - 16px);
     background: #fff;
+  }
+
+  .createRosterModalContent {
+    width: 100%;
+    height: auto;
+    max-height: calc(100dvh - 16px);
+    overflow-y: auto;
   }
 
   .profileModalHeaderText {
