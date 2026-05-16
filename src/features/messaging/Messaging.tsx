@@ -14,6 +14,7 @@ import {
   useGetMessagesQuery,
   useGetMessageThreadQuery,
 } from "../../services/api/endpoints/messages/messages.api";
+import { useGetSimpleUserInfoQuery } from "../../services/api/endpoints/profiles/profiles.api";
 import {
   MessageState,
   MessageThreadsState,
@@ -113,9 +114,16 @@ const buildThreadSummary = (
 export const Messaging = () => {
   const { userId: routeUserId } = useParams<{ userId?: string }>();
   const currentUserId = useAppSelector(selectCurrentUserId);
+  const routeRecipientId =
+    currentUserId && routeUserId && routeUserId !== currentUserId
+      ? routeUserId
+      : "";
   const currentFriends = useAppSelector(selectCurrentFriends) ?? [];
   const { isDesktop } = useScreenWidthHook();
   const { data: messageThreads = [], isLoading } = useGetMessagesQuery();
+  const { data: routeRecipient } = useGetSimpleUserInfoQuery(routeRecipientId, {
+    skip: !routeRecipientId,
+  });
   const [selectedThreadId, setSelectedThreadId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [friendSearchTerm, setFriendSearchTerm] = useState("");
@@ -154,12 +162,12 @@ export const Messaging = () => {
   );
 
   useEffect(() => {
-    if (routeUserId || !isDesktop || selectedThreadId || !threadSummaries.length) {
+    if (routeRecipientId || !isDesktop || selectedThreadId || !threadSummaries.length) {
       return;
     }
 
     setSelectedThreadId(threadSummaries[0].id);
-  }, [isDesktop, routeUserId, selectedThreadId, threadSummaries]);
+  }, [isDesktop, routeRecipientId, selectedThreadId, threadSummaries]);
 
   useEffect(() => {
     if (!draftThread) {
@@ -181,7 +189,7 @@ export const Messaging = () => {
   const selectedThread =
     threadSummaries.find((thread) => thread.id === selectedThreadId) ||
     draftThread ||
-    (isDesktop ? threadSummaries[0] : undefined);
+    (!routeRecipientId && isDesktop ? threadSummaries[0] : undefined);
 
   const threadSummaryByFriendId = useMemo(
     () =>
@@ -195,11 +203,11 @@ export const Messaging = () => {
   );
 
   useEffect(() => {
-    if (!routeUserId) {
+    if (!routeRecipientId) {
       return;
     }
 
-    const existingThread = threadSummaryByFriendId.get(routeUserId);
+    const existingThread = threadSummaryByFriendId.get(routeRecipientId);
 
     if (existingThread) {
       setSelectedThreadId(existingThread.id);
@@ -209,18 +217,20 @@ export const Messaging = () => {
     }
 
     const friend = currentFriends.find(
-      (currentFriend) => currentFriend.id === routeUserId
+      (currentFriend) => currentFriend.id === routeRecipientId
     );
 
-    if (!friend) {
+    const recipient = friend ?? routeRecipient;
+
+    if (!recipient) {
       return;
     }
 
     const nextDraftThread = {
-      id: `draft-${friend.id}`,
-      friendId: friend.id,
-      fullName: getFriendDisplayName(friend),
-      profilePicture: friend.profilePicture,
+      id: `draft-${recipient.id}`,
+      friendId: recipient.id,
+      fullName: friend ? getFriendDisplayName(friend) : getDisplayName(routeRecipient),
+      profilePicture: recipient.profilePicture,
       lastMessage: "",
       dateSent: "",
     };
@@ -228,7 +238,7 @@ export const Messaging = () => {
     setDraftThread(nextDraftThread);
     setSelectedThreadId(nextDraftThread.id);
     setIsMobileConversationOpen(true);
-  }, [currentFriends, routeUserId, threadSummaryByFriendId]);
+  }, [currentFriends, routeRecipient, routeRecipientId, threadSummaryByFriendId]);
 
   const filteredMobileFriends = currentFriends.filter((friend) => {
     const searchValue = searchTerm.trim().toLowerCase();

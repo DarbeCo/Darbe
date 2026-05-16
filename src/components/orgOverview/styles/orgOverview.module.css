@@ -57,6 +57,24 @@
   border-bottom: 1px solid #eeeeee;
 }
 
+.orgOverviewRowButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 0;
+  border: 0;
+  border-bottom: 1px solid #eeeeee;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.orgOverviewRowButton:disabled {
+  cursor: default;
+}
+
 .orgOverviewRow:last-child {
   border-bottom: 0;
 }
@@ -130,4 +148,99 @@
   background: #f5f5f5;
   color: #8a8a8a;
   cursor: not-allowed;
+}
+
+.orgFollowersOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.24);
+}
+
+.orgFollowersDialog {
+  width: min(360px, calc(100vw - 48px));
+  max-height: min(520px, calc(100vh - 48px));
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 0 18px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.orgFollowersHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+  padding: 0 16px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.orgFollowersHeader h2 {
+  margin: 0;
+  color: #263238;
+  font-family: "Open Sans", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.orgFollowersHeader button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #263238;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.orgFollowersList {
+  display: flex;
+  flex-direction: column;
+  max-height: 464px;
+  overflow-y: auto;
+}
+
+.orgFollowersItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 10px 16px;
+  border: 0;
+  border-bottom: 1px solid #eeeeee;
+  background: #ffffff;
+  color: #263238;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.orgFollowersItem:hover {
+  background: #f7faff;
+}
+
+.orgFollowersItem img {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.orgFollowersEmpty {
+  margin: 0;
+  padding: 20px 16px;
+  color: #717070;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  text-align: center;
 }

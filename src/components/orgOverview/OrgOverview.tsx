@@ -1,15 +1,33 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { ROSTER_ROUTE } from "../../routes/route.constants";
+import { PROFILE_ROUTE, ROSTER_ROUTE } from "../../routes/route.constants";
+import { useGetEntityUpcomingEventsQuery } from "../../services/api/endpoints/events/events.api";
+import { useGetEntityRosterMembersQuery } from "../../services/api/endpoints/roster/roster.api";
+import { assetUrl } from "../../utils/assetUrl";
 
 import styles from "./styles/orgOverview.module.css";
 
+type OrgOverviewFollower = {
+  id: string;
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
+  profilePicture?: string;
+  organizationName?: string;
+  nonprofitName?: string;
+};
+
 export interface OrgOverviewProps {
+  entityId?: string;
   followersCount?: number;
-  mutualFollowers?: { id: string; profilePicture?: string }[];
+  followers?: OrgOverviewFollower[];
+  mutualFollowers?: OrgOverviewFollower[];
   mutualCount?: number;
   partnersCount?: number;
+  members?: OrgOverviewFollower[];
   businessSponsorsCount?: number;
+  businessSponsors?: OrgOverviewFollower[];
   upcomingProjectsCount?: number;
   completedProjectsCount?: number;
   canViewRoster?: boolean;
@@ -35,18 +53,48 @@ const ArrowRightIcon = () => (
 );
 
 export const OrgOverview = ({
+  entityId,
   followersCount = 0,
+  followers = [],
   mutualFollowers = [],
   mutualCount,
   partnersCount = 0,
+  members = [],
   businessSponsorsCount = 0,
+  businessSponsors = [],
   upcomingProjectsCount = 0,
   completedProjectsCount = 0,
   canViewRoster = false,
 }: OrgOverviewProps) => {
   const navigate = useNavigate();
+  const [activeList, setActiveList] = useState<
+    "followers" | "members" | "sponsors" | "projects" | null
+  >(null);
+  const { data: rosterMembers = [] } = useGetEntityRosterMembersQuery(
+    entityId ?? "",
+    { skip: !entityId || !activeList || activeList !== "members" }
+  );
+  const { data: upcomingProjects = [] } = useGetEntityUpcomingEventsQuery(
+    entityId ?? "",
+    { skip: !entityId || !activeList || activeList !== "projects" }
+  );
   const mutualTotal = mutualCount ?? mutualFollowers.length;
   const mutualAvatars = mutualFollowers.slice(0, 2);
+  const getFollowerName = (follower: OrgOverviewFollower) =>
+    follower.fullName ||
+    follower.organizationName ||
+    follower.nonprofitName ||
+    `${follower.firstName ?? ""} ${follower.lastName ?? ""}`.trim() ||
+    "User";
+  const membersToDisplay = rosterMembers.length ? rosterMembers : members;
+  const activeListTitle =
+    activeList === "followers"
+      ? "Followers"
+      : activeList === "members"
+      ? "Members"
+      : activeList === "sponsors"
+      ? "Business Sponsors"
+      : "Upcoming Projects";
   const handleRosterClick = () => {
     if (!canViewRoster) {
       return;
@@ -69,7 +117,12 @@ export const OrgOverview = ({
           </button>
         </div>
 
-        <div className={styles.orgOverviewRow}>
+        <button
+          type="button"
+          className={styles.orgOverviewRowButton}
+          onClick={() => setActiveList("followers")}
+          disabled={followersCount === 0}
+        >
           <span className={styles.orgOverviewRowText}>
             Followers&nbsp;&nbsp;{followersCount}
           </span>
@@ -89,25 +142,38 @@ export const OrgOverview = ({
               {mutualTotal} mutual
             </span>
           )}
-        </div>
+        </button>
 
-        <div className={styles.orgOverviewRow}>
+        <button
+          type="button"
+          className={styles.orgOverviewRowButton}
+          onClick={() => setActiveList("members")}
+        >
           <span className={styles.orgOverviewRowText}>
             {partnersCount} Members
           </span>
-        </div>
+        </button>
 
-        <div className={styles.orgOverviewRow}>
+        <button
+          type="button"
+          className={styles.orgOverviewRowButton}
+          onClick={() => setActiveList("sponsors")}
+        >
           <span className={styles.orgOverviewRowText}>
             {businessSponsorsCount} Business Sponsors
           </span>
-        </div>
+        </button>
 
-        <div className={styles.orgOverviewRow}>
+        <button
+          type="button"
+          className={styles.orgOverviewRowButton}
+          onClick={() => setActiveList("projects")}
+          disabled={upcomingProjectsCount === 0}
+        >
           <span className={styles.orgOverviewRowText}>
             {upcomingProjectsCount} Upcoming Projects
           </span>
-        </div>
+        </button>
 
         <div className={styles.orgOverviewRow}>
           <span className={styles.orgOverviewRowTextMuted}>
@@ -132,6 +198,97 @@ export const OrgOverview = ({
       >
         Our Roster
       </button>
+
+      {activeList && (
+        <div className={styles.orgFollowersOverlay}>
+          <div
+            className={styles.orgFollowersDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="org-followers-title"
+          >
+            <div className={styles.orgFollowersHeader}>
+              <h2 id="org-followers-title">{activeListTitle}</h2>
+              <button
+                type="button"
+                onClick={() => setActiveList(null)}
+                aria-label={`Close ${activeListTitle} list`}
+              >
+                x
+              </button>
+            </div>
+            <div className={styles.orgFollowersList}>
+              {activeList === "projects" ? (
+                <>
+                  {upcomingProjects.map((project) => (
+                    <button
+                      type="button"
+                      key={project.id}
+                      className={styles.orgFollowersItem}
+                      onClick={() => {
+                        setActiveList(null);
+                        navigate(`/home/events/${project.id}`);
+                      }}
+                    >
+                      <img
+                        src={
+                          project.eventCoverPhoto ||
+                          assetUrl("/images/defaultCoverPhoto.jpg")
+                        }
+                        alt=""
+                      />
+                      <span>{project.eventName}</span>
+                    </button>
+                  ))}
+                  {upcomingProjects.length === 0 && (
+                    <p className={styles.orgFollowersEmpty}>
+                      No upcoming projects.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  {(activeList === "followers"
+                    ? followers
+                    : activeList === "members"
+                    ? membersToDisplay
+                    : businessSponsors
+                  ).map((person) => (
+                    <button
+                      type="button"
+                      key={person.id}
+                      className={styles.orgFollowersItem}
+                      onClick={() => {
+                        setActiveList(null);
+                        navigate(`${PROFILE_ROUTE}/${person.id}`);
+                      }}
+                    >
+                      <img
+                        src={
+                          person.profilePicture ||
+                          assetUrl("/images/defaultProfilePicture.jpg")
+                        }
+                        alt=""
+                      />
+                      <span>{getFollowerName(person)}</span>
+                    </button>
+                  ))}
+                  {(activeList === "followers"
+                    ? followers
+                    : activeList === "members"
+                    ? membersToDisplay
+                    : businessSponsors
+                  ).length === 0 && (
+                    <p className={styles.orgFollowersEmpty}>
+                      No {activeListTitle.toLowerCase()} yet.
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

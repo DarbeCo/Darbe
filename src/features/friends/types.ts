@@ -16,6 +16,9 @@ export type ProfileFriendState = {
 
 export type ProfileFollowState = {
   id: string;
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
   profilePicture: string;
   nonprofitName?: string;
   organizationName?: string;

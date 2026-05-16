@@ -130,5 +130,19 @@ export interface VolunteerMatch extends SimpleUserInfo {
   createdAt: string;
   causes: Cause[];
   emergencyContact: EmergencyContactState;
+  nextEvent?: {
+    id: string;
+    eventName: string;
+    impactValue: string;
+  };
   volunteerSummary: ShortVolunteerImpact;
 }
+
+export type EventEditableUpdate = {
+  eventId: string;
+  eventName?: string;
+  eventDescription?: string;
+  maxVolunteerCount?: number;
+  eventAddress?: Partial<EventAddressSchema>;
+  volunteerImpact?: Partial<VolunteerImpactSchema>;
+};

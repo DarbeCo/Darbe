@@ -294,12 +294,18 @@ export const mapProfileToFriend = (
 export const mapProfileToFollow = (
   profile: {
     id: string;
+    full_name: string | null;
+    first_name: string | null;
+    last_name: string | null;
     profile_picture_url: string | null;
     nonprofit_name: string | null;
     organization_name: string | null;
   }
 ): ProfileFollowState => ({
   id: profile.id,
+  fullName: profile.full_name ?? undefined,
+  firstName: profile.first_name ?? undefined,
+  lastName: profile.last_name ?? undefined,
   profilePicture: profile.profile_picture_url ?? "",
   nonprofitName: profile.nonprofit_name ?? undefined,
   organizationName: profile.organization_name ?? undefined,

@@ -4,7 +4,10 @@ import { ContentCopy } from "@mui/icons-material";
 import { useState } from "react";
 
 import { EVENTS_ROUTE, PROFILE_ROUTE } from "../../routes/route.constants";
-import { ShortEventState } from "../../services/api/endpoints/types/events.api.types";
+import {
+  EventEditableUpdate,
+  ShortEventState,
+} from "../../services/api/endpoints/types/events.api.types";
 import { UserAvatars } from "../avatars/UserAvatars";
 import { Typography } from "../typography/Typography";
 import { DarbeButton } from "../buttons/DarbeButton";
@@ -16,7 +19,6 @@ import {
 import { useAppSelector } from "../../services/hooks";
 import {
   selectCurrentUserId,
-  selectUserType,
 } from "../../features/users/selectors";
 import { assetUrl } from "../../utils/assetUrl";
 import {
@@ -35,6 +37,7 @@ import {
   useDenyEventVolunteerMutation,
   useMarkNoShowForEventMutation,
   useUnvolunteerFromEventMutation,
+  useUpdateEventDetailsMutation,
   useUpdateEventSignupImpactDetailsMutation,
   useUpdateEventTimeMutation,
   useVolunteerForEventMutation,
@@ -86,6 +89,31 @@ const formatCheckTimestamp = (timestamp?: string) => {
 const formatEventTimeRangeValue = (time?: number) =>
   time !== undefined ? formatDarbeTimeToString(time) : "--";
 
+const decimalHourToTimeInputValue = (time?: number) => {
+  if (time === undefined || time === null || !Number.isFinite(time)) {
+    return "";
+  }
+
+  const hour = Math.floor(time);
+  const minute = Math.round((time - hour) * 60);
+
+  return `${hour.toString().padStart(2, "0")}:${minute
+    .toString()
+    .padStart(2, "0")}`;
+};
+
+const timeInputValueToDecimalHour = (time: string) => {
+  const [hourValue, minuteValue] = time.split(":");
+  const hour = Number(hourValue);
+  const minute = Number(minuteValue);
+
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) {
+    return Number.NaN;
+  }
+
+  return hour + minute / 60;
+};
+
 const formatVolunteerActionTime = (timestamp?: string) => {
   if (!timestamp) {
     return "";
@@ -110,6 +138,39 @@ type ImpactEditState = {
   location: string;
   impact: string;
 };
+
+type EventTimeEditState = {
+  eventDate: string;
+  startTime: string;
+  endTime: string;
+};
+
+type EventFieldEditState =
+  | {
+      field: "eventName" | "eventDescription";
+      label: string;
+      value: string;
+      multiline?: boolean;
+    }
+  | {
+      field: "maxVolunteerCount";
+      label: string;
+      value: string;
+    }
+  | {
+      field: "location";
+      label: string;
+      locationName: string;
+      city: string;
+      zipCode: string;
+    }
+  | {
+      field: "volunteerImpact";
+      label: string;
+      amount: string;
+      impact: string;
+      impactType: "individual" | "group";
+    };
 
 type VolunteerSignupRow = ShortEventState["signups"][number] & {
   isCoordinator: boolean;
@@ -138,7 +199,6 @@ export const EventCard = ({
 }: EventCardProps) => {
   const navigate = useNavigate();
   const currentUserId = useAppSelector(selectCurrentUserId);
-  const currentUserType = useAppSelector(selectUserType);
   const [passOnEvent, { isLoading: isPassing }] = usePassOnEventMutation();
   const [checkInForEvent, { isLoading: isCheckingIn }] =
     useCheckInForEventMutation();
@@ -154,6 +214,8 @@ export const EventCard = ({
     useDenyEventVolunteerMutation();
   const [approveAllEventVolunteers, { isLoading: isApprovingAllVolunteers }] =
     useApproveAllEventVolunteersMutation();
+  const [updateEventDetails, { isLoading: isUpdatingEventDetails }] =
+    useUpdateEventDetailsMutation();
   const [updateImpactDetails, { isLoading: isUpdatingImpactDetails }] =
     useUpdateEventSignupImpactDetailsMutation();
   const [updateEventTime, { isLoading: isUpdatingEventTime }] =
@@ -173,6 +235,12 @@ export const EventCard = ({
   const [impactEditState, setImpactEditState] =
     useState<ImpactEditState | null>(null);
   const [impactEditError, setImpactEditError] = useState("");
+  const [eventTimeEditState, setEventTimeEditState] =
+    useState<EventTimeEditState | null>(null);
+  const [eventTimeEditError, setEventTimeEditError] = useState("");
+  const [eventFieldEditState, setEventFieldEditState] =
+    useState<EventFieldEditState | null>(null);
+  const [eventFieldEditError, setEventFieldEditError] = useState("");
   const [impactDetailOverrides, setImpactDetailOverrides] = useState<
     Record<string, Omit<ImpactEditState, "signupId">>
   >({});
@@ -342,40 +410,117 @@ export const EventCard = ({
     navigator.clipboard.writeText(eventShareUrl);
   };
 
-  const handleEditEventTime = async () => {
-    const currentDateValue = event.eventDate.split("T")[0];
-    const nextDate = window.prompt("Event date (YYYY-MM-DD)", currentDateValue);
+  const handleEditEventTime = () => {
+    setEventTimeEditError("");
+    setEventTimeEditState({
+      eventDate: event.eventDate.split("T")[0],
+      startTime: decimalHourToTimeInputValue(event.startTime),
+      endTime: decimalHourToTimeInputValue(event.endTime),
+    });
+  };
 
-    if (!nextDate) return;
+  const handleSaveEventTime = async () => {
+    if (!eventTimeEditState) return;
 
-    const nextStartTime = window.prompt(
-      "Start time as decimal hour, e.g. 13.5 for 1:30 PM",
-      event.startTime.toString()
+    const parsedStartTime = timeInputValueToDecimalHour(
+      eventTimeEditState.startTime
     );
-
-    if (!nextStartTime) return;
-
-    const nextEndTime = window.prompt(
-      "End time as decimal hour, e.g. 15 for 3:00 PM",
-      event.endTime?.toString() ?? ""
-    );
-
-    const parsedStartTime = Number(nextStartTime);
-    const parsedEndTime = nextEndTime?.trim() ? Number(nextEndTime) : undefined;
+    const parsedEndTime = eventTimeEditState.endTime.trim()
+      ? timeInputValueToDecimalHour(eventTimeEditState.endTime)
+      : undefined;
 
     if (
+      !eventTimeEditState.eventDate ||
       !Number.isFinite(parsedStartTime) ||
       (parsedEndTime !== undefined && !Number.isFinite(parsedEndTime))
     ) {
+      setEventTimeEditError("Enter a valid date and time.");
       return;
     }
 
-    await updateEventTime({
-      eventId: event.id,
-      eventDate: nextDate,
-      startTime: parsedStartTime,
-      endTime: parsedEndTime,
-    }).unwrap();
+    try {
+      await updateEventTime({
+        eventId: event.id,
+        eventDate: eventTimeEditState.eventDate,
+        startTime: parsedStartTime,
+        endTime: parsedEndTime,
+      }).unwrap();
+      setEventTimeEditState(null);
+      setEventTimeEditError("");
+    } catch (error) {
+      console.error("Error updating event time", error);
+      setEventTimeEditError("Unable to update event time.");
+    }
+  };
+
+  const openEventFieldEdit = (state: EventFieldEditState) => {
+    setEventFieldEditError("");
+    setEventFieldEditState(state);
+  };
+
+  const handleSaveEventField = async () => {
+    if (!eventFieldEditState) return;
+
+    const update: EventEditableUpdate = { eventId: event.id };
+
+    if (eventFieldEditState.field === "eventName") {
+      update.eventName = eventFieldEditState.value.trim();
+    }
+
+    if (eventFieldEditState.field === "eventDescription") {
+      update.eventDescription = eventFieldEditState.value.trim();
+    }
+
+    if (eventFieldEditState.field === "maxVolunteerCount") {
+      const nextCount = Number(eventFieldEditState.value);
+
+      if (!Number.isFinite(nextCount) || nextCount < 0) {
+        setEventFieldEditError("Enter a valid volunteer count.");
+        return;
+      }
+
+      update.maxVolunteerCount = nextCount;
+    }
+
+    if (eventFieldEditState.field === "location") {
+      update.eventAddress = {
+        ...event.eventAddress,
+        locationName: eventFieldEditState.locationName.trim(),
+        city: eventFieldEditState.city.trim(),
+        zipCode: eventFieldEditState.zipCode.trim(),
+      };
+    }
+
+    if (eventFieldEditState.field === "volunteerImpact") {
+      const isIndividual = eventFieldEditState.impactType === "individual";
+
+      update.volunteerImpact = {
+        ...event.volunteerImpact,
+        individualImpactPerHour: isIndividual
+          ? eventFieldEditState.amount.trim()
+          : event.volunteerImpact.individualImpactPerHour,
+        individualImpact: isIndividual
+          ? eventFieldEditState.impact.trim()
+          : event.volunteerImpact.individualImpact,
+        groupImpactPerHour: !isIndividual
+          ? eventFieldEditState.amount.trim()
+          : event.volunteerImpact.groupImpactPerHour,
+        groupImpact: !isIndividual
+          ? eventFieldEditState.impact.trim()
+          : event.volunteerImpact.groupImpact,
+        isIndividualImpact: isIndividual,
+        isGroupImpact: !isIndividual,
+      };
+    }
+
+    try {
+      await updateEventDetails(update).unwrap();
+      setEventFieldEditState(null);
+      setEventFieldEditError("");
+    } catch (error) {
+      console.error("Error updating event details", error);
+      setEventFieldEditError("Unable to update event details.");
+    }
   };
 
   const eventState = getUserStateFromZip(event.eventAddress.zipCode)?.st;
@@ -437,12 +582,11 @@ export const EventCard = ({
   }`;
   const isEventPoster = currentUserId === event.eventOwner.id;
   const isEventCoordinator = currentUserId === event.eventCoordinator?.id;
-  const isEntityUser =
-    currentUserType === "organization" || currentUserType === "nonprofit";
   const canManageVolunteerCheckIns =
     enableAdminControls ||
-    (isEntityUser && isEventPoster) ||
+    isEventPoster ||
     (allowCoordinatorVolunteerManagement && isEventCoordinator);
+  const canEditEventFields = isEventPoster || enableAdminControls;
   const isPastEvent =
     hasEventEnded !== undefined ? hasEventEnded : eventDateTime < todayTime;
   const isVolunteerLocked = hasVolunteered || isVolunteering;
@@ -586,6 +730,24 @@ export const EventCard = ({
   const eventDateToDisplay = isMatchVariant ? compactDate : formattedDate;
   const eventCoverPhoto =
     event.eventCoverPhoto || assetUrl("/images/defaultCoverPhoto.jpg");
+  const renderEditPencil = (
+    label: string,
+    onClick: () => void
+  ) =>
+    canEditEventFields ? (
+      <button
+        type="button"
+        className={styles.eventFieldEditButton}
+        onClick={onClick}
+        aria-label={`Edit ${label}`}
+      >
+        <CustomSvgs
+          svgPath="/svgs/common/editProfileIcon.svg"
+          variant="small"
+          altText=""
+        />
+      </button>
+    ) : null;
 
   return (
     <div className={eventCardClassName}>
@@ -631,7 +793,10 @@ export const EventCard = ({
               variant="small"
               altText="Event Duration Icon"
             />
-            <Typography variant="text" textToDisplay={eventDuration} />
+            <div className={styles.eventEditableValue}>
+              <Typography variant="text" textToDisplay={eventDuration} />
+              {renderEditPencil("event time", handleEditEventTime)}
+            </div>
           </div>
           <div className={styles.eventCardRowInfo}>
             <CustomSvgs
@@ -639,7 +804,10 @@ export const EventCard = ({
               variant="small"
               altText="Event Date Icon"
             />
-            <Typography variant="text" textToDisplay={eventDateToDisplay} />
+            <div className={styles.eventEditableValue}>
+              <Typography variant="text" textToDisplay={eventDateToDisplay} />
+              {renderEditPencil("event date", handleEditEventTime)}
+            </div>
           </div>
           <div className={styles.eventCardRowInfo}>
             <CustomSvgs
@@ -647,7 +815,10 @@ export const EventCard = ({
               variant="small"
               altText="Event Time Icon"
             />
-            <Typography variant="text" textToDisplay={formattedStartTime} />
+            <div className={styles.eventEditableValue}>
+              <Typography variant="text" textToDisplay={formattedStartTime} />
+              {renderEditPencil("event time", handleEditEventTime)}
+            </div>
           </div>
           <div className={styles.eventCardRowInfo}>
             <CustomSvgs
@@ -655,7 +826,16 @@ export const EventCard = ({
               variant="small"
               altText="Event Location Icon"
             />
-            <Typography variant="text" textToDisplay={signedUpVolunteers} />
+            <div className={styles.eventEditableValue}>
+              <Typography variant="text" textToDisplay={signedUpVolunteers} />
+              {renderEditPencil("volunteer count", () =>
+                openEventFieldEdit({
+                  field: "maxVolunteerCount",
+                  label: "Volunteer Count",
+                  value: event.maxVolunteerCount.toString(),
+                })
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -665,8 +845,36 @@ export const EventCard = ({
           textToDisplay={event.eventName}
           extraClass={styles.eventCardEventName}
         />
-        <Typography variant="locationSmall" textToDisplay={locationText} />
-        <Typography variant="text" textToDisplay={event.eventDescription} />
+        {renderEditPencil("event name", () =>
+          openEventFieldEdit({
+            field: "eventName",
+            label: "Event Name",
+            value: event.eventName,
+          })
+        )}
+        <div className={styles.eventEditableLine}>
+          <Typography variant="locationSmall" textToDisplay={locationText} />
+          {renderEditPencil("event location", () =>
+            openEventFieldEdit({
+              field: "location",
+              label: "Location",
+              locationName: event.eventAddress.locationName ?? "",
+              city: event.eventAddress.city ?? "",
+              zipCode: event.eventAddress.zipCode ?? "",
+            })
+          )}
+        </div>
+        <div className={styles.eventEditableLine}>
+          <Typography variant="text" textToDisplay={event.eventDescription} />
+          {renderEditPencil("event description", () =>
+            openEventFieldEdit({
+              field: "eventDescription",
+              label: "Description",
+              value: event.eventDescription,
+              multiline: true,
+            })
+          )}
+        </div>
         <div>
           <Typography
             variant="text"
@@ -674,6 +882,21 @@ export const EventCard = ({
             extraClass={styles.eventCardImpactLabel}
           />
           <Typography variant="text" textToDisplay={eventImpactText} />
+          {renderEditPencil("volunteer impact", () => {
+            const isIndividual = Boolean(event.volunteerImpact.isIndividualImpact);
+
+            openEventFieldEdit({
+              field: "volunteerImpact",
+              label: "Volunteer Impact",
+              amount: isIndividual
+                ? event.volunteerImpact.individualImpactPerHour ?? ""
+                : event.volunteerImpact.groupImpactPerHour ?? "",
+              impact: isIndividual
+                ? event.volunteerImpact.individualImpact ?? ""
+                : event.volunteerImpact.groupImpact ?? "",
+              impactType: isIndividual ? "individual" : "group",
+            });
+          })}
         </div>
       </div>
 
@@ -777,7 +1000,9 @@ export const EventCard = ({
             </div>
           )}
           {canManageVolunteerCheckIns && !incompleteActionLabel && (
-            <div className={styles.eventMatchActions}>
+            <div
+              className={`${styles.eventMatchActions} ${styles.eventEditTimeAction}`}
+            >
               <DarbeButton
                 buttonText="Edit Time"
                 onClick={handleEditEventTime}
@@ -930,9 +1155,14 @@ export const EventCard = ({
             const canEditImpactDetails =
               canManageVolunteerCheckIns &&
               isCheckableUser &&
-              (hasSignupRecord || isVolunteerCoordinator);
+              (hasSignupRecord || isVolunteerCoordinator) &&
+              isPastEvent;
             const showApprovalCandidateLayout =
-              canShowApprovalActions || isApproved || isDenied || canEditImpactDetails;
+              isPastEvent &&
+              (canShowApprovalActions ||
+                isApproved ||
+                isDenied ||
+                canEditImpactDetails);
             const impactDetailOverride = impactDetailOverrides[signup.id];
             const candidateStartTime =
               impactDetailOverride?.startTime ||
@@ -1203,6 +1433,250 @@ export const EventCard = ({
               />
               <span>{approvalDialogMessage}</span>
             </h2>
+          </div>
+        </div>
+      ) : null}
+      {eventFieldEditState ? (
+        <div className={styles.eventTimeEditOverlay}>
+          <div
+            className={styles.eventTimeEditDialog}
+            role="dialog"
+            aria-modal="true"
+          >
+            <h2>Edit {eventFieldEditState.label}</h2>
+            {(eventFieldEditState.field === "eventName" ||
+              eventFieldEditState.field === "eventDescription" ||
+              eventFieldEditState.field === "maxVolunteerCount") && (
+              <label>
+                <span>{eventFieldEditState.label}</span>
+                {eventFieldEditState.field === "eventDescription" ? (
+                  <textarea
+                    value={eventFieldEditState.value}
+                    onChange={(event) =>
+                      setEventFieldEditState((currentState) =>
+                        currentState &&
+                        (currentState.field === "eventName" ||
+                          currentState.field === "eventDescription" ||
+                          currentState.field === "maxVolunteerCount")
+                          ? { ...currentState, value: event.target.value }
+                          : currentState
+                      )
+                    }
+                  />
+                ) : (
+                  <input
+                    type={
+                      eventFieldEditState.field === "maxVolunteerCount"
+                        ? "number"
+                        : "text"
+                    }
+                    value={eventFieldEditState.value}
+                    onChange={(event) =>
+                      setEventFieldEditState((currentState) =>
+                        currentState &&
+                        (currentState.field === "eventName" ||
+                          currentState.field === "eventDescription" ||
+                          currentState.field === "maxVolunteerCount")
+                          ? { ...currentState, value: event.target.value }
+                          : currentState
+                      )
+                    }
+                  />
+                )}
+              </label>
+            )}
+            {eventFieldEditState.field === "location" && (
+              <>
+                <label>
+                  <span>Location</span>
+                  <input
+                    value={eventFieldEditState.locationName}
+                    onChange={(event) =>
+                      setEventFieldEditState((currentState) =>
+                        currentState?.field === "location"
+                          ? {
+                              ...currentState,
+                              locationName: event.target.value,
+                            }
+                          : currentState
+                      )
+                    }
+                  />
+                </label>
+                <label>
+                  <span>City</span>
+                  <input
+                    value={eventFieldEditState.city}
+                    onChange={(event) =>
+                      setEventFieldEditState((currentState) =>
+                        currentState?.field === "location"
+                          ? { ...currentState, city: event.target.value }
+                          : currentState
+                      )
+                    }
+                  />
+                </label>
+                <label>
+                  <span>Zip Code</span>
+                  <input
+                    value={eventFieldEditState.zipCode}
+                    onChange={(event) =>
+                      setEventFieldEditState((currentState) =>
+                        currentState?.field === "location"
+                          ? { ...currentState, zipCode: event.target.value }
+                          : currentState
+                      )
+                    }
+                  />
+                </label>
+              </>
+            )}
+            {eventFieldEditState.field === "volunteerImpact" && (
+              <>
+                <label>
+                  <span>Type</span>
+                  <select
+                    value={eventFieldEditState.impactType}
+                    onChange={(event) =>
+                      setEventFieldEditState((currentState) =>
+                        currentState?.field === "volunteerImpact"
+                          ? {
+                              ...currentState,
+                              impactType: event.target.value as
+                                | "individual"
+                                | "group",
+                            }
+                          : currentState
+                      )
+                    }
+                  >
+                    <option value="individual">Individual</option>
+                    <option value="group">Group</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Amount</span>
+                  <input
+                    value={eventFieldEditState.amount}
+                    onChange={(event) =>
+                      setEventFieldEditState((currentState) =>
+                        currentState?.field === "volunteerImpact"
+                          ? { ...currentState, amount: event.target.value }
+                          : currentState
+                      )
+                    }
+                  />
+                </label>
+                <label>
+                  <span>Impact</span>
+                  <input
+                    value={eventFieldEditState.impact}
+                    onChange={(event) =>
+                      setEventFieldEditState((currentState) =>
+                        currentState?.field === "volunteerImpact"
+                          ? { ...currentState, impact: event.target.value }
+                          : currentState
+                      )
+                    }
+                  />
+                </label>
+              </>
+            )}
+            <div className={styles.eventTimeEditActions}>
+              <button
+                type="button"
+                className={styles.eventTimeEditSave}
+                onClick={handleSaveEventField}
+                disabled={isUpdatingEventDetails}
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                className={styles.eventTimeEditCancel}
+                onClick={() => setEventFieldEditState(null)}
+                disabled={isUpdatingEventDetails}
+              >
+                Cancel
+              </button>
+            </div>
+            {eventFieldEditError && (
+              <p className={styles.eventTimeEditError}>{eventFieldEditError}</p>
+            )}
+          </div>
+        </div>
+      ) : null}
+      {eventTimeEditState ? (
+        <div className={styles.eventTimeEditOverlay}>
+          <div
+            className={styles.eventTimeEditDialog}
+            role="dialog"
+            aria-modal="true"
+          >
+            <h2>Edit Time</h2>
+            <label>
+              <span>Event Date</span>
+              <input
+                type="date"
+                value={eventTimeEditState.eventDate}
+                onChange={(event) =>
+                  setEventTimeEditState((currentState) =>
+                    currentState
+                      ? { ...currentState, eventDate: event.target.value }
+                      : currentState
+                  )
+                }
+              />
+            </label>
+            <label>
+              <span>Start Time</span>
+              <input
+                type="time"
+                value={eventTimeEditState.startTime}
+                onChange={(event) =>
+                  setEventTimeEditState((currentState) =>
+                    currentState
+                      ? { ...currentState, startTime: event.target.value }
+                      : currentState
+                  )
+                }
+              />
+            </label>
+            <label>
+              <span>End Time</span>
+              <input
+                type="time"
+                value={eventTimeEditState.endTime}
+                onChange={(event) =>
+                  setEventTimeEditState((currentState) =>
+                    currentState
+                      ? { ...currentState, endTime: event.target.value }
+                      : currentState
+                  )
+                }
+              />
+            </label>
+            <div className={styles.eventTimeEditActions}>
+              <button
+                type="button"
+                className={styles.eventTimeEditSave}
+                onClick={handleSaveEventTime}
+                disabled={isUpdatingEventTime}
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                className={styles.eventTimeEditCancel}
+                onClick={() => setEventTimeEditState(null)}
+                disabled={isUpdatingEventTime}
+              >
+                Cancel
+              </button>
+            </div>
+            {eventTimeEditError && (
+              <p className={styles.eventTimeEditError}>{eventTimeEditError}</p>
+            )}
           </div>
         </div>
       ) : null}

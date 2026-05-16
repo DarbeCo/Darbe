@@ -107,12 +107,15 @@ export const Home = () => {
     currentUserFollowingIds.has(follower.id)
   );
   const orgOverviewProps = {
+    entityId: viewedProfileUserId,
     followersCount: viewedProfileFollowers.length,
+    followers: viewedProfileFollowers,
     mutualFollowers,
     mutualCount: mutualFollowers.length,
     partnersCount: viewedEntityRosterAccess?.memberCount ?? 0,
     businessSponsorsCount:
       viewedProfile?.entityDetails?.donorList?.length ?? 0,
+    businessSponsors: viewedProfile?.entityDetails?.donorList ?? [],
     upcomingProjectsCount:
       viewedProfileEventCounts?.upcomingProjectsCount ?? 0,
     completedProjectsCount:

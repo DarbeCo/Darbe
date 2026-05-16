@@ -2,6 +2,7 @@ import { darbeBaseApi } from "../darbe.api";
 import {
   CreateEvent,
   EntityEventCounts,
+  EventEditableUpdate,
   EventsState,
   ShortEventState,
   SimpleEventState,
@@ -16,6 +17,7 @@ import {
   deleteEvent,
   denyEventVolunteer,
   getEntityEventCounts,
+  getEntityUpcomingEvents,
   getEventDetails,
   getEvents,
   getSignedUpEvents,
@@ -25,6 +27,7 @@ import {
   markNoShowForEvent,
   passOnEvent,
   unvolunteerFromEvent,
+  updateEventDetails,
   updateEventSignupImpactDetails,
   updateEventTime,
   volunteerForEvent,
@@ -89,6 +92,23 @@ const eventsApi = darbeBaseApi.injectEndpoints({
       async queryFn(entityId) {
         try {
           const data = await getEntityEventCounts(entityId);
+          return { data };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      providesTags: ["Events"],
+      keepUnusedDataFor: 10,
+    }),
+    getEntityUpcomingEvents: builder.query<ShortEventState[], string>({
+      async queryFn(entityId) {
+        try {
+          const data = await getEntityUpcomingEvents(entityId);
           return { data };
         } catch (error) {
           return {
@@ -313,6 +333,22 @@ const eventsApi = darbeBaseApi.injectEndpoints({
       },
       invalidatesTags: ["Events"],
     }),
+    updateEventDetails: builder.mutation<void, EventEditableUpdate>({
+      async queryFn(details) {
+        try {
+          await updateEventDetails(details);
+          return { data: undefined };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      invalidatesTags: ["Events"],
+    }),
     unvolunteerFromEvent: builder.mutation<void, string>({
       async queryFn(eventId) {
         try {
@@ -374,6 +410,7 @@ export const {
   useGetEventsQuery,
   useGetEventDetailsQuery,
   useGetEntityEventCountsQuery,
+  useGetEntityUpcomingEventsQuery,
   useAddEventVolunteerMutation,
   useApproveAllEventVolunteersMutation,
   useApproveEventVolunteerMutation,
@@ -388,6 +425,7 @@ export const {
   useUnvolunteerFromEventMutation,
   useUpdateEventSignupImpactDetailsMutation,
   useUpdateEventTimeMutation,
+  useUpdateEventDetailsMutation,
   useGetSignedUpEventsQuery,
   useGetVolunteerMatchesQuery,
 } = eventsApi;

@@ -74,7 +74,6 @@ export const UserProfileConnectionButtons = ({
       ? "Pending"
       : "Join";
 
-  // TODO: Some refactor required to message entities
   const entityProfileButtons = (
     <>
       <DarbeButton
@@ -99,13 +98,11 @@ export const UserProfileConnectionButtons = ({
 
   const userProfileButtons = (
     <>
-      {isFriend && (
-        <DarbeButton
-          darbeButtonType="messageFriendButton"
-          buttonText="Message"
-          onClick={handleMessage}
-        />
-      )}
+      <DarbeButton
+        darbeButtonType="messageFriendButton"
+        buttonText="Message"
+        onClick={handleMessage}
+      />
       {!isFriend && hasReceivedRequestFromUser && !isFriend && (
         <DarbeButton
           darbeButtonType="friendRequestButton"

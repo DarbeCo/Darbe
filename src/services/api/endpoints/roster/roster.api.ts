@@ -14,6 +14,7 @@ import {
     demoteUserFromAdmin,
     getAllRosterMembers,
     getEntityRosterAccess,
+    getEntityRosterMembers,
     getRosterAdminEntityIds,
     getRosterAdmins,
     getRosterMembers,
@@ -207,6 +208,22 @@ const rosterApi = darbeBaseApi.injectEndpoints({
             },
             providesTags: ["Roster", "RosterMembers"],
         }),
+        getEntityRosterMembers: builder.query<SimpleUserInfo[], string>({
+            async queryFn(entityId) {
+                try {
+                    const data = await getEntityRosterMembers(entityId);
+                    return { data };
+                } catch (error) {
+                    return {
+                        error: {
+                            status: "CUSTOM_ERROR",
+                            data: { message: (error as Error).message },
+                        },
+                    };
+                }
+            },
+            providesTags: ["Roster", "RosterMembers"],
+        }),
         getRosterAdminEntityIds: builder.query<string[], void>({
             async queryFn() {
                 try {
@@ -238,5 +255,6 @@ export const {
     useGetRosterAdminsQuery,
     useGetAllRosterMembersQuery,
     useGetEntityRosterAccessQuery,
+    useGetEntityRosterMembersQuery,
     useGetRosterAdminEntityIdsQuery
 } = rosterApi;

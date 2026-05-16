@@ -435,6 +435,41 @@
   gap: 16px;
 }
 
+.eventEditTimeAction button {
+  width: 168px !important;
+  min-width: 168px !important;
+}
+
+.eventEditableValue,
+.eventEditableLine {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.eventEditableLine {
+  max-width: 100%;
+}
+
+.eventFieldEditButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.eventFieldEditButton img {
+  width: 14px;
+  height: 14px;
+}
+
 .eventSeeVolunteersButton {
   display: inline-flex;
   align-items: center;
@@ -1150,6 +1185,123 @@
   justify-content: center;
   padding: 16px;
   background: rgba(0, 0, 0, 0.16);
+}
+
+.eventTimeEditOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1450;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.eventTimeEditDialog {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(324px, calc(100vw - 32px));
+  padding: 20px;
+  border: 1px solid #c4c4c4;
+  border-radius: 6px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 18px rgba(0, 0, 0, 0.22);
+  box-sizing: border-box;
+}
+
+.eventTimeEditDialog h2 {
+  margin: 0 0 4px;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 19px;
+  text-align: center;
+}
+
+.eventTimeEditDialog label {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.eventTimeEditDialog input,
+.eventTimeEditDialog select,
+.eventTimeEditDialog textarea {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid #717070;
+  border-radius: 3px;
+  background-color: #ffffff;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+.eventTimeEditDialog input,
+.eventTimeEditDialog select {
+  height: 32px;
+}
+
+.eventTimeEditDialog textarea {
+  min-height: 86px;
+  resize: vertical;
+}
+
+.eventTimeEditActions {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.eventTimeEditSave,
+.eventTimeEditCancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 76px;
+  height: 32px;
+  border-radius: 3px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.eventTimeEditSave {
+  border: 1px solid #2c77e7;
+  background-color: #2c77e7;
+  color: #ffffff;
+}
+
+.eventTimeEditCancel {
+  border: 1px solid #717070;
+  background-color: #ffffff;
+  color: #717070;
+}
+
+.eventTimeEditSave:disabled,
+.eventTimeEditCancel:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.eventTimeEditError {
+  margin: 0;
+  color: #ff0000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  text-align: center;
 }
 
 .eventImpactEditDialog {

@@ -456,6 +456,34 @@ export const getEntityRosterAccess = async (
   };
 };
 
+export const getEntityRosterMembers = async (
+  entityId: string
+): Promise<SimpleUserInfo[]> => {
+  const { data: rosters, error: rosterError } = await supabase
+    .from("rosters")
+    .select("id")
+    .eq("roster_owner_id", entityId);
+
+  if (rosterError) throw rosterError;
+
+  const rosterIds = (rosters ?? []).map((roster) => roster.id);
+  if (!rosterIds.length) return [];
+
+  const { data: members, error: membersError } = await supabase
+    .from("roster_members")
+    .select("user_id")
+    .in("roster_id", rosterIds);
+
+  if (membersError) throw membersError;
+
+  const memberIds = Array.from(
+    new Set((members ?? []).map((member) => member.user_id))
+  );
+  const profiles = await getProfilesByIds(memberIds);
+
+  return profiles.map(mapProfileToSimpleUserInfo);
+};
+
 export const getRosterAdminEntityIds = async (): Promise<string[]> => {
   const userId = await ensureUserId();
   const { data: memberships, error: membershipsError } = await supabase

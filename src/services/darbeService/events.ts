@@ -1,6 +1,7 @@
 import type {
   CreateEvent,
   EntityEventCounts,
+  EventEditableUpdate,
   EventsState,
   ShortEventState,
   SimpleEventState,
@@ -132,6 +133,55 @@ const toDatabaseDateString = (value: Date | string): string => {
   }
 
   return value.split("T")[0];
+};
+
+const toLocalDateString = (value: Date): string => {
+  const year = value.getFullYear();
+  const month = (value.getMonth() + 1).toString().padStart(2, "0");
+  const day = value.getDate().toString().padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+const calculateEventImpactValue = (
+  event: {
+    start_time: string | null;
+    end_time: string | null;
+    max_volunteer_count: number;
+  },
+  impact?: EventImpactRow
+) => {
+  if (!impact) return "";
+
+  const start = timeToDecimal(event.start_time) ?? 0;
+  const end = timeToDecimal(event.end_time);
+  const duration = end ? Math.max(end - start, 0) : undefined;
+  let amount = 0;
+  let label = "";
+
+  if (impact.is_individual_impact) {
+    amount =
+      Number.parseInt(impact.individual_impact_per_hour ?? "1", 10) *
+      event.max_volunteer_count *
+      (duration ?? 1);
+    label = impact.individual_impact ?? "";
+  }
+
+  if (impact.is_group_impact) {
+    amount =
+      Number.parseInt(impact.group_impact_per_hour ?? "1", 10) *
+      event.max_volunteer_count *
+      (duration ?? 1);
+    label = impact.group_impact ?? "";
+  }
+
+  if (!label) return "";
+
+  const displayAmount = Number.isInteger(amount)
+    ? amount.toString()
+    : amount.toFixed(1);
+
+  return `${displayAmount} ${label}`.trim();
 };
 
 const getJobTitleMap = async (userIds: string[]) => {
@@ -663,6 +713,24 @@ export const getEntityEventCounts = async (
   );
 };
 
+export const getEntityUpcomingEvents = async (
+  entityId: string
+): Promise<ShortEventState[]> => {
+  const { data, error } = await supabase
+    .from("events")
+    .select(
+      "id, event_owner_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_coordinator_id"
+    )
+    .eq("event_owner_id", entityId)
+    .gte("event_date", toLocalDateString(new Date()))
+    .order("event_date", { ascending: true })
+    .order("start_time", { ascending: true });
+
+  if (error) throw error;
+
+  return buildShortEvents((data ?? []) as EventRow[]);
+};
+
 export const getEventDetails = async (eventId: string): Promise<EventsState> => {
   const { data: event, error } = await supabase
     .from("events")
@@ -860,12 +928,123 @@ export const updateEventTime = async ({
     .from("events")
     .update({
       event_date: toDatabaseDateString(eventDate),
-      start_time: startTime.toString(),
-      end_time: endTime === undefined ? null : endTime.toString(),
+      start_time: decimalToTimeString(startTime),
+      end_time: decimalToTimeString(endTime),
     })
     .eq("id", eventId);
 
   if (updateError) throw updateError;
+};
+
+const ensureCanEditEvent = async (eventId: string) => {
+  const userId = await ensureUserId();
+  const { data: event, error: eventError } = await supabase
+    .from("events")
+    .select("event_owner_id, event_coordinator_id")
+    .eq("id", eventId)
+    .single();
+
+  if (eventError || !event) throw eventError ?? new Error("Event not found");
+
+  let canEdit =
+    event.event_owner_id === userId || event.event_coordinator_id === userId;
+
+  if (!canEdit) {
+    const { data: rosters, error: rosterError } = await supabase
+      .from("rosters")
+      .select("id")
+      .eq("roster_owner_id", event.event_owner_id);
+
+    if (rosterError) throw rosterError;
+
+    const rosterIds = (rosters ?? []).map((roster) => roster.id);
+    if (rosterIds.length) {
+      const { data: adminMembership, error: adminError } = await supabase
+        .from("roster_members")
+        .select("user_id")
+        .eq("user_id", userId)
+        .eq("is_admin", true)
+        .in("roster_id", rosterIds)
+        .limit(1)
+        .maybeSingle();
+
+      if (adminError) throw adminError;
+      canEdit = Boolean(adminMembership);
+    }
+  }
+
+  if (!canEdit) {
+    throw new Error("You do not have permission to edit this event");
+  }
+};
+
+export const updateEventDetails = async ({
+  eventId,
+  eventName,
+  eventDescription,
+  maxVolunteerCount,
+  eventAddress,
+  volunteerImpact,
+}: EventEditableUpdate): Promise<void> => {
+  await ensureCanEditEvent(eventId);
+
+  const eventUpdates: {
+    event_name?: string;
+    event_description?: string;
+    max_volunteer_count?: number;
+  } = {};
+
+  if (eventName !== undefined) eventUpdates.event_name = eventName;
+  if (eventDescription !== undefined) {
+    eventUpdates.event_description = eventDescription;
+  }
+  if (maxVolunteerCount !== undefined) {
+    eventUpdates.max_volunteer_count = maxVolunteerCount;
+  }
+
+  const updates = [];
+
+  if (Object.keys(eventUpdates).length) {
+    updates.push(supabase.from("events").update(eventUpdates).eq("id", eventId));
+  }
+
+  if (eventAddress) {
+    updates.push(
+      supabase.from("event_addresses").upsert(
+        {
+          event_id: eventId,
+          location_name: eventAddress.locationName ?? null,
+          street_name: eventAddress.streetName ?? null,
+          city: eventAddress.city ?? null,
+          zip_code: eventAddress.zipCode ?? null,
+        },
+        { onConflict: "event_id" }
+      )
+    );
+  }
+
+  if (volunteerImpact) {
+    updates.push(
+      supabase.from("event_volunteer_impacts").upsert(
+        {
+          event_id: eventId,
+          individual_impact: volunteerImpact.individualImpact ?? null,
+          individual_impact_per_hour:
+            volunteerImpact.individualImpactPerHour ?? null,
+          group_impact: volunteerImpact.groupImpact ?? null,
+          group_impact_per_hour: volunteerImpact.groupImpactPerHour ?? null,
+          is_individual_impact: volunteerImpact.isIndividualImpact ?? false,
+          is_group_impact: volunteerImpact.isGroupImpact ?? false,
+        },
+        { onConflict: "event_id" }
+      )
+    );
+  }
+
+  const results = await Promise.all(updates);
+  results.forEach((result) => {
+    if (result.error) throw result.error;
+  });
 };
 
 export const deleteEvent = async (eventId: string): Promise<void> => {
@@ -1266,6 +1445,41 @@ export const getSignedUpEvents = async (
 export const getVolunteerMatches = async (): Promise<VolunteerMatch[]> => {
   const entityId = await ensureUserId();
 
+  const { data: nextEvent, error: nextEventError } = await supabase
+    .from("events")
+    .select("id, event_name, event_date, start_time, end_time, max_volunteer_count")
+    .eq("event_owner_id", entityId)
+    .gte("event_date", toLocalDateString(new Date()))
+    .order("event_date", { ascending: true })
+    .order("start_time", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (nextEventError) throw nextEventError;
+
+  const { data: nextEventImpact, error: nextEventImpactError } = nextEvent
+    ? await supabase
+        .from("event_volunteer_impacts")
+        .select(
+          "event_id, individual_impact, individual_impact_per_hour, group_impact, group_impact_per_hour, is_individual_impact, is_group_impact"
+        )
+        .eq("event_id", nextEvent.id)
+        .maybeSingle()
+    : { data: null, error: null };
+
+  if (nextEventImpactError) throw nextEventImpactError;
+
+  const nextEventMatch = nextEvent
+    ? {
+        id: nextEvent.id,
+        eventName: nextEvent.event_name,
+        impactValue: calculateEventImpactValue(
+          nextEvent,
+          nextEventImpact ?? undefined
+        ),
+      }
+    : undefined;
+
   const { data: entityCauses, error: causeError } = await supabase
     .from("user_causes")
     .select("cause_id")
@@ -1364,9 +1578,10 @@ export const getVolunteerMatches = async (): Promise<VolunteerMatch[]> => {
         phone: details?.emergency_contact_phone ?? "",
         relation: details?.emergency_contact_relation ?? "",
       },
+      nextEvent: nextEventMatch,
       volunteerSummary: {
         hoursVolunteered: Number(impact?.hours_volunteered ?? 0),
-        volunteerValue: 0,
+        volunteerValue: Number(impact?.hours_volunteered ?? 0) * 33.49,
         eventsAttended: impact?.events_attended ?? 0,
       },
     };
