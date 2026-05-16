@@ -3,6 +3,7 @@ import { useEffect, useMemo } from "react";
 
 import { selectUser } from "../selectors";
 import { useGetUserImpactQuery } from "../../../services/api/endpoints/impact/impact.api";
+import { parseEventDateAsLocalDate } from "../../../utils/eventDateUtils";
 import { CoverPhoto } from "./sections/CoverPhoto";
 import { UserProfilePicture } from "./sections/UserProfilePicture";
 import { UserQuickInfo } from "./sections/UserQuickInfo";
@@ -57,14 +58,17 @@ export const UserProfiles = () => {
   const { data: userImpacts } = useGetUserImpactQuery(userId ?? "", {
     skip: !userId,
   });
-  const totalVolunteerHours = useMemo(
-    () =>
-      (userImpacts ?? []).reduce(
-        (sum, impact) => sum + (impact.hoursVolunteered ?? 0),
-        0
-      ),
-    [userImpacts]
-  );
+  const totalVolunteerHours = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    return (userImpacts ?? []).reduce((sum, impact) => {
+      const eventYear = parseEventDateAsLocalDate(
+        impact.event.eventDate
+      ).getFullYear();
+      return eventYear === currentYear
+        ? sum + (impact.hoursVolunteered ?? 0)
+        : sum;
+    }, 0);
+  }, [userImpacts]);
 
   // This gets the currently logged in user sent friend requests
   const { data: sentFriendRequests } = useGetSentFriendRequestsQuery();
