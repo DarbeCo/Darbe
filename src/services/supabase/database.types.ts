@@ -1156,6 +1156,13 @@ export interface Database {
         };
         Returns: undefined;
       };
+      deny_event_volunteer_as_no_show: {
+        Args: {
+          target_event_id: string;
+          target_user_id: string;
+        };
+        Returns: undefined;
+      };
       approve_all_event_volunteers: {
         Args: { target_event_id: string };
         Returns: undefined;

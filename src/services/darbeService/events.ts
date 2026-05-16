@@ -1236,10 +1236,9 @@ export const denyEventVolunteer = async (
     throw new Error("Volunteer is required");
   }
 
-  const { error } = await supabase.rpc("manage_event_signup_check_time", {
+  const { error } = await supabase.rpc("deny_event_volunteer_as_no_show", {
     target_event_id: action.eventId,
     target_user_id: action.userId,
-    check_action: "deny",
   });
 
   if (error) throw error;

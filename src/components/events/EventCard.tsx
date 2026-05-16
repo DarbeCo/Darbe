@@ -35,7 +35,6 @@ import {
   useCheckInForEventMutation,
   useCheckOutFromEventMutation,
   useDenyEventVolunteerMutation,
-  useMarkNoShowForEventMutation,
   useUnvolunteerFromEventMutation,
   useUpdateEventDetailsMutation,
   useUpdateEventSignupImpactDetailsMutation,
@@ -204,8 +203,6 @@ export const EventCard = ({
     useCheckInForEventMutation();
   const [checkOutFromEvent, { isLoading: isCheckingOut }] =
     useCheckOutFromEventMutation();
-  const [markNoShowForEvent, { isLoading: isMarkingNoShow }] =
-    useMarkNoShowForEventMutation();
   const [addEventVolunteer, { isLoading: isAddingVolunteer }] =
     useAddEventVolunteerMutation();
   const [approveEventVolunteer, { isLoading: isApprovingVolunteer }] =
@@ -321,17 +318,6 @@ export const EventCard = ({
       ).unwrap();
     } catch (error) {
       console.error("Error checking out of event", error);
-    }
-  };
-
-  const handleNoShowEvent = async (targetUserId: string) => {
-    try {
-      await markNoShowForEvent({
-        eventId: event.id,
-        userId: targetUserId,
-      }).unwrap();
-    } catch (error) {
-      console.error("Error marking volunteer as no show", error);
     }
   };
 
@@ -593,7 +579,6 @@ export const EventCard = ({
   const isCheckInLocked =
     isCheckingIn ||
     isCheckingOut ||
-    isMarkingNoShow ||
     isAddingVolunteer ||
     isApprovingVolunteer ||
     isDenyingVolunteer ||
@@ -999,18 +984,6 @@ export const EventCard = ({
               />
             </div>
           )}
-          {canManageVolunteerCheckIns && !incompleteActionLabel && (
-            <div
-              className={`${styles.eventMatchActions} ${styles.eventEditTimeAction}`}
-            >
-              <DarbeButton
-                buttonText="Edit Time"
-                onClick={handleEditEventTime}
-                darbeButtonType="secondaryNextButton"
-                isDisabled={isUpdatingEventTime}
-              />
-            </div>
-          )}
         </div>
       )}
       {canExpandVolunteers && isVolunteerListOpen && (
@@ -1099,59 +1072,68 @@ export const EventCard = ({
             const isNoShow = signup.status === "no_show";
             const isApproved = signup.status === "approved";
             const isDenied = signup.status === "denied";
-            const checkStatusText = isNoShow
-              ? "No Show"
-              : isApproved
-              ? "Approved"
-              : isDenied
-              ? "Denied"
-              : isCheckedOut
-              ? "Checked Out"
-              : isCheckedIn
-              ? "Checked In"
-              : "Not Checked In";
-            const checkedOutTimeText = isCheckedOut
-              ? formatCheckTimestamp(signup.checkOutAt)
-              : "";
-            const checkedInTimeText =
-              isCheckedIn && !isCheckedOut
-                ? formatCheckTimestamp(signup.checkInAt)
-                : "";
-            const checkButtonText = isCheckedIn ? "Check Out" : "Check In";
-            const canShowCheckAction =
-              (isCurrentVolunteer || canManageVolunteerCheckIns) &&
-              isCheckableUser &&
-              (hasSignupRecord ||
-                (canManageVolunteerCheckIns && isVolunteerCoordinator)) &&
-              !isPastEvent &&
-              !isCheckedOut &&
-              isWithinEventTime;
-            const canShowAdminPostEventCheckOut =
-              canManageVolunteerCheckIns &&
-              isCheckableUser &&
-              isPastEvent &&
-              isCheckedIn &&
-              !isCheckedOut &&
-              !isApproved &&
-              !isDenied &&
-              !isNoShow;
-            const canShowNoShowAction =
-              canManageVolunteerCheckIns &&
-              isCheckableUser &&
-              (hasSignupRecord || isVolunteerCoordinator) &&
-              isPastEvent &&
-              !isCheckedIn &&
-              !isNoShow &&
-              !isDenied;
             const canShowApprovalActions =
               canManageVolunteerCheckIns &&
               isCheckableUser &&
               isPastEvent &&
               isCheckedIn &&
-              isCheckedOut &&
               !isApproved &&
               !isDenied &&
               !isNoShow;
+            const isPendingPastVolunteer =
+              isPastEvent &&
+              !canManageVolunteerCheckIns &&
+              !isApproved &&
+              !isDenied &&
+              !isNoShow;
+            const hasVolunteeredForPastEvent =
+              isPastEvent && isCheckedIn && !canShowApprovalActions;
+            const isPostEventNoShow = isPastEvent && !isCheckedIn;
+            const checkStatusText = isNoShow
+              ? "No Show"
+              : isDenied
+              ? "No Show"
+              : isApproved
+              ? "Volunteered"
+              : isPendingPastVolunteer
+              ? ""
+              : isPostEventNoShow
+              ? "No Show"
+              : hasVolunteeredForPastEvent
+              ? "Volunteered"
+              : isCheckedOut
+              ? "Checked Out"
+              : isCheckedIn
+              ? "Checked In"
+              : "Not Checked In";
+            const checkedOutTimeText = checkStatusText && isCheckedOut
+              ? formatCheckTimestamp(signup.checkOutAt)
+              : "";
+            const checkedInTimeText =
+              checkStatusText && isCheckedIn && !isCheckedOut
+                ? formatCheckTimestamp(signup.checkInAt)
+                : "";
+            const checkButtonText = isCheckedIn ? "Check Out" : "Check In";
+            const isManageableVolunteer =
+              isCheckableUser &&
+              (hasSignupRecord ||
+                (canManageVolunteerCheckIns && isVolunteerCoordinator));
+            const canShowSelfCheckAction =
+              isCurrentVolunteer &&
+              isManageableVolunteer &&
+              !isPastEvent &&
+              !isCheckedOut &&
+              isWithinEventTime;
+            const canShowManagedCheckAction =
+              canManageVolunteerCheckIns &&
+              isManageableVolunteer &&
+              isWithinEventTime &&
+              !isCheckedOut &&
+              !isApproved &&
+              !isDenied &&
+              !isNoShow;
+            const canShowCheckAction =
+              canShowSelfCheckAction || canShowManagedCheckAction;
             const canEditImpactDetails =
               canManageVolunteerCheckIns &&
               isCheckableUser &&
@@ -1164,16 +1146,21 @@ export const EventCard = ({
                 isDenied ||
                 canEditImpactDetails);
             const impactDetailOverride = impactDetailOverrides[signup.id];
+            const canUseDefaultVolunteerTimes = !isPastEvent || isCheckedIn;
             const candidateStartTime =
               impactDetailOverride?.startTime ||
               signup.volunteerStartTime ||
               formatVolunteerActionTime(signup.checkInAt) ||
-              formatEventTimeRangeValue(event.startTime);
+              (canUseDefaultVolunteerTimes
+                ? formatEventTimeRangeValue(event.startTime)
+                : "");
             const candidateEndTime =
               impactDetailOverride?.endTime ||
               signup.volunteerEndTime ||
               formatVolunteerActionTime(signup.checkOutAt) ||
-              formatEventTimeRangeValue(event.endTime);
+              (canUseDefaultVolunteerTimes
+                ? formatEventTimeRangeValue(event.endTime)
+                : "");
             const candidateLocation =
               impactDetailOverride?.location ||
               signup.volunteerLocation ||
@@ -1248,7 +1235,7 @@ export const EventCard = ({
                 <div className={styles.eventVolunteerCheckIn}>
                   {!showApprovalCandidateLayout && (
                     <div className={styles.eventVolunteerCheckStatus}>
-                      <strong>{checkStatusText}</strong>
+                      {checkStatusText && <strong>{checkStatusText}</strong>}
                       {checkedOutTimeText && (
                         <span className={styles.eventVolunteerCheckTime}>
                           {checkedOutTimeText}
@@ -1263,10 +1250,10 @@ export const EventCard = ({
                   )}
                   {showApprovalCandidateLayout && !canShowApprovalActions && (
                     <div className={styles.eventVolunteerCheckStatus}>
-                      <strong>{checkStatusText}</strong>
+                      {checkStatusText && <strong>{checkStatusText}</strong>}
                     </div>
                   )}
-                  {(canShowCheckAction || canShowAdminPostEventCheckOut) && (
+                  {canShowCheckAction && (
                     <button
                       type="button"
                       className={styles.eventVolunteerCheckInButton}
@@ -1278,16 +1265,6 @@ export const EventCard = ({
                       disabled={isCheckInLocked}
                     >
                       {checkButtonText}
-                    </button>
-                  )}
-                  {canShowNoShowAction && (
-                    <button
-                      type="button"
-                      className={styles.eventVolunteerNoShowButton}
-                      onClick={() => handleNoShowEvent(signup.user.id)}
-                      disabled={isCheckInLocked}
-                    >
-                      No Show
                     </button>
                   )}
                   {canShowApprovalActions && (
