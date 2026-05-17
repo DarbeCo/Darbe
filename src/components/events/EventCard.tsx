@@ -530,7 +530,7 @@ export const EventCard = ({
       : event.eventOwner.nonprofitName;
 
   const eventDuration = event?.endTime
-    ? `${event.endTime - event.startTime} Hours`
+    ? `${(event.endTime - event.startTime).toFixed(1)} Hours`
     : "? Hours";
 
   const eventDate = parseEventDateAsLocalDate(event.eventDate);

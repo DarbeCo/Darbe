@@ -128,7 +128,7 @@ export const EventDetailCard = ({
     : !!eventEndtimeToUse;
   const eventDuration =
     hasEndTime && eventEndtimeToUse && eventStartTimeToUse
-      ? `${eventEndtimeToUse - eventStartTimeToUse} Hours`
+      ? `${(eventEndtimeToUse - eventStartTimeToUse).toFixed(1)} Hours`
       : "? Hours";
   const compactDate = eventDateToUse
     ? parseEventDateAsLocalDate(eventDateToUse).toLocaleDateString("en-US", {
