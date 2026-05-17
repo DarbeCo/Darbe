@@ -12,16 +12,125 @@ import { ensureUserId } from "./utils";
 import { getProfilesByIds, mapProfileToSimpleUserInfo } from "./profiles";
 
 const VOLUNTEER_VALUE_PER_HOUR = 33.49;
+const FOLLOWERS_ROSTER_NAME = "Followers";
+const VOLUNTEER_COORDINATORS_ROSTER_NAME = "Volunteer Coordinators";
 
-const getRosterOwnerId = async (rosterId: string): Promise<string> => {
+const isMembershipRoster = (rosterName?: string | null) =>
+  rosterName !== FOLLOWERS_ROSTER_NAME;
+
+const getRosterInfo = async (
+  rosterId: string
+): Promise<{ ownerId: string; name: string }> => {
   const { data, error } = await supabase
     .from("rosters")
-    .select("roster_owner_id")
+    .select("roster_owner_id, roster_name")
     .eq("id", rosterId)
     .single();
 
   if (error || !data) throw error ?? new Error("Roster not found");
-  return data.roster_owner_id;
+
+  return {
+    ownerId: data.roster_owner_id,
+    name: data.roster_name,
+  };
+};
+
+const getOrCreateNamedRoster = async (
+  entityId: string,
+  rosterName: string
+): Promise<string> => {
+  const { data: existingRoster, error: existingRosterError } = await supabase
+    .from("rosters")
+    .select("id")
+    .eq("roster_owner_id", entityId)
+    .eq("roster_name", rosterName)
+    .limit(1)
+    .maybeSingle();
+
+  if (existingRosterError) throw existingRosterError;
+  if (existingRoster?.id) return existingRoster.id;
+
+  const { data: roster, error } = await supabase
+    .from("rosters")
+    .insert({
+      roster_owner_id: entityId,
+      roster_name: rosterName,
+    })
+    .select("id")
+    .single();
+
+  if (error || !roster) throw error ?? new Error("Failed to create roster");
+
+  return roster.id;
+};
+
+const syncVolunteerCoordinatorRoster = async (
+  entityId: string,
+  userId: string,
+  shouldInclude: boolean
+): Promise<void> => {
+  if (shouldInclude) {
+    const rosterId = await getOrCreateNamedRoster(
+      entityId,
+      VOLUNTEER_COORDINATORS_ROSTER_NAME
+    );
+    const { error } = await supabase.from("roster_members").upsert({
+      roster_id: rosterId,
+      user_id: userId,
+      is_admin: true,
+    });
+
+    if (error) throw error;
+    await syncUserOrganizationMembership(userId, entityId);
+    return;
+  }
+
+  const { data: roster, error: rosterError } = await supabase
+    .from("rosters")
+    .select("id")
+    .eq("roster_owner_id", entityId)
+    .eq("roster_name", VOLUNTEER_COORDINATORS_ROSTER_NAME)
+    .limit(1)
+    .maybeSingle();
+
+  if (rosterError) throw rosterError;
+  if (!roster?.id) return;
+
+  const { error } = await supabase
+    .from("roster_members")
+    .delete()
+    .match({ roster_id: roster.id, user_id: userId });
+
+  if (error) throw error;
+};
+
+const hasVolunteerCoordinatorPermission = async (
+  entityId: string,
+  userId: string
+): Promise<boolean> => {
+  const { data: rosters, error: rosterError } = await supabase
+    .from("rosters")
+    .select("id")
+    .eq("roster_owner_id", entityId);
+
+  if (rosterError) throw rosterError;
+
+  const rosterIds = (rosters ?? []).map((roster) => roster.id);
+  if (!rosterIds.length) return false;
+
+  const { data: membership, error } = await supabase
+    .from("roster_members")
+    .select("user_id")
+    .eq("user_id", userId)
+    .eq("is_admin", true)
+    .eq("can_assign_volunteer_coordinators", true)
+    .in("roster_id", rosterIds)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return Boolean(membership);
 };
 
 const getEntityDisplayName = async (entityId: string): Promise<string> => {
@@ -77,12 +186,14 @@ const removeUserOrganizationMembershipIfNeeded = async (
 ): Promise<void> => {
   const { data: rosters, error: rosterError } = await supabase
     .from("rosters")
-    .select("id")
+    .select("id, roster_name")
     .eq("roster_owner_id", entityId);
 
   if (rosterError) throw rosterError;
 
-  const rosterIds = (rosters ?? []).map((roster) => roster.id);
+  const rosterIds = (rosters ?? [])
+    .filter((roster) => isMembershipRoster(roster.roster_name))
+    .map((roster) => roster.id);
   if (!rosterIds.length) return;
 
   const { data: remainingMembership, error: membershipError } = await supabase
@@ -434,6 +545,17 @@ export const promoteUserToAdmin = async (
     })
     .match({ roster_id: rosterId, user_id: userId });
   if (error) throw error;
+
+  const roster = await getRosterInfo(rosterId);
+  const shouldBeVolunteerCoordinator =
+    permissions.canAssignVolunteerCoordinators ||
+    (await hasVolunteerCoordinatorPermission(roster.ownerId, userId));
+
+  await syncVolunteerCoordinatorRoster(
+    roster.ownerId,
+    userId,
+    shouldBeVolunteerCoordinator
+  );
 };
 
 export const demoteUserFromAdmin = async (userId: string, rosterId: string): Promise<void> => {
@@ -448,6 +570,13 @@ export const demoteUserFromAdmin = async (userId: string, rosterId: string): Pro
     })
     .match({ roster_id: rosterId, user_id: userId });
   if (error) throw error;
+
+  const roster = await getRosterInfo(rosterId);
+  await syncVolunteerCoordinatorRoster(
+    roster.ownerId,
+    userId,
+    await hasVolunteerCoordinatorPermission(roster.ownerId, userId)
+  );
 };
 
 export const addToRoster = async (followerId: string, rosterId: string): Promise<void> => {
@@ -458,31 +587,41 @@ export const addToRoster = async (followerId: string, rosterId: string): Promise
   });
   if (error) throw error;
 
-  const entityId = await getRosterOwnerId(rosterId);
-  await syncUserOrganizationMembership(followerId, entityId);
+  const roster = await getRosterInfo(rosterId);
+  if (isMembershipRoster(roster.name)) {
+    await syncUserOrganizationMembership(followerId, roster.ownerId);
+  }
 };
 
 export const removeFromRoster = async (memberId: string, rosterId: string): Promise<void> => {
-  const entityId = await getRosterOwnerId(rosterId);
+  const roster = await getRosterInfo(rosterId);
   const { error } = await supabase
     .from("roster_members")
     .delete()
     .match({ roster_id: rosterId, user_id: memberId });
   if (error) throw error;
 
-  await removeUserOrganizationMembershipIfNeeded(memberId, entityId);
+  if (roster.name === VOLUNTEER_COORDINATORS_ROSTER_NAME) {
+    return;
+  }
+
+  if (isMembershipRoster(roster.name)) {
+    await removeUserOrganizationMembershipIfNeeded(memberId, roster.ownerId);
+  }
 };
 
 export const getRosterAdmins = async (): Promise<SimpleUserInfo[]> => {
   const userId = await ensureUserId();
   const { data: rosterIds, error: rosterError } = await supabase
     .from("rosters")
-    .select("id")
+    .select("id, roster_name")
     .eq("roster_owner_id", userId);
 
   if (rosterError) throw rosterError;
 
-  const ids = (rosterIds ?? []).map((row) => row.id);
+  const ids = (rosterIds ?? [])
+    .filter((row) => isMembershipRoster(row.roster_name))
+    .map((row) => row.id);
   if (!ids.length) return [];
 
   const { data: admins, error } = await supabase
@@ -502,12 +641,14 @@ export const getAllRosterMembers = async (): Promise<EligibleRosterMembers> => {
   const userId = await ensureUserId();
   const { data: rosterIds, error: rosterError } = await supabase
     .from("rosters")
-    .select("id")
+    .select("id, roster_name")
     .eq("roster_owner_id", userId);
 
   if (rosterError) throw rosterError;
 
-  const ids = (rosterIds ?? []).map((row) => row.id);
+  const ids = (rosterIds ?? [])
+    .filter((row) => isMembershipRoster(row.roster_name))
+    .map((row) => row.id);
   if (!ids.length) {
     return { eligibleDonors: [], eligibleStaff: [] };
   }
@@ -546,12 +687,14 @@ export const getEntityRosterAccess = async (
   const userId = await ensureUserId();
   const { data: rosters, error: rosterError } = await supabase
     .from("rosters")
-    .select("id")
+    .select("id, roster_name")
     .eq("roster_owner_id", entityId);
 
   if (rosterError) throw rosterError;
 
-  const rosterIds = (rosters ?? []).map((roster) => roster.id);
+  const rosterIds = (rosters ?? [])
+    .filter((roster) => isMembershipRoster(roster.roster_name))
+    .map((roster) => roster.id);
 
   if (!rosterIds.length) {
     return { isMember: userId === entityId, isAdmin: userId === entityId, memberCount: 0 };
@@ -579,12 +722,14 @@ export const getEntityRosterMembers = async (
 ): Promise<SimpleUserInfo[]> => {
   const { data: rosters, error: rosterError } = await supabase
     .from("rosters")
-    .select("id")
+    .select("id, roster_name")
     .eq("roster_owner_id", entityId);
 
   if (rosterError) throw rosterError;
 
-  const rosterIds = (rosters ?? []).map((roster) => roster.id);
+  const rosterIds = (rosters ?? [])
+    .filter((roster) => isMembershipRoster(roster.roster_name))
+    .map((roster) => roster.id);
   if (!rosterIds.length) return [];
 
   const { data: members, error: membersError } = await supabase

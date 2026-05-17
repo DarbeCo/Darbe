@@ -694,14 +694,14 @@ export const getEvents = async (): Promise<ShortEventState[]> => {
     const { data: memberRosters, error: memberRostersError } = rosterIds.length
       ? await supabase
           .from("rosters")
-          .select("roster_owner_id")
+          .select("roster_owner_id, roster_name")
           .in("id", rosterIds)
       : { data: [], error: null };
     const { data: adminRosters, error: adminRostersError } =
       adminRosterIds.length
         ? await supabase
             .from("rosters")
-            .select("roster_owner_id")
+            .select("roster_owner_id, roster_name")
             .in("id", adminRosterIds)
         : { data: [], error: null };
 
@@ -710,14 +710,18 @@ export const getEvents = async (): Promise<ShortEventState[]> => {
 
     const memberEntityIds = new Set(
       [
-        ...((memberRosters ?? []).map((row) => row.roster_owner_id)),
+        ...((memberRosters ?? [])
+          .filter((row) => row.roster_name !== "Followers")
+          .map((row) => row.roster_owner_id)),
         ...((savedOrganizations ?? [])
           .map((row) => row.parent_organization_id)
         .filter(Boolean) as string[]),
       ]
     );
     const adminEntityIds = new Set(
-      (adminRosters ?? []).map((row) => row.roster_owner_id)
+      (adminRosters ?? [])
+        .filter((row) => row.roster_name !== "Followers")
+        .map((row) => row.roster_owner_id)
     );
     const affiliatedEntityIds = new Set<string>([
       ...((following ?? []).map((row) => row.following_id)),

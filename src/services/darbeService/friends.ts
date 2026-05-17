@@ -199,6 +199,16 @@ export const followEntity = async (entityId: string): Promise<void> => {
 
   if (followError) throw followError;
 
+  const { error: rosterSyncError } = await supabase.rpc(
+    "sync_entity_followers_roster",
+    {
+      target_entity_id: entityId,
+      target_follower_id: userId,
+    }
+  );
+
+  if (rosterSyncError) throw rosterSyncError;
+
   const { data, error: requestError } = await supabase.from("friend_requests").upsert(
     {
       requester_id: userId,
@@ -342,12 +352,14 @@ export const getOrgJoinRequestStatus = async (
 
   const { data: rosters, error: rosterError } = await supabase
     .from("rosters")
-    .select("id")
+    .select("id, roster_name")
     .eq("roster_owner_id", entityId);
 
   if (rosterError) throw rosterError;
 
-  const rosterIds = (rosters ?? []).map((roster) => roster.id);
+  const rosterIds = (rosters ?? [])
+    .filter((roster) => roster.roster_name !== "Followers")
+    .map((roster) => roster.id);
 
   if (rosterIds.length) {
     const { data: membership, error: membershipError } = await supabase

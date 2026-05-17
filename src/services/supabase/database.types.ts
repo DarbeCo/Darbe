@@ -1188,6 +1188,10 @@ export interface Database {
           date_sent: string;
         }[];
       };
+      sync_entity_followers_roster: {
+        Args: { target_entity_id: string; target_follower_id: string };
+        Returns: undefined;
+      };
       manage_event_signup_check_time: {
         Args: {
           target_event_id: string;
