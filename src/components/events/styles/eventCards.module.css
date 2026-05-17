@@ -435,6 +435,24 @@
   gap: 16px;
 }
 
+.eventLocationSection {
+  align-items: flex-start;
+}
+
+.eventLocationText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.eventLocationText strong {
+  font-weight: 700;
+}
+
 .eventEditableValue,
 .eventEditableLine {
   display: inline-flex;

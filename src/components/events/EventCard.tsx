@@ -510,7 +510,17 @@ export const EventCard = ({
   };
 
   const eventState = getUserStateFromZip(event.eventAddress.zipCode)?.st;
-  const locationText = `${event.eventAddress.city}, ${eventState}`;
+  const cityStateText = [event.eventAddress.city, eventState]
+    .filter(Boolean)
+    .join(", ");
+  const locationText =
+    cityStateText || event.eventAddress.locationName || event.eventAddress.zipCode || "";
+  const eventAddressText = [
+    event.eventAddress.streetName,
+    cityStateText,
+  ]
+    .filter(Boolean)
+    .join(", ");
   const displayName =
     event.eventOwner.userType === "organization"
       ? event.eventOwner.organizationName
@@ -837,8 +847,17 @@ export const EventCard = ({
             value: event.eventName,
           })
         )}
-        <div className={styles.eventEditableLine}>
-          <Typography variant="locationSmall" textToDisplay={locationText} />
+        <div className={`${styles.eventEditableLine} ${styles.eventLocationSection}`}>
+          <div className={styles.eventLocationText}>
+            <strong>Location</strong>
+            {event.eventAddress.locationName && (
+              <span>{event.eventAddress.locationName}</span>
+            )}
+            {eventAddressText && <span>{eventAddressText}</span>}
+            {event.eventAddress.zipCode && (
+              <span>{event.eventAddress.zipCode}</span>
+            )}
+          </div>
           {renderEditPencil("event location", () =>
             openEventFieldEdit({
               field: "location",
