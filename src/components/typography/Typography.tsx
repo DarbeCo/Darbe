@@ -26,7 +26,8 @@ interface TypographyProps {
   extraClass?: string;
   onClick?: () => void;
   truncationLength?: number;
-  customStyles?: React.CSSProperties
+  customStyles?: React.CSSProperties;
+  title?: string;
 }
 
 // TODO: Maybe rework to take children and have a popup state
@@ -36,7 +37,8 @@ export const Typography = ({
   extraClass = "",
   onClick,
   truncationLength,
-  customStyles
+  customStyles,
+  title,
 }: TypographyProps) => {
   const classDefinitions: Record<TypographyVariants, string> = {
     text: "text",
@@ -85,6 +87,7 @@ export const Typography = ({
       className={`${styles[typographyClassName]} ${extraClass}`}
       style={customStyles}
       onClick={handleClick}
+      title={title}
     >
       {determineTextDisplay()}
     </span>

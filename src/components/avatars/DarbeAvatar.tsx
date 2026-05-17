@@ -1,4 +1,4 @@
-import { Avatar, IconButton } from "@mui/material";
+import { Avatar } from "@mui/material";
 import { NavLink } from "react-router-dom";
 import { PROFILE_ROUTE } from "../../routes/route.constants";
 import { useSelector } from "react-redux";
@@ -56,25 +56,25 @@ export const DarbeAvatar = ({
     overrideProfilePicture ?? userProfile?.user.profilePicture;
 
   return (
-    <NavLink to={`${PROFILE_ROUTE}/${navigationIdToUse}`}>
-      <IconButton>
-        <Avatar className={styleToUse} alt="user picture" src={imageURLtoUse} />
-        {showUserName && (
-          <div className={styles.avatarUserInfo}>
-            <Typography
-              extraClass={styles.avatarUserName}
-              textToDisplay={overrideUserName ?? userName}
-              variant="sectionTitle"
-              truncationLength={15}
-            />
-            {showTimeStamp && (
-              <span className={styles.avatarTimeStamp}>
-                {formattedDateTime}
-              </span>
-            )}
-          </div>
-        )}
-      </IconButton>
+    <NavLink
+      to={`${PROFILE_ROUTE}/${navigationIdToUse}`}
+      className={styles.avatarUserDiv}
+    >
+      <Avatar className={styleToUse} alt="user picture" src={imageURLtoUse} />
+      {showUserName && (
+        <div className={styles.avatarUserInfo}>
+          <Typography
+            extraClass={styles.avatarUserName}
+            textToDisplay={overrideUserName ?? userName}
+            variant="sectionTitle"
+            truncationLength={15}
+            title={overrideUserName ?? userName}
+          />
+          {showTimeStamp && (
+            <span className={styles.avatarTimeStamp}>{formattedDateTime}</span>
+          )}
+        </div>
+      )}
     </NavLink>
   );
 };
