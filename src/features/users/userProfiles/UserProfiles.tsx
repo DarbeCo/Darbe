@@ -212,12 +212,6 @@ export const UserProfiles = () => {
           canEdit={canEdit}
         />
       )}
-      {isNonprofitProfile && (
-        <UserDocuments
-          canEdit={canEdit}
-          documents={userInformation?.entityDetails?.documents}
-        />
-      )}
       {!isEntityProfile && (
         <UserOrganizations
           organizations={userInformation?.organizations}
@@ -229,6 +223,12 @@ export const UserProfiles = () => {
         title={isEntityProfile ? "Our Impacts" : undefined}
       />
       {userId && <UserRecentActivity canEdit={canEdit} userId={userId} />}
+      {isNonprofitProfile && (
+        <UserDocuments
+          canEdit={canEdit}
+          documents={userInformation?.entityDetails?.documents}
+        />
+      )}
       {isEntityProfile && (
         <>
           <UserDonors
