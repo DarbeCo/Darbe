@@ -927,6 +927,80 @@ export const getUserProfile = async (userId: string): Promise<DarbeProfileShared
     isChildOrganization: org.is_child_organization,
   }));
 
+  const { data: rosterMemberships, error: rosterMembershipsError } = await supabase
+    .from("roster_members")
+    .select("roster_id, created_at")
+    .eq("user_id", userId);
+
+  if (rosterMembershipsError) throw rosterMembershipsError;
+
+  const rosterIds = Array.from(
+    new Set((rosterMemberships ?? []).map((membership) => membership.roster_id))
+  );
+
+  if (rosterIds.length) {
+    const { data: memberRosters, error: memberRostersError } = await supabase
+      .from("rosters")
+      .select("id, roster_owner_id")
+      .in("id", rosterIds);
+
+    if (memberRostersError) throw memberRostersError;
+
+    const rosterCreatedAtById = new Map(
+      (rosterMemberships ?? []).map((membership) => [
+        membership.roster_id,
+        membership.created_at,
+      ])
+    );
+    const entityIds = Array.from(
+      new Set((memberRosters ?? []).map((roster) => roster.roster_owner_id))
+    );
+    const entityProfiles = await getProfilesByIds(entityIds);
+    const entityProfileMap = new Map(
+      entityProfiles.map((entityProfile) => [entityProfile.id, entityProfile])
+    );
+    const existingOrganizationKeys = new Set(
+      organizations.map((organization) =>
+        `${organization.parentOrganization?.id ?? ""}|${organization.organizationName ?? ""}`
+      )
+    );
+    const existingOrganizationNames = new Set(
+      organizations.map((organization) => organization.organizationName ?? "")
+    );
+
+    (memberRosters ?? []).forEach((roster) => {
+      const entityProfile = entityProfileMap.get(roster.roster_owner_id);
+      const organizationName =
+        entityProfile?.nonprofit_name ||
+        entityProfile?.organization_name ||
+        entityProfile?.full_name ||
+        "Organization";
+      const organizationKey = `${roster.roster_owner_id}|${organizationName}`;
+
+      if (
+        existingOrganizationKeys.has(organizationKey) ||
+        existingOrganizationNames.has(organizationName)
+      ) {
+        return;
+      }
+
+      existingOrganizationKeys.add(organizationKey);
+      existingOrganizationNames.add(organizationName);
+      organizations.push({
+        organizationName,
+        position: "Member",
+        startDate: rosterCreatedAtById.get(roster.id) ?? undefined,
+        endDate: undefined,
+        description: "",
+        parentOrganization: {
+          id: roster.roster_owner_id,
+          organizationName,
+        },
+        isChildOrganization: false,
+      });
+    });
+  }
+
   const [friendsRes, followersRes, followingRes] = await Promise.all([
     supabase.rpc("get_user_friends", { target_user_id: userId }),
     supabase.from("follows").select("follower_id").eq("following_id", userId),

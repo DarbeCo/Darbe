@@ -94,6 +94,17 @@ export const RosterRightPanel = () => {
     });
   };
 
+  const handlePendingRequests = () => {
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams);
+      nextParams.set("view", "pendingRequests");
+      if (currentRoster?.id) {
+        nextParams.set("rosterId", currentRoster.id);
+      }
+      return nextParams;
+    });
+  };
+
   const handleDeleteRoster = async () => {
     if (!currentRoster?.id || !rosters?.length) return;
 
@@ -169,7 +180,11 @@ export const RosterRightPanel = () => {
         </span>
       </button>
 
-      <button type="button" className={styles.rosterRailAction}>
+      <button
+        type="button"
+        className={styles.rosterRailAction}
+        onClick={handlePendingRequests}
+      >
         <span>Pending Requests</span>
         <span className={styles.rosterRailActionIcon} aria-hidden="true">
           <ChevronRight fontSize="small" />

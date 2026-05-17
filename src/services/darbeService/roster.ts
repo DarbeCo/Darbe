@@ -13,6 +13,99 @@ import { getProfilesByIds, mapProfileToSimpleUserInfo } from "./profiles";
 
 const VOLUNTEER_VALUE_PER_HOUR = 33.49;
 
+const getRosterOwnerId = async (rosterId: string): Promise<string> => {
+  const { data, error } = await supabase
+    .from("rosters")
+    .select("roster_owner_id")
+    .eq("id", rosterId)
+    .single();
+
+  if (error || !data) throw error ?? new Error("Roster not found");
+  return data.roster_owner_id;
+};
+
+const getEntityDisplayName = async (entityId: string): Promise<string> => {
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("nonprofit_name, organization_name, full_name")
+    .eq("id", entityId)
+    .single();
+
+  if (error || !profile) {
+    throw error ?? new Error("Organization not found");
+  }
+
+  return (
+    profile.nonprofit_name ||
+    profile.organization_name ||
+    profile.full_name ||
+    "Organization"
+  );
+};
+
+const syncUserOrganizationMembership = async (
+  userId: string,
+  entityId: string
+): Promise<void> => {
+  const organizationName = await getEntityDisplayName(entityId);
+  const { data: existingOrganization, error: existingError } = await supabase
+    .from("user_organizations")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("parent_organization_id", entityId)
+    .limit(1)
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+  if (existingOrganization) return;
+
+  const { error } = await supabase.from("user_organizations").insert({
+    user_id: userId,
+    organization_name: organizationName,
+    position: "Member",
+    start_date: new Date().toISOString().split("T")[0],
+    parent_organization_id: entityId,
+    is_child_organization: false,
+  });
+
+  if (error) throw error;
+};
+
+const removeUserOrganizationMembershipIfNeeded = async (
+  userId: string,
+  entityId: string
+): Promise<void> => {
+  const { data: rosters, error: rosterError } = await supabase
+    .from("rosters")
+    .select("id")
+    .eq("roster_owner_id", entityId);
+
+  if (rosterError) throw rosterError;
+
+  const rosterIds = (rosters ?? []).map((roster) => roster.id);
+  if (!rosterIds.length) return;
+
+  const { data: remainingMembership, error: membershipError } = await supabase
+    .from("roster_members")
+    .select("user_id")
+    .eq("user_id", userId)
+    .in("roster_id", rosterIds)
+    .limit(1)
+    .maybeSingle();
+
+  if (membershipError) throw membershipError;
+  if (remainingMembership) return;
+
+  const { error } = await supabase
+    .from("user_organizations")
+    .delete()
+    .eq("user_id", userId)
+    .eq("parent_organization_id", entityId)
+    .eq("position", "Member");
+
+  if (error) throw error;
+};
+
 const mapProfileToSimpleEntityInfo = (profile: any): SimpleEntityInfo => ({
   id: profile.id,
   nonprofitName: profile.nonprofit_name ?? undefined,
@@ -255,6 +348,12 @@ export const createRoster = async (newRoster: NewRoster): Promise<Roster> => {
     );
 
     if (membersError) throw membersError;
+
+    await Promise.all(
+      newRoster.members.map((memberId) =>
+        syncUserOrganizationMembership(memberId, roster.roster_owner_id)
+      )
+    );
   }
 
   const ownerProfile = (await getProfilesByIds([roster.roster_owner_id]))[0];
@@ -284,6 +383,13 @@ export const deleteRoster = async (rosterId: string): Promise<void> => {
     throw rosterError ?? new Error("Roster not found");
   }
 
+  const { data: existingMembers, error: existingMembersError } = await supabase
+    .from("roster_members")
+    .select("user_id")
+    .eq("roster_id", rosterId);
+
+  if (existingMembersError) throw existingMembersError;
+
   const { error: membersError } = await supabase
     .from("roster_members")
     .delete()
@@ -298,6 +404,12 @@ export const deleteRoster = async (rosterId: string): Promise<void> => {
     .eq("roster_owner_id", userId);
 
   if (error) throw error;
+
+  await Promise.all(
+    (existingMembers ?? []).map((member) =>
+      removeUserOrganizationMembershipIfNeeded(member.user_id, userId)
+    )
+  );
 };
 
 export const promoteUserToAdmin = async (
@@ -345,14 +457,20 @@ export const addToRoster = async (followerId: string, rosterId: string): Promise
     is_admin: false,
   });
   if (error) throw error;
+
+  const entityId = await getRosterOwnerId(rosterId);
+  await syncUserOrganizationMembership(followerId, entityId);
 };
 
 export const removeFromRoster = async (memberId: string, rosterId: string): Promise<void> => {
+  const entityId = await getRosterOwnerId(rosterId);
   const { error } = await supabase
     .from("roster_members")
     .delete()
     .match({ roster_id: rosterId, user_id: memberId });
   if (error) throw error;
+
+  await removeUserOrganizationMembershipIfNeeded(memberId, entityId);
 };
 
 export const getRosterAdmins = async (): Promise<SimpleUserInfo[]> => {

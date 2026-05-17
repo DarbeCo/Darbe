@@ -49,6 +49,9 @@ export const Home = () => {
 
   const isProfileRoute = location.pathname.startsWith(`${PROFILE_ROUTE}/`);
   const viewedProfileUserId = isProfileRoute ? pathName[3] : undefined;
+  const currentUserIsEntity = user.user?.userType
+    ? user.user.userType !== "individual"
+    : false;
   const { data: viewedProfile } = useGetUserProfileQuery(
     viewedProfileUserId ?? "",
     { skip: !viewedProfileUserId }
@@ -68,19 +71,25 @@ export const Home = () => {
     (viewedProfileUserType
       ? viewedProfileUserType !== "individual"
       : !!viewedEntityName);
-  const { data: viewedProfileEventCounts } = useGetEntityEventCountsQuery(
-    viewedProfileUserId ?? "",
-    { skip: !viewedProfileUserId || !viewedProfileIsEntity }
+  const overviewEntityId =
+    viewedProfileIsEntity && viewedProfileUserId
+      ? viewedProfileUserId
+      : currentUserIsEntity
+        ? user.user?.id
+        : undefined;
+  const { data: overviewEntityEventCounts } = useGetEntityEventCountsQuery(
+    overviewEntityId ?? "",
+    { skip: !overviewEntityId }
   );
-  const { data: viewedEntityRosterAccess } = useGetEntityRosterAccessQuery(
-    viewedProfileUserId ?? "",
-    { skip: !viewedProfileUserId || !viewedProfileIsEntity }
+  const { data: overviewEntityRosterAccess } = useGetEntityRosterAccessQuery(
+    overviewEntityId ?? "",
+    { skip: !overviewEntityId }
   );
   const normalizeOrgName = (name?: string) => name?.trim().toLowerCase();
   const normalizedViewedEntityName = normalizeOrgName(viewedEntityName);
   const currentUserIsViewedProfile = user.user?.id === viewedProfileUserId;
   const currentUserIsOrgMember =
-    viewedEntityRosterAccess?.isMember ||
+    overviewEntityRosterAccess?.isMember ||
     currentUserIsViewedProfile ||
     currentUserProfile?.organizations?.some((organization) => {
       const organizationNameMatches =
@@ -98,28 +107,30 @@ export const Home = () => {
     false;
 
   const showOrgOverview = isProfileRoute && viewedProfileIsEntity;
+  const showOrgOverviewInStats = !showOrgOverview && currentUserIsEntity;
   const isProfileEntityPending = isProfileRoute && !viewedProfile;
-  const viewedProfileFollowers = viewedProfile?.followers ?? [];
+  const overviewProfile = showOrgOverview ? viewedProfile : currentUserProfile;
+  const overviewProfileFollowers = overviewProfile?.followers ?? [];
   const currentUserFollowingIds = new Set(
     currentUserProfile?.following?.map((following) => following.id) ?? []
   );
-  const mutualFollowers = viewedProfileFollowers.filter((follower) =>
+  const mutualFollowers = overviewProfileFollowers.filter((follower) =>
     currentUserFollowingIds.has(follower.id)
   );
   const orgOverviewProps = {
-    entityId: viewedProfileUserId,
-    followersCount: viewedProfileFollowers.length,
-    followers: viewedProfileFollowers,
+    entityId: overviewEntityId,
+    followersCount: overviewProfileFollowers.length,
+    followers: overviewProfileFollowers,
     mutualFollowers,
     mutualCount: mutualFollowers.length,
-    partnersCount: viewedEntityRosterAccess?.memberCount ?? 0,
+    partnersCount: overviewEntityRosterAccess?.memberCount ?? 0,
     businessSponsorsCount:
-      viewedProfile?.entityDetails?.donorList?.length ?? 0,
-    businessSponsors: viewedProfile?.entityDetails?.donorList ?? [],
+      overviewProfile?.entityDetails?.donorList?.length ?? 0,
+    businessSponsors: overviewProfile?.entityDetails?.donorList ?? [],
     upcomingProjectsCount:
-      viewedProfileEventCounts?.upcomingProjectsCount ?? 0,
+      overviewEntityEventCounts?.upcomingProjectsCount ?? 0,
     completedProjectsCount:
-      viewedProfileEventCounts?.completedProjectsCount ?? 0,
+      overviewEntityEventCounts?.completedProjectsCount ?? 0,
     canViewRoster: currentUserIsOrgMember,
   };
   const showSuggestedFriends =
@@ -183,6 +194,7 @@ export const Home = () => {
               <RightPanel
                 showSuggestedFriends={showSuggestedFriends}
                 showOrgOverview={showOrgOverview}
+                showOrgOverviewInStats={showOrgOverviewInStats}
                 showRosterPanel={isRosterPage}
                 orgOverviewProps={orgOverviewProps}
               />

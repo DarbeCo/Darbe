@@ -10,6 +10,11 @@ import {
   useRemoveMemberFromRosterMutation,
 } from "../../services/api/endpoints/roster/roster.api";
 import {
+  useAcceptOrgJoinRequestMutation,
+  useDenyOrgJoinRequestMutation,
+  useGetOrgJoinRequestsQuery,
+} from "../../services/api/endpoints/friends/friends.api";
+import {
   RosterAdminPermissions,
   RosterMember,
 } from "../../services/api/endpoints/types/roster.api.types";
@@ -60,6 +65,12 @@ export const Roster = () => {
     useDemoteUserFromAdminMutation();
   const [removeMemberFromRoster, { isLoading: isRemovingMember }] =
     useRemoveMemberFromRosterMutation();
+  const { data: pendingJoinRequests = [], isLoading: isLoadingPendingRequests } =
+    useGetOrgJoinRequestsQuery();
+  const [acceptOrgJoinRequest, { isLoading: isAcceptingJoinRequest }] =
+    useAcceptOrgJoinRequestMutation();
+  const [denyOrgJoinRequest, { isLoading: isDenyingJoinRequest }] =
+    useDenyOrgJoinRequestMutation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchText, setSearchText] = useState("");
   const [inviteText, setInviteText] = useState("");
@@ -74,6 +85,7 @@ export const Roster = () => {
   const navigate = useNavigate();
   const selectedRosterId = searchParams.get("rosterId");
   const isCreateRosterView = searchParams.get("view") === "createRoster";
+  const isPendingRequestsView = searchParams.get("view") === "pendingRequests";
 
   useEffect(() => {
     if (!data?.length) return;
@@ -117,6 +129,8 @@ export const Roster = () => {
   const emptyRoster = !filteredMembers.length;
   const isAdminMutationLoading = isPromoting || isDemoting;
   const isRosterActionLoading = isAdminMutationLoading || isRemovingMember;
+  const isJoinRequestActionLoading =
+    isAcceptingJoinRequest || isDenyingJoinRequest;
 
   const handleEditRoster = () => {
     if (!rosterId) return;
@@ -202,6 +216,22 @@ export const Roster = () => {
     });
   };
 
+  const exitRosterSubView = () => {
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams);
+      nextParams.delete("view");
+      return nextParams;
+    });
+  };
+
+  const handleAcceptJoinRequest = async (requestId: string) => {
+    await acceptOrgJoinRequest(requestId).unwrap();
+  };
+
+  const handleDenyJoinRequest = async (requestId: string) => {
+    await denyOrgJoinRequest(requestId).unwrap();
+  };
+
   return (
     <div className={styles.rostersContainer}>
       <div className={styles.rosterMainColumn}>
@@ -215,7 +245,7 @@ export const Roster = () => {
           />
         </label>
 
-        {!isCreateRosterView && (
+        {!isCreateRosterView && !isPendingRequestsView && (
           <div className={styles.rosterInviteBar}>
             <input
               type="text"
@@ -249,6 +279,80 @@ export const Roster = () => {
               });
             }}
           />
+        ) : isPendingRequestsView ? (
+          <section className={styles.rosterPanel}>
+            <div className={styles.rosterMembersHeader}>
+              <h1>Pending Requests</h1>
+              <button type="button" onClick={exitRosterSubView}>
+                Member Roster
+              </button>
+            </div>
+
+            {isLoadingPendingRequests && (
+              <div className={styles.rosterLoading}>
+                <CircularProgress />
+              </div>
+            )}
+
+            {!isLoadingPendingRequests && !pendingJoinRequests.length && (
+              <p className={styles.rosterEmpty}>No pending requests</p>
+            )}
+
+            {!isLoadingPendingRequests && pendingJoinRequests.length > 0 && (
+              <div className={styles.rosterPendingRequests}>
+                {pendingJoinRequests.map((request) => {
+                  const requesterName =
+                    request.requester.fullName ||
+                    request.requester.organizationName ||
+                    request.requester.nonprofitName ||
+                    "Member";
+
+                  return (
+                    <article
+                      className={styles.rosterPendingRequestCard}
+                      key={request.id}
+                    >
+                      <button
+                        type="button"
+                        className={styles.rosterMemberIdentity}
+                        onClick={() => navigate(`${PROFILE_ROUTE}/${request.requester.id}`)}
+                      >
+                        <img
+                          src={
+                            request.requester.profilePicture ||
+                            assetUrl("/images/defaultProfilePicture.jpg")
+                          }
+                          alt=""
+                        />
+                        <span>
+                          <strong>{requesterName}</strong>
+                          <em>Requested to join</em>
+                        </span>
+                      </button>
+                      <div className={styles.rosterMemberActions}>
+                        <button
+                          type="button"
+                          className={styles.rosterPrimaryAction}
+                          onClick={() => handleAcceptJoinRequest(request.id)}
+                          disabled={isJoinRequestActionLoading}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.rosterRemoveAction}
+                          onClick={() => handleDenyJoinRequest(request.id)}
+                          disabled={isJoinRequestActionLoading}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </section>
         ) : (
           <section className={styles.rosterPanel}>
             <div className={styles.rosterMembersHeader}>

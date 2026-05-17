@@ -65,9 +65,17 @@ export const EventMatches = ({
     }
 
     const dismissedEventIdSet = new Set(dismissedEventIds);
+    const hiddenSignupStatuses = new Set([
+      "volunteered",
+      "confirmed",
+      "approved",
+      "no_show",
+    ]);
     const sortedEvents = getUpcomingEventMatches(data).filter((event) => {
       const currentUserSignup = event.signups?.find(
-        (signup) => signup.user.id === currentUserId
+        (signup) =>
+          signup.user.id === currentUserId &&
+          hiddenSignupStatuses.has(signup.status)
       );
 
       return (

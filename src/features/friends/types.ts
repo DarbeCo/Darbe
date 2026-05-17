@@ -37,6 +37,12 @@ export type PendingFriendRequestState = {
   requesterId: ProfileFriendState;
 }
 
+export type OrgJoinRequestState = {
+  id: string;
+  requester: ProfileFriendState;
+  requestedAt?: string;
+};
+
 
 export interface SuggestedFriendState  {
   id: string;

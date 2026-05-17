@@ -13,6 +13,7 @@ import styles from "../styles/mainPage.module.css";
 interface RightPanelProps {
   showSuggestedFriends?: boolean;
   showOrgOverview?: boolean;
+  showOrgOverviewInStats?: boolean;
   showRosterPanel?: boolean;
   orgOverviewProps?: OrgOverviewProps;
 }
@@ -20,6 +21,7 @@ interface RightPanelProps {
 export const RightPanel = ({
   showSuggestedFriends,
   showOrgOverview,
+  showOrgOverviewInStats,
   showRosterPanel,
   orgOverviewProps,
 }: RightPanelProps) => {
@@ -37,9 +39,10 @@ export const RightPanel = ({
         <FriendSuggestions />
       ) : (
         <div className={styles.rightPanelStats}>
+          {showOrgOverviewInStats && <OrgOverview {...(orgOverviewProps ?? {})} />}
           <VolunteerCurrentMatches />
           <VolunteerRecentImpacts />
-          <VolunteerAnnualSummary />
+          {!showOrgOverviewInStats && <VolunteerAnnualSummary />}
         </div>
       )}
     </>

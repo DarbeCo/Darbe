@@ -155,6 +155,24 @@
   gap: 20px;
 }
 
+.rosterPendingRequests {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rosterPendingRequestCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 18px;
+  border-radius: 4px;
+  background: #fafafa;
+  box-sizing: border-box;
+}
+
 .rosterMemberCard {
   display: flex;
   flex-direction: column;

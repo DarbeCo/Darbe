@@ -27,6 +27,7 @@ export {
   denyFriendRequest,
   followEntity,
   getFriendRequests,
+  getOrgJoinRequests,
   getFriends,
   getMutualFriends,
   getOrgJoinRequestStatus,

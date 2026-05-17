@@ -634,13 +634,24 @@ export const getEvents = async (): Promise<ShortEventState[]> => {
   let filteredEvents = events ?? [];
 
   if (isIndividual) {
-    const [{ data: signups }, { data: following }, { data: memberships }] = await Promise.all([
+    const [
+      { data: signups },
+      { data: following },
+      { data: memberships },
+      { data: savedOrganizations },
+      { data: staffEntries },
+    ] = await Promise.all([
       supabase
         .from("event_signups")
         .select("event_id, status")
         .eq("user_id", userId),
       supabase.from("follows").select("following_id").eq("follower_id", userId),
       supabase.from("roster_members").select("roster_id").eq("user_id", userId),
+      supabase
+        .from("user_organizations")
+        .select("parent_organization_id")
+        .eq("user_id", userId),
+      supabase.from("entity_staff").select("entity_id").eq("user_id", userId),
     ]);
 
     const blockedEventIds = new Set(
@@ -651,7 +662,6 @@ export const getEvents = async (): Promise<ShortEventState[]> => {
         .map((row) => row.event_id)
     );
 
-    const followingIds = new Set((following ?? []).map((row) => row.following_id));
     const rosterIds = (memberships ?? []).map((row) => row.roster_id);
     const { data: memberRosters, error: memberRostersError } = rosterIds.length
       ? await supabase
@@ -663,18 +673,25 @@ export const getEvents = async (): Promise<ShortEventState[]> => {
     if (memberRostersError) throw memberRostersError;
 
     const memberEntityIds = new Set(
-      (memberRosters ?? []).map((row) => row.roster_owner_id)
+      [
+        ...((memberRosters ?? []).map((row) => row.roster_owner_id)),
+        ...((savedOrganizations ?? [])
+          .map((row) => row.parent_organization_id)
+          .filter(Boolean) as string[]),
+      ]
     );
+    const affiliatedEntityIds = new Set<string>([
+      ...((following ?? []).map((row) => row.following_id)),
+      ...memberEntityIds,
+      ...((staffEntries ?? []).map((row) => row.entity_id)),
+    ]);
 
     filteredEvents = filteredEvents.filter((event) => {
       if (event.event_coordinator_id === userId) return true;
       if (blockedEventIds.has(event.id)) return false;
-      if (event.is_followers_only) {
-        return (
-          followingIds.has(event.event_owner_id) ||
-          memberEntityIds.has(event.event_owner_id)
-        );
-      }
+      if (memberEntityIds.has(event.event_owner_id)) return true;
+      if (affiliatedEntityIds.has(event.event_owner_id)) return true;
+      if (event.is_followers_only) return false;
       return true;
     });
   }
@@ -1062,6 +1079,23 @@ export const volunteerForEvent = async (eventId: string): Promise<void> => {
     .eq("user_id", userId);
 
   if (existingError) throw existingError;
+
+  const passedSignups = (existing ?? []).filter(
+    (signup) => signup.status === "passed"
+  );
+
+  if (passedSignups.length) {
+    const { error } = await supabase
+      .from("event_signups")
+      .update({
+        status: "volunteered",
+        event_action_timestamp: new Date().toISOString(),
+      })
+      .in("id", passedSignups.map((signup) => signup.id));
+
+    if (error) throw error;
+    return;
+  }
 
   if ((existing ?? []).length > 0) {
     throw new Error("You have already volunteered for this event");

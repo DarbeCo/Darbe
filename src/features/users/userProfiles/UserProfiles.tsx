@@ -198,6 +198,7 @@ export const UserProfiles = () => {
           canEdit={canEdit}
         />
       )}
+      {isEntityProfile && userId && <UserEventPhotos entityId={userId} />}
       {isEntityProfile && (
         <UserEntityProfileInformation
           entityInformation={entityInformation}
@@ -225,7 +226,6 @@ export const UserProfiles = () => {
             canEdit={canEdit}
             staff={userInformation?.entityDetails?.staffList}
           />
-          <UserEventPhotos entityId={userId} />
         </>
       )}
       {!isDesktop && !isEntityProfile && <FriendSuggestions />}

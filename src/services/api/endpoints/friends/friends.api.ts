@@ -1,5 +1,6 @@
 import {
   FriendRequestState,
+  OrgJoinRequestState,
   PendingFriendRequestState,
   ProfileFollowState,
   ProfileFriendState,
@@ -17,6 +18,7 @@ import {
   getFriendRequests,
   getFriends,
   getMutualFriends,
+  getOrgJoinRequests,
   getOrgJoinRequestStatus,
   getSentFriendRequests,
   getSuggestedFriends,
@@ -77,6 +79,23 @@ const friendsApi = darbeBaseApi.injectEndpoints({
       },
       providesTags: ["FriendRequests"],
       keepUnusedDataFor: 10,
+    }),
+    getOrgJoinRequests: builder.query<OrgJoinRequestState[], void>({
+      async queryFn() {
+        try {
+          const data = await getOrgJoinRequests();
+          return { data };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      providesTags: ["FriendRequests", "Notifications"],
+      keepUnusedDataFor: 5,
     }),
     sendFriendRequest: builder.mutation<void, string>({
       async queryFn(userId) {
@@ -302,6 +321,7 @@ export const {
   useDeleteFriendMutation,
   useAcceptFriendRequestMutation,
   useGetSentFriendRequestsQuery,
+  useGetOrgJoinRequestsQuery,
   useFollowEntityMutation,
   useSendOrgJoinRequestMutation,
   useGetOrgJoinRequestStatusQuery,
