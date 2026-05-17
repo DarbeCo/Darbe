@@ -9,16 +9,22 @@ import { EDIT_SECTIONS } from "../../constants";
 
 import styles from "./styles/entityDetails.module.css";
 
+export type EventPhotoScope = "entity" | "individual";
+
 interface UserEventPhotosProps {
-  entityId?: string;
+  userId?: string;
+  scope?: EventPhotoScope;
 }
 
-export const UserEventPhotos = ({ entityId }: UserEventPhotosProps) => {
+export const UserEventPhotos = ({
+  userId,
+  scope = "entity",
+}: UserEventPhotosProps) => {
   const dispatch = useAppDispatch();
 
   const handleOpen = () => {
-    if (!entityId) return;
-    dispatch(setExternalData(entityId));
+    if (!userId) return;
+    dispatch(setExternalData({ userId, scope }));
     dispatch(setModalType(EDIT_SECTIONS.eventPhotoList));
     dispatch(showModal());
   };
@@ -32,7 +38,7 @@ export const UserEventPhotos = ({ entityId }: UserEventPhotosProps) => {
         type="button"
         className={styles.entityUserShowAll}
         onClick={handleOpen}
-        disabled={!entityId}
+        disabled={!userId}
       >
         View Event Photos
       </button>

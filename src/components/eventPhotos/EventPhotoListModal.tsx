@@ -1,7 +1,10 @@
 import { CircularProgress } from "@mui/material";
 import { PhotoLibrary } from "@mui/icons-material";
 
-import { useGetEntityEventPhotoSummariesQuery } from "../../services/api/endpoints/eventPhotos/eventPhotos.api";
+import {
+  useGetEntityEventPhotoSummariesQuery,
+  useGetIndividualEventPhotoSummariesQuery,
+} from "../../services/api/endpoints/eventPhotos/eventPhotos.api";
 import { useAppDispatch } from "../../services/hooks";
 import {
   setExternalData,
@@ -16,6 +19,31 @@ interface EventPhotoListModalProps {
   externalData?: unknown;
 }
 
+type ListScope = "entity" | "individual";
+
+interface ListContext {
+  userId: string;
+  scope: ListScope;
+}
+
+const parseListContext = (externalData: unknown): ListContext => {
+  if (typeof externalData === "string") {
+    return { userId: externalData, scope: "entity" };
+  }
+  if (
+    externalData &&
+    typeof externalData === "object" &&
+    "userId" in externalData &&
+    typeof (externalData as Record<string, unknown>).userId === "string"
+  ) {
+    const record = externalData as Record<string, unknown>;
+    const scope =
+      record.scope === "individual" ? "individual" : "entity";
+    return { userId: record.userId as string, scope };
+  }
+  return { userId: "", scope: "entity" };
+};
+
 const formatEventDate = (eventDate: string): string => {
   if (!eventDate) return "";
   return parseEventDateAsLocalDate(eventDate).toLocaleDateString("en-US", {
@@ -29,21 +57,29 @@ export const EventPhotoListModal = ({
   externalData,
 }: EventPhotoListModalProps) => {
   const dispatch = useAppDispatch();
-  const entityId = typeof externalData === "string" ? externalData : "";
+  const { userId, scope } = parseListContext(externalData);
 
-  const { data: events, isLoading } = useGetEntityEventPhotoSummariesQuery(
-    entityId,
-    { skip: !entityId }
-  );
+  const entityQuery = useGetEntityEventPhotoSummariesQuery(userId, {
+    skip: !userId || scope !== "entity",
+  });
+  const individualQuery = useGetIndividualEventPhotoSummariesQuery(userId, {
+    skip: !userId || scope !== "individual",
+  });
+
+  const events = scope === "entity" ? entityQuery.data : individualQuery.data;
+  const isLoading =
+    scope === "entity" ? entityQuery.isLoading : individualQuery.isLoading;
 
   const handleEventClick = (eventId: string) => {
-    dispatch(setExternalData({ eventId, entityId }));
+    dispatch(
+      setExternalData({ eventId, listUserId: userId, listScope: scope })
+    );
     dispatch(setModalType(EDIT_SECTIONS.eventPhotoCarousel));
   };
 
-  if (!entityId) {
+  if (!userId) {
     return (
-      <div className={styles.eventPhotoListEmpty}>No entity selected</div>
+      <div className={styles.eventPhotoListEmpty}>No user selected</div>
     );
   }
 

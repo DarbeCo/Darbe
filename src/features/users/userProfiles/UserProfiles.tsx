@@ -192,13 +192,18 @@ export const UserProfiles = () => {
           />
         )}
       </div>
+      {!isEntityProfile && userId && (
+        <UserEventPhotos userId={userId} scope="individual" />
+      )}
       {!isEntityProfile && (
         <UserProfileInformation
           userInformation={userInformation}
           canEdit={canEdit}
         />
       )}
-      {isEntityProfile && userId && <UserEventPhotos entityId={userId} />}
+      {isEntityProfile && userId && (
+        <UserEventPhotos userId={userId} scope="entity" />
+      )}
       {isEntityProfile && (
         <UserEntityProfileInformation
           entityInformation={entityInformation}

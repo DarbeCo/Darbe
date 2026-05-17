@@ -42,6 +42,7 @@ export {
   canUploadEventPhotos,
   getEntityEventPhotoSummaries,
   getEventPhotos,
+  getIndividualEventPhotoSummaries,
   uploadEventPhoto,
 } from "./eventPhotos";
 export type {

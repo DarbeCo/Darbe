@@ -28,9 +28,13 @@ interface EventPhotoCarouselModalProps {
   externalData?: unknown;
 }
 
+type ListScope = "entity" | "individual";
+
 interface CarouselContext {
   eventId: string;
   entityId: string;
+  listUserId: string;
+  listScope: ListScope;
 }
 
 const parseContext = (externalData: unknown): CarouselContext => {
@@ -41,20 +45,36 @@ const parseContext = (externalData: unknown): CarouselContext => {
     typeof (externalData as Record<string, unknown>).eventId === "string"
   ) {
     const record = externalData as Record<string, unknown>;
+    const legacyEntityId =
+      typeof record.entityId === "string" ? (record.entityId as string) : "";
+    const listUserId =
+      typeof record.listUserId === "string"
+        ? (record.listUserId as string)
+        : legacyEntityId;
+    const listScope: ListScope =
+      record.listScope === "individual" ? "individual" : "entity";
+
     return {
       eventId: record.eventId as string,
-      entityId:
-        typeof record.entityId === "string" ? (record.entityId as string) : "",
+      entityId: legacyEntityId,
+      listUserId,
+      listScope,
     };
   }
-  return { eventId: "", entityId: "" };
+  return {
+    eventId: "",
+    entityId: "",
+    listUserId: "",
+    listScope: "entity",
+  };
 };
 
 export const EventPhotoCarouselModal = ({
   externalData,
 }: EventPhotoCarouselModalProps) => {
   const dispatch = useAppDispatch();
-  const { eventId, entityId } = parseContext(externalData);
+  const { eventId, entityId, listUserId, listScope } =
+    parseContext(externalData);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -77,7 +97,7 @@ export const EventPhotoCarouselModal = ({
   }, [photos?.length]);
 
   const handleBackToList = () => {
-    dispatch(setExternalData(entityId));
+    dispatch(setExternalData({ userId: listUserId, scope: listScope }));
     dispatch(setModalType(EDIT_SECTIONS.eventPhotoList));
   };
 
@@ -109,7 +129,14 @@ export const EventPhotoCarouselModal = ({
 
     setUploadError(null);
     try {
-      await uploadPhoto({ eventId, file, entityId }).unwrap();
+      await uploadPhoto({
+        eventId,
+        file,
+        entityId:
+          listScope === "entity" && listUserId ? listUserId : entityId,
+        individualId:
+          listScope === "individual" && listUserId ? listUserId : undefined,
+      }).unwrap();
     } catch (error) {
       const message =
         (error as { data?: { message?: string } })?.data?.message ||
@@ -130,7 +157,7 @@ export const EventPhotoCarouselModal = ({
   return (
     <div className={styles.eventPhotoCarousel}>
       <div className={styles.eventPhotoCarouselHeader}>
-        {entityId ? (
+        {listUserId ? (
           <button
             type="button"
             className={styles.eventPhotoCarouselBackButton}

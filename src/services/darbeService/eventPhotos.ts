@@ -176,6 +176,61 @@ export const getEntityEventPhotoSummaries = async (
     );
 };
 
+export const getIndividualEventPhotoSummaries = async (
+  userId: string
+): Promise<EntityEventPhotoSummary[]> => {
+  const { data: signups, error: signupsError } = await supabase
+    .from("event_signups")
+    .select("event_id, status")
+    .eq("user_id", userId)
+    .in("status", ["volunteered", "confirmed", "approved", "no_show"]);
+
+  if (signupsError) throw signupsError;
+
+  const eventIds = Array.from(
+    new Set(
+      (signups ?? [])
+        .map((signup) => signup.event_id)
+        .filter((eventId): eventId is string => Boolean(eventId))
+    )
+  );
+  if (!eventIds.length) return [];
+
+  const { data: events, error: eventsError } = await supabase
+    .from("events")
+    .select("id, event_name, event_date, event_cover_photo_url")
+    .in("id", eventIds);
+
+  if (eventsError) throw eventsError;
+
+  const { data: photos, error: photosError } = await supabase
+    .from("event_photos")
+    .select("event_id")
+    .in("event_id", eventIds);
+
+  if (photosError) throw photosError;
+
+  const photoCountByEventId = new Map<string, number>();
+  (photos ?? []).forEach((photo) => {
+    photoCountByEventId.set(
+      photo.event_id,
+      (photoCountByEventId.get(photo.event_id) ?? 0) + 1
+    );
+  });
+
+  return (events ?? [])
+    .map((event) => ({
+      eventId: event.id,
+      eventName: event.event_name ?? "",
+      eventDate: event.event_date ?? "",
+      photoCount: photoCountByEventId.get(event.id) ?? 0,
+      coverPhotoUrl: event.event_cover_photo_url ?? undefined,
+    }))
+    .sort((a, b) =>
+      a.eventName.localeCompare(b.eventName, undefined, { sensitivity: "base" })
+    );
+};
+
 export const canUploadEventPhotos = async (
   eventId: string
 ): Promise<boolean> => {

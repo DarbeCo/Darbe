@@ -3,6 +3,7 @@ import {
   canUploadEventPhotos,
   getEntityEventPhotoSummaries,
   getEventPhotos,
+  getIndividualEventPhotoSummaries,
   uploadEventPhoto,
   type EntityEventPhotoSummary,
   type EventPhoto,
@@ -49,6 +50,27 @@ const EventPhotosApi = darbeBaseApi.injectEndpoints({
         { type: "EventPhotos" as const, id: `entity-${entityId}` },
       ],
     }),
+    getIndividualEventPhotoSummaries: builder.query<
+      EntityEventPhotoSummary[],
+      string
+    >({
+      async queryFn(userId) {
+        try {
+          const data = await getIndividualEventPhotoSummaries(userId);
+          return { data };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      providesTags: (_result, _error, userId) => [
+        { type: "EventPhotos" as const, id: `individual-${userId}` },
+      ],
+    }),
     canUploadEventPhotos: builder.query<boolean, string>({
       async queryFn(eventId) {
         try {
@@ -66,7 +88,12 @@ const EventPhotosApi = darbeBaseApi.injectEndpoints({
     }),
     uploadEventPhoto: builder.mutation<
       EventPhoto,
-      { eventId: string; file: File; entityId?: string }
+      {
+        eventId: string;
+        file: File;
+        entityId?: string;
+        individualId?: string;
+      }
     >({
       async queryFn({ eventId, file }) {
         try {
@@ -81,10 +108,16 @@ const EventPhotosApi = darbeBaseApi.injectEndpoints({
           };
         }
       },
-      invalidatesTags: (_result, _error, { eventId, entityId }) => {
+      invalidatesTags: (_result, _error, { eventId, entityId, individualId }) => {
         const tags = [{ type: "EventPhotos" as const, id: eventId }];
         if (entityId) {
           tags.push({ type: "EventPhotos" as const, id: `entity-${entityId}` });
+        }
+        if (individualId) {
+          tags.push({
+            type: "EventPhotos" as const,
+            id: `individual-${individualId}`,
+          });
         }
         return tags;
       },
@@ -95,6 +128,7 @@ const EventPhotosApi = darbeBaseApi.injectEndpoints({
 export const {
   useGetEventPhotosQuery,
   useGetEntityEventPhotoSummariesQuery,
+  useGetIndividualEventPhotoSummariesQuery,
   useCanUploadEventPhotosQuery,
   useUploadEventPhotoMutation,
 } = EventPhotosApi;
