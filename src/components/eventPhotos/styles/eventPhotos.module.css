@@ -1,0 +1,331 @@
+.eventPhotoList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 8px 4px;
+  box-sizing: border-box;
+}
+
+.eventPhotoListLoading,
+.eventPhotoListEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 12px;
+  color: #717070;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+}
+
+.eventPhotoListRow {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #ffffff;
+  text-align: left;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.eventPhotoListRow:hover {
+  background: #fafafa;
+}
+
+.eventPhotoListThumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 6px;
+  background: #f0f0f0;
+  color: #717070;
+  overflow: hidden;
+}
+
+.eventPhotoListThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.eventPhotoListMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.eventPhotoListMeta strong {
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 19px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eventPhotoListMeta span {
+  color: #717070;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.eventPhotoListCount {
+  flex: 0 0 auto;
+  color: #2c77e7;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 17px;
+}
+
+.eventPhotoCarousel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.eventPhotoCarouselHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.eventPhotoCarouselBackButton {
+  border: 0;
+  background: transparent;
+  color: #2c77e7;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+.eventPhotoCarouselUploadButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid #2c77e7;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #2c77e7;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 17px;
+  cursor: pointer;
+}
+
+.eventPhotoCarouselUploadButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.eventPhotoCarouselError {
+  padding: 8px 12px;
+  border: 1px solid #ff0000;
+  border-radius: 4px;
+  background: #fff4f4;
+  color: #ff0000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.eventPhotoCarouselLoading,
+.eventPhotoCarouselEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  padding: 24px;
+  color: #717070;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  text-align: center;
+}
+
+.eventPhotoCarouselStage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  width: min(500px, 100%);
+  aspect-ratio: 1 / 1;
+  background: #000000;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.eventPhotoCarouselImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.eventPhotoCarouselNav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  color: #000000;
+  cursor: pointer;
+}
+
+.eventPhotoCarouselNav:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.eventPhotoCarouselNavPrev {
+  left: 12px;
+}
+
+.eventPhotoCarouselNavNext {
+  right: 12px;
+}
+
+.eventPhotoCarouselCounter {
+  align-self: center;
+  color: #717070;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.eventPhotoCarouselCredit {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  max-width: calc(100% - 24px);
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  line-height: 17px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eventPhotosSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.eventPhotosSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.eventPhotosSectionHeader h2 {
+  margin: 0;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 22px;
+}
+
+.eventPhotosSectionUpload {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid #2c77e7;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #2c77e7;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 17px;
+  cursor: pointer;
+}
+
+.eventPhotosSectionUpload:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.eventPhotosSectionError {
+  padding: 6px 10px;
+  border: 1px solid #ff0000;
+  border-radius: 4px;
+  background: #fff4f4;
+  color: #ff0000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.eventPhotosSectionEmpty {
+  margin: 0;
+  color: #717070;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.eventPhotosSectionStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.eventPhotosSectionThumb {
+  flex: 0 0 auto;
+  width: 96px;
+  height: 96px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #f0f0f0;
+}
+
+.eventPhotosSectionThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}

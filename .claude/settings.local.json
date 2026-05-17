@@ -2,7 +2,16 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:www.figma.com)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(Find /c/Development/Darbe/supabase/migrations -name \"*.sql\")",
+      "Bash(xargs grep -l \"event_signups\")",
+      "Bash(xargs grep -l \"storage.policies\\\\|CREATE POLICY\")",
+      "Bash(Find /c/Development/Darbe -name \"*.sql\")",
+      "Bash(xargs grep -l \"RLS\\\\|ALTER BUCKET\\\\|bucket.*policy\")",
+      "Bash(xargs grep \"CREATE TABLE\")",
+      "Bash(xargs grep \"CREATE TABLE.*events\\\\|CREATE TABLE.*event_signups\" -A 20)",
+      "Bash(xargs grep -l \"UserDocuments\\\\|UserEntityProfileInformation\")",
+      "Bash(npx eslint *)"
     ]
   }
 }

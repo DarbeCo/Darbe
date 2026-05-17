@@ -39,6 +39,8 @@ import { EditEntityValues } from "../../features/users/editProfile/editEntitySec
 import { EditEntityPrograms } from "../../features/users/editProfile/editEntitySections/EditEntityPrograms";
 import { runProfileEditAutosave } from "../../features/users/editProfile/profileEditAutosave";
 import { FriendSuggestionsDialog } from "../friendSuggestions/FriendSuggestionsDialog";
+import { EventPhotoListModal } from "../eventPhotos/EventPhotoListModal";
+import { EventPhotoCarouselModal } from "../eventPhotos/EventPhotoCarouselModal";
 
 /**
  * Mainly used for the create a post pop up modal
@@ -109,6 +111,8 @@ export const Modal = () => {
     modalType === MODAL_TYPE.values ||
     modalType === MODAL_TYPE.programs;
   const isCreateRosterModal = modalType === MODAL_TYPE.createRoster;
+  const isEventPhotoCarouselModal =
+    modalType === MODAL_TYPE.eventPhotoCarousel;
   const profileBackTargets: Partial<Record<string, string>> = {
     [MODAL_TYPE.causes]: MODAL_TYPE.profile,
     [MODAL_TYPE.availability]: MODAL_TYPE.causes,
@@ -138,7 +142,8 @@ export const Modal = () => {
       <div
         className={`${styles.modalContent} ${
           isProfileModal ? styles.profileModalContent : ""
-        } ${isCreateRosterModal ? styles.createRosterModalContent : ""
+        } ${isCreateRosterModal ? styles.createRosterModalContent : ""} ${
+          isEventPhotoCarouselModal ? styles.eventPhotoCarouselModalContent : ""
         }`.trim()}
       >
         <div
@@ -216,6 +221,10 @@ export const Modal = () => {
                     return "Edit Values";
                   case MODAL_TYPE.programs:
                     return "Edit Programs";
+                  case MODAL_TYPE.eventPhotoList:
+                    return "Event Photos";
+                  case MODAL_TYPE.eventPhotoCarousel:
+                    return "Event Photos";
                   default:
                     return null;
                 }
@@ -298,6 +307,10 @@ export const Modal = () => {
               return <SimpleCreateRoster />;
             case MODAL_TYPE.friendSuggestions:
               return <FriendSuggestionsDialog />;
+            case MODAL_TYPE.eventPhotoList:
+              return <EventPhotoListModal externalData={externalData} />;
+            case MODAL_TYPE.eventPhotoCarousel:
+              return <EventPhotoCarouselModal externalData={externalData} />;
             default:
               return null;
           }

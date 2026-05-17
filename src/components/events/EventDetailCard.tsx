@@ -31,6 +31,7 @@ import {
   setModalType,
   showModal,
 } from "../modal/modalSlice";
+import { EventPhotosSection } from "../eventPhotos/EventPhotosSection";
 
 import styles from "./styles/eventCards.module.css";
 
@@ -465,6 +466,8 @@ export const EventDetailCard = ({
           />
         </button>
       </section>
+
+      {!isPreview && eventId && <EventPhotosSection eventId={eventId} />}
 
       {!isEventOwner && !isPreview && !isMoreThanTwentyFourHoursPast && (
         <div className={styles.eventDetailActions}>

@@ -698,6 +698,30 @@ export interface Database {
         };
         Relationships: [];
       };
+      event_photos: {
+        Row: {
+          id: string;
+          event_id: string;
+          uploaded_by: string;
+          storage_path: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          event_id: string;
+          uploaded_by: string;
+          storage_path: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          event_id?: string;
+          uploaded_by?: string;
+          storage_path?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       events: {
         Row: {
           id: string;

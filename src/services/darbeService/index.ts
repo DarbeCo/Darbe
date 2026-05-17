@@ -38,6 +38,16 @@ export {
 } from "./friends";
 export { deletePost, getPost, getUserPosts, submitPost } from "./posts";
 export {
+  canUploadEventPhotos,
+  getEntityEventPhotoSummaries,
+  getEventPhotos,
+  uploadEventPhoto,
+} from "./eventPhotos";
+export type {
+  EntityEventPhotoSummary,
+  EventPhoto,
+} from "./eventPhotos";
+export {
   deleteComment,
   deleteReply,
   getCommentReplies,

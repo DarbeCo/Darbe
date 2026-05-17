@@ -57,6 +57,13 @@
   box-sizing: border-box;
 }
 
+.eventPhotoCarouselModalContent {
+  width: min(580px, calc(100dvw - 24px));
+  max-height: calc(100dvh - 24px);
+  padding: 20px;
+  box-sizing: border-box;
+}
+
 .modalContentHeader {
   display: flex;
   flex-direction: column;
@@ -212,6 +219,13 @@
     height: min(812px, calc(100dvh - 48px));
     max-height: calc(100dvh - 48px);
   }
+
+  .eventPhotoCarouselModalContent {
+    width: min(580px, calc(100dvw - 48px));
+    height: auto;
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+  }
 }
 
 @media (max-width: 640px) {
@@ -228,6 +242,13 @@
   }
 
   .createRosterModalContent {
+    width: 100%;
+    height: auto;
+    max-height: calc(100dvh - 16px);
+    overflow-y: auto;
+  }
+
+  .eventPhotoCarouselModalContent {
     width: 100%;
     height: auto;
     max-height: calc(100dvh - 16px);

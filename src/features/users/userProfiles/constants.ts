@@ -210,4 +210,6 @@ export const EDIT_SECTIONS = {
   createRoster: "createRoster",
   entityProfile: "entityProfile",
   entityAbout: "entityAbout",
+  eventPhotoList: "eventPhotoList",
+  eventPhotoCarousel: "eventPhotoCarousel",
 };

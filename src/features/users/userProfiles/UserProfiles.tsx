@@ -28,6 +28,7 @@ import { useLazyGetUserProfileQuery } from "../../../services/api/endpoints/prof
 import { UserDonors } from "./sections/entity/UserDonors";
 import { UserEntityStaff } from "./sections/entity/UserEntityStaff";
 import { UserEntityProfileInformation } from "./sections/entity/UserEntityProfileInformation";
+import { UserEventPhotos } from "./sections/entity/UserEventPhotos";
 
 import styles from "./styles/userProfiles.module.css";
 
@@ -224,6 +225,7 @@ export const UserProfiles = () => {
             canEdit={canEdit}
             staff={userInformation?.entityDetails?.staffList}
           />
+          <UserEventPhotos entityId={userId} />
         </>
       )}
       {!isDesktop && !isEntityProfile && <FriendSuggestions />}
