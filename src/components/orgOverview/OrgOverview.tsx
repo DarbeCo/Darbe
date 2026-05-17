@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { PROFILE_ROUTE, ROSTER_ROUTE } from "../../routes/route.constants";
 import { useGetEntityUpcomingEventsQuery } from "../../services/api/endpoints/events/events.api";
+import { useGetOrgJoinRequestsQuery } from "../../services/api/endpoints/friends/friends.api";
 import { useGetEntityRosterMembersQuery } from "../../services/api/endpoints/roster/roster.api";
 import { assetUrl } from "../../utils/assetUrl";
 
@@ -78,6 +79,9 @@ export const OrgOverview = ({
     entityId ?? "",
     { skip: !entityId || !activeList || activeList !== "projects" }
   );
+  const { data: pendingRequests = [] } = useGetOrgJoinRequestsQuery(undefined, {
+    skip: !canViewRoster,
+  });
   const mutualTotal = mutualCount ?? mutualFollowers.length;
   const mutualAvatars = mutualFollowers.slice(0, 2);
   const getFollowerName = (follower: OrgOverviewFollower) =>
@@ -101,6 +105,14 @@ export const OrgOverview = ({
     }
 
     navigate(ROSTER_ROUTE);
+  };
+
+  const handlePendingRequestsClick = () => {
+    if (!canViewRoster) {
+      return;
+    }
+
+    navigate(`${ROSTER_ROUTE}?view=pendingRequests`);
   };
 
   return (
@@ -151,6 +163,17 @@ export const OrgOverview = ({
         >
           <span className={styles.orgOverviewRowText}>
             {partnersCount} Members
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className={styles.orgOverviewRowButton}
+          onClick={handlePendingRequestsClick}
+          disabled={!canViewRoster}
+        >
+          <span className={styles.orgOverviewRowText}>
+            {pendingRequests.length} Pending Requests
           </span>
         </button>
 
