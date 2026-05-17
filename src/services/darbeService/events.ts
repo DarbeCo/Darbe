@@ -748,7 +748,7 @@ export const getEntityEventCounts = async (
 ): Promise<EntityEventCounts> => {
   const { data, error } = await supabase
     .from("events")
-    .select("event_date, end_time")
+    .select("event_date, start_time, end_time")
     .eq("event_owner_id", entityId);
 
   if (error) throw error;
@@ -762,10 +762,12 @@ export const getEntityEventCounts = async (
         Number(event.end_time ?? 0)
       );
 
-      if (eventEnd >= now) {
-        counts.upcomingProjectsCount += 1;
-      } else {
+      // Completed: only events that have ended (past events)
+      // Upcoming: events that haven't ended yet (future or in progress)
+      if (eventEnd < now) {
         counts.completedProjectsCount += 1;
+      } else {
+        counts.upcomingProjectsCount += 1;
       }
 
       return counts;
