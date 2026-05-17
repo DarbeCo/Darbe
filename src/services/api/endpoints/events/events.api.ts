@@ -20,6 +20,7 @@ import {
   getEntityUpcomingEvents,
   getEventDetails,
   getEvents,
+  getRosterAdminEvents,
   getSignedUpEvents,
   getVolunteerMatches,
   checkInForEvent,
@@ -109,6 +110,23 @@ const eventsApi = darbeBaseApi.injectEndpoints({
       async queryFn(entityId) {
         try {
           const data = await getEntityUpcomingEvents(entityId);
+          return { data };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      providesTags: ["Events"],
+      keepUnusedDataFor: 10,
+    }),
+    getRosterAdminEvents: builder.query<ShortEventState[], void>({
+      async queryFn() {
+        try {
+          const data = await getRosterAdminEvents();
           return { data };
         } catch (error) {
           return {
@@ -411,6 +429,7 @@ export const {
   useGetEventDetailsQuery,
   useGetEntityEventCountsQuery,
   useGetEntityUpcomingEventsQuery,
+  useGetRosterAdminEventsQuery,
   useAddEventVolunteerMutation,
   useApproveAllEventVolunteersMutation,
   useApproveEventVolunteerMutation,

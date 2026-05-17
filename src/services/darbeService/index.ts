@@ -73,6 +73,7 @@ export {
   getEntityEventCounts,
   getEntityUpcomingEvents,
   getEvents,
+  getRosterAdminEvents,
   getSignedUpEvents,
   getVolunteerMatches,
   passOnEvent,

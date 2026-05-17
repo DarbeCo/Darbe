@@ -8,6 +8,7 @@ import {
   EventEditableUpdate,
   ShortEventState,
 } from "../../services/api/endpoints/types/events.api.types";
+import { SimpleUserInfo } from "../../services/api/endpoints/types/user.api.types";
 import { UserAvatars } from "../avatars/UserAvatars";
 import { Typography } from "../typography/Typography";
 import { DarbeButton } from "../buttons/DarbeButton";
@@ -63,6 +64,7 @@ interface EventCardProps {
   onPassSuccess?: (eventId: string) => void;
   allowCoordinatorVolunteerManagement?: boolean;
   enableAdminControls?: boolean;
+  additionalVolunteerCoordinators?: SimpleUserInfo[];
 }
 
 const formatCheckTimestamp = (timestamp?: string) => {
@@ -195,6 +197,7 @@ export const EventCard = ({
   onPassSuccess,
   allowCoordinatorVolunteerManagement = true,
   enableAdminControls = false,
+  additionalVolunteerCoordinators = [],
 }: EventCardProps) => {
   const navigate = useNavigate();
   const currentUserId = useAppSelector(selectCurrentUserId);
@@ -578,10 +581,14 @@ export const EventCard = ({
   }`;
   const isEventPoster = currentUserId === event.eventOwner.id;
   const isEventCoordinator = currentUserId === event.eventCoordinator?.id;
+  const isAdditionalVolunteerCoordinator = additionalVolunteerCoordinators.some(
+    (coordinator) => coordinator.id === currentUserId
+  );
   const canManageVolunteerCheckIns =
     enableAdminControls ||
     isEventPoster ||
-    (allowCoordinatorVolunteerManagement && isEventCoordinator);
+    (allowCoordinatorVolunteerManagement &&
+      (isEventCoordinator || isAdditionalVolunteerCoordinator));
   const canEditEventFields = isEventPoster || enableAdminControls;
   const isPastEvent =
     hasEventEnded !== undefined ? hasEventEnded : eventDateTime < todayTime;
@@ -602,37 +609,47 @@ export const EventCard = ({
   const currentUserSignup = event.signups?.find(
     (signup) => signup.user.id === currentUserId
   );
-  const coordinatorVolunteerSignup = event.eventCoordinator?.id
-    ? event.signups?.find((signup) => signup.user.id === event.eventCoordinator?.id)
-    : undefined;
+  const volunteerCoordinators = [
+    ...(event.eventCoordinator ? [event.eventCoordinator] : []),
+    ...additionalVolunteerCoordinators,
+  ].filter(
+    (coordinator, index, coordinators) =>
+      coordinator.id &&
+      coordinators.findIndex(
+        (candidate) => candidate.id === coordinator.id
+      ) === index
+  );
   const coordinatorVolunteerRow: VolunteerSignupRow[] =
-    event.eventCoordinator && event.eventCoordinator.id
-      ? [
-          {
-            id:
-              coordinatorVolunteerSignup?.id ??
-              `coordinator-${event.eventCoordinator.id}`,
-            user: event.eventCoordinator,
-            eventId: event.id,
-            status:
-              coordinatorVolunteerSignup?.status ?? ("volunteered" as const),
-            eventActionTimeStamp:
-              coordinatorVolunteerSignup?.eventActionTimeStamp ??
-              new Date(0).toISOString(),
-            checkInAt: coordinatorVolunteerSignup?.checkInAt,
-            checkOutAt: coordinatorVolunteerSignup?.checkOutAt,
-            volunteerStartTime: coordinatorVolunteerSignup?.volunteerStartTime,
-            volunteerEndTime: coordinatorVolunteerSignup?.volunteerEndTime,
-            volunteerLocation: coordinatorVolunteerSignup?.volunteerLocation,
-            volunteerImpact: coordinatorVolunteerSignup?.volunteerImpact,
-            isCoordinator: true,
-          },
-        ]
-      : [];
+    volunteerCoordinators.map((coordinator) => {
+      const coordinatorSignup = event.signups?.find(
+        (signup) => signup.user.id === coordinator.id
+      );
+
+      return {
+        id: coordinatorSignup?.id ?? `coordinator-${coordinator.id}`,
+        user: coordinator,
+        eventId: event.id,
+        status: coordinatorSignup?.status ?? ("volunteered" as const),
+        eventActionTimeStamp:
+          coordinatorSignup?.eventActionTimeStamp ?? new Date(0).toISOString(),
+        checkInAt: coordinatorSignup?.checkInAt,
+        checkOutAt: coordinatorSignup?.checkOutAt,
+        volunteerStartTime: coordinatorSignup?.volunteerStartTime,
+        volunteerEndTime: coordinatorSignup?.volunteerEndTime,
+        volunteerLocation: coordinatorSignup?.volunteerLocation,
+        volunteerImpact: coordinatorSignup?.volunteerImpact,
+        isCoordinator: true,
+      };
+    });
   const volunteerRows: VolunteerSignupRow[] = [
     ...coordinatorVolunteerRow,
     ...(event.signups ?? [])
-      .filter((signup) => signup.user.id !== event.eventCoordinator?.id)
+      .filter(
+        (signup) =>
+          !volunteerCoordinators.some(
+            (coordinator) => coordinator.id === signup.user.id
+          )
+      )
       .map((signup): VolunteerSignupRow => ({ ...signup, isCoordinator: false })),
   ];
   const volunteerUserIds = new Set(volunteerRows.map((signup) => signup.user.id));

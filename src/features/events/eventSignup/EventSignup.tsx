@@ -11,13 +11,18 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   useGetEventsQuery,
+  useGetRosterAdminEventsQuery,
   useGetSignedUpEventsQuery,
 } from "../../../services/api/endpoints/events/events.api";
-import { useGetRosterAdminEntityIdsQuery } from "../../../services/api/endpoints/roster/roster.api";
+import {
+  useGetRosterAdminEntityIdsQuery,
+  useGetRostersQuery,
+} from "../../../services/api/endpoints/roster/roster.api";
 import { EventCard } from "../../../components/events/EventCard";
 import { ShortEventState } from "../../../services/api/endpoints/types/events.api.types";
+import { SimpleUserInfo } from "../../../services/api/endpoints/types/user.api.types";
 import { useAppSelector } from "../../../services/hooks";
-import { selectCurrentUserId, selectUserType } from "../../users/selectors";
+import { selectCurrentUserId, selectUser, selectUserType } from "../../users/selectors";
 import { CustomSvgs } from "../../../components/customSvgs/CustomSvgs";
 import { UserAvatars } from "../../../components/avatars/UserAvatars";
 import { CREATE_EVENT_ROUTE, PROFILE_ROUTE } from "../../../routes/route.constants";
@@ -54,6 +59,12 @@ const getCoordinatorName = (event: ShortEventState) =>
   event.eventCoordinator?.organizationName ||
   event.eventCoordinator?.nonprofitName ||
   "";
+
+const getUserName = (user?: {
+  fullName?: string;
+  organizationName?: string;
+  nonprofitName?: string;
+}) => user?.fullName || user?.organizationName || user?.nonprofitName || "";
 
 const getVolunteerCount = (
   event: ShortEventState,
@@ -115,6 +126,7 @@ type VolunteerEventDisplay = {
 export const EventSignup = () => {
   const navigate = useNavigate();
   const userType = useAppSelector(selectUserType);
+  const currentUser = useAppSelector(selectUser).user;
   const currentUserId = useAppSelector(selectCurrentUserId);
   const isPostNeedAdmin =
     userType === "organization" || userType === "nonprofit";
@@ -129,6 +141,15 @@ export const EventSignup = () => {
   const eventCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const { data: events, isLoading } = useGetEventsQuery();
   const { data: rosterAdminEntityIds = [] } = useGetRosterAdminEntityIdsQuery();
+  const {
+    data: rosterAdminEvents = [],
+    isLoading: isLoadingRosterAdminEvents,
+  } = useGetRosterAdminEventsQuery(undefined, {
+    skip: userType !== "individual",
+  });
+  const { data: organizationRosters = [] } = useGetRostersQuery(undefined, {
+    skip: !isPostNeedAdmin,
+  });
   const { data: signedUpEvents, isLoading: isLoadingSignedUpEvents } =
     useGetSignedUpEventsQuery(
       { when: "upcoming" },
@@ -139,12 +160,17 @@ export const EventSignup = () => {
       { when: "past" },
       { skip: userType !== "individual" }
     );
+  const rosterAdminEventIdSet = useMemo(
+    () => new Set(rosterAdminEvents.map((event) => event.id)),
+    [rosterAdminEvents]
+  );
   const hasCoordinatorEvents = Boolean(
     currentUserId &&
-      events?.some(
+      [...(events ?? []), ...rosterAdminEvents].some(
         (event) =>
           event.eventCoordinator?.id === currentUserId ||
-          rosterAdminEntityIds.includes(event.eventOwner.id)
+          rosterAdminEntityIds.includes(event.eventOwner.id) ||
+          rosterAdminEventIdSet.has(event.id)
       )
   );
   const availableTabs: readonly EventsTab[] = userType === "organization"
@@ -187,17 +213,27 @@ export const EventSignup = () => {
   }, [currentUserId, isPostNeedAdmin, activeTab]);
 
   const volunteerEvents = useMemo<VolunteerEventDisplay[]>(() => {
-    const eventsToDisplay = [...(events ?? [])];
+    const eventsById = new Map<string, ShortEventState>();
+
+    [
+      ...(events ?? []),
+      ...rosterAdminEvents,
+      ...(signedUpEvents ?? []).map(({ event }) => event),
+      ...(pastSignedUpEvents ?? []).map(({ event }) => event),
+    ].forEach((event) => {
+      eventsById.set(event.id, event);
+    });
+
+    const eventsToDisplay = Array.from(eventsById.values());
     const hiddenEventIdSet = new Set(hiddenEventIds);
     const adminManagedEvents = eventsToDisplay.filter(
       (event) =>
         event.eventOwner.id === currentUserId ||
         event.eventCoordinator?.id === currentUserId ||
-        rosterAdminEntityIds.includes(event.eventOwner.id)
+        rosterAdminEntityIds.includes(event.eventOwner.id) ||
+        rosterAdminEventIdSet.has(event.id)
     );
-    const coordinatorManagedEvents = eventsToDisplay.filter(
-      (event) => event.eventCoordinator?.id === currentUserId
-    );
+    const coordinatorManagedEvents = adminManagedEvents;
     const sourceEvents =
       isPostNeedAdmin || activeTab === "Admin"
         ? adminManagedEvents
@@ -258,7 +294,7 @@ export const EventSignup = () => {
           .map((event) => ({ event }));
       }
 
-      return [...(signedUpEvents ?? [])]
+      const signedUpCurrentEvents = [...(signedUpEvents ?? [])]
         .filter(
           ({ event, status }) =>
             status !== "passed" &&
@@ -275,6 +311,23 @@ export const EventSignup = () => {
           signupCount,
           isSignedUp: true,
         }));
+      const signedUpCurrentEventIds = new Set(
+        signedUpCurrentEvents.map(({ event }) => event.id)
+      );
+      const managedCurrentEvents = adminManagedEvents
+        .filter(
+          (event) =>
+            isCurrentEvent(event) &&
+            !hiddenEventIdSet.has(event.id) &&
+            !signedUpCurrentEventIds.has(event.id)
+        )
+        .map((event) => ({ event }));
+
+      return [...signedUpCurrentEvents, ...managedCurrentEvents].sort(
+        (first, second) =>
+          getEventDateOnlyTime(first.event.eventDate) -
+          getEventDateOnlyTime(second.event.eventDate)
+      );
     }
 
     if (activeTab === "Incomplete") {
@@ -293,11 +346,7 @@ export const EventSignup = () => {
     }
 
     if (activeTab === "Admin") {
-      const eventsForAdminTab = isPostNeedAdmin
-        ? adminManagedEvents
-        : coordinatorManagedEvents;
-
-      return eventsForAdminTab
+      return adminManagedEvents
         .sort(
           (first, second) =>
             getEventDateOnlyTime(second.eventDate) -
@@ -320,13 +369,17 @@ export const EventSignup = () => {
     hiddenEventIds,
     incompleteDraftEvents,
     isPostNeedAdmin,
+    currentUser,
     pastSignedUpEvents,
+    rosterAdminEventIdSet,
+    rosterAdminEvents,
     rosterAdminEntityIds,
     signedUpEvents,
   ]);
 
   const isLoadingVolunteerEvents =
     isLoading ||
+    isLoadingRosterAdminEvents ||
     (activeTab === "Current" && isLoadingSignedUpEvents) ||
     (activeTab === "Past" && isLoadingPastSignedUpEvents);
   const summaryEvents = showAllSummaryRows
@@ -358,6 +411,40 @@ export const EventSignup = () => {
   ) => {
     clickEvent.stopPropagation();
     navigate(`${PROFILE_ROUTE}/${coordinatorId}`);
+  };
+
+  const getAdditionalVolunteerCoordinators = (
+    event: ShortEventState
+  ): SimpleUserInfo[] => {
+    const coordinators: SimpleUserInfo[] = [];
+
+    if (isPostNeedAdmin && event.eventOwner.id === currentUserId) {
+      organizationRosters.forEach((roster) => {
+        roster.members.forEach((member) => {
+          if (member.isAdmin) {
+            coordinators.push(member.user);
+          }
+        });
+      });
+    }
+
+    if (
+      currentUser &&
+      (rosterAdminEntityIds.includes(event.eventOwner.id) ||
+        rosterAdminEventIdSet.has(event.id)) &&
+      event.eventOwner.id !== currentUserId
+    ) {
+      coordinators.push(currentUser);
+    }
+
+    return coordinators.filter(
+      (coordinator, index, allCoordinators) =>
+        coordinator.id &&
+        coordinator.id !== event.eventCoordinator?.id &&
+        allCoordinators.findIndex(
+          (candidate) => candidate.id === coordinator.id
+        ) === index
+    );
   };
 
   const handleFinishIncompleteEvent = (eventId: string) => {
@@ -458,9 +545,28 @@ export const EventSignup = () => {
               >
                 {summaryEvents.map(({ event, signupCount }) => {
                   const coordinatorName = getCoordinatorName(event);
+                  const additionalCoordinators =
+                    getAdditionalVolunteerCoordinators(event);
+                  const extraCoordinatorNames = additionalCoordinators
+                    .map((coordinator) => getUserName(coordinator))
+                    .filter(Boolean);
                   const hasCoordinator = Boolean(
-                    event.eventCoordinator?.id && coordinatorName
+                    (event.eventCoordinator?.id && coordinatorName) ||
+                      extraCoordinatorNames.length
                   );
+                  const coordinatorDisplayName = [
+                    coordinatorName,
+                    ...extraCoordinatorNames,
+                  ]
+                    .filter(Boolean)
+                    .filter(
+                      (name, index, names) => names.indexOf(name) === index
+                    )
+                    .join(", ");
+                  const coordinatorProfileId =
+                    event.eventCoordinator?.id ||
+                    additionalCoordinators[0]?.id ||
+                    "";
 
                   return (
                     <div
@@ -490,10 +596,8 @@ export const EventSignup = () => {
                           type="button"
                           className={styles.volunteerSummaryCoordinator}
                           onClick={(clickEvent) =>
-                            handleSummaryCoordinatorClick(
-                              clickEvent,
-                              event.eventCoordinator!.id
-                            )
+                            coordinatorProfileId &&
+                            handleSummaryCoordinatorClick(clickEvent, coordinatorProfileId)
                           }
                         >
                           <UserAvatars
@@ -503,7 +607,7 @@ export const EventSignup = () => {
                               event.eventCoordinator?.profilePicture
                             }
                           />
-                          <span>{coordinatorName}</span>
+                          <span>{coordinatorDisplayName}</span>
                         </button>
                       ) : (
                         <div className={styles.volunteerSummaryCoordinator}>
@@ -528,51 +632,67 @@ export const EventSignup = () => {
             </div>
             <div className={styles.darbeEventCards}>
               {volunteerEvents.map(
-                ({ event, signupCount, isSignedUp }: VolunteerEventDisplay) => (
-                  <div
-                    key={event.id}
-                    ref={(element) => {
-                      eventCardRefs.current[event.id] = element;
-                    }}
-                    className={styles.volunteerEventCardAnchor}
-                  >
-                    <EventCard
-                      event={event}
-                      variant="match"
-                      isSignedUp={isSignedUp}
-                      signupCount={signupCount}
-                      hideVolunteerActions={
-                        isPostNeedAdmin ||
-                        activeTab === "Past" ||
-                        activeTab === "Admin"
-                      }
-                      hideDetailsAction={activeTab === "Incomplete"}
-                      returnToEventsTab={activeTab}
-                      canExpandVolunteers
-                      allowCoordinatorVolunteerManagement={
-                        isPostNeedAdmin || activeTab === "Admin"
-                      }
-                      enableAdminControls={
-                        activeTab === "Admin" &&
-                        (isPostNeedAdmin ||
-                          event.eventCoordinator?.id === currentUserId ||
-                          rosterAdminEntityIds.includes(event.eventOwner.id))
-                      }
-                      useCurrentEventTimingActions={
-                        userType === "individual" && activeTab === "Current"
-                      }
-                      onPassSuccess={handlePassEventSuccess}
-                      incompleteActionLabel={
-                        activeTab === "Incomplete" ? "Complete Event Creation" : undefined
-                      }
-                      onIncompleteAction={
-                        activeTab === "Incomplete"
-                          ? handleFinishIncompleteEvent
-                          : undefined
-                      }
-                    />
-                  </div>
-                )
+                ({ event, signupCount, isSignedUp }: VolunteerEventDisplay) => {
+                  const isRosterAdminForEvent = rosterAdminEntityIds.includes(
+                    event.eventOwner.id
+                  ) || rosterAdminEventIdSet.has(event.id);
+                  const isCoordinatorForEvent =
+                    event.eventCoordinator?.id === currentUserId ||
+                    isRosterAdminForEvent;
+
+                  return (
+                    <div
+                      key={event.id}
+                      ref={(element) => {
+                        eventCardRefs.current[event.id] = element;
+                      }}
+                      className={styles.volunteerEventCardAnchor}
+                    >
+                      <EventCard
+                        event={event}
+                        variant="match"
+                        isSignedUp={isSignedUp}
+                        signupCount={signupCount}
+                        hideVolunteerActions={
+                          isPostNeedAdmin ||
+                          activeTab === "Past" ||
+                          activeTab === "Admin"
+                        }
+                        hideDetailsAction={activeTab === "Incomplete"}
+                        returnToEventsTab={activeTab}
+                        canExpandVolunteers
+                        allowCoordinatorVolunteerManagement={
+                          isPostNeedAdmin ||
+                          activeTab === "Admin" ||
+                          (activeTab === "Current" && isCoordinatorForEvent)
+                        }
+                        enableAdminControls={
+                          activeTab === "Admin" &&
+                          (isPostNeedAdmin ||
+                            event.eventCoordinator?.id === currentUserId ||
+                            isRosterAdminForEvent)
+                        }
+                        additionalVolunteerCoordinators={
+                          getAdditionalVolunteerCoordinators(event)
+                        }
+                        useCurrentEventTimingActions={
+                          userType === "individual" && activeTab === "Current"
+                        }
+                        onPassSuccess={handlePassEventSuccess}
+                        incompleteActionLabel={
+                          activeTab === "Incomplete"
+                            ? "Complete Event Creation"
+                            : undefined
+                        }
+                        onIncompleteAction={
+                          activeTab === "Incomplete"
+                            ? handleFinishIncompleteEvent
+                            : undefined
+                        }
+                      />
+                    </div>
+                  );
+                }
               )}
             </div>
           </>

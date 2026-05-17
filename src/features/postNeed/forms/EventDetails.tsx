@@ -16,6 +16,8 @@ import {
   useGetRostersQuery,
 } from "../../../services/api/endpoints/roster/roster.api";
 import { assetUrl } from "../../../utils/assetUrl";
+import { useAppSelector } from "../../../services/hooks";
+import { selectCurrentUserId, selectUser } from "../../users/selectors";
 
 import styles from "../styles/postNeed.module.css";
 
@@ -34,6 +36,23 @@ export const EventDetails = ({
     useState(false);
   const { data: rosterMembers, isLoading } = useGetRosterAdminsQuery();
   const { data: rosters } = useGetRostersQuery();
+  const currentUserId = useAppSelector(selectCurrentUserId);
+  const { user } = useAppSelector(selectUser);
+  const isEntityUser =
+    user?.userType === "organization" || user?.userType === "nonprofit";
+  const entityCoordinator = isEntityUser && currentUserId
+    ? {
+        id: currentUserId,
+        fullName: user?.fullName,
+        organizationName: user?.organizationName,
+        nonprofitName: user?.nonprofitName,
+        profilePicture: user?.profilePicture,
+      }
+    : undefined;
+  const coordinatorOptions = [
+    ...(entityCoordinator ? [entityCoordinator] : []),
+    ...(rosterMembers ?? []).filter((member) => member.id !== currentUserId),
+  ];
 
   const inviteRosterGroups = useMemo(
     () =>
@@ -51,13 +70,21 @@ export const EventDetails = ({
     selectedRoster?.rosterName || "Select roster group";
 
   useEffect(() => {
+    if (!data.eventCoordinator && entityCoordinator?.id) {
+      onChange?.((prevState) => ({
+        ...prevState,
+        eventCoordinator: entityCoordinator.id,
+      }));
+      return;
+    }
+
     if (!data.eventCoordinator && rosterMembers?.[0]?.id) {
       onChange?.((prevState) => ({
         ...prevState,
         eventCoordinator: rosterMembers[0].id,
       }));
     }
-  }, [data.eventCoordinator, onChange, rosterMembers]);
+  }, [data.eventCoordinator, entityCoordinator?.id, onChange, rosterMembers]);
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (onChange) {
@@ -221,8 +248,8 @@ export const EventDetails = ({
   const imagePreviewUrl = converPreviewToFile();
 
   const selectedCoordinator =
-    rosterMembers?.find((member) => member.id === data.eventCoordinator) ||
-    rosterMembers?.[0];
+    coordinatorOptions.find((member) => member.id === data.eventCoordinator) ||
+    coordinatorOptions[0];
   const selectedCoordinatorName =
     selectedCoordinator?.fullName ||
     selectedCoordinator?.organizationName ||
@@ -374,8 +401,8 @@ export const EventDetails = ({
             )}
             {isCoordinatorDropdownOpen && (
               <div className={styles.internalCoordinatorDropdown}>
-                {rosterMembers?.length ? (
-                  rosterMembers.map((member) => (
+                {coordinatorOptions.length ? (
+                  coordinatorOptions.map((member) => (
                     <button
                       className={styles.internalCoordinatorDropdownOption}
                       key={member.id}
@@ -390,7 +417,7 @@ export const EventDetails = ({
                   ))
                 ) : (
                   <span className={styles.internalCoordinatorDropdownEmpty}>
-                    No roster admins available
+                    No coordinators available
                   </span>
                 )}
               </div>
@@ -571,8 +598,8 @@ export const EventDetails = ({
             )}
             {isCoordinatorDropdownOpen && (
               <div className={styles.internalCoordinatorDropdown}>
-                {rosterMembers?.length ? (
-                  rosterMembers.map((member) => (
+                {coordinatorOptions.length ? (
+                  coordinatorOptions.map((member) => (
                     <button
                       className={styles.internalCoordinatorDropdownOption}
                       key={member.id}
@@ -587,7 +614,7 @@ export const EventDetails = ({
                   ))
                 ) : (
                   <span className={styles.internalCoordinatorDropdownEmpty}>
-                    No roster admins available
+                    No coordinators available
                   </span>
                 )}
               </div>

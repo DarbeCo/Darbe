@@ -241,6 +241,28 @@ const getSignupCounts = async (eventIds: string[]) => {
   return map;
 };
 
+const getRosterAdminUserIds = async (entityId: string): Promise<string[]> => {
+  const { data: rosters, error: rostersError } = await supabase
+    .from("rosters")
+    .select("id")
+    .eq("roster_owner_id", entityId);
+
+  if (rostersError) throw rostersError;
+
+  const rosterIds = (rosters ?? []).map((roster) => roster.id);
+  if (!rosterIds.length) return [];
+
+  const { data: members, error: membersError } = await supabase
+    .from("roster_members")
+    .select("user_id")
+    .in("roster_id", rosterIds)
+    .eq("is_admin", true);
+
+  if (membersError) throw membersError;
+
+  return Array.from(new Set((members ?? []).map((member) => member.user_id)));
+};
+
 const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> => {
   if (!events.length) return [];
 
@@ -646,7 +668,10 @@ export const getEvents = async (): Promise<ShortEventState[]> => {
         .select("event_id, status")
         .eq("user_id", userId),
       supabase.from("follows").select("following_id").eq("follower_id", userId),
-      supabase.from("roster_members").select("roster_id").eq("user_id", userId),
+      supabase
+        .from("roster_members")
+        .select("roster_id, is_admin")
+        .eq("user_id", userId),
       supabase
         .from("user_organizations")
         .select("parent_organization_id")
@@ -663,22 +688,36 @@ export const getEvents = async (): Promise<ShortEventState[]> => {
     );
 
     const rosterIds = (memberships ?? []).map((row) => row.roster_id);
+    const adminRosterIds = (memberships ?? [])
+      .filter((row) => row.is_admin)
+      .map((row) => row.roster_id);
     const { data: memberRosters, error: memberRostersError } = rosterIds.length
       ? await supabase
           .from("rosters")
           .select("roster_owner_id")
           .in("id", rosterIds)
       : { data: [], error: null };
+    const { data: adminRosters, error: adminRostersError } =
+      adminRosterIds.length
+        ? await supabase
+            .from("rosters")
+            .select("roster_owner_id")
+            .in("id", adminRosterIds)
+        : { data: [], error: null };
 
     if (memberRostersError) throw memberRostersError;
+    if (adminRostersError) throw adminRostersError;
 
     const memberEntityIds = new Set(
       [
         ...((memberRosters ?? []).map((row) => row.roster_owner_id)),
         ...((savedOrganizations ?? [])
           .map((row) => row.parent_organization_id)
-          .filter(Boolean) as string[]),
+        .filter(Boolean) as string[]),
       ]
+    );
+    const adminEntityIds = new Set(
+      (adminRosters ?? []).map((row) => row.roster_owner_id)
     );
     const affiliatedEntityIds = new Set<string>([
       ...((following ?? []).map((row) => row.following_id)),
@@ -688,6 +727,7 @@ export const getEvents = async (): Promise<ShortEventState[]> => {
 
     filteredEvents = filteredEvents.filter((event) => {
       if (event.event_coordinator_id === userId) return true;
+      if (adminEntityIds.has(event.event_owner_id)) return true;
       if (blockedEventIds.has(event.id)) return false;
       if (memberEntityIds.has(event.event_owner_id)) return true;
       if (affiliatedEntityIds.has(event.event_owner_id)) return true;
@@ -746,6 +786,17 @@ export const getEntityUpcomingEvents = async (
   if (error) throw error;
 
   return buildShortEvents((data ?? []) as EventRow[]);
+};
+
+export const getRosterAdminEvents = async (): Promise<ShortEventState[]> => {
+  await ensureUserId();
+  const { data: events, error: eventsError } = await supabase.rpc(
+    "get_roster_admin_events"
+  );
+
+  if (eventsError) throw eventsError;
+
+  return buildShortEvents((events ?? []) as EventRow[]);
 };
 
 export const getEventDetails = async (eventId: string): Promise<EventsState> => {
@@ -879,6 +930,24 @@ export const createEvent = async (newEvent: CreateEvent): Promise<SimpleEventSta
   results.forEach((result) => {
     if (result.error) throw result.error;
   });
+
+  const rosterAdminUserIds = await getRosterAdminUserIds(eventOwnerId);
+
+  if (rosterAdminUserIds.length) {
+    const adminSignupResults = await Promise.all(
+      rosterAdminUserIds.map((adminUserId) =>
+        supabase.rpc("manage_event_signup_check_time", {
+          target_event_id: event.id,
+          target_user_id: adminUserId,
+          check_action: "add_volunteer",
+        })
+      )
+    );
+
+    adminSignupResults.forEach((result) => {
+      if (result.error) throw result.error;
+    });
+  }
 
   await incrementImpact(eventOwnerId, { events_created: 1 });
 

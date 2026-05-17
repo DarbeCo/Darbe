@@ -101,6 +101,8 @@ export const PostNeed = () => {
   const location = useLocation();
   const userId = useAppSelector(selectCurrentUserId);
   const { user } = useAppSelector(selectUser);
+  const isEntityUser =
+    user?.userType === "organization" || user?.userType === "nonprofit";
   const routeIncompleteEventId = (
     location.state as {
       incompleteEventId?: string;
@@ -170,6 +172,7 @@ export const PostNeed = () => {
         isFollowersOnly: isInternalEvent || Boolean(eventData.isFollowersOnly),
         // set the event owner to the current user
         eventOwner: userId,
+        eventCoordinator: eventData.eventCoordinator || userId,
       };
 
       await createEvent(payload).unwrap();
@@ -330,7 +333,9 @@ export const PostNeed = () => {
     }
 
     const eventDetailsMissingFields = [
-      !hasValue(eventData.eventCoordinator) ? "Coordinator" : "",
+      !isEntityUser && !hasValue(eventData.eventCoordinator)
+        ? "Coordinator"
+        : "",
       !eventData.volunteerImpact.isIndividualImpact &&
       !eventData.volunteerImpact.isGroupImpact
         ? "Volunteer Impact Type"
@@ -394,7 +399,9 @@ export const PostNeed = () => {
       !hasValue(eventData.eventInternalLocation)
         ? "Assignment Location"
         : "",
-      !hasValue(eventData.eventCoordinator) ? "Coordinator" : "",
+      !isEntityUser && !hasValue(eventData.eventCoordinator)
+        ? "Coordinator"
+        : "",
       !eventData.volunteerImpact.isIndividualImpact &&
       !eventData.volunteerImpact.isGroupImpact
         ? "Volunteer Impact Type"
@@ -435,6 +442,7 @@ export const PostNeed = () => {
       endTime: toNumber(eventData.endTime),
       maxVolunteerCount: toNumber(eventData.maxVolunteerCount),
       eventOwner: userId,
+      eventCoordinator: eventData.eventCoordinator || userId,
     };
 
     saveIncompletePostNeedEvent({
