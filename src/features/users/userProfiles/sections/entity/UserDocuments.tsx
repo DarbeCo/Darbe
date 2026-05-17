@@ -16,10 +16,6 @@ export const UserDocuments = ({ canEdit, documents }: UserDocumentsProps) => {
   const financialDocuments = documents?.filter(
     (doc) => doc.documentCategory === "financial"
   );
-  const reports990 = documents?.filter((doc) => doc.documentCategory === "990");
-  const auditReports = documents?.filter(
-    (doc) => doc.documentCategory === "audit"
-  );
 
   const navigate = useNavigate();
   const handleEdit = () => {
@@ -31,92 +27,36 @@ export const UserDocuments = ({ canEdit, documents }: UserDocumentsProps) => {
     window.open(url, "_blank");
   };
 
-  const hasNoDocuments =
-    !financialDocuments?.length && !reports990?.length && !auditReports?.length;
-
-  const financialsRender = (
-    <>
-      {financialDocuments && financialDocuments.length > 0 && (
-        <div className={styles.entityDocumentsRow}>
-          <Typography variant="sectionTitle" textToDisplay="Financials" />
-          <div className={styles.entityDocumentRowList}>
-            {financialDocuments?.map((doc) => (
-              <div key={doc.id} className={styles.entityDocumentEntry}>
-                <Typography
-                  variant="blueTextSmall"
-                  textToDisplay={doc.fileName}
-                  truncationLength={7}
-                  onClick={() => handleOpenDocument(doc.url)}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </>
-  );
-  const reports990Render = (
-    <>
-      {reports990 && reports990.length > 0 && (
-        <div className={styles.entityDocumentsRow}>
-          <Typography variant="sectionTitle" textToDisplay="Reports 990" />
-          <div className={styles.entityDocumentRowList}>
-            {reports990?.map((doc) => (
-              <div key={doc.id} className={styles.entityDocumentEntry}>
-                <Typography
-                  variant="blueTextSmall"
-                  textToDisplay={doc.fileName}
-                  truncationLength={7}
-                  onClick={() => handleOpenDocument(doc.url)}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </>
-  );
-  const auditsRender = (
-    <>
-      {auditReports && auditReports.length > 0 && (
-        <div className={styles.entityDocumentsRow}>
-          <Typography variant="sectionTitle" textToDisplay="Audit Reports" />
-          <div className={styles.entityDocumentRowList}>
-            {auditReports?.map((doc) => (
-              <div key={doc.id} className={styles.entityDocumentEntry}>
-                <Typography
-                  variant="blueTextSmall"
-                  textToDisplay={doc.fileName}
-                  truncationLength={7}
-                  onClick={() => handleOpenDocument(doc.url)}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </>
-  );
-
   return (
     <div className={styles.entityDocuments}>
       <div className={styles.entityDetailsHeader}>
         <Typography
           variant="sectionTitle"
-          textToDisplay="Documents"
+          textToDisplay="Financials"
           extraClass="paddingLeft"
         />
         {canEdit && <EditProfileIcon onClick={handleEdit} />}
       </div>
-      {hasNoDocuments && (
+      {!financialDocuments?.length && (
         <Typography
           variant="blueTextSmall"
-          textToDisplay="No documents available"
+          textToDisplay="No financials available"
         />
       )}
-      {financialsRender}
-      {reports990Render}
-      {auditsRender}
+      {financialDocuments && financialDocuments.length > 0 && (
+        <div className={styles.entityDocumentRowList}>
+          {financialDocuments.map((doc) => (
+            <div key={doc.id} className={styles.entityDocumentEntry}>
+              <Typography
+                variant="blueTextSmall"
+                textToDisplay={doc.fileName}
+                truncationLength={7}
+                onClick={() => handleOpenDocument(doc.url)}
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

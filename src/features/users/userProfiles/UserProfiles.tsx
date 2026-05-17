@@ -29,6 +29,7 @@ import { UserDonors } from "./sections/entity/UserDonors";
 import { UserEntityStaff } from "./sections/entity/UserEntityStaff";
 import { UserEntityProfileInformation } from "./sections/entity/UserEntityProfileInformation";
 import { UserEventPhotos } from "./sections/entity/UserEventPhotos";
+import { UserDocuments } from "./sections/entity/UserDocuments";
 
 import styles from "./styles/userProfiles.module.css";
 
@@ -100,6 +101,7 @@ export const UserProfiles = () => {
     (friendRequest) => friendRequest.requesterId.id === userId
   );
   const isEntityProfile = userInformation?.user?.userType !== "individual";
+  const isNonprofitProfile = userInformation?.user?.userType === "nonprofit";
   const currentFriendCount = currentFriends?.length || 0;
   const isFriend = currentFriends?.some((friend) => friend.id === user?.id);
   const isFollowing = followingData?.some(
@@ -208,6 +210,12 @@ export const UserProfiles = () => {
         <UserEntityProfileInformation
           entityInformation={entityInformation}
           canEdit={canEdit}
+        />
+      )}
+      {isNonprofitProfile && (
+        <UserDocuments
+          canEdit={canEdit}
+          documents={userInformation?.entityDetails?.documents}
         />
       )}
       {!isEntityProfile && (
