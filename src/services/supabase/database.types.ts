@@ -1162,6 +1162,22 @@ export interface Database {
           hours_volunteered: number;
         }[];
       };
+      get_roster_admin_events: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          id: string;
+          event_owner_id: string;
+          event_name: string;
+          event_description: string | null;
+          event_date: string;
+          start_time: string | null;
+          end_time: string | null;
+          is_followers_only: boolean | null;
+          max_volunteer_count: number;
+          event_cover_photo_url: string | null;
+          event_coordinator_id: string;
+        }[];
+      };
       send_message: {
         Args: { target_receiver_id: string; message_body: string };
         Returns: {
