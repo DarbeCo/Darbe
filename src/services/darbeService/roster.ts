@@ -133,48 +133,13 @@ const hasVolunteerCoordinatorPermission = async (
   return Boolean(membership);
 };
 
-const getEntityDisplayName = async (entityId: string): Promise<string> => {
-  const { data: profile, error } = await supabase
-    .from("profiles")
-    .select("nonprofit_name, organization_name, full_name")
-    .eq("id", entityId)
-    .single();
-
-  if (error || !profile) {
-    throw error ?? new Error("Organization not found");
-  }
-
-  return (
-    profile.nonprofit_name ||
-    profile.organization_name ||
-    profile.full_name ||
-    "Organization"
-  );
-};
-
 const syncUserOrganizationMembership = async (
   userId: string,
   entityId: string
 ): Promise<void> => {
-  const organizationName = await getEntityDisplayName(entityId);
-  const { data: existingOrganization, error: existingError } = await supabase
-    .from("user_organizations")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("parent_organization_id", entityId)
-    .limit(1)
-    .maybeSingle();
-
-  if (existingError) throw existingError;
-  if (existingOrganization) return;
-
-  const { error } = await supabase.from("user_organizations").insert({
-    user_id: userId,
-    organization_name: organizationName,
-    position: "Member",
-    start_date: new Date().toISOString().split("T")[0],
-    parent_organization_id: entityId,
-    is_child_organization: false,
+  const { error } = await supabase.rpc("sync_user_organization_membership", {
+    target_user_id: userId,
+    target_entity_id: entityId,
   });
 
   if (error) throw error;

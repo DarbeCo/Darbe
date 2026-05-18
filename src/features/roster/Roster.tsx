@@ -18,6 +18,7 @@ import {
   RosterAdminPermissions,
   RosterMember,
 } from "../../services/api/endpoints/types/roster.api.types";
+import { OrgJoinRequestState } from "../friends/types";
 import { useAppDispatch } from "../../services/hooks";
 import {
   setExternalData,
@@ -81,6 +82,13 @@ export const Roster = () => {
   const [removeAsAdmin, setRemoveAsAdmin] = useState(false);
   const [showRemoveAdminConfirm, setShowRemoveAdminConfirm] = useState(false);
   const [adminStatusMessage, setAdminStatusMessage] = useState("");
+  const [pendingRequestRows, setPendingRequestRows] = useState<
+    OrgJoinRequestState[]
+  >([]);
+  const [handledJoinRequestIds, setHandledJoinRequestIds] = useState<string[]>(
+    []
+  );
+  const [joinRequestStatusMessage, setJoinRequestStatusMessage] = useState("");
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const selectedRosterId = searchParams.get("rosterId");
@@ -102,6 +110,14 @@ export const Roster = () => {
       }, { replace: true });
     }
   }, [data, selectedRosterId, setSearchParams]);
+
+  useEffect(() => {
+    setPendingRequestRows(
+      pendingJoinRequests.filter(
+        (request) => !handledJoinRequestIds.includes(request.id)
+      )
+    );
+  }, [handledJoinRequestIds, pendingJoinRequests]);
 
   const currentRoster = useMemo(
     () => data?.find((roster) => roster.id === selectedRosterId) ?? data?.[0],
@@ -225,11 +241,43 @@ export const Roster = () => {
   };
 
   const handleAcceptJoinRequest = async (requestId: string) => {
-    await acceptOrgJoinRequest(requestId).unwrap();
+    setHandledJoinRequestIds((currentIds) =>
+      currentIds.includes(requestId) ? currentIds : [...currentIds, requestId]
+    );
+    setPendingRequestRows((currentRequests) =>
+      currentRequests.filter((request) => request.id !== requestId)
+    );
+
+    try {
+      await acceptOrgJoinRequest(requestId).unwrap();
+      setJoinRequestStatusMessage("Request Accepted");
+    } catch (error) {
+      setHandledJoinRequestIds((currentIds) =>
+        currentIds.filter((id) => id !== requestId)
+      );
+      setPendingRequestRows(pendingJoinRequests);
+      throw error;
+    }
   };
 
   const handleDenyJoinRequest = async (requestId: string) => {
-    await denyOrgJoinRequest(requestId).unwrap();
+    setHandledJoinRequestIds((currentIds) =>
+      currentIds.includes(requestId) ? currentIds : [...currentIds, requestId]
+    );
+    setPendingRequestRows((currentRequests) =>
+      currentRequests.filter((request) => request.id !== requestId)
+    );
+
+    try {
+      await denyOrgJoinRequest(requestId).unwrap();
+      setJoinRequestStatusMessage("Request Rejected");
+    } catch (error) {
+      setHandledJoinRequestIds((currentIds) =>
+        currentIds.filter((id) => id !== requestId)
+      );
+      setPendingRequestRows(pendingJoinRequests);
+      throw error;
+    }
   };
 
   return (
@@ -294,13 +342,13 @@ export const Roster = () => {
               </div>
             )}
 
-            {!isLoadingPendingRequests && !pendingJoinRequests.length && (
+            {!isLoadingPendingRequests && !pendingRequestRows.length && (
               <p className={styles.rosterEmpty}>No pending requests</p>
             )}
 
-            {!isLoadingPendingRequests && pendingJoinRequests.length > 0 && (
+            {!isLoadingPendingRequests && pendingRequestRows.length > 0 && (
               <div className={styles.rosterPendingRequests}>
-                {pendingJoinRequests.map((request) => {
+                {pendingRequestRows.map((request) => {
                   const requesterName =
                     request.requester.fullName ||
                     request.requester.organizationName ||
@@ -630,6 +678,25 @@ export const Roster = () => {
       {adminStatusMessage && (
         <div className={styles.rosterAdminToast} role="status">
           {adminStatusMessage}
+        </div>
+      )}
+
+      {joinRequestStatusMessage && (
+        <div className={styles.rosterStatusDialogOverlay}>
+          <div
+            className={styles.rosterStatusDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="roster-status-dialog-title"
+          >
+            <h2 id="roster-status-dialog-title">{joinRequestStatusMessage}</h2>
+            <button
+              type="button"
+              onClick={() => setJoinRequestStatusMessage("")}
+            >
+              OK
+            </button>
+          </div>
         </div>
       )}
     </div>

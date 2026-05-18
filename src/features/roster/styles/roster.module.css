@@ -721,6 +721,52 @@
   box-shadow: 0 0 14px rgba(0, 0, 0, 0.22);
 }
 
+.rosterStatusDialogOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.rosterStatusDialog {
+  width: min(280px, calc(100vw - 48px));
+  min-height: 126px;
+  padding: 30px 28px 22px;
+  border-radius: 6px;
+  background: #ffffff;
+  box-shadow: 0 0 18px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.rosterStatusDialog h2 {
+  margin: 0;
+  color: #088f26;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.rosterStatusDialog button {
+  min-width: 72px;
+  height: 32px;
+  margin-top: 24px;
+  border: 1px solid #717070;
+  border-radius: 3px;
+  background: #ffffff;
+  color: #303030;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 17px;
+  cursor: pointer;
+}
+
 .rosterRemoveAdminConfirmOverlay {
   position: fixed;
   inset: 0;
