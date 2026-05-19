@@ -1,5 +1,4 @@
 import { FriendRequests } from "../../../friends/friendRequests";
-import PendingFriendRequests from "../../../friends/PendingRequests";
 import CurrentFriends from "../../../friends/CurrentFriends";
 import { useAppSelector } from "../../../../services/hooks";
 import { selectUser } from "../../selectors";

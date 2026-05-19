@@ -121,7 +121,8 @@ export const markNotificationsRead = async (): Promise<void> => {
     .from("notifications")
     .update({ read: true })
     .eq("recipient_user_id", userId)
-    .eq("read", false);
+    .eq("read", false)
+    .neq("content_type", "friendRequest");
 
   if (error) throw error;
 };

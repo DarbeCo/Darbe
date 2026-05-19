@@ -46,6 +46,21 @@ const fallbackFriendProfile = (id: string): ProfileFriendState =>
     zip: null,
   });
 
+const resolveFriendRequestNotifications = async (
+  recipientUserId: string,
+  senderUserId: string
+) => {
+  const { error } = await supabase
+    .from("notifications")
+    .update({ read: true })
+    .eq("recipient_user_id", recipientUserId)
+    .eq("sender_user_id", senderUserId)
+    .eq("content_type", "friendRequest")
+    .eq("read", false);
+
+  if (error) throw error;
+};
+
 export const getFriendRequests = async (): Promise<FriendRequestState[]> => {
   const userId = await ensureUserId();
   const { data, error } = await supabase
@@ -132,6 +147,11 @@ export const deleteFriendRequest = async (friendId: string): Promise<void> => {
     );
 
   if (error) throw error;
+
+  await Promise.all([
+    resolveFriendRequestNotifications(userId, friendId),
+    resolveFriendRequestNotifications(friendId, userId),
+  ]);
 };
 
 export const acceptFriendRequest = async (friendId: string): Promise<void> => {
@@ -156,6 +176,8 @@ export const acceptFriendRequest = async (friendId: string): Promise<void> => {
 
   const requestId = updatedRequest?.[0]?.id ?? friendId;
 
+  await resolveFriendRequestNotifications(userId, friendId);
+
   await createNotifications({
     recipientUserIds: [friendId],
     senderUserId: userId,
@@ -176,6 +198,8 @@ export const denyFriendRequest = async (friendId: string): Promise<void> => {
     });
 
   if (error) throw error;
+
+  await resolveFriendRequestNotifications(userId, friendId);
 };
 
 export const deleteFriend = async (friendId: string): Promise<void> => {

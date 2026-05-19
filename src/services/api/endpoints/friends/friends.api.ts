@@ -127,7 +127,7 @@ const friendsApi = darbeBaseApi.injectEndpoints({
           };
         }
       },
-      invalidatesTags: ["FriendRequests"],
+      invalidatesTags: ["FriendRequests", "Notifications", "NotificationCount"],
     }),
     deleteFriend: builder.mutation<void, string>({
       async queryFn(userId) {
@@ -143,7 +143,14 @@ const friendsApi = darbeBaseApi.injectEndpoints({
           };
         }
       },
-      invalidatesTags: ["Friends", "FriendRequests", "Feed", "Profile"],
+      invalidatesTags: [
+        "Friends",
+        "FriendRequests",
+        "Feed",
+        "Profile",
+        "Notifications",
+        "NotificationCount",
+      ],
     }),
     acceptFriendRequest: builder.mutation<void, string>({
       async queryFn(userId) {
@@ -175,7 +182,13 @@ const friendsApi = darbeBaseApi.injectEndpoints({
           };
         }
       },
-      invalidatesTags: ["Friends", "FriendRequests", "Feed"],
+      invalidatesTags: [
+        "Friends",
+        "FriendRequests",
+        "Feed",
+        "Notifications",
+        "NotificationCount",
+      ],
     }),
     followEntity: builder.mutation<void, string>({
       async queryFn(userId) {
