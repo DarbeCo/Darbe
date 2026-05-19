@@ -16,13 +16,12 @@ import {
 } from "../../../services/api/endpoints/events/events.api";
 import {
   useGetRosterAdminEntityIdsQuery,
-  useGetRostersQuery,
 } from "../../../services/api/endpoints/roster/roster.api";
 import { EventCard } from "../../../components/events/EventCard";
 import { ShortEventState } from "../../../services/api/endpoints/types/events.api.types";
 import { SimpleUserInfo } from "../../../services/api/endpoints/types/user.api.types";
 import { useAppSelector } from "../../../services/hooks";
-import { selectCurrentUserId, selectUser, selectUserType } from "../../users/selectors";
+import { selectCurrentUserId, selectUserType } from "../../users/selectors";
 import { CustomSvgs } from "../../../components/customSvgs/CustomSvgs";
 import { UserAvatars } from "../../../components/avatars/UserAvatars";
 import { CREATE_EVENT_ROUTE, PROFILE_ROUTE } from "../../../routes/route.constants";
@@ -126,7 +125,6 @@ type VolunteerEventDisplay = {
 export const EventSignup = () => {
   const navigate = useNavigate();
   const userType = useAppSelector(selectUserType);
-  const currentUser = useAppSelector(selectUser).user;
   const currentUserId = useAppSelector(selectCurrentUserId);
   const isPostNeedAdmin =
     userType === "organization" || userType === "nonprofit";
@@ -146,9 +144,6 @@ export const EventSignup = () => {
     isLoading: isLoadingRosterAdminEvents,
   } = useGetRosterAdminEventsQuery(undefined, {
     skip: userType !== "individual",
-  });
-  const { data: organizationRosters = [] } = useGetRostersQuery(undefined, {
-    skip: !isPostNeedAdmin,
   });
   const { data: signedUpEvents, isLoading: isLoadingSignedUpEvents } =
     useGetSignedUpEventsQuery(
@@ -369,7 +364,6 @@ export const EventSignup = () => {
     hiddenEventIds,
     incompleteDraftEvents,
     isPostNeedAdmin,
-    currentUser,
     pastSignedUpEvents,
     rosterAdminEventIdSet,
     rosterAdminEvents,
@@ -413,38 +407,8 @@ export const EventSignup = () => {
     navigate(`${PROFILE_ROUTE}/${coordinatorId}`);
   };
 
-  const getAdditionalVolunteerCoordinators = (
-    event: ShortEventState
-  ): SimpleUserInfo[] => {
-    const coordinators: SimpleUserInfo[] = [];
-
-    if (isPostNeedAdmin && event.eventOwner.id === currentUserId) {
-      organizationRosters.forEach((roster) => {
-        roster.members.forEach((member) => {
-          if (member.isAdmin) {
-            coordinators.push(member.user);
-          }
-        });
-      });
-    }
-
-    if (
-      currentUser &&
-      (rosterAdminEntityIds.includes(event.eventOwner.id) ||
-        rosterAdminEventIdSet.has(event.id)) &&
-      event.eventOwner.id !== currentUserId
-    ) {
-      coordinators.push(currentUser);
-    }
-
-    return coordinators.filter(
-      (coordinator, index, allCoordinators) =>
-        coordinator.id &&
-        coordinator.id !== event.eventCoordinator?.id &&
-        allCoordinators.findIndex(
-          (candidate) => candidate.id === coordinator.id
-        ) === index
-    );
+  const getAdditionalVolunteerCoordinators = (): SimpleUserInfo[] => {
+    return [];
   };
 
   const handleFinishIncompleteEvent = (eventId: string) => {
@@ -546,7 +510,7 @@ export const EventSignup = () => {
                 {summaryEvents.map(({ event, signupCount }) => {
                   const coordinatorName = getCoordinatorName(event);
                   const additionalCoordinators =
-                    getAdditionalVolunteerCoordinators(event);
+                    getAdditionalVolunteerCoordinators();
                   const extraCoordinatorNames = additionalCoordinators
                     .map((coordinator) => getUserName(coordinator))
                     .filter(Boolean);
@@ -673,7 +637,7 @@ export const EventSignup = () => {
                             isRosterAdminForEvent)
                         }
                         additionalVolunteerCoordinators={
-                          getAdditionalVolunteerCoordinators(event)
+                          getAdditionalVolunteerCoordinators()
                         }
                         useCurrentEventTimingActions={
                           userType === "individual" && activeTab === "Current"

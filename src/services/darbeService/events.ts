@@ -241,28 +241,6 @@ const getSignupCounts = async (eventIds: string[]) => {
   return map;
 };
 
-const getRosterAdminUserIds = async (entityId: string): Promise<string[]> => {
-  const { data: rosters, error: rostersError } = await supabase
-    .from("rosters")
-    .select("id")
-    .eq("roster_owner_id", entityId);
-
-  if (rostersError) throw rostersError;
-
-  const rosterIds = (rosters ?? []).map((roster) => roster.id);
-  if (!rosterIds.length) return [];
-
-  const { data: members, error: membersError } = await supabase
-    .from("roster_members")
-    .select("user_id")
-    .in("roster_id", rosterIds)
-    .eq("is_admin", true);
-
-  if (membersError) throw membersError;
-
-  return Array.from(new Set((members ?? []).map((member) => member.user_id)));
-};
-
 const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> => {
   if (!events.length) return [];
 
@@ -936,24 +914,6 @@ export const createEvent = async (newEvent: CreateEvent): Promise<SimpleEventSta
   results.forEach((result) => {
     if (result.error) throw result.error;
   });
-
-  const rosterAdminUserIds = await getRosterAdminUserIds(eventOwnerId);
-
-  if (rosterAdminUserIds.length) {
-    const adminSignupResults = await Promise.all(
-      rosterAdminUserIds.map((adminUserId) =>
-        supabase.rpc("manage_event_signup_check_time", {
-          target_event_id: event.id,
-          target_user_id: adminUserId,
-          check_action: "add_volunteer",
-        })
-      )
-    );
-
-    adminSignupResults.forEach((result) => {
-      if (result.error) throw result.error;
-    });
-  }
 
   await incrementImpact(eventOwnerId, { events_created: 1 });
 
