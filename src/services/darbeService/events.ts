@@ -143,6 +143,26 @@ const toLocalDateString = (value: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
+const hasEventEnded = (
+  event: Pick<EventRow, "event_date" | "end_time">,
+  now = new Date()
+) => {
+  const eventDate = parseEventDateAsLocalDate(event.event_date);
+  const eventEndTime = timeToDecimal(event.end_time);
+
+  if (eventEndTime !== undefined) {
+    return now > parseEventDateTimeAsLocalDate(event.event_date, eventEndTime);
+  }
+
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  );
+
+  return eventDate < startOfToday;
+};
+
 const calculateEventImpactValue = (
   event: {
     start_time: string | null;
@@ -735,14 +755,7 @@ export const getEntityEventCounts = async (
 
   return (data ?? []).reduce<EntityEventCounts>(
     (counts, event) => {
-      const eventEnd = parseEventDateTimeAsLocalDate(
-        event.event_date,
-        Number(event.end_time ?? 0)
-      );
-
-      // Completed: only events that have ended (past events)
-      // Upcoming: events that haven't ended yet (future or in progress)
-      if (eventEnd < now) {
+      if (hasEventEnded(event, now)) {
         counts.completedProjectsCount += 1;
       } else {
         counts.upcomingProjectsCount += 1;
@@ -769,7 +782,12 @@ export const getEntityUpcomingEvents = async (
 
   if (error) throw error;
 
-  return buildShortEvents((data ?? []) as EventRow[]);
+  const now = new Date();
+  const upcomingEvents = ((data ?? []) as EventRow[]).filter(
+    (event) => !hasEventEnded(event, now)
+  );
+
+  return buildShortEvents(upcomingEvents);
 };
 
 export const getRosterAdminEvents = async (): Promise<ShortEventState[]> => {
@@ -1437,25 +1455,13 @@ export const getSignedUpEvents = async (
   let filteredEvents = events ?? [];
 
   if (when) {
-    const today = new Date();
-    const startOfToday = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate()
-    );
-
+    const now = new Date();
     filteredEvents = filteredEvents.filter((event) => {
-      const eventDate = parseEventDateAsLocalDate(event.event_date);
-      const eventEndTime = timeToDecimal(event.end_time);
-      const hasEventEnded =
-        eventEndTime !== undefined
-          ? new Date() >
-            parseEventDateTimeAsLocalDate(event.event_date, eventEndTime)
-          : eventDate < startOfToday;
+      const eventEnded = hasEventEnded(event, now);
 
       return when === "past"
-        ? hasEventEnded
-        : !hasEventEnded;
+        ? eventEnded
+        : !eventEnded;
     });
   }
 

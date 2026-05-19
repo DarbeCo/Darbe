@@ -13,6 +13,10 @@ import "./globalStyles/global.css";
 const baseUrl = import.meta.env.BASE_URL || "/";
 const normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
 document.documentElement.style.setProperty("--base-url", normalizedBaseUrl);
+document.documentElement.style.setProperty(
+  "--signup-desktop-image",
+  `url("${normalizedBaseUrl}images/signupDesktopImage.png")`
+);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

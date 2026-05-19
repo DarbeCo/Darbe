@@ -23,6 +23,10 @@ import ImpactPage from "../features/impact/Impact";
 import { PrivacyPolicy } from "../pages/privacy/PrivacyPolicy";
 import { ContactUs } from "../pages/contact/ContactUs";
 
+const routerBasename = import.meta.env.DEV && window.location.pathname.startsWith("/Darbe")
+  ? "/Darbe"
+  : import.meta.env.BASE_URL;
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -133,5 +137,5 @@ export const router = createBrowserRouter([
     ],
   },
 ], {
-  basename: import.meta.env.BASE_URL,
+  basename: routerBasename,
 });
