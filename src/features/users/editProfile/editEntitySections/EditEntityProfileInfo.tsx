@@ -5,6 +5,7 @@ import { hideModal } from "../../../../components/modal/modalSlice";
 import { useUpdateEntityProfileMutation } from "../../../../services/api/endpoints/profiles/profiles.api";
 import { useAppDispatch, useAppSelector } from "../../../../services/hooks";
 import { splitStringndCapitalize } from "../../../../utils/CommonFunctions";
+import { formatPhoneNumber } from "../../../../utils/formUtils/formUtils";
 import { selectCurrentUserId, selectUser } from "../../selectors";
 import { setUserProfile } from "../../userSlice";
 import { useEditEntityProfileInformation } from "../hooks";
@@ -63,7 +64,10 @@ export const EditEntityProfileInfo = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setEditProfileInfo((prev) => ({ ...prev, [name]: value }));
+    setEditProfileInfo((prev) => ({
+      ...prev,
+      [name]: name === "phoneNumber" ? formatPhoneNumber(value) : value,
+    }));
   };
 
   const getFieldValue = (name: EntityProfileField) => {
@@ -77,7 +81,8 @@ export const EditEntityProfileInfo = () => {
       return parentEntity?.fullName ?? "";
     }
 
-    return String(editProfileInfo[name] ?? "");
+    const value = String(editProfileInfo[name] ?? "");
+    return name === "phoneNumber" ? formatPhoneNumber(value) : value;
   };
 
   const renderInput = (
@@ -102,6 +107,8 @@ export const EditEntityProfileInfo = () => {
           onChange={handleChange}
           placeholder={placeholder}
           value={value}
+          maxLength={name === "phoneNumber" ? 14 : undefined}
+          type={name === "phoneNumber" ? "tel" : "text"}
         />
       </div>
     );
@@ -110,6 +117,7 @@ export const EditEntityProfileInfo = () => {
   const saveProfile = useCallback(async () => {
     const payload = {
       ...editProfileInfo,
+      phoneNumber: formatPhoneNumber(editProfileInfo.phoneNumber),
       user: {
         id: userId,
         nonprofitName: editProfileInfo.nonprofitName,

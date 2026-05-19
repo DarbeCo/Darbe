@@ -12,6 +12,7 @@ import {
   setModalType,
 } from "../../../../components/modal/modalSlice";
 import { ProfileFriendState } from "../../../friends/types";
+import { formatPhoneNumber } from "../../../../utils/formUtils/formUtils";
 
 import styles from "../styles/userProfiles.module.css";
 
@@ -72,6 +73,7 @@ export const UserQuickInfo = ({
   isEntity,
 }: UserQuickInfoProps) => {
   const dispatch = useAppDispatch();
+  const formattedContactNumber = formatPhoneNumber(contactNumber);
   const handleEditProfile = () => {
     if (isEntity) {
       dispatch(setModalType(EDIT_SECTIONS.entityProfile));
@@ -82,8 +84,8 @@ export const UserQuickInfo = ({
     dispatch(showModal());
   };
   const handleContactClick = () => {
-    if (contactNumber) {
-      window.location.href = `tel:${contactNumber}`;
+    if (formattedContactNumber) {
+      window.location.href = `tel:${formattedContactNumber}`;
     }
   };
 
@@ -175,7 +177,9 @@ export const UserQuickInfo = ({
           <Typography
             variant="blueTextSmall"
             textToDisplay={
-              contactNumber ? `Phone #: ${contactNumber}` : "Phone #: Unknown"
+              formattedContactNumber
+                ? `Phone #: ${formattedContactNumber}`
+                : "Phone #: Unknown"
             }
             extraClass="paddingTop"
           />

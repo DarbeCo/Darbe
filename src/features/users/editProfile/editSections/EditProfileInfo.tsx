@@ -18,6 +18,7 @@ import { selectCurrentUserId, selectUser } from "../../selectors";
 import { DarbeProfileSharedState, setUserProfile } from "../../userSlice";
 import { useEditProfileInformation } from "../hooks";
 import { registerProfileEditAutosave } from "../profileEditAutosave";
+import { formatPhoneNumber } from "../../../../utils/formUtils/formUtils";
 
 import styles from "../styles/profileEdit.module.css";
 
@@ -340,9 +341,12 @@ export const EditProfileInfo = () => {
       | "state",
     value: string
   ) => {
+    const nextValue =
+      field === "phoneNumber" ? formatPhoneNumber(value) : value;
+
     setFormData((prev) => ({
       ...prev,
-      [field]: value,
+      [field]: nextValue,
     }));
   };
 
@@ -350,11 +354,13 @@ export const EditProfileInfo = () => {
     field: "name" | "phone" | "email" | "relation",
     value: string
   ) => {
+    const nextValue = field === "phone" ? formatPhoneNumber(value) : value;
+
     setFormData((prev) => ({
       ...prev,
       emergencyContact: {
         ...prev.emergencyContact,
-        [field]: value,
+        [field]: nextValue,
       },
     }));
   };
@@ -365,6 +371,7 @@ export const EditProfileInfo = () => {
 
     return {
       ...formData,
+      phoneNumber: formatPhoneNumber(formData.phoneNumber),
       state: parsedLocation.state,
       user: {
         ...formData.user,
@@ -374,7 +381,7 @@ export const EditProfileInfo = () => {
       },
       emergencyContact: {
         name: formData.emergencyContact?.name ?? "",
-        phone: formData.emergencyContact?.phone ?? "",
+        phone: formatPhoneNumber(formData.emergencyContact?.phone),
         email: formData.emergencyContact?.email ?? "",
         relation: formData.emergencyContact?.relation ?? "",
       },
@@ -573,9 +580,10 @@ export const EditProfileInfo = () => {
           <ProfileTextField
             label="Phone Number"
             placeholder="123-456-7890"
-            value={formData.phoneNumber}
+            value={formatPhoneNumber(formData.phoneNumber)}
             onChange={(value) => setProfileField("phoneNumber", value)}
-            maxLength={50}
+            maxLength={14}
+            type="tel"
           />
           <ProfileTextField
             label="Emergency Contact Email"

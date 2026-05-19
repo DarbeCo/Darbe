@@ -1,5 +1,6 @@
 import { assetUrl } from "../../utils/assetUrl";
 import { VolunteerMatch } from "../../services/api/endpoints/types/events.api.types";
+import { formatPhoneNumber } from "../../utils/formUtils/formUtils";
 
 import styles from "./styles/volunteerMathces.module.css";
 
@@ -27,6 +28,7 @@ export const VolunteerCard = ({ match }: VolunteerCardProps) => {
   const extraCauseCount = Math.max((match.causes?.length ?? 0) - 3, 0);
   const memberSince = formatMemberSince(match.createdAt);
   const emergencyContact = match.emergencyContact;
+  const emergencyContactPhone = formatPhoneNumber(emergencyContact?.phone);
 
   return (
       <article className={styles.volunteerCard}>
@@ -101,7 +103,7 @@ export const VolunteerCard = ({ match }: VolunteerCardProps) => {
           </div>
           <div>
             <h3>Phone Number</h3>
-            <p>{emergencyContact?.phone || "None"}</p>
+            <p>{emergencyContactPhone || "None"}</p>
           </div>
         </div>
       </article>
