@@ -6,8 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { SuggestedFriendState } from "../../features/friends/types";
 import { PROFILE_ROUTE } from "../../routes/route.constants";
 import {
-  useGetFriendRequestsQuery,
-  useGetSentFriendRequestsQuery,
   useGetSuggestedFriendsQuery,
   useSendFriendRequestMutation,
 } from "../../services/api/endpoints/friends/friends.api";
@@ -32,41 +30,11 @@ export const FriendSuggestionsDialog = () => {
   );
   const requestLocksRef = useRef(new Set<string>());
   const [sendFriendRequest] = useSendFriendRequestMutation();
-  const { data: friendRequests = [] } = useGetFriendRequestsQuery();
-  const { data: pendingRequests = [] } = useGetSentFriendRequestsQuery();
-
-  const pendingRequestIds = useMemo(() => {
-    const ids = new Set<string>();
-    friendRequests.forEach((request) => {
-      if (request.requesterId?.id) ids.add(request.requesterId.id);
-    });
-    pendingRequests.forEach((request) => {
-      if (request.receiverId?.id) ids.add(request.receiverId.id);
-    });
-    return Array.from(ids).sort();
-  }, [friendRequests, pendingRequests]);
-
-  const combinedFilterIds = useMemo(() => {
-    const ids = new Set<string>();
-    pendingRequestIds.forEach((id) => ids.add(id));
-    return Array.from(ids);
-  }, [pendingRequestIds]);
-
-  const pendingRequestIdSet = useMemo(
-    () => new Set(pendingRequestIds),
-    [pendingRequestIds]
-  );
-
-  const { data: suggestedFriends, isLoading } = useGetSuggestedFriendsQuery({
-    filterIds: combinedFilterIds,
-  });
+  const { data: suggestedFriends, isLoading } = useGetSuggestedFriendsQuery();
 
   const filteredSuggestedFriends = useMemo(() => {
     if (!suggestedFriends) return [];
     return suggestedFriends
-      .filter(
-        (suggestedFriend) => !pendingRequestIdSet.has(suggestedFriend.id)
-      )
       .sort((firstSuggestion, secondSuggestion) =>
         getSuggestionName(firstSuggestion).localeCompare(
           getSuggestionName(secondSuggestion),
@@ -74,7 +42,7 @@ export const FriendSuggestionsDialog = () => {
           { sensitivity: "base" }
         )
       );
-  }, [pendingRequestIdSet, suggestedFriends]);
+  }, [suggestedFriends]);
 
   useEffect(() => {
     setVisibleSuggestions((currentSuggestions) => {

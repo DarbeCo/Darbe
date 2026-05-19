@@ -14,7 +14,6 @@ export const EditFriends = () => {
       <div className={styles.profileDialogScrollArea}>
         <div className={styles.profileFriendsDialogSections}>
           <FriendRequests />
-          <PendingFriendRequests />
           <CurrentFriends user={user} />
         </div>
       </div>

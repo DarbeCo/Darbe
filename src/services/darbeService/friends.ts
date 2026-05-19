@@ -492,23 +492,16 @@ export const getUserFollowers = async (userId: string): Promise<ProfileFollowSta
 };
 
 export const getFriends = async (userId: string): Promise<ProfileFriendState[]> => {
-  const { data, error } = await supabase
-    .from("friendships")
-    .select("friend_id, created_at")
-    .eq("user_id", userId);
+  const { data, error } = await supabase.rpc("get_user_friends", {
+    target_user_id: userId,
+  });
 
   if (error) throw error;
 
   const friendIds = uniqueIds((data ?? []).map((row) => row.friend_id));
   const friendProfiles = await getProfilesByIds(friendIds);
-  const connectedAtByFriendId = new Map(
-    (data ?? []).map((row) => [row.friend_id, row.created_at])
-  );
 
-  return friendProfiles.map((profile) => ({
-    ...mapProfileToFriend(profile),
-    connectedAt: connectedAtByFriendId.get(profile.id),
-  }));
+  return friendProfiles.map(mapProfileToFriend);
 };
 
 export const getMutualFriends = async (userId: string): Promise<ProfileFriendState[]> => {
@@ -518,22 +511,19 @@ export const getMutualFriends = async (userId: string): Promise<ProfileFriendSta
     return [];
   }
 
-  const { data, error } = await supabase
-    .from("friendships")
-    .select("user_id, friend_id")
-    .in("user_id", [currentUserId, userId]);
+  const [currentUserFriendsRes, targetUserFriendsRes] = await Promise.all([
+    supabase.rpc("get_user_friends", { target_user_id: currentUserId }),
+    supabase.rpc("get_user_friends", { target_user_id: userId }),
+  ]);
 
-  if (error) throw error;
+  if (currentUserFriendsRes.error) throw currentUserFriendsRes.error;
+  if (targetUserFriendsRes.error) throw targetUserFriendsRes.error;
 
   const currentUserFriendIds = new Set(
-    (data ?? [])
-      .filter((row) => row.user_id === currentUserId)
-      .map((row) => row.friend_id)
+    (currentUserFriendsRes.data ?? []).map((row) => row.friend_id)
   );
   const targetUserFriendIds = new Set(
-    (data ?? [])
-      .filter((row) => row.user_id === userId)
-      .map((row) => row.friend_id)
+    (targetUserFriendsRes.data ?? []).map((row) => row.friend_id)
   );
 
   const friendIds = uniqueIds(
@@ -550,9 +540,23 @@ export const getMutualFriends = async (userId: string): Promise<ProfileFriendSta
 };
 
 export const getSuggestedFriends = async (
-  filterIds?: string[]
+  _filterIds?: string[]
 ): Promise<SuggestedFriendState[]> => {
   const userId = await ensureUserId();
+  const { data: currentUser, error: currentUserError } = await supabase
+    .from("profiles")
+    .select("user_type")
+    .eq("id", userId)
+    .single();
+
+  if (currentUserError || !currentUser) {
+    throw currentUserError ?? new Error("User not found");
+  }
+
+  if (currentUser.user_type !== "individual") {
+    return [];
+  }
+
   const { data: friendIdsData, error: friendIdsError } = await supabase.rpc(
     "get_user_friends",
     { target_user_id: userId }
@@ -561,7 +565,7 @@ export const getSuggestedFriends = async (
   if (friendIdsError) throw friendIdsError;
 
   const friendIds = (friendIdsData ?? []).map((row) => row.friend_id);
-  const excludeIds = new Set([userId, ...(filterIds ?? []), ...friendIds]);
+  const excludeIds = new Set([userId, ...friendIds]);
 
   const { data, error } = await supabase
     .from("profiles")

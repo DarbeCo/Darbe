@@ -4,7 +4,6 @@ import styles from "./styles/friendRequests.module.css";
 import CurrentFriends from "./CurrentFriends";
 import { useSelector } from "react-redux";
 import { selectUser } from "../users/selectors";
-import PendingFriendRequests from "./PendingRequests";
 
 export const FriendsList = () => {
   const { user } = useSelector(selectUser);
@@ -13,7 +12,6 @@ export const FriendsList = () => {
     <Container>
       <Card className={styles.friendsListCard}>
         <FriendRequests />
-        <PendingFriendRequests />
         <CurrentFriends user={user} />
       </Card>
     </Container>

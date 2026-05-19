@@ -1,57 +1,32 @@
-import { useMemo } from "react";
-import {
-  useGetFriendRequestsQuery,
-  useGetSentFriendRequestsQuery,
-  useGetSuggestedFriendsQuery,
-} from "../../services/api/endpoints/friends/friends.api";
+import { useGetSuggestedFriendsQuery } from "../../services/api/endpoints/friends/friends.api";
+import { useAppSelector } from "../../services/hooks";
 import useScreenWidthHook from "../../utils/commonHooks/UseScreenWidth";
+import { selectUserType } from "../../features/users/selectors";
 import { DesktopFriendSuggestions } from "./DesktopFriendSuggestions";
+import { MobileFriendSuggestions } from "./MobileFriendSuggestions";
 
 export const FriendSuggestions = () => {
   const { isDesktop } = useScreenWidthHook();
+  const userType = useAppSelector(selectUserType);
+  const isIndividual = userType === "individual";
 
-  const { data: friendRequests = [] } = useGetFriendRequestsQuery();
-  const { data: pendingRequests = [] } = useGetSentFriendRequestsQuery();
-
-  const pendingRequestIds = useMemo(() => {
-    const ids = new Set<string>();
-    friendRequests.forEach((request) => {
-      if (request.requesterId?.id) ids.add(request.requesterId.id);
-    });
-    pendingRequests.forEach((request) => {
-      if (request.receiverId?.id) ids.add(request.receiverId.id);
-    });
-    return Array.from(ids).sort();
-  }, [friendRequests, pendingRequests]);
-
-  const combinedFilterIds = useMemo(() => {
-    const ids = new Set<string>();
-    pendingRequestIds.forEach((id) => ids.add(id));
-    return Array.from(ids);
-  }, [pendingRequestIds]);
-
-  const pendingRequestIdSet = useMemo(
-    () => new Set(pendingRequestIds),
-    [pendingRequestIds]
-  );
-
-  const { data: suggestedFriends } = useGetSuggestedFriendsQuery({
-    filterIds: combinedFilterIds,
+  const { data: suggestedFriends } = useGetSuggestedFriendsQuery(undefined, {
+    skip: !isIndividual,
   });
 
-  const filteredSuggestedFriends = useMemo(() => {
-    if (!suggestedFriends) return suggestedFriends;
-    return suggestedFriends.filter(
-      (suggestedFriend) => !pendingRequestIdSet.has(suggestedFriend.id)
-    );
-  }, [pendingRequestIdSet, suggestedFriends]);
+  if (!isIndividual) {
+    return null;
+  }
 
-  // TODO: Combine these, pretty much copy past unless we have some wild changes
   return (
     <>
-      {isDesktop && (
+      {isDesktop ? (
         <DesktopFriendSuggestions
-          suggestedFriends={filteredSuggestedFriends}
+          suggestedFriends={suggestedFriends}
+        />
+      ) : (
+        <MobileFriendSuggestions
+          suggestedFriends={suggestedFriends}
         />
       )}
     </>
