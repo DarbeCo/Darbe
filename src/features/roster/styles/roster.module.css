@@ -119,12 +119,22 @@
 }
 
 .rosterMembersHeader h1 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
   margin: 0;
   color: #000000;
   font-family: "Open Sans", sans-serif;
   font-size: 20px;
   font-weight: 700;
   line-height: 27px;
+}
+
+.rosterMembersHeader h1 span {
+  color: #717070;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 18px;
 }
 
 .rosterHeaderActions {

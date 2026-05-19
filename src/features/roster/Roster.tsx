@@ -436,7 +436,13 @@ export const Roster = () => {
         ) : (
           <section className={styles.rosterPanel}>
             <div className={styles.rosterMembersHeader}>
-              <h1>{currentRosterName}</h1>
+              <h1>
+                {currentRosterName}
+                <span>
+                  {rosterMembers.length}{" "}
+                  {rosterMembers.length === 1 ? "member" : "members"}
+                </span>
+              </h1>
               <div className={styles.rosterHeaderActions}>
                 <button type="button" onClick={handleEditRoster}>
                   Edit Roster
@@ -447,7 +453,7 @@ export const Roster = () => {
                   onClick={() => setShowDeleteRosterConfirm(true)}
                   disabled={!canDeleteRoster || isDeletingRoster}
                 >
-                  Remove Roster
+                  Delete Roster
                 </button>
               </div>
             </div>
