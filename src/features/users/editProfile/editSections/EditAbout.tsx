@@ -43,6 +43,33 @@ const YEAR_OPTIONS = Array.from({ length: 101 }, (_, index) =>
 
 const ABOUT_MAX_LENGTH = 300;
 
+const normalizeHoursValue = (value: string | number | undefined | null) =>
+  value?.toString().replace(/,/g, "").trim() ?? "";
+
+const parseHoursValue = (value: string | number | undefined | null) =>
+  Number(normalizeHoursValue(value));
+
+const formatHoursForDisplay = (value: string | number | undefined | null) => {
+  const rawValue = value?.toString() ?? "";
+  const normalizedValue = normalizeHoursValue(value);
+
+  if (!normalizedValue) return "";
+  if (!/^\d*\.?\d*$/.test(normalizedValue)) return rawValue;
+
+  const [integerPart, decimalPart] = normalizedValue.split(".");
+  const formattedInteger = integerPart
+    ? Number(integerPart).toLocaleString("en-US")
+    : "";
+
+  if (normalizedValue.endsWith(".")) {
+    return `${formattedInteger}.`;
+  }
+
+  return decimalPart === undefined
+    ? formattedInteger
+    : `${formattedInteger}.${decimalPart}`;
+};
+
 type AutoGrowFieldProps = {
   label: string;
   value?: string | number;
@@ -223,11 +250,16 @@ export const EditAbout = () => {
     const isAboutMeDirty = formData.aboutMe !== editUserAboutState.aboutMe;
     const isVolunteerReasonDirty =
       formData.volunteerReason !== editUserAboutState.volunteerReason;
+    const currentTotalHours = normalizeHoursValue(
+      volunteerExperiences.totalHours
+    );
+    const initialTotalHours = normalizeHoursValue(
+      editUserVolunteerExperiencesState.totalHours
+    );
     const isVolunteerExperiencesDirty =
       volunteerExperiences.entityName !==
         editUserVolunteerExperiencesState.entityName ||
-      volunteerExperiences.totalHours !==
-        editUserVolunteerExperiencesState.totalHours ||
+      currentTotalHours !== initialTotalHours ||
       volunteerExperiences.startDate !==
         editUserVolunteerExperiencesState.startDate ||
       volunteerExperiences.endDate !==
@@ -291,11 +323,15 @@ export const EditAbout = () => {
       errors.entityName = "Non-Profit Name is required.";
     }
 
+    const normalizedTotalHours = normalizeHoursValue(
+      volunteerExperiences.totalHours
+    );
+
     if (
       volunteerExperiences.totalHours === undefined ||
       volunteerExperiences.totalHours === null ||
-      volunteerExperiences.totalHours.toString().trim() === "" ||
-      Number.isNaN(Number(volunteerExperiences.totalHours))
+      normalizedTotalHours === "" ||
+      Number.isNaN(parseHoursValue(volunteerExperiences.totalHours))
     ) {
       errors.totalHours = "Estimated Hours Volunteered is required.";
     }
@@ -331,7 +367,7 @@ export const EditAbout = () => {
       dates,
       {
         ...volunteerExperiences,
-        totalHours: Number(volunteerExperiences.totalHours),
+        totalHours: parseHoursValue(volunteerExperiences.totalHours),
       }
     ) as VolunteerExperienceState;
 
@@ -403,7 +439,7 @@ export const EditAbout = () => {
           <AutoGrowField
             label="Estimated Hours Volunteered"
             required
-            value={volunteerExperiences.totalHours}
+            value={formatHoursForDisplay(volunteerExperiences.totalHours)}
             placeholder="Hours Volunteer?"
             name="volunteerExperiences totalHours"
             error={fieldErrors.totalHours}
