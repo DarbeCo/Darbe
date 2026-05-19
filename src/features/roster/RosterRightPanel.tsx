@@ -8,10 +8,7 @@ import {
 
 import { useGetEntityEventCountsQuery } from "../../services/api/endpoints/events/events.api";
 import { useGetDonorsAndStaffQuery } from "../../services/api/endpoints/profiles/profiles.api";
-import {
-  useDeleteRosterMutation,
-  useGetRostersQuery,
-} from "../../services/api/endpoints/roster/roster.api";
+import { useGetRostersQuery } from "../../services/api/endpoints/roster/roster.api";
 import { useAppSelector } from "../../services/hooks";
 import { selectCurrentUserId } from "../users/selectors";
 
@@ -21,12 +18,9 @@ export const RosterRightPanel = () => {
   const currentUserId = useAppSelector(selectCurrentUserId);
   const [searchParams, setSearchParams] = useSearchParams();
   const [isRosterMenuOpen, setIsRosterMenuOpen] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const rosterMenuRef = useRef<HTMLDivElement | null>(null);
   const selectedRosterId = searchParams.get("rosterId");
   const { data: rosters } = useGetRostersQuery();
-  const [deleteRoster, { isLoading: isDeletingRoster }] =
-    useDeleteRosterMutation();
   const { data: eventCounts } = useGetEntityEventCountsQuery(currentUserId, {
     skip: !currentUserId,
   });
@@ -72,7 +66,6 @@ export const RosterRightPanel = () => {
     rosters?.find((roster) => roster.id === selectedRosterId) ?? rosters?.[0];
   const rosterMembers = currentRoster?.members ?? [];
   const hasMultipleRosters = (rosters?.length ?? 0) > 1;
-  const canDeleteRoster = Boolean(currentRoster?.id && hasMultipleRosters);
 
   const handleSelectRoster = (rosterId: string) => {
     setSearchParams((currentParams) => {
@@ -101,26 +94,6 @@ export const RosterRightPanel = () => {
       if (currentRoster?.id) {
         nextParams.set("rosterId", currentRoster.id);
       }
-      return nextParams;
-    });
-  };
-
-  const handleDeleteRoster = async () => {
-    if (!currentRoster?.id || !rosters?.length) return;
-
-    const nextRoster = rosters.find((roster) => roster.id !== currentRoster.id);
-
-    await deleteRoster(currentRoster.id).unwrap();
-    setShowDeleteConfirm(false);
-
-    setSearchParams((currentParams) => {
-      const nextParams = new URLSearchParams(currentParams);
-      if (nextRoster?.id) {
-        nextParams.set("rosterId", nextRoster.id);
-      } else {
-        nextParams.delete("rosterId");
-      }
-      nextParams.delete("view");
       return nextParams;
     });
   };
@@ -191,15 +164,6 @@ export const RosterRightPanel = () => {
         </span>
       </button>
 
-      <button
-        type="button"
-        className={`${styles.rosterRailAction} ${styles.rosterRailRemoveAction}`}
-        onClick={() => setShowDeleteConfirm(true)}
-        disabled={!canDeleteRoster || isDeletingRoster}
-      >
-        <span>Remove Roster</span>
-      </button>
-
       <section className={styles.rosterRailOverview}>
         <h2>Org Overview</h2>
         <dl>
@@ -230,35 +194,6 @@ export const RosterRightPanel = () => {
         </dl>
       </section>
 
-      {showDeleteConfirm && currentRoster && (
-        <div className={styles.rosterRailConfirmOverlay}>
-          <div
-            className={styles.rosterRailConfirm}
-            role="dialog"
-            aria-modal="true"
-          >
-            <p>
-              Are you sure you want to remove {currentRoster.rosterName}?
-            </p>
-            <div className={styles.rosterRailConfirmActions}>
-              <button
-                type="button"
-                onClick={handleDeleteRoster}
-                disabled={isDeletingRoster}
-              >
-                Yes
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                disabled={isDeletingRoster}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </aside>
   );
 };

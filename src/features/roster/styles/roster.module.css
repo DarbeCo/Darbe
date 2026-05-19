@@ -127,12 +127,26 @@
   line-height: 27px;
 }
 
+.rosterHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
 .rosterMembersHeader button {
   height: 34px;
   padding: 0 16px;
   border: 1px solid #2c77e7;
   background: #ffffff;
   color: #2c77e7;
+}
+
+.rosterHeaderActions .rosterRemoveAction {
+  height: 34px;
+  border: 1px solid #ff0000;
+  background: #ffffff;
+  color: #ff0000;
 }
 
 .rosterLoading,

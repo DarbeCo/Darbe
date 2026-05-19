@@ -4,6 +4,7 @@ import { Search } from "@mui/icons-material";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import {
+  useDeleteRosterMutation,
   useDemoteUserFromAdminMutation,
   useGetRostersQuery,
   usePromoteUserToAdminMutation,
@@ -65,6 +66,8 @@ type PermissionKey = keyof RosterAdminPermissions;
 
 export const Roster = () => {
   const { data, isLoading } = useGetRostersQuery();
+  const [deleteRoster, { isLoading: isDeletingRoster }] =
+    useDeleteRosterMutation();
   const [promoteToAdmin, { isLoading: isPromoting }] =
     usePromoteUserToAdminMutation();
   const [removeFromAdmin, { isLoading: isDemoting }] =
@@ -86,6 +89,7 @@ export const Roster = () => {
     useState<RosterAdminPermissions>(emptyPermissions);
   const [removeAsAdmin, setRemoveAsAdmin] = useState(false);
   const [showRemoveAdminConfirm, setShowRemoveAdminConfirm] = useState(false);
+  const [showDeleteRosterConfirm, setShowDeleteRosterConfirm] = useState(false);
   const [adminStatusMessage, setAdminStatusMessage] = useState("");
   const [pendingRequestRows, setPendingRequestRows] = useState<
     OrgJoinRequestState[]
@@ -131,6 +135,8 @@ export const Roster = () => {
   const currentRosterName = getRosterDisplayName(currentRoster?.rosterName);
   const rosterId = currentRoster?.id;
   const rosterMembers = currentRoster?.members ?? [];
+  const hasMultipleRosters = (data?.length ?? 0) > 1;
+  const canDeleteRoster = Boolean(currentRoster?.id && hasMultipleRosters);
   const filteredMembers = useMemo(() => {
     const query = searchText.trim().toLowerCase();
     if (!query) return rosterMembers;
@@ -160,6 +166,26 @@ export const Roster = () => {
     dispatch(setModalType(EDIT_SECTIONS.editRoster));
     dispatch(setExternalData(rosterId));
     dispatch(showModal());
+  };
+
+  const handleDeleteRoster = async () => {
+    if (!currentRoster?.id || !data?.length) return;
+
+    const nextRoster = data.find((roster) => roster.id !== currentRoster.id);
+
+    await deleteRoster(currentRoster.id).unwrap();
+    setShowDeleteRosterConfirm(false);
+
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams);
+      if (nextRoster?.id) {
+        nextParams.set("rosterId", nextRoster.id);
+      } else {
+        nextParams.delete("rosterId");
+      }
+      nextParams.delete("view");
+      return nextParams;
+    });
   };
 
   const openAdminDialog = (member: RosterMember) => {
@@ -411,9 +437,19 @@ export const Roster = () => {
           <section className={styles.rosterPanel}>
             <div className={styles.rosterMembersHeader}>
               <h1>{currentRosterName}</h1>
-              <button type="button" onClick={handleEditRoster}>
-                Edit Roster
-              </button>
+              <div className={styles.rosterHeaderActions}>
+                <button type="button" onClick={handleEditRoster}>
+                  Edit Roster
+                </button>
+                <button
+                  type="button"
+                  className={styles.rosterRemoveAction}
+                  onClick={() => setShowDeleteRosterConfirm(true)}
+                  disabled={!canDeleteRoster || isDeletingRoster}
+                >
+                  Remove Roster
+                </button>
+              </div>
             </div>
 
             {isLoading && (
@@ -673,6 +709,36 @@ export const Roster = () => {
                 type="button"
                 onClick={() => setShowRemoveAdminConfirm(false)}
                 disabled={isAdminMutationLoading}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteRosterConfirm && currentRoster && (
+        <div className={styles.rosterRailConfirmOverlay}>
+          <div
+            className={styles.rosterRailConfirm}
+            role="dialog"
+            aria-modal="true"
+          >
+            <p>
+              Are you sure you want to remove {currentRosterName}?
+            </p>
+            <div className={styles.rosterRailConfirmActions}>
+              <button
+                type="button"
+                onClick={handleDeleteRoster}
+                disabled={isDeletingRoster}
+              >
+                Yes
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDeleteRosterConfirm(false)}
+                disabled={isDeletingRoster}
               >
                 Cancel
               </button>
