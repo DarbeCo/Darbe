@@ -69,6 +69,11 @@ const INITIAL_STATE = {
   },
 };
 
+const getUserTypeFromButton = (label: string) => {
+  const normalizedLabel = label.trim().toLowerCase();
+  return normalizedLabel === "non-profit" ? "nonprofit" : normalizedLabel;
+};
+
 export const SignUpForms = () => {
   const [errorFound, setErrorFound] = useState(false);
   const [signUpStarted, setSignUpStarted] = useState(false);
@@ -85,17 +90,17 @@ export const SignUpForms = () => {
   const navigate = useNavigate();
 
   const handleStart = (evt: React.MouseEvent<HTMLButtonElement>) => {
-    // to coerce the innerText of the button as existing
-    const target = evt.target as HTMLButtonElement;
+    const target = evt.currentTarget;
     setSignUpData((state) => ({
       ...state,
-      userType: target.innerText.toLowerCase(),
+      userType: getUserTypeFromButton(target.textContent ?? ""),
     }));
     setStep(2);
     setSignUpStarted(true);
   };
 
   const handleRestart = () => {
+    setErrorFound(false);
     setSignUpStarted(false);
     setSignUpData(INITIAL_STATE);
     setStep(1);
@@ -150,13 +155,14 @@ export const SignUpForms = () => {
 
   const submitSignUpData = async () => {
     try {
+      const payload: SignUpState = { ...signUpData };
       if (signUpData.userType !== "individual") {
-        delete signUpData.availability;
-        delete signUpData.firstName;
-        delete signUpData.lastName;
-        delete signUpData.dob;
+        delete payload.availability;
+        delete payload.firstName;
+        delete payload.lastName;
+        delete payload.dob;
       }
-      const result = await submitSignUp(signUpData).unwrap();
+      const result = await submitSignUp(payload).unwrap();
 
       dispatch(setUser(result.user));
       navigate("/home");

@@ -73,9 +73,15 @@ export const Causes = ({
 
   const getNonUserText = useMemo(() => {
     if (nonUserType) {
-      return nonUserType === "organization"
-        ? capitalizeFirstLetter(nonUserType)
-        : capitalizeHyphenatedString(nonUserType);
+      if (nonUserType === "organization") {
+        return capitalizeFirstLetter(nonUserType);
+      }
+
+      if (nonUserType === "nonprofit") {
+        return "Non-Profit";
+      }
+
+      return capitalizeHyphenatedString(nonUserType);
     }
   }, [nonUserType]);
 

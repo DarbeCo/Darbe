@@ -38,6 +38,13 @@ const DAY_TO_INDEX = DAY_ORDER.reduce(
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 
+const normalizeUserType = (userType: string) => {
+  const normalizedUserType = userType.trim().toLowerCase();
+  return normalizedUserType === "non-profit" || normalizedUserType === "non profit"
+    ? "nonprofit"
+    : normalizedUserType;
+};
+
 const toDateString = (dob?: SignUpState["dob"]): string | null => {
   if (!dob?.year || !dob?.month || !dob?.day) {
     return null;
@@ -217,6 +224,7 @@ export const signUpWithProfile = async (payload: SignUpState): Promise<UserState
   const normalizedPayload = {
     ...payload,
     email: normalizeEmail(payload.email),
+    userType: normalizeUserType(payload.userType),
   };
 
   const emailAvailable = await checkEmailAvailability(normalizedPayload.email);

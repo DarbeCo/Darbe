@@ -41,7 +41,7 @@ export const EntityInputs = ({
   });
 
   const capitalizedEntityName = `${capitalizeHyphenatedString(
-    entityType
+    entityType === "nonprofit" ? "non-profit" : entityType
   )} Name`;
 
   const runErrorChecks = (name: string) => {
