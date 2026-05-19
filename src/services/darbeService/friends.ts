@@ -277,12 +277,11 @@ const getOrCreateDefaultRoster = async (entityId: string): Promise<string> => {
     throw profileError ?? new Error("Organization not found");
   }
 
-  const rosterName = profile.nonprofit_name || profile.organization_name || "Default";
   const { data: newRoster, error: newRosterError } = await supabase
     .from("rosters")
     .insert({
       roster_owner_id: entityId,
-      roster_name: `${rosterName}'s Default Roster`,
+      roster_name: "Member Roster",
     })
     .select("id")
     .single();

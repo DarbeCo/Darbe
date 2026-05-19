@@ -13,10 +13,16 @@ import { getProfilesByIds, mapProfileToSimpleUserInfo } from "./profiles";
 
 const VOLUNTEER_VALUE_PER_HOUR = 33.49;
 const FOLLOWERS_ROSTER_NAME = "Followers";
+const MEMBER_ROSTER_NAME = "Member Roster";
 const VOLUNTEER_COORDINATORS_ROSTER_NAME = "Volunteer Coordinators";
 
 const isMembershipRoster = (rosterName?: string | null) =>
   rosterName !== FOLLOWERS_ROSTER_NAME;
+
+const displayRosterName = (rosterName?: string | null) =>
+  !rosterName || rosterName.includes("Default Roster")
+    ? MEMBER_ROSTER_NAME
+    : rosterName;
 
 const getRosterInfo = async (
   rosterId: string
@@ -330,13 +336,11 @@ export const getRosters = async (): Promise<Roster[]> => {
 
     if (profileError || !profile) throw profileError ?? new Error("User not found");
 
-    const rosterName = profile.nonprofit_name || profile.organization_name || "Default";
-
     const { data: newRoster, error: insertError } = await supabase
       .from("rosters")
       .insert({
         roster_owner_id: userId,
-        roster_name: `${rosterName}'s Default Roster`,
+        roster_name: MEMBER_ROSTER_NAME,
       })
       .select("id, roster_owner_id, roster_name, created_at")
       .single();
@@ -377,7 +381,7 @@ export const getRosters = async (): Promise<Roster[]> => {
   return rosterRows.map((roster) => ({
     id: roster.id,
     rosterOwner: ownerInfo,
-    rosterName: roster.roster_name,
+    rosterName: displayRosterName(roster.roster_name),
     members: membersByRoster.get(roster.id) ?? [],
     createdAt: roster.created_at,
   }));
@@ -403,11 +407,29 @@ export const getRosterMembers = async (rosterId: string): Promise<RosterMember[]
 };
 
 export const createRoster = async (newRoster: NewRoster): Promise<Roster> => {
+  const rosterName = newRoster.rosterName.trim();
+  const { data: existingRosters, error: existingRosterError } = await supabase
+    .from("rosters")
+    .select("id, roster_name")
+    .eq("roster_owner_id", newRoster.rosterOwner);
+
+  if (existingRosterError) throw existingRosterError;
+
+  const duplicateRoster = (existingRosters ?? []).some(
+    (roster) =>
+      displayRosterName(roster.roster_name).trim().toLowerCase() ===
+      rosterName.toLowerCase()
+  );
+
+  if (duplicateRoster) {
+    throw new Error("A roster with this name already exists.");
+  }
+
   const { data: roster, error } = await supabase
     .from("rosters")
     .insert({
       roster_owner_id: newRoster.rosterOwner,
-      roster_name: newRoster.rosterName,
+      roster_name: rosterName,
     })
     .select("id, roster_owner_id, roster_name, created_at")
     .single();

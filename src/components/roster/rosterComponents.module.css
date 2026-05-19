@@ -156,6 +156,14 @@
   color: #717070;
 }
 
+.createRosterField p {
+  margin: 0;
+  color: #c62828;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  line-height: 18px;
+}
+
 .createRosterRecentSection {
   display: flex;
   flex: 1 1 auto;

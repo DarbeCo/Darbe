@@ -354,10 +354,9 @@ export const signUpWithProfile = async (payload: SignUpState): Promise<UserState
     }
 
     if (!existingRosters || existingRosters.length === 0) {
-      const rosterName = `${normalizedPayload.organizationName ?? normalizedPayload.nonprofitName ?? "Entity"}'s Default Roster`;
       const { error: rosterError } = await supabase
         .from("rosters")
-        .insert({ roster_owner_id: userId, roster_name: rosterName });
+        .insert({ roster_owner_id: userId, roster_name: "Member Roster" });
 
       if (rosterError) {
         throw rosterError;

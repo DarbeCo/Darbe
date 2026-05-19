@@ -49,6 +49,11 @@ const formatHours = (hours?: number) =>
 const formatCurrency = (value?: number) =>
   `$${Math.round(value ?? 0).toLocaleString("en-US")}`;
 
+const getRosterDisplayName = (rosterName?: string) =>
+  !rosterName || rosterName.includes("Default Roster")
+    ? "Member Roster"
+    : rosterName;
+
 const emptyPermissions: RosterAdminPermissions = {
   canEditAssignedRoster: false,
   canAssignVolunteerCoordinators: false,
@@ -123,6 +128,7 @@ export const Roster = () => {
     () => data?.find((roster) => roster.id === selectedRosterId) ?? data?.[0],
     [data, selectedRosterId]
   );
+  const currentRosterName = getRosterDisplayName(currentRoster?.rosterName);
   const rosterId = currentRoster?.id;
   const rosterMembers = currentRoster?.members ?? [];
   const filteredMembers = useMemo(() => {
@@ -404,7 +410,7 @@ export const Roster = () => {
         ) : (
           <section className={styles.rosterPanel}>
             <div className={styles.rosterMembersHeader}>
-              <h1>Member Roster</h1>
+              <h1>{currentRosterName}</h1>
               <button type="button" onClick={handleEditRoster}>
                 Edit Roster
               </button>

@@ -7,7 +7,10 @@ import { useGetEntityFollowersQuery } from "../../services/api/endpoints/profile
 import { useAppDispatch, useAppSelector } from "../../services/hooks";
 import { selectCurrentUserId } from "../../features/users/selectors";
 import { SimpleUserInfo } from "../../services/api/endpoints/types/user.api.types";
-import { useCreateRosterMutation } from "../../services/api/endpoints/roster/roster.api";
+import {
+  useCreateRosterMutation,
+  useGetRostersQuery,
+} from "../../services/api/endpoints/roster/roster.api";
 import { hideModal } from "../modal/modalSlice";
 import { assetUrl } from "../../utils/assetUrl";
 
@@ -15,6 +18,14 @@ import styles from "./rosterComponents.module.css";
 
 const getDisplayName = (member: SimpleUserInfo) =>
   member.fullName || member.nonprofitName || member.organizationName || "Member";
+
+const getRosterDisplayName = (rosterName?: string) =>
+  !rosterName || rosterName.includes("Default Roster")
+    ? "Member Roster"
+    : rosterName;
+
+const normalizeRosterName = (rosterName: string) =>
+  rosterName.trim().toLowerCase();
 
 interface SimpleCreateRosterProps {
   embedded?: boolean;
@@ -37,8 +48,23 @@ export const SimpleCreateRoster = ({
     members: [],
   });
   const { data: followers, isLoading } = useGetEntityFollowersQuery(userId);
+  const { data: rosters = [] } = useGetRostersQuery();
   const [createNewRoster, { isLoading: isCreatingRoster }] =
     useCreateRosterMutation();
+  const [rosterNameError, setRosterNameError] = useState("");
+  const rosterName = newRosterData.rosterName.trim();
+  const rosterNameAlreadyExists = useMemo(() => {
+    if (!rosterName) return false;
+
+    return rosters.some(
+      (roster) =>
+        normalizeRosterName(getRosterDisplayName(roster.rosterName)) ===
+        normalizeRosterName(rosterName)
+    );
+  }, [rosterName, rosters]);
+  const createRosterError = rosterNameAlreadyExists
+    ? "Roster name already exists."
+    : rosterNameError;
   const recentMembers = useMemo(() => {
     const query = memberSearchQuery.trim().toLowerCase();
 
@@ -62,6 +88,7 @@ export const SimpleCreateRoster = ({
   }, [userId]);
 
   const handleRosterNameChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setRosterNameError("");
     setNewRosterData((currentData) => ({
       ...currentData,
       rosterName: event.target.value,
@@ -82,12 +109,12 @@ export const SimpleCreateRoster = ({
   };
 
   const handleSubmit = async () => {
-    if (!newRosterData.rosterName.trim()) return;
+    if (!rosterName || rosterNameAlreadyExists) return;
 
     try {
       const createdRoster = await createNewRoster({
         ...newRosterData,
-        rosterName: newRosterData.rosterName.trim(),
+        rosterName,
       }).unwrap();
       onComplete?.(createdRoster.id);
       if (!embedded) {
@@ -95,6 +122,11 @@ export const SimpleCreateRoster = ({
       }
     } catch (error) {
       console.error("Error creating new roster:", error);
+      const message =
+        error && typeof error === "object" && "data" in error
+          ? (error as { data?: { message?: string } }).data?.message
+          : undefined;
+      setRosterNameError(message ?? "Unable to create roster.");
     }
   };
 
@@ -128,7 +160,12 @@ export const SimpleCreateRoster = ({
           placeholder="Create Roster Name"
           value={newRosterData.rosterName}
           onChange={handleRosterNameChange}
+          aria-invalid={Boolean(createRosterError)}
+          aria-describedby={createRosterError ? "create-roster-name-error" : undefined}
         />
+        {createRosterError && (
+          <p id="create-roster-name-error">{createRosterError}</p>
+        )}
       </label>
 
       <section className={styles.createRosterRecentSection}>
@@ -182,9 +219,9 @@ export const SimpleCreateRoster = ({
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={!newRosterData.rosterName.trim() || isCreatingRoster}
+          disabled={!rosterName || rosterNameAlreadyExists || isCreatingRoster}
         >
-          Add Members
+          Create Roster
           <span aria-hidden="true">&gt;</span>
         </button>
       </div>
