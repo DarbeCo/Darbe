@@ -4,6 +4,12 @@
   flex-wrap: wrap;
   column-gap: 10px;
   row-gap: 10px;
+  justify-content: center;
+  align-items: center;
+  img{
+    width: 586px; /* controls the width of the image */
+    margin-left: 80px;
+  }
 }
 
 .pictureImagePreview {
@@ -30,8 +36,9 @@
 
 .removeFileButton {
   position: relative;
-  right: 25px;
+  right: 35px;
   bottom: 15px;
+  box-shadow: none;
 }
 
 #fileImagePreview {
