@@ -59,6 +59,7 @@ export const useEditProfileInformation = () => {
     emergencyContact: {
       name: profileInformation?.emergencyContact?.name,
       phone: profileInformation?.emergencyContact?.phone,
+      email: profileInformation?.emergencyContact?.email,
       relation: profileInformation?.emergencyContact?.relation,
     },
     user: {

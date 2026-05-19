@@ -88,6 +88,7 @@ export interface Database {
           associated_entity_id: string | null;
           emergency_contact_name: string | null;
           emergency_contact_phone: string | null;
+          emergency_contact_email: string | null;
           emergency_contact_relation: string | null;
           created_at: string;
           updated_at: string;
@@ -116,6 +117,7 @@ export interface Database {
           associated_entity_id?: string | null;
           emergency_contact_name?: string | null;
           emergency_contact_phone?: string | null;
+          emergency_contact_email?: string | null;
           emergency_contact_relation?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -144,6 +146,7 @@ export interface Database {
           associated_entity_id?: string | null;
           emergency_contact_name?: string | null;
           emergency_contact_phone?: string | null;
+          emergency_contact_email?: string | null;
           emergency_contact_relation?: string | null;
           updated_at?: string;
         };

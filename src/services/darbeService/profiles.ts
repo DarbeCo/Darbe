@@ -512,6 +512,7 @@ const mapUserDetailsToProfile = (
   const emergencyContact: EmergencyContactState = {
     name: detailsRow?.emergency_contact_name ?? "",
     phone: detailsRow?.emergency_contact_phone ?? "",
+    email: detailsRow?.emergency_contact_email ?? "",
     relation: detailsRow?.emergency_contact_relation ?? "",
   };
 
@@ -608,6 +609,10 @@ export const updateUserProfile = async (
         parent_entity_id: parentEntityId,
         parent_entity_name: parentEntityName,
         associated_entity_id: associatedEntityId,
+        emergency_contact_name: profile.emergencyContact?.name ?? undefined,
+        emergency_contact_phone: profile.emergencyContact?.phone ?? undefined,
+        emergency_contact_email: profile.emergencyContact?.email ?? undefined,
+        emergency_contact_relation: profile.emergencyContact?.relation ?? undefined,
       },
       { onConflict: "user_id" }
     );

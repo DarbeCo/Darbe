@@ -70,6 +70,7 @@ export type OrganizationState = {
 export type EmergencyContactState = {
   name?: string;
   phone?: string;
+  email?: string;
   relation?: string;
 };
 

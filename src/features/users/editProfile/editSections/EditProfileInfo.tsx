@@ -15,7 +15,7 @@ import { useUpdateUserProfileMutation } from "../../../../services/api/endpoints
 import { useAppDispatch, useAppSelector } from "../../../../services/hooks";
 import { EDIT_SECTIONS } from "../../userProfiles/constants";
 import { selectCurrentUserId, selectUser } from "../../selectors";
-import { DarbeProfileSharedState } from "../../userSlice";
+import { DarbeProfileSharedState, setUserProfile } from "../../userSlice";
 import { useEditProfileInformation } from "../hooks";
 import { registerProfileEditAutosave } from "../profileEditAutosave";
 
@@ -304,7 +304,6 @@ export const EditProfileInfo = () => {
   const [dateOfBirth, setDateOfBirth] = useState<DateOfBirthFields>(
     parseDateOfBirth(editProfileState.user?.dateOfBirth)
   );
-  const [titlePrefix, setTitlePrefix] = useState(editProfileState.title ?? "");
 
   const [updateUserProfile] = useUpdateUserProfileMutation();
   const dispatch = useAppDispatch();
@@ -348,7 +347,7 @@ export const EditProfileInfo = () => {
   };
 
   const setEmergencyField = (
-    field: "name" | "phone" | "relation",
+    field: "name" | "phone" | "email" | "relation",
     value: string
   ) => {
     setFormData((prev) => ({
@@ -366,7 +365,6 @@ export const EditProfileInfo = () => {
 
     return {
       ...formData,
-      title: titlePrefix,
       state: parsedLocation.state,
       user: {
         ...formData.user,
@@ -377,13 +375,15 @@ export const EditProfileInfo = () => {
       emergencyContact: {
         name: formData.emergencyContact?.name ?? "",
         phone: formData.emergencyContact?.phone ?? "",
+        email: formData.emergencyContact?.email ?? "",
         relation: formData.emergencyContact?.relation ?? "",
       },
     };
   };
 
   const persistProfile = async (shouldClose: boolean) => {
-    await updateUserProfile(buildPayload());
+    const updatedProfile = await updateUserProfile(buildPayload()).unwrap();
+    dispatch(setUserProfile(updatedProfile));
 
     if (shouldClose) {
       dispatch(hideModal());
@@ -399,8 +399,7 @@ export const EditProfileInfo = () => {
   const isFormDirty = () =>
     JSON.stringify(formData) !== JSON.stringify(editProfileState) ||
     location !== initialLocation ||
-    JSON.stringify(dateOfBirth) !== JSON.stringify(initialDateOfBirth) ||
-    titlePrefix !== (editProfileState.title ?? "");
+    JSON.stringify(dateOfBirth) !== JSON.stringify(initialDateOfBirth);
 
   const autosaveProfile = async () => {
     if (!isFormDirty()) {
@@ -418,7 +417,7 @@ export const EditProfileInfo = () => {
 
   useEffect(() => {
     return registerProfileEditAutosave(autosaveProfile);
-  }, [formData, location, dateOfBirth, titlePrefix]);
+  }, [formData, location, dateOfBirth]);
 
   const handlePrevious = async () => {
     const didAutosave = await autosaveProfile();
@@ -535,11 +534,12 @@ export const EditProfileInfo = () => {
             className={styles.profileDialogFieldFullWidth}
           />
           <ProfileTextField
-            label="Title / Prefix"
-            placeholder="Mr."
-            value={titlePrefix}
-            onChange={setTitlePrefix}
+            label="Login Email"
+            placeholder="something@mail.com"
+            value={user?.email}
+            onChange={() => undefined}
             maxLength={50}
+            readOnly
             className={styles.profileDialogFieldFullWidth}
           />
           <ProfileSelectField
@@ -578,12 +578,12 @@ export const EditProfileInfo = () => {
             maxLength={50}
           />
           <ProfileTextField
-            label="Email"
-            placeholder="something@mail.com"
-            value={user?.email}
-            onChange={() => undefined}
+            label="Emergency Contact Email"
+            placeholder="contact@mail.com"
+            value={formData.emergencyContact?.email}
+            onChange={(value) => setEmergencyField("email", value)}
             maxLength={50}
-            readOnly
+            type="email"
           />
           <ProfileTextField
             label="Allergies (optional)"

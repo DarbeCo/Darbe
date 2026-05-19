@@ -1626,7 +1626,7 @@ export const getVolunteerMatches = async (): Promise<VolunteerMatch[]> => {
   const [detailsRes, impactRes, causeRowsRes] = await Promise.all([
     supabase
       .from("user_details")
-      .select("user_id, emergency_contact_name, emergency_contact_phone, emergency_contact_relation")
+      .select("user_id, emergency_contact_name, emergency_contact_phone, emergency_contact_email, emergency_contact_relation")
       .in("user_id", profileIds),
     supabase
       .from("impact")
@@ -1684,6 +1684,7 @@ export const getVolunteerMatches = async (): Promise<VolunteerMatch[]> => {
       emergencyContact: {
         name: details?.emergency_contact_name ?? "",
         phone: details?.emergency_contact_phone ?? "",
+        email: details?.emergency_contact_email ?? "",
         relation: details?.emergency_contact_relation ?? "",
       },
       nextEvent: nextEventMatch,
