@@ -559,6 +559,41 @@ export const PostNeed = () => {
     return missingFields;
   };
 
+  const buildIncompleteEventPayload = (): CreateEvent => ({
+    ...eventData,
+    eventDate: toDatabaseDate(eventData.eventDate),
+    startTime: toNumber(eventData.startTime),
+    endTime: toNumber(eventData.endTime),
+    maxVolunteerCount: toNumber(eventData.maxVolunteerCount),
+    eventOwner: userId,
+    eventCoordinator: eventData.eventCoordinator || userId,
+  });
+
+  useEffect(() => {
+    if (!userId || isPostingEvent) {
+      return;
+    }
+
+    if (!eventType && currentStep === -1) {
+      return;
+    }
+
+    const autosaveTimer = window.setTimeout(() => {
+      saveIncompletePostNeedEvent({
+        id: incompleteEventId,
+        eventType,
+        ownerId: userId,
+        coordinatorId: eventData.eventCoordinator || undefined,
+        data: buildIncompleteEventPayload(),
+        savedAt: new Date().toISOString(),
+        missingFields: getAllMissingRequiredFields(),
+        owner: buildIncompleteEventOwner(user),
+      });
+    }, 600);
+
+    return () => window.clearTimeout(autosaveTimer);
+  }, [currentStep, eventData, eventType, incompleteEventId, isPostingEvent, user, userId]);
+
   const handleSaveIncomplete = () => {
     if (eventActionLockRef.current || isPostingEvent || isSavingIncomplete) {
       return;
@@ -566,23 +601,12 @@ export const PostNeed = () => {
 
     eventActionLockRef.current = true;
     setIsSavingIncomplete(true);
-    const eventDate = toDatabaseDate(eventData.eventDate);
-    const payload: CreateEvent = {
-      ...eventData,
-      eventDate,
-      startTime: toNumber(eventData.startTime),
-      endTime: toNumber(eventData.endTime),
-      maxVolunteerCount: toNumber(eventData.maxVolunteerCount),
-      eventOwner: userId,
-      eventCoordinator: eventData.eventCoordinator || userId,
-    };
-
     saveIncompletePostNeedEvent({
       id: incompleteEventId,
       eventType,
       ownerId: userId,
       coordinatorId: eventData.eventCoordinator || undefined,
-      data: payload,
+      data: buildIncompleteEventPayload(),
       savedAt: new Date().toISOString(),
       missingFields: getAllMissingRequiredFields(),
       owner: buildIncompleteEventOwner(user),
