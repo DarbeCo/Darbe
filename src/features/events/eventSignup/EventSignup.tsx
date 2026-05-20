@@ -37,7 +37,7 @@ import {
 import styles from "../styles/entityEvents.module.css";
 
 const adminTabs = ["Current", "Past", "Admin", "Incomplete"] as const;
-const nonprofitTabs = ["Past", "Current", "Admin"] as const;
+const nonprofitTabs = ["Past", "Current", "Admin", "Incomplete"] as const;
 const nonAdminTabs = ["Current", "Past"] as const;
 type EventsTab = (typeof adminTabs)[number];
 const COLLAPSED_SUMMARY_COUNT = 3;
