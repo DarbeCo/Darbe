@@ -77,6 +77,9 @@ export interface EventsState {
   eventHoursNeeded?: string;
   maxVolunteerCount: number;
   isRepeating?: boolean;
+  recurrenceFrequency?: "daily" | "weekly" | "monthly" | "customDays";
+  recurrenceIntervalDays?: number;
+  recurrenceCount?: number;
   /** This is for internal events, aka not public outside the entity follower list or roster members */
   isFollowersOnly?: boolean;
   eventAddress: EventAddressSchema;

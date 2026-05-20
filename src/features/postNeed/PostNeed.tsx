@@ -37,6 +37,9 @@ const INITIAL_EVENT_STATE: CreateEvent = {
   endTime: 0,
   eventHoursNeeded: "",
   isRepeating: false,
+  recurrenceFrequency: "weekly",
+  recurrenceIntervalDays: 2,
+  recurrenceCount: 2,
   isFollowersOnly: false,
   maxVolunteerCount: 0,
   eventAddress: {
@@ -95,6 +98,61 @@ const toNumber = (value: number | string | undefined, fallback = 0) => {
 };
 
 const hasValue = (value?: unknown) => Boolean(value?.toString().trim());
+const addRecurrenceInterval = (
+  date: Date,
+  frequency: Exclude<CreateEvent["recurrenceFrequency"], "customDays">,
+  intervalIndex: number
+) => {
+  const nextDate = new Date(date);
+
+  if (frequency === "daily") {
+    nextDate.setDate(nextDate.getDate() + intervalIndex);
+  } else if (frequency === "monthly") {
+    nextDate.setMonth(nextDate.getMonth() + intervalIndex);
+  } else {
+    nextDate.setDate(nextDate.getDate() + intervalIndex * 7);
+  }
+
+  return nextDate;
+};
+
+const formatDateForPayload = (date: Date) => {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+const buildRecurringEventDates = (eventData: CreateEvent) => {
+  const eventDate = toDatabaseDate(eventData.eventDate);
+
+  if (!eventData.isRepeating) return [eventDate];
+
+  const recurrenceCount = Math.max(
+    1,
+    Math.min(52, toNumber(eventData.recurrenceCount, 1))
+  );
+  const startDate = new Date(`${eventDate}T00:00:00`);
+
+  if (!eventDate || Number.isNaN(startDate.getTime())) {
+    return [eventDate];
+  }
+
+  const intervalDays = Math.max(1, toNumber(eventData.recurrenceIntervalDays, 1));
+
+  return Array.from({ length: recurrenceCount }, (_, index) => {
+    if (eventData.recurrenceFrequency === "customDays") {
+      const nextDate = new Date(startDate);
+      nextDate.setDate(nextDate.getDate() + index * intervalDays);
+      return formatDateForPayload(nextDate);
+    }
+
+    return formatDateForPayload(
+      addRecurrenceInterval(startDate, eventData.recurrenceFrequency, index)
+    );
+  });
+};
 const ACTIVE_DRAFT_STORAGE_KEY = "darbe:active-post-need-event";
 
 type ActivePostNeedDraft = {
@@ -226,7 +284,15 @@ export const PostNeed = () => {
         eventCoordinator: eventData.eventCoordinator || userId,
       };
 
-      await createEvent(payload).unwrap();
+      const eventDates = buildRecurringEventDates(eventData);
+
+      for (const eventDate of eventDates) {
+        await createEvent({
+          ...payload,
+          eventDate,
+          isRepeating: eventDates.length > 1,
+        }).unwrap();
+      }
       removeIncompletePostNeedEvent(incompleteEventId);
       removeActiveDraft();
       setSubmitValidationDialog(null);
@@ -349,6 +415,14 @@ export const PostNeed = () => {
         : "",
       !hasValue(eventData.eventDescription) ? "Description" : "",
       toNumber(eventData.maxVolunteerCount) <= 0 ? "# Of Volunteers" : "",
+      eventData.isRepeating && toNumber(eventData.recurrenceCount) < 2
+        ? "Recurrence Occurrences"
+        : "",
+      eventData.isRepeating &&
+      eventData.recurrenceFrequency === "customDays" &&
+      toNumber(eventData.recurrenceIntervalDays) < 1
+        ? "Recurrence Days"
+        : "",
       !isInternalEvent && !hasValue(eventData.eventHoursNeeded)
         ? "# Of Hours Needed"
         : "",
@@ -433,6 +507,14 @@ export const PostNeed = () => {
         : "",
       !hasValue(eventData.eventDescription) ? "Description" : "",
       toNumber(eventData.maxVolunteerCount) <= 0 ? "# Of Volunteers" : "",
+      eventData.isRepeating && toNumber(eventData.recurrenceCount) < 2
+        ? "Recurrence Occurrences"
+        : "",
+      eventData.isRepeating &&
+      eventData.recurrenceFrequency === "customDays" &&
+      toNumber(eventData.recurrenceIntervalDays) < 1
+        ? "Recurrence Days"
+        : "",
       !isInternalEvent && !hasValue(eventData.eventHoursNeeded)
         ? "# Of Hours Needed"
         : "",

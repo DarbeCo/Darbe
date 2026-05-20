@@ -388,11 +388,61 @@
   margin-top: 0;
 }
 
+.eventRecurrenceFields {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  grid-column: 1 / -1;
+  margin-top: -4px;
+  margin-bottom: 16px;
+}
+
+.eventRecurrenceFields label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.eventRecurrenceFields select,
+.eventRecurrenceFields input {
+  width: 164px;
+  height: 40px;
+  padding: 0 12px;
+  border: 2px solid #d8d8d8;
+  border-radius: 8px;
+  background: #fff;
+  color: #000;
+  box-sizing: border-box;
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+}
+
+.eventRecurrenceFields select:focus,
+.eventRecurrenceFields input:focus {
+  border-color: #263238;
+  outline: none;
+}
+
+.communityEventDetailsForm .eventRecurrenceFields {
+  position: absolute;
+  top: 462px;
+  left: 0;
+}
+
 .communityMembersOnlyEvent {
   position: absolute;
   top: 470px;
   left: 0;
   margin-top: 0;
+}
+
+.communityMembersOnlyEventWithRecurrence {
+  top: 548px;
 }
 
 .communityMembersOnlyEvent :global(.MuiCheckbox-root) {
@@ -2594,6 +2644,7 @@
   .internalLocationAssignmentField,
   .internalRequirementField,
   .communityRequirementsForm .internalRequirementField,
+  .eventRecurrenceFields,
   .internalCoverSection,
   .internalOtherMetaSection,
   .internalCoordinatorSection,
@@ -2611,6 +2662,7 @@
   .communityEventDetailsForm .internalMaxVolunteerField,
   .communityEventDetailsForm .communityHoursNeededField,
   .communityEventDetailsForm .internalTimeArea,
+  .communityEventDetailsForm .eventRecurrenceFields,
   .communityEventDetailsForm .internalRepeatingEvent,
   .communityMembersOnlyEvent {
     position: static;
@@ -2674,8 +2726,13 @@
     order: 7;
   }
 
-  .communityMembersOnlyEvent {
+  .eventRecurrenceFields,
+  .communityEventDetailsForm .eventRecurrenceFields {
     order: 8;
+  }
+
+  .communityMembersOnlyEvent {
+    order: 9;
   }
 
   .internalFormField :global(.MuiInputLabel-root),

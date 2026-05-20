@@ -51,8 +51,25 @@ export const EventInfo = ({
       onChange((prevState) => ({
         ...prevState,
         [name]: checked,
+        recurrenceFrequency: checked ? prevState.recurrenceFrequency ?? "weekly" : undefined,
+        recurrenceIntervalDays: checked ? prevState.recurrenceIntervalDays || 2 : undefined,
+        recurrenceCount: checked ? prevState.recurrenceCount || 2 : undefined,
       }));
     }
+  };
+
+  const handleRecurrenceChange = (
+    event: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>
+  ) => {
+    const { name, value } = event.target;
+
+    onChange?.((prevState) => ({
+      ...prevState,
+      [name]:
+        name === "recurrenceCount" || name === "recurrenceIntervalDays"
+          ? Number(value)
+          : value,
+    }));
   };
 
   const hours = DropdownTypes({ type: "hours" });
@@ -303,8 +320,54 @@ export const EventInfo = ({
         />
       </div>
 
+      {data.isRepeating && (
+        <div className={styles.eventRecurrenceFields}>
+          <label>
+            <span>Repeats</span>
+            <select
+              name="recurrenceFrequency"
+              value={data.recurrenceFrequency ?? "weekly"}
+              onChange={handleRecurrenceChange}
+            >
+              <option value="daily">Daily</option>
+              <option value="customDays">Every _ days</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </label>
+          {data.recurrenceFrequency === "customDays" && (
+            <label>
+              <span>Every</span>
+              <input
+                type="number"
+                name="recurrenceIntervalDays"
+                min="1"
+                max="365"
+                value={data.recurrenceIntervalDays ?? 2}
+                onChange={handleRecurrenceChange}
+              />
+            </label>
+          )}
+          <label>
+            <span>Events to create</span>
+            <input
+              type="number"
+              name="recurrenceCount"
+              min="2"
+              max="52"
+              value={data.recurrenceCount ?? 2}
+              onChange={handleRecurrenceChange}
+            />
+          </label>
+        </div>
+      )}
+
       {isCommunityEvent && (
-        <div className={styles.communityMembersOnlyEvent}>
+        <div
+          className={`${styles.communityMembersOnlyEvent} ${
+            data.isRepeating ? styles.communityMembersOnlyEventWithRecurrence : ""
+          }`}
+        >
           <CheckBox
             name="isFollowersOnly"
             label="Members Only Event"
