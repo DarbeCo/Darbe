@@ -181,7 +181,7 @@ const calculateEventImpactValue = (
 
   if (impact.is_individual_impact) {
     amount =
-      Number.parseInt(impact.individual_impact_per_hour ?? "1", 10) *
+      Number(impact.individual_impact_per_hour ?? "1") *
       event.max_volunteer_count *
       (duration ?? 1);
     label = impact.individual_impact ?? "";
@@ -189,7 +189,7 @@ const calculateEventImpactValue = (
 
   if (impact.is_group_impact) {
     amount =
-      Number.parseInt(impact.group_impact_per_hour ?? "1", 10) *
+      Number(impact.group_impact_per_hour ?? "1") *
       event.max_volunteer_count *
       (duration ?? 1);
     label = impact.group_impact ?? "";
@@ -199,7 +199,7 @@ const calculateEventImpactValue = (
 
   const displayAmount = Number.isInteger(amount)
     ? amount.toString()
-    : amount.toFixed(1);
+    : amount.toFixed(2);
 
   return `${displayAmount} ${label}`.trim();
 };

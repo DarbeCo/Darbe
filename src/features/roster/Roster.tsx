@@ -45,11 +45,13 @@ const formatMemberSince = (date?: string) => {
 
 const formatHours = (hours?: number) =>
   Number(hours ?? 0).toLocaleString("en-US", {
-    maximumFractionDigits: 1,
+    maximumFractionDigits: 2,
   });
 
 const formatCurrency = (value?: number) =>
-  `$${Math.round(value ?? 0).toLocaleString("en-US")}`;
+  `$${Number(value ?? 0).toLocaleString("en-US", {
+    maximumFractionDigits: 2,
+  })}`;
 
 const getRosterDisplayName = (rosterName?: string) =>
   !rosterName || rosterName.includes("Default Roster")

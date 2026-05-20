@@ -27,10 +27,12 @@ const formatDate = (eventDate: string) =>
   });
 
 const formatNumber = (value: number) =>
-  Number.isInteger(value) ? `${value}` : value.toFixed(1);
+  Number.isInteger(value) ? `${value}` : value.toFixed(2);
 
 const formatCurrency = (value: number) =>
-  `$ ${Math.round(value).toLocaleString("en-US")}`;
+  `$ ${value.toLocaleString("en-US", {
+    maximumFractionDigits: 2,
+  })}`;
 
 const getImpactMetric = (impact: EventImpact) => {
   const { event, hoursVolunteered } = impact;

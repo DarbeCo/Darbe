@@ -25,7 +25,7 @@ const getOwnerName = (impact: {
   "Darbe Partner";
 
 const formatHours = (hours: number) =>
-  `${Number.isInteger(hours) ? hours : hours.toFixed(1)} hrs`;
+  `${Number.isInteger(hours) ? hours : hours.toFixed(2)} hrs`;
 
 export const VolunteerRecentImpacts = ({ simpleMode }: VolunteerCardsProps) => {
   const navigate = useNavigateHook();

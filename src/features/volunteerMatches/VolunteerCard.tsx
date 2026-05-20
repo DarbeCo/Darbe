@@ -15,7 +15,14 @@ const formatMemberSince = (createdAt: string) =>
   });
 
 const formatCurrency = (value?: number) =>
-  `$${Math.round(value ?? 0).toLocaleString("en-US")}`;
+  `$${Number(value ?? 0).toLocaleString("en-US", {
+    maximumFractionDigits: 2,
+  })}`;
+
+const formatNumber = (value?: number) =>
+  Number(value ?? 0).toLocaleString("en-US", {
+    maximumFractionDigits: 2,
+  });
 
 const getCauseName = (cause: VolunteerMatch["causes"][number]) =>
   typeof cause === "string" ? cause : cause.name;
@@ -45,7 +52,7 @@ export const VolunteerCard = ({ match }: VolunteerCardProps) => {
         </div>
 
         <p className={styles.volunteerMemberSince}>
-          Member since {memberSince}: {match.volunteerSummary?.hoursVolunteered ?? 0} vol
+          Member since {memberSince}: {formatNumber(match.volunteerSummary?.hoursVolunteered)} vol
           hours
         </p>
 
@@ -54,7 +61,7 @@ export const VolunteerCard = ({ match }: VolunteerCardProps) => {
             <h3>Total Volunteer Summary</h3>
             <dl>
               <div>
-                <dt>{match.volunteerSummary?.hoursVolunteered ?? 0}</dt>
+                <dt>{formatNumber(match.volunteerSummary?.hoursVolunteered)}</dt>
                 <dd>Hours Volunteered</dd>
               </div>
               <div>

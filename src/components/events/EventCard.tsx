@@ -115,6 +115,9 @@ const timeInputValueToDecimalHour = (time: string) => {
   return Number(`${hour}.${minute.toString().padStart(2, "0")}`);
 };
 
+const formatImpactNumber = (value: number) =>
+  Number.isInteger(value) ? value.toString() : value.toFixed(2);
+
 const formatVolunteerActionTime = (timestamp?: string) => {
   if (!timestamp) {
     return "";
@@ -694,33 +697,33 @@ export const EventCard = ({
     if (event.volunteerImpact.isIndividualImpact) {
       if (calculatedEventDuration) {
         totalEventIndivdualGoal =
-          parseInt(event.volunteerImpact.individualImpactPerHour ?? "1") *
+          Number(event.volunteerImpact.individualImpactPerHour ?? "1") *
           event.maxVolunteerCount *
           calculatedEventDuration;
 
-        eventImpactText = `${totalEventIndivdualGoal} ${event.volunteerImpact.individualImpact}`;
+        eventImpactText = `${formatImpactNumber(totalEventIndivdualGoal)} ${event.volunteerImpact.individualImpact}`;
       } else {
         totalEventIndivdualGoal =
-          parseInt(event.volunteerImpact.individualImpactPerHour ?? "1") *
+          Number(event.volunteerImpact.individualImpactPerHour ?? "1") *
           event.maxVolunteerCount;
 
-        eventImpactText = `${totalEventIndivdualGoal} ${event.volunteerImpact.individualImpact}`;
+        eventImpactText = `${formatImpactNumber(totalEventIndivdualGoal)} ${event.volunteerImpact.individualImpact}`;
       }
     }
     if (event.volunteerImpact.isGroupImpact) {
       if (calculatedEventDuration) {
         totalEventGroupGoal =
-          parseInt(event.volunteerImpact.groupImpactPerHour ?? "1") *
+          Number(event.volunteerImpact.groupImpactPerHour ?? "1") *
           event.maxVolunteerCount *
           calculatedEventDuration;
 
-        eventImpactText = `${totalEventGroupGoal} ${event.volunteerImpact.groupImpact}`;
+        eventImpactText = `${formatImpactNumber(totalEventGroupGoal)} ${event.volunteerImpact.groupImpact}`;
       } else {
         totalEventGroupGoal =
-          parseInt(event.volunteerImpact.groupImpactPerHour ?? "1") *
+          Number(event.volunteerImpact.groupImpactPerHour ?? "1") *
           event.maxVolunteerCount;
 
-        eventImpactText = `${totalEventGroupGoal} ${event.volunteerImpact.groupImpact}`;
+        eventImpactText = `${formatImpactNumber(totalEventGroupGoal)} ${event.volunteerImpact.groupImpact}`;
       }
     }
 
