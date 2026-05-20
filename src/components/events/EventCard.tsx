@@ -23,6 +23,7 @@ import {
 } from "../../features/users/selectors";
 import { assetUrl } from "../../utils/assetUrl";
 import {
+  getEventTimeParts,
   parseEventDateAsLocalDate,
   parseEventDateTimeAsLocalDate,
 } from "../../utils/eventDateUtils";
@@ -95,8 +96,7 @@ const decimalHourToTimeInputValue = (time?: number) => {
     return "";
   }
 
-  const hour = Math.floor(time);
-  const minute = Math.round((time - hour) * 60);
+  const { hour, minute } = getEventTimeParts(time);
 
   return `${hour.toString().padStart(2, "0")}:${minute
     .toString()
@@ -112,7 +112,7 @@ const timeInputValueToDecimalHour = (time: string) => {
     return Number.NaN;
   }
 
-  return hour + minute / 60;
+  return Number(`${hour}.${minute.toString().padStart(2, "0")}`);
 };
 
 const formatVolunteerActionTime = (timestamp?: string) => {
