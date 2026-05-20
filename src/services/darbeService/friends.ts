@@ -256,16 +256,36 @@ export const followEntity = async (entityId: string): Promise<void> => {
 };
 
 const getOrCreateDefaultRoster = async (entityId: string): Promise<string> => {
-  const { data: existingRoster, error: existingRosterError } = await supabase
+  const { data: memberRoster, error: memberRosterError } = await supabase
     .from("rosters")
     .select("id")
     .eq("roster_owner_id", entityId)
-    .order("created_at", { ascending: true })
+    .eq("roster_name", "Member Roster")
     .limit(1)
     .maybeSingle();
 
-  if (existingRosterError) throw existingRosterError;
-  if (existingRoster?.id) return existingRoster.id;
+  if (memberRosterError) throw memberRosterError;
+  if (memberRoster?.id) return memberRoster.id;
+
+  const { data: legacyRoster, error: legacyRosterError } = await supabase
+    .from("rosters")
+    .select("id")
+    .eq("roster_owner_id", entityId)
+    .eq("roster_name", "Default Roster")
+    .limit(1)
+    .maybeSingle();
+
+  if (legacyRosterError) throw legacyRosterError;
+
+  if (legacyRoster?.id) {
+    const { error: renameError } = await supabase
+      .from("rosters")
+      .update({ roster_name: "Member Roster" })
+      .eq("id", legacyRoster.id);
+
+    if (renameError) throw renameError;
+    return legacyRoster.id;
+  }
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
@@ -338,29 +358,15 @@ export const getOrgJoinRequestStatus = async (
 ): Promise<OrgJoinRequestStatus> => {
   const userId = await ensureUserId();
 
-  const { data: rosters, error: rosterError } = await supabase
-    .from("rosters")
-    .select("id, roster_name")
-    .eq("roster_owner_id", entityId);
+  const { data: rosterAccess, error: rosterAccessError } = await supabase.rpc(
+    "get_entity_roster_access",
+    { target_entity_id: entityId }
+  );
 
-  if (rosterError) throw rosterError;
+  if (rosterAccessError) throw rosterAccessError;
 
-  const rosterIds = (rosters ?? [])
-    .filter((roster) => roster.roster_name !== "Followers")
-    .map((roster) => roster.id);
-
-  if (rosterIds.length) {
-    const { data: membership, error: membershipError } = await supabase
-      .from("roster_members")
-      .select("user_id")
-      .eq("user_id", userId)
-      .in("roster_id", rosterIds)
-      .limit(1)
-      .maybeSingle();
-
-    if (membershipError) throw membershipError;
-    if (membership) return "approved";
-  }
+  const access = Array.isArray(rosterAccess) ? rosterAccess[0] : rosterAccess;
+  if (access?.is_member) return "approved";
 
   const { data: request, error: requestError } = await supabase
     .from("friend_requests")

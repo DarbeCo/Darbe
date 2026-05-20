@@ -24,6 +24,25 @@ const displayRosterName = (rosterName?: string | null) =>
     ? MEMBER_ROSTER_NAME
     : rosterName;
 
+const sortRosterRows = <
+  T extends { roster_name: string | null; created_at: string | null }
+>(
+  rosters: T[]
+) =>
+  [...rosters].sort((left, right) => {
+    const leftIsMemberRoster = displayRosterName(left.roster_name) === MEMBER_ROSTER_NAME;
+    const rightIsMemberRoster = displayRosterName(right.roster_name) === MEMBER_ROSTER_NAME;
+
+    if (leftIsMemberRoster !== rightIsMemberRoster) {
+      return leftIsMemberRoster ? -1 : 1;
+    }
+
+    return (
+      new Date(left.created_at ?? 0).getTime() -
+      new Date(right.created_at ?? 0).getTime()
+    );
+  });
+
 const getRosterInfo = async (
   rosterId: string
 ): Promise<{ ownerId: string; name: string }> => {
@@ -315,23 +334,87 @@ const mapRosterMembers = async (
   });
 };
 
-export const getRosters = async (): Promise<Roster[]> => {
+export const getRosters = async (ownerId?: string): Promise<Roster[]> => {
   const userId = await ensureUserId();
+  const rosterOwnerId = ownerId ?? userId;
+
+  if (ownerId && ownerId !== userId) {
+    const { data: rosterRows, error } = await supabase.rpc("get_entity_roster_rows", {
+      target_entity_id: ownerId,
+    });
+
+    if (error) throw error;
+
+    const rostersById = new Map<
+      string,
+      { id: string; roster_owner_id: string; roster_name: string; created_at: string }
+    >();
+    const memberRows = (rosterRows ?? [])
+      .filter((row) => row.user_id)
+      .map((row) => ({
+        roster_id: row.roster_id,
+        user_id: row.user_id as string,
+        is_admin: row.is_admin,
+        can_edit_assigned_roster: row.can_edit_assigned_roster,
+        can_assign_volunteer_coordinators: row.can_assign_volunteer_coordinators,
+        can_edit_internal_events: row.can_edit_internal_events,
+        can_edit_external_events: row.can_edit_external_events,
+        created_at: row.member_created_at ?? undefined,
+      }));
+
+    (rosterRows ?? []).forEach((row) => {
+      rostersById.set(row.roster_id, {
+        id: row.roster_id,
+        roster_owner_id: row.roster_owner_id,
+        roster_name: row.roster_name,
+        created_at: row.roster_created_at,
+      });
+    });
+
+    const rosterMembers = await mapRosterMembers(memberRows);
+    const membersByRoster = new Map<string, RosterMember[]>();
+    rosterMembers.forEach((member) => {
+      const list = membersByRoster.get(member.rosterId) ?? [];
+      list.push({
+        user: member.user,
+        isAdmin: member.isAdmin,
+        adminPermissions: member.adminPermissions,
+        memberSince: member.memberSince,
+        causes: member.causes,
+        volunteerSummary: member.volunteerSummary,
+      });
+      membersByRoster.set(member.rosterId, list);
+    });
+
+    const ownerProfile = (await getProfilesByIds([ownerId]))[0];
+    const ownerInfo = ownerProfile
+      ? mapProfileToSimpleEntityInfo(ownerProfile)
+      : ({ id: ownerId } as SimpleEntityInfo);
+
+    return sortRosterRows(Array.from(rostersById.values())).map((roster) => ({
+      id: roster.id,
+      rosterOwner: ownerInfo,
+      rosterName: displayRosterName(roster.roster_name),
+      members: membersByRoster.get(roster.id) ?? [],
+      createdAt: roster.created_at,
+    }));
+  }
+
   const { data: rosters, error } = await supabase
     .from("rosters")
     .select("id, roster_owner_id, roster_name, created_at")
-    .eq("roster_owner_id", userId)
+    .eq("roster_owner_id", rosterOwnerId)
     .order("created_at", { ascending: true });
 
   if (error) throw error;
 
-  let rosterRows = rosters ?? [];
+  let rosterRows = sortRosterRows(rosters ?? []);
 
   if (!rosterRows.length) {
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("nonprofit_name, organization_name, user_type, profile_picture_url")
-      .eq("id", userId)
+      .eq("id", rosterOwnerId)
       .single();
 
     if (profileError || !profile) throw profileError ?? new Error("User not found");
@@ -339,7 +422,7 @@ export const getRosters = async (): Promise<Roster[]> => {
     const { data: newRoster, error: insertError } = await supabase
       .from("rosters")
       .insert({
-        roster_owner_id: userId,
+        roster_owner_id: rosterOwnerId,
         roster_name: MEMBER_ROSTER_NAME,
       })
       .select("id, roster_owner_id, roster_name, created_at")
@@ -373,10 +456,10 @@ export const getRosters = async (): Promise<Roster[]> => {
     membersByRoster.set(member.rosterId, list);
   });
 
-  const ownerProfile = (await getProfilesByIds([userId]))[0];
+  const ownerProfile = (await getProfilesByIds([rosterOwnerId]))[0];
   const ownerInfo = ownerProfile
     ? mapProfileToSimpleEntityInfo(ownerProfile)
-    : ({ id: userId } as SimpleEntityInfo);
+    : ({ id: rosterOwnerId } as SimpleEntityInfo);
 
   return rosterRows.map((roster) => ({
     id: roster.id,
@@ -671,61 +754,28 @@ export const getAllRosterMembers = async (): Promise<EligibleRosterMembers> => {
 export const getEntityRosterAccess = async (
   entityId: string
 ): Promise<{ isMember: boolean; isAdmin: boolean; memberCount: number }> => {
-  const userId = await ensureUserId();
-  const { data: rosters, error: rosterError } = await supabase
-    .from("rosters")
-    .select("id, roster_name")
-    .eq("roster_owner_id", entityId);
+  const { data, error } = await supabase.rpc("get_entity_roster_access", {
+    target_entity_id: entityId,
+  });
 
-  if (rosterError) throw rosterError;
+  if (error) throw error;
 
-  const rosterIds = (rosters ?? [])
-    .filter((roster) => isMembershipRoster(roster.roster_name))
-    .map((roster) => roster.id);
-
-  if (!rosterIds.length) {
-    return { isMember: userId === entityId, isAdmin: userId === entityId, memberCount: 0 };
-  }
-
-  const { data: members, error: membersError } = await supabase
-    .from("roster_members")
-    .select("user_id, is_admin")
-    .in("roster_id", rosterIds);
-
-  if (membersError) throw membersError;
-
-  const memberIds = new Set((members ?? []).map((member) => member.user_id));
-  const currentMembership = (members ?? []).find((member) => member.user_id === userId);
-
+  const access = Array.isArray(data) ? data[0] : data;
   return {
-    isMember: userId === entityId || memberIds.has(userId),
-    isAdmin: userId === entityId || Boolean(currentMembership?.is_admin),
-    memberCount: memberIds.size,
+    isMember: Boolean(access?.is_member),
+    isAdmin: Boolean(access?.is_admin),
+    memberCount: Number(access?.member_count ?? 0),
   };
 };
 
 export const getEntityRosterMembers = async (
   entityId: string
 ): Promise<SimpleUserInfo[]> => {
-  const { data: rosters, error: rosterError } = await supabase
-    .from("rosters")
-    .select("id, roster_name")
-    .eq("roster_owner_id", entityId);
+  const { data: members, error } = await supabase.rpc("get_entity_roster_member_ids", {
+    target_entity_id: entityId,
+  });
 
-  if (rosterError) throw rosterError;
-
-  const rosterIds = (rosters ?? [])
-    .filter((roster) => isMembershipRoster(roster.roster_name))
-    .map((roster) => roster.id);
-  if (!rosterIds.length) return [];
-
-  const { data: members, error: membersError } = await supabase
-    .from("roster_members")
-    .select("user_id")
-    .in("roster_id", rosterIds);
-
-  if (membersError) throw membersError;
-
+  if (error) throw error;
   const memberIds = Array.from(
     new Set((members ?? []).map((member) => member.user_id))
   );

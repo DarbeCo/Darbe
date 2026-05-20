@@ -26,10 +26,10 @@ import {
 
 const rosterApi = darbeBaseApi.injectEndpoints({
     endpoints: (builder) => ({
-        getRosters: builder.query<Roster[], void>({
-            async queryFn() {
+        getRosters: builder.query<Roster[], string | void>({
+            async queryFn(ownerId) {
                 try {
-                    const data = await getRosters();
+                    const data = await getRosters(ownerId || undefined);
                     return { data };
                 } catch (error) {
                     return {

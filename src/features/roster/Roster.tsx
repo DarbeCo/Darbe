@@ -20,7 +20,7 @@ import {
   RosterMember,
 } from "../../services/api/endpoints/types/roster.api.types";
 import { OrgJoinRequestState } from "../friends/types";
-import { useAppDispatch } from "../../services/hooks";
+import { useAppDispatch, useAppSelector } from "../../services/hooks";
 import {
   setExternalData,
   setModalType,
@@ -30,6 +30,7 @@ import { EDIT_SECTIONS } from "../users/userProfiles/constants";
 import { PROFILE_ROUTE } from "../../routes/route.constants";
 import { assetUrl } from "../../utils/assetUrl";
 import { SimpleCreateRoster } from "../../components/roster/SimpleCreateNewRoster";
+import { selectUser } from "../users/selectors";
 
 import styles from "./styles/roster.module.css";
 
@@ -65,7 +66,11 @@ const emptyPermissions: RosterAdminPermissions = {
 type PermissionKey = keyof RosterAdminPermissions;
 
 export const Roster = () => {
-  const { data, isLoading } = useGetRostersQuery();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const user = useAppSelector(selectUser);
+  const rosterOwnerId = searchParams.get("entityId") ?? undefined;
+  const isViewingOwnRoster = !rosterOwnerId || rosterOwnerId === user.user?.id;
+  const { data, isLoading } = useGetRostersQuery(rosterOwnerId);
   const [deleteRoster, { isLoading: isDeletingRoster }] =
     useDeleteRosterMutation();
   const [promoteToAdmin, { isLoading: isPromoting }] =
@@ -80,7 +85,6 @@ export const Roster = () => {
     useAcceptOrgJoinRequestMutation();
   const [denyOrgJoinRequest, { isLoading: isDenyingJoinRequest }] =
     useDenyOrgJoinRequestMutation();
-  const [searchParams, setSearchParams] = useSearchParams();
   const [searchText, setSearchText] = useState("");
   const [inviteText, setInviteText] = useState("");
   const [adminDialogMember, setAdminDialogMember] =
@@ -135,8 +139,14 @@ export const Roster = () => {
   const currentRosterName = getRosterDisplayName(currentRoster?.rosterName);
   const rosterId = currentRoster?.id;
   const rosterMembers = currentRoster?.members ?? [];
+  const currentUserRosterMember = rosterMembers.find(
+    (member) => member.user.id === user.user?.id
+  );
+  const canManageRoster =
+    isViewingOwnRoster ||
+    Boolean(currentUserRosterMember?.adminPermissions?.canEditAssignedRoster);
   const hasMultipleRosters = (data?.length ?? 0) > 1;
-  const canDeleteRoster = Boolean(currentRoster?.id && hasMultipleRosters);
+  const canDeleteRoster = Boolean(canManageRoster && currentRoster?.id && hasMultipleRosters);
   const filteredMembers = useMemo(() => {
     const query = searchText.trim().toLowerCase();
     if (!query) return rosterMembers;
@@ -161,6 +171,7 @@ export const Roster = () => {
     isAcceptingJoinRequest || isDenyingJoinRequest;
 
   const handleEditRoster = () => {
+    if (!canManageRoster) return;
     if (!rosterId) return;
 
     dispatch(setModalType(EDIT_SECTIONS.editRoster));
@@ -169,6 +180,7 @@ export const Roster = () => {
   };
 
   const handleDeleteRoster = async () => {
+    if (!canManageRoster) return;
     if (!currentRoster?.id || !data?.length) return;
 
     const nextRoster = data.find((roster) => roster.id !== currentRoster.id);
@@ -189,6 +201,7 @@ export const Roster = () => {
   };
 
   const openAdminDialog = (member: RosterMember) => {
+    if (!canManageRoster) return;
     setAdminDialogMember(member);
     setAdminPermissions(member.adminPermissions ?? emptyPermissions);
     setRemoveAsAdmin(false);
@@ -247,6 +260,7 @@ export const Roster = () => {
   };
 
   const handleRemoveMember = async (memberId: string) => {
+    if (!canManageRoster) return;
     if (!rosterId) return;
 
     await removeMemberFromRoster({ memberId, rosterId }).unwrap();
@@ -325,7 +339,7 @@ export const Roster = () => {
           />
         </label>
 
-        {!isCreateRosterView && !isPendingRequestsView && (
+        {canManageRoster && !isCreateRosterView && !isPendingRequestsView && (
           <div className={styles.rosterInviteBar}>
             <input
               type="text"
@@ -343,7 +357,7 @@ export const Roster = () => {
           </div>
         )}
 
-        {isCreateRosterView ? (
+        {isCreateRosterView && canManageRoster ? (
           <SimpleCreateRoster
             embedded
             memberSearchQuery={searchText}
@@ -359,7 +373,7 @@ export const Roster = () => {
               });
             }}
           />
-        ) : isPendingRequestsView ? (
+        ) : isPendingRequestsView && canManageRoster ? (
           <section className={styles.rosterPanel}>
             <div className={styles.rosterMembersHeader}>
               <h1>Pending Requests</h1>
@@ -443,19 +457,21 @@ export const Roster = () => {
                   {rosterMembers.length === 1 ? "member" : "members"}
                 </span>
               </h1>
-              <div className={styles.rosterHeaderActions}>
-                <button type="button" onClick={handleEditRoster}>
-                  Edit Roster
-                </button>
-                <button
-                  type="button"
-                  className={styles.rosterRemoveAction}
-                  onClick={() => setShowDeleteRosterConfirm(true)}
-                  disabled={!canDeleteRoster || isDeletingRoster}
-                >
-                  Delete Roster
-                </button>
-              </div>
+              {canManageRoster && (
+                <div className={styles.rosterHeaderActions}>
+                  <button type="button" onClick={handleEditRoster}>
+                    Edit Roster
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.rosterRemoveAction}
+                    onClick={() => setShowDeleteRosterConfirm(true)}
+                    disabled={!canDeleteRoster || isDeletingRoster}
+                  >
+                    Delete Roster
+                  </button>
+                </div>
+              )}
             </div>
 
             {isLoading && (
@@ -507,33 +523,39 @@ export const Roster = () => {
                           </span>
                         </button>
 
-                        <div className={styles.rosterMemberActions}>
-                          {member.isAdmin && (
-                            <span className={styles.rosterAdminLabel}>
-                              Admin
-                            </span>
-                          )}
-                          <button
-                            type="button"
-                            className={
-                              member.isAdmin
-                                ? styles.rosterSecondaryAction
-                                : styles.rosterPrimaryAction
-                            }
-                            onClick={() => openAdminDialog(member)}
-                            disabled={isRosterActionLoading}
-                          >
-                            {member.isAdmin ? "Edit Admin" : "Make Admin"}
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.rosterRemoveAction}
-                            onClick={() => handleRemoveMember(member.user.id)}
-                            disabled={isRosterActionLoading}
-                          >
-                            Remove
-                          </button>
-                        </div>
+                        {(canManageRoster || member.isAdmin) && (
+                          <div className={styles.rosterMemberActions}>
+                            {member.isAdmin && (
+                              <span className={styles.rosterAdminLabel}>
+                                Admin
+                              </span>
+                            )}
+                            {canManageRoster && (
+                              <>
+                                <button
+                                  type="button"
+                                  className={
+                                    member.isAdmin
+                                      ? styles.rosterSecondaryAction
+                                      : styles.rosterPrimaryAction
+                                  }
+                                  onClick={() => openAdminDialog(member)}
+                                  disabled={isRosterActionLoading}
+                                >
+                                  {member.isAdmin ? "Edit Admin" : "Make Admin"}
+                                </button>
+                                <button
+                                  type="button"
+                                  className={styles.rosterRemoveAction}
+                                  onClick={() => handleRemoveMember(member.user.id)}
+                                  disabled={isRosterActionLoading}
+                                >
+                                  Remove
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       <p className={styles.rosterMemberSince}>

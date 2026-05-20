@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { PROFILE_ROUTE, ROSTER_ROUTE } from "../../routes/route.constants";
@@ -73,7 +73,10 @@ export const OrgOverview = ({
   >(null);
   const { data: rosterMembers = [] } = useGetEntityRosterMembersQuery(
     entityId ?? "",
-    { skip: !entityId || !activeList || activeList !== "members" }
+    {
+      skip:
+        !entityId || !canViewRoster || !activeList || activeList !== "members",
+    }
   );
   const { data: upcomingProjects = [] } = useGetEntityUpcomingEventsQuery(
     entityId ?? "",
@@ -104,8 +107,14 @@ export const OrgOverview = ({
       return;
     }
 
-    navigate(ROSTER_ROUTE);
+    navigate(`${ROSTER_ROUTE}?entityId=${entityId}`);
   };
+
+  useEffect(() => {
+    if (!canViewRoster && activeList === "members") {
+      setActiveList(null);
+    }
+  }, [activeList, canViewRoster]);
 
   const handlePendingRequestsClick = () => {
     if (!canViewRoster) {
@@ -159,7 +168,18 @@ export const OrgOverview = ({
         <button
           type="button"
           className={styles.orgOverviewRowButton}
-          onClick={() => setActiveList("members")}
+          onClick={() => {
+            if (canViewRoster) {
+              setActiveList("members");
+            }
+          }}
+          disabled={!canViewRoster}
+          aria-disabled={!canViewRoster}
+          title={
+            canViewRoster
+              ? "View organization members"
+              : "Only organization members can view this member list"
+          }
         >
           <span className={styles.orgOverviewRowText}>
             {partnersCount} Members

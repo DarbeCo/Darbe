@@ -1181,6 +1181,36 @@ export interface Database {
           event_coordinator_id: string;
         }[];
       };
+      get_entity_roster_access: {
+        Args: { target_entity_id: string };
+        Returns: {
+          is_member: boolean;
+          is_admin: boolean;
+          member_count: number;
+        }[];
+      };
+      get_entity_roster_member_ids: {
+        Args: { target_entity_id: string };
+        Returns: {
+          user_id: string;
+        }[];
+      };
+      get_entity_roster_rows: {
+        Args: { target_entity_id: string };
+        Returns: {
+          roster_id: string;
+          roster_owner_id: string;
+          roster_name: string;
+          roster_created_at: string;
+          user_id: string | null;
+          is_admin: boolean;
+          can_edit_assigned_roster: boolean;
+          can_assign_volunteer_coordinators: boolean;
+          can_edit_internal_events: boolean;
+          can_edit_external_events: boolean;
+          member_created_at: string | null;
+        }[];
+      };
       send_message: {
         Args: { target_receiver_id: string; message_body: string };
         Returns: {

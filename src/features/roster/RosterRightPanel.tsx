@@ -20,13 +20,15 @@ export const RosterRightPanel = () => {
   const [isRosterMenuOpen, setIsRosterMenuOpen] = useState(false);
   const rosterMenuRef = useRef<HTMLDivElement | null>(null);
   const selectedRosterId = searchParams.get("rosterId");
-  const { data: rosters } = useGetRostersQuery();
-  const { data: eventCounts } = useGetEntityEventCountsQuery(currentUserId, {
-    skip: !currentUserId,
+  const rosterOwnerId = searchParams.get("entityId") ?? undefined;
+  const overviewEntityId = rosterOwnerId ?? currentUserId;
+  const { data: rosters } = useGetRostersQuery(rosterOwnerId);
+  const { data: eventCounts } = useGetEntityEventCountsQuery(overviewEntityId, {
+    skip: !overviewEntityId,
   });
   const { data: donorsAndStaff } = useGetDonorsAndStaffQuery(
-    { userId: currentUserId },
-    { skip: !currentUserId }
+    { userId: overviewEntityId },
+    { skip: !overviewEntityId }
   );
 
   useEffect(() => {
@@ -65,6 +67,13 @@ export const RosterRightPanel = () => {
   const currentRoster =
     rosters?.find((roster) => roster.id === selectedRosterId) ?? rosters?.[0];
   const rosterMembers = currentRoster?.members ?? [];
+  const currentUserRosterMember = rosterMembers.find(
+    (member) => member.user.id === currentUserId
+  );
+  const canManageRoster =
+    !rosterOwnerId ||
+    rosterOwnerId === currentUserId ||
+    Boolean(currentUserRosterMember?.adminPermissions?.canEditAssignedRoster);
   const hasMultipleRosters = (rosters?.length ?? 0) > 1;
 
   const handleSelectRoster = (rosterId: string) => {
@@ -142,27 +151,31 @@ export const RosterRightPanel = () => {
         </div>
       </section>
 
-      <button
-        type="button"
-        className={styles.rosterRailAction}
-        onClick={handleCreateRoster}
-      >
-        <span>Create Roster</span>
-        <span className={styles.rosterRailActionIcon} aria-hidden="true">
-          <Add fontSize="small" />
-        </span>
-      </button>
+      {canManageRoster && (
+        <>
+          <button
+            type="button"
+            className={styles.rosterRailAction}
+            onClick={handleCreateRoster}
+          >
+            <span>Create Roster</span>
+            <span className={styles.rosterRailActionIcon} aria-hidden="true">
+              <Add fontSize="small" />
+            </span>
+          </button>
 
-      <button
-        type="button"
-        className={styles.rosterRailAction}
-        onClick={handlePendingRequests}
-      >
-        <span>Pending Requests</span>
-        <span className={styles.rosterRailActionIcon} aria-hidden="true">
-          <ChevronRight fontSize="small" />
-        </span>
-      </button>
+          <button
+            type="button"
+            className={styles.rosterRailAction}
+            onClick={handlePendingRequests}
+          >
+            <span>Pending Requests</span>
+            <span className={styles.rosterRailActionIcon} aria-hidden="true">
+              <ChevronRight fontSize="small" />
+            </span>
+          </button>
+        </>
+      )}
 
       <section className={styles.rosterRailOverview}>
         <h2>Org Overview</h2>
