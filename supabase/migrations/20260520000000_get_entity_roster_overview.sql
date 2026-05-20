@@ -111,7 +111,7 @@ select distinct
 from public.rosters roster
 join public.profiles profile
   on profile.id = roster.roster_owner_id
-where profile.user_type in ('organization', 'nonprofit')
+where lower(trim(profile.user_type)) in ('organization', 'nonprofit', 'non-profit', 'non profit')
   and roster.roster_name <> 'Followers'
   and not exists (
     select 1

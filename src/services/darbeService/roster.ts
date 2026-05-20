@@ -334,6 +334,62 @@ const mapRosterMembers = async (
   });
 };
 
+const mergeRosterMember = (
+  current: RosterMember | undefined,
+  next: RosterMember
+): RosterMember => ({
+  user: current?.user ?? next.user,
+  isAdmin: Boolean(current?.isAdmin || next.isAdmin),
+  adminPermissions: {
+    canEditAssignedRoster: Boolean(
+      current?.adminPermissions?.canEditAssignedRoster ||
+        next.adminPermissions?.canEditAssignedRoster
+    ),
+    canAssignVolunteerCoordinators: Boolean(
+      current?.adminPermissions?.canAssignVolunteerCoordinators ||
+        next.adminPermissions?.canAssignVolunteerCoordinators
+    ),
+    canEditInternalEvents: Boolean(
+      current?.adminPermissions?.canEditInternalEvents ||
+        next.adminPermissions?.canEditInternalEvents
+    ),
+    canEditExternalEvents: Boolean(
+      current?.adminPermissions?.canEditExternalEvents ||
+        next.adminPermissions?.canEditExternalEvents
+    ),
+  },
+  memberSince:
+    current?.memberSince && next.memberSince
+      ? new Date(current.memberSince).getTime() <= new Date(next.memberSince).getTime()
+        ? current.memberSince
+        : next.memberSince
+      : current?.memberSince ?? next.memberSince,
+  causes: current?.causes?.length ? current.causes : next.causes,
+  volunteerSummary: current?.volunteerSummary ?? next.volunteerSummary,
+});
+
+const applyMemberRosterAggregate = (
+  rosterMembers: Array<RosterMember & { rosterId: string }>,
+  membersByRoster: Map<string, RosterMember[]>,
+  rosterRows: Array<{ id: string; roster_name: string | null }>
+) => {
+  const memberRoster = rosterRows.find(
+    (roster) => displayRosterName(roster.roster_name) === MEMBER_ROSTER_NAME
+  );
+
+  if (!memberRoster) return;
+
+  const aggregateByUser = new Map<string, RosterMember>();
+  rosterMembers.forEach((member) => {
+    aggregateByUser.set(
+      member.user.id,
+      mergeRosterMember(aggregateByUser.get(member.user.id), member)
+    );
+  });
+
+  membersByRoster.set(memberRoster.id, Array.from(aggregateByUser.values()));
+};
+
 export const getRosters = async (ownerId?: string): Promise<Roster[]> => {
   const userId = await ensureUserId();
   const rosterOwnerId = ownerId ?? userId;
@@ -385,6 +441,11 @@ export const getRosters = async (ownerId?: string): Promise<Roster[]> => {
       });
       membersByRoster.set(member.rosterId, list);
     });
+    applyMemberRosterAggregate(
+      rosterMembers,
+      membersByRoster,
+      Array.from(rostersById.values())
+    );
 
     const ownerProfile = (await getProfilesByIds([ownerId]))[0];
     const ownerInfo = ownerProfile
@@ -455,6 +516,7 @@ export const getRosters = async (ownerId?: string): Promise<Roster[]> => {
     });
     membersByRoster.set(member.rosterId, list);
   });
+  applyMemberRosterAggregate(rosterMembers, membersByRoster, rosterRows);
 
   const ownerProfile = (await getProfilesByIds([rosterOwnerId]))[0];
   const ownerInfo = ownerProfile
