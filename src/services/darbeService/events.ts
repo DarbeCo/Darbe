@@ -1562,32 +1562,63 @@ export const getVolunteerMatches = async (): Promise<VolunteerMatch[]> => {
   if (causeError) throw causeError;
 
   const causeIds = (entityCauses ?? []).map((row) => row.cause_id);
-  if (!causeIds.length) return [];
-
-  const { data: matchingUsers, error: matchError } = await supabase
-    .from("user_causes")
-    .select("user_id, cause_id")
-    .in("cause_id", causeIds);
+  const { data: matchingUsers, error: matchError } = causeIds.length
+    ? await supabase
+        .from("user_causes")
+        .select("user_id, cause_id")
+        .in("cause_id", causeIds)
+    : { data: [], error: null };
 
   if (matchError) throw matchError;
 
-  const matchingUserIds = Array.from(
-    new Set((matchingUsers ?? []).map((row) => row.user_id))
-  ).filter((id) => id !== entityId);
+  const { data: entityEvents, error: entityEventsError } = await supabase
+    .from("events")
+    .select("id")
+    .eq("event_owner_id", entityId);
 
-  if (!matchingUserIds.length) return [];
+  if (entityEventsError) throw entityEventsError;
+
+  const entityEventIds = (entityEvents ?? []).map((event) => event.id);
+  if (!entityEventIds.length) return [];
+
+  const { data: volunteeredSignups, error: volunteeredSignupsError } =
+    await supabase
+      .from("event_signups")
+      .select("user_id")
+      .in("event_id", entityEventIds)
+      .in("status", ["volunteered", "confirmed", "approved"]);
+
+  if (volunteeredSignupsError) throw volunteeredSignupsError;
+
+  const volunteeredSignupUserIds = new Set(
+    (volunteeredSignups ?? []).map((signup) => signup.user_id)
+  );
+  const volunteeredUserIds = Array.from(volunteeredSignupUserIds).filter(
+    (userId) => userId !== entityId
+  );
+
+  if (!volunteeredUserIds.length) return [];
 
   const { data: profiles, error: profileError } = await supabase
     .from("profiles")
     .select(
       "id, full_name, first_name, last_name, profile_picture_url, nonprofit_name, organization_name, user_type, created_at"
     )
-    .in("id", matchingUserIds)
+    .in("id", volunteeredUserIds)
     .eq("user_type", "individual");
 
   if (profileError) throw profileError;
 
   const profileIds = (profiles ?? []).map((profile) => profile.id);
+  if (!profileIds.length) return [];
+
+  const profileCauseIds = Array.from(
+    new Set(
+      (matchingUsers ?? [])
+        .filter((row) => profileIds.includes(row.user_id))
+        .map((row) => row.cause_id)
+    )
+  );
 
   const [detailsRes, impactRes, causeRowsRes] = await Promise.all([
     supabase
@@ -1599,10 +1630,12 @@ export const getVolunteerMatches = async (): Promise<VolunteerMatch[]> => {
       .select("impact_owner_id, hours_volunteered, events_attended")
       .in("impact_owner_id", profileIds)
       .is("event_id", null),
-    supabase
-      .from("causes")
-      .select("id, name, description, image_url, active")
-      .in("id", Array.from(new Set((matchingUsers ?? []).map((row) => row.cause_id)))),
+    profileCauseIds.length
+      ? supabase
+          .from("causes")
+          .select("id, name, description, image_url, active")
+          .in("id", profileCauseIds)
+      : Promise.resolve({ data: [], error: null }),
   ]);
 
   if (detailsRes.error) throw detailsRes.error;

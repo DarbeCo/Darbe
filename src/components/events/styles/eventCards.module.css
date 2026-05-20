@@ -233,7 +233,7 @@
   justify-content: center;
   width: 107px;
   height: 47px;
-  padding: 12px 40px;
+  padding: 12px 18px;
   border-radius: 4px;
   background-color: #ffffff;
   border: 1px solid #c4c4c4;
@@ -242,6 +242,7 @@
   font-size: 12px;
   font-weight: 600;
   line-height: 17px;
+  white-space: nowrap;
   cursor: pointer;
 }
 

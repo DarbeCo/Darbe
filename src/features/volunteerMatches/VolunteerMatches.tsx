@@ -67,9 +67,7 @@ export const VolunteerMatches = ({
               <div className={styles.volunteerCardHeader}>
                 <strong>Volunteer # {index + 1}/15</strong>
                 <button type="button">
-                  {match.nextEvent?.impactValue ||
-                    match.nextEvent?.eventName ||
-                    "No upcoming event"}
+                  {match.nextEvent?.eventName || "No upcoming event"}
                 </button>
               </div>
               <div className={styles.volunteerMatchesContainer}>
