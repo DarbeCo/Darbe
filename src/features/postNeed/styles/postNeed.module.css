@@ -272,6 +272,23 @@
   opacity: 1;
 }
 
+.eventDateField :global(.MuiInputBase-root) {
+  position: relative;
+}
+
+.eventDateField :global(input[type="date"]) {
+  padding-left: 44px;
+  padding-right: 16px;
+}
+
+.eventDateField :global(input[type="date"]::-webkit-calendar-picker-indicator) {
+  position: absolute;
+  left: 14px;
+  right: auto;
+  margin: 0;
+  cursor: pointer;
+}
+
 .internalDescriptionField {
   grid-column: 1;
 }

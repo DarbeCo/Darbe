@@ -132,10 +132,10 @@ export const EventInfo = ({
         className={
           useStepPanelLayout
             ? getInternalFieldClassName(
-                styles.internalDateField,
+                `${styles.internalDateField} ${styles.eventDateField}`,
                 Boolean(data.eventDate)
               )
-            : ""
+            : styles.eventDateField
         }
       >
         <Inputs
