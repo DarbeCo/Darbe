@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { IconButton } from "@mui/material";
 
@@ -95,6 +95,44 @@ const toNumber = (value: number | string | undefined, fallback = 0) => {
 };
 
 const hasValue = (value?: unknown) => Boolean(value?.toString().trim());
+const ACTIVE_DRAFT_STORAGE_KEY = "darbe:active-post-need-event";
+
+type ActivePostNeedDraft = {
+  userId?: string;
+  currentStep: number;
+  eventType: string;
+  incompleteEventId: string;
+  eventData: CreateEvent;
+};
+
+const getActiveDraft = (userId?: string) => {
+  if (typeof window === "undefined") return undefined;
+
+  try {
+    const rawDraft = window.sessionStorage.getItem(ACTIVE_DRAFT_STORAGE_KEY);
+    if (!rawDraft) return undefined;
+
+    const draft = JSON.parse(rawDraft) as ActivePostNeedDraft;
+    if (userId && draft.userId && draft.userId !== userId) return undefined;
+
+    return draft;
+  } catch (error) {
+    console.error("Unable to read active event draft", error);
+    return undefined;
+  }
+};
+
+const saveActiveDraft = (draft: ActivePostNeedDraft) => {
+  if (typeof window === "undefined") return;
+
+  window.sessionStorage.setItem(ACTIVE_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+};
+
+const removeActiveDraft = () => {
+  if (typeof window === "undefined") return;
+
+  window.sessionStorage.removeItem(ACTIVE_DRAFT_STORAGE_KEY);
+};
 
 export const PostNeed = () => {
   const navigate = useNavigate();
@@ -118,20 +156,22 @@ export const PostNeed = () => {
   const draftToFinish = routeIncompleteEventId
     ? getIncompletePostNeedEventById(routeIncompleteEventId)
     : undefined;
+  const activeDraft = !draftToFinish ? getActiveDraft(userId) : undefined;
   const [currentStep, setCurrentStep] = useState(
-    draftToFinish?.eventType || routeInitialEventType ? 0 : -1
+    activeDraft?.currentStep ??
+      (draftToFinish?.eventType || routeInitialEventType ? 0 : -1)
   );
   const [eventType, setEventType] = useState(
-    draftToFinish?.eventType ?? routeInitialEventType ?? ""
+    activeDraft?.eventType ?? draftToFinish?.eventType ?? routeInitialEventType ?? ""
   );
   const [incompleteEventId] = useState(
-    () => draftToFinish?.id ?? createIncompleteEventId()
+    () => activeDraft?.incompleteEventId ?? draftToFinish?.id ?? createIncompleteEventId()
   );
   const [eventData, setEventData] = useState<CreateEvent>({
     ...INITIAL_EVENT_STATE,
-    ...(draftToFinish?.data ?? {}),
+    ...(activeDraft?.eventData ?? draftToFinish?.data ?? {}),
     isFollowersOnly:
-      (draftToFinish?.data ?? {}).isFollowersOnly ??
+      (activeDraft?.eventData ?? draftToFinish?.data ?? {}).isFollowersOnly ??
       routeInitialEventType === "internalEvent",
   });
   const [submitValidationDialog, setSubmitValidationDialog] = useState<{
@@ -143,6 +183,20 @@ export const PostNeed = () => {
   const eventActionLockRef = useRef(false);
   const [createEvent, { isLoading: isPostingEvent }] =
     useCreateEventMutation();
+
+  useEffect(() => {
+    if (!eventType && currentStep === -1) {
+      return;
+    }
+
+    saveActiveDraft({
+      userId,
+      currentStep,
+      eventType,
+      incompleteEventId,
+      eventData,
+    });
+  }, [currentStep, eventData, eventType, incompleteEventId, userId]);
 
   const handlePostEvent = async () => {
     if (eventActionLockRef.current || isPostingEvent || isSavingIncomplete) {
@@ -165,10 +219,7 @@ export const PostNeed = () => {
         eventDate: toDatabaseDate(eventData.eventDate),
         startTime: toNumber(eventData.startTime),
         endTime: toNumber(eventData.endTime),
-        maxVolunteerCount:
-          isInternalEvent && !toNumber(eventData.maxVolunteerCount)
-            ? 15
-            : toNumber(eventData.maxVolunteerCount),
+        maxVolunteerCount: toNumber(eventData.maxVolunteerCount),
         isFollowersOnly: isInternalEvent || Boolean(eventData.isFollowersOnly),
         // set the event owner to the current user
         eventOwner: userId,
@@ -177,6 +228,7 @@ export const PostNeed = () => {
 
       await createEvent(payload).unwrap();
       removeIncompletePostNeedEvent(incompleteEventId);
+      removeActiveDraft();
       setSubmitValidationDialog(null);
       navigate(EVENTS_ROUTE);
     } catch (error) {
@@ -187,6 +239,7 @@ export const PostNeed = () => {
   };
 
   const handleExit = () => {
+    removeActiveDraft();
     navigate(HOME_ROUTE);
   };
 
@@ -254,6 +307,7 @@ export const PostNeed = () => {
 
   const handleIncompleteSavedConfirm = () => {
     setIncompleteSavedDialog(false);
+    removeActiveDraft();
     navigate(EVENTS_ROUTE, { state: { activeEventsTab: "Incomplete" } });
   };
 
@@ -294,9 +348,7 @@ export const PostNeed = () => {
         ? "Valid Time Range"
         : "",
       !hasValue(eventData.eventDescription) ? "Description" : "",
-      !isInternalEvent && toNumber(eventData.maxVolunteerCount) <= 0
-        ? "# Of Volunteers Needed"
-        : "",
+      toNumber(eventData.maxVolunteerCount) <= 0 ? "# Of Volunteers" : "",
       !isInternalEvent && !hasValue(eventData.eventHoursNeeded)
         ? "# Of Hours Needed"
         : "",
@@ -380,9 +432,7 @@ export const PostNeed = () => {
         ? "Valid Time Range"
         : "",
       !hasValue(eventData.eventDescription) ? "Description" : "",
-      !isInternalEvent && toNumber(eventData.maxVolunteerCount) <= 0
-        ? "# Of Volunteers Needed"
-        : "",
+      toNumber(eventData.maxVolunteerCount) <= 0 ? "# Of Volunteers" : "",
       !isInternalEvent && !hasValue(eventData.eventHoursNeeded)
         ? "# Of Hours Needed"
         : "",

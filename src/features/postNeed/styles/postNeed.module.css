@@ -293,12 +293,24 @@
   grid-column: 1;
 }
 
+.internalTimeArea {
+  grid-column: 2;
+  grid-row: 2;
+}
+
 .internalMaxVolunteerField {
   grid-column: 2;
 }
 
+.internalEventDetailsForm:not(.communityEventDetailsForm)
+  .internalMaxVolunteerField {
+  grid-row: 2;
+  margin-top: 96px;
+}
+
 .communityHoursNeededField {
   grid-column: 2;
+  grid-row: 4;
 }
 
 .communityEventDetailsForm {

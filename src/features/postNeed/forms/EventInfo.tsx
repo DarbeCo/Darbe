@@ -181,34 +181,28 @@ export const EventInfo = ({
         )}
       </div>
 
-      {!isInternalEvent && (
-        <div
-          className={
-            useStepPanelLayout
-              ? getInternalFieldClassName(
-                  styles.internalMaxVolunteerField,
-                  Boolean(data.maxVolunteerCount)
-                )
-              : ""
+      <div
+        className={
+          useStepPanelLayout
+            ? getInternalFieldClassName(
+                styles.internalMaxVolunteerField,
+                Boolean(data.maxVolunteerCount)
+              )
+            : ""
+        }
+      >
+        <Inputs
+          label="# Of Volunteers"
+          darbeInputType="standardInput"
+          isRequired
+          value={data.maxVolunteerCount || ""}
+          handleChange={handleChange}
+          name="maxVolunteerCount"
+          placeholder={
+            useStepPanelLayout ? "Volunteers" : "Enter # of Volunteers"
           }
-        >
-          <Inputs
-            label="# Of Volunteers Needed"
-            darbeInputType="standardInput"
-            isRequired
-            value={data.maxVolunteerCount}
-            handleChange={handleChange}
-            name="maxVolunteerCount"
-            placeholder={
-              isCommunityEvent
-                ? "Volunteers"
-                : useStepPanelLayout
-                  ? "# of Volunteers Needed"
-                  : "Enter # of Volunteers"
-            }
-          />
-        </div>
-      )}
+        />
+      </div>
 
       {isCommunityEvent && (
         <div
