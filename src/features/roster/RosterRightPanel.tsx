@@ -190,7 +190,7 @@ export const RosterRightPanel = () => {
           </div>
           <div>
             <dt>{donorsAndStaff?.donors.length ?? 0}</dt>
-            <dd>Business Sponsors</dd>
+            <dd>Supporters</dd>
           </div>
           <div>
             <dt>{rosterMembers.length}</dt>

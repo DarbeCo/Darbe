@@ -100,7 +100,7 @@ export const OrgOverview = ({
       : activeList === "members"
       ? "Members"
       : activeList === "sponsors"
-      ? "Business Sponsors"
+      ? "Supporters"
       : "Upcoming Projects";
   const handleRosterClick = () => {
     if (!canViewRoster) {
@@ -203,7 +203,7 @@ export const OrgOverview = ({
           onClick={() => setActiveList("sponsors")}
         >
           <span className={styles.orgOverviewRowText}>
-            {businessSponsorsCount} Business Sponsors
+            {businessSponsorsCount} Supporters
           </span>
         </button>
 
