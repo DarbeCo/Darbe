@@ -1006,6 +1006,33 @@ export const getUserProfile = async (userId: string): Promise<DarbeProfileShared
     });
   }
 
+  const seenOrganizationIds = new Set<string>();
+  const seenOrganizationNames = new Set<string>();
+  const uniqueOrganizations = organizations.filter((organization) => {
+    const organizationId = organization.parentOrganization?.id?.trim();
+    const organizationName = organization.organizationName
+      ?.trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ");
+
+    if (
+      (organizationId && seenOrganizationIds.has(organizationId)) ||
+      (organizationName && seenOrganizationNames.has(organizationName))
+    ) {
+      return false;
+    }
+
+    if (organizationId) {
+      seenOrganizationIds.add(organizationId);
+    }
+
+    if (organizationName) {
+      seenOrganizationNames.add(organizationName);
+    }
+
+    return true;
+  });
+
   const [friendsRes, followersRes, followingRes] = await Promise.all([
     supabase.rpc("get_user_friends", { target_user_id: userId }),
     supabase.from("follows").select("follower_id").eq("following_id", userId),
@@ -1077,7 +1104,7 @@ export const getUserProfile = async (userId: string): Promise<DarbeProfileShared
     jobExperiences,
     volunteerExperiences,
     militaryService,
-    organizations,
+    organizations: uniqueOrganizations,
     friends: friendProfiles.map(mapProfileToFriend),
     followers: followerProfiles.map(mapProfileToFollow),
     following: followingProfiles.map(mapProfileToFollow),
