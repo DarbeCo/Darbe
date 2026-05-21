@@ -261,7 +261,10 @@ const getSignupCounts = async (eventIds: string[]) => {
   return map;
 };
 
-const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> => {
+const buildShortEvents = async (
+  events: EventRow[],
+  invitationByEventId = new Map<string, SimpleUserInfo>()
+): Promise<ShortEventState[]> => {
   if (!events.length) return [];
 
   const eventIds = events.map((event) => event.id);
@@ -370,6 +373,7 @@ const buildShortEvents = async (events: EventRow[]): Promise<ShortEventState[]> 
       eventCoordinator: coordinatorId
         ? toSimpleUser(coordinatorMap.get(coordinatorId), coordinatorId)
         : undefined,
+      invitationFrom: invitationByEventId.get(event.id),
       eventName: event.event_name,
       eventDate: event.event_date,
       startTime: timeToDecimal(event.start_time) ?? 0,
@@ -657,13 +661,40 @@ export const getEvents = async (
   if (error) throw error;
 
   let filteredEvents = events ?? [];
+  const invitationByEventId = new Map<string, SimpleUserInfo>();
 
   if (isRecommendableEntityScope) {
+    const [
+      { data: passedRows, error: passedRowsError },
+      { data: followingRows, error: followingRowsError },
+    ] = await Promise.all([
+      supabase
+        .from("event_signups")
+        .select("event_id")
+        .eq("user_id", userId)
+        .eq("status", "passed"),
+      supabase
+        .from("follows")
+        .select("following_id")
+        .eq("follower_id", userId),
+    ]);
+
+    if (passedRowsError) throw passedRowsError;
+    if (followingRowsError) throw followingRowsError;
+
+    const passedEventIds = new Set(
+      (passedRows ?? []).map((signup) => signup.event_id)
+    );
+    const followedEntityIds = new Set(
+      (followingRows ?? []).map((follow) => follow.following_id)
+    );
+
     filteredEvents = filteredEvents.filter(
       (event) =>
         event.event_owner_id !== userId &&
         event.event_coordinator_id !== userId &&
-        !event.is_followers_only
+        !passedEventIds.has(event.id) &&
+        (!event.is_followers_only || followedEntityIds.has(event.event_owner_id))
     );
   }
 
@@ -674,6 +705,7 @@ export const getEvents = async (
       { data: memberships },
       { data: savedOrganizations },
       { data: staffEntries },
+      { data: recommendations, error: recommendationsError },
     ] = await Promise.all([
       supabase
         .from("event_signups")
@@ -689,7 +721,35 @@ export const getEvents = async (
         .select("parent_organization_id")
         .eq("user_id", userId),
       supabase.from("entity_staff").select("entity_id").eq("user_id", userId),
+      supabase
+        .from("event_recommendations")
+        .select("event_id, recommender_entity_id")
+        .eq("recipient_user_id", userId),
     ]);
+
+    if (recommendationsError) throw recommendationsError;
+
+    const recommendedEventIds = new Set(
+      (recommendations ?? []).map((row) => row.event_id)
+    );
+    const recommenderIds = Array.from(
+      new Set((recommendations ?? []).map((row) => row.recommender_entity_id))
+    );
+    const recommenderProfiles = await getProfilesByIds(recommenderIds);
+    const recommenderMap = new Map(
+      recommenderProfiles.map((profile) => [profile.id, profile])
+    );
+
+    (recommendations ?? []).forEach((recommendation) => {
+      const recommender = recommenderMap.get(recommendation.recommender_entity_id);
+
+      if (recommender) {
+        invitationByEventId.set(
+          recommendation.event_id,
+          mapProfileToSimpleUserInfo(recommender)
+        );
+      }
+    });
 
     const blockedEventIds = new Set(
       (signups ?? [])
@@ -745,6 +805,7 @@ export const getEvents = async (
       if (event.event_coordinator_id === userId) return true;
       if (adminEntityIds.has(event.event_owner_id)) return true;
       if (blockedEventIds.has(event.id)) return false;
+      if (recommendedEventIds.has(event.id)) return true;
       if (memberEntityIds.has(event.event_owner_id)) return true;
       if (affiliatedEntityIds.has(event.event_owner_id)) return true;
       if (event.is_followers_only) return false;
@@ -752,7 +813,89 @@ export const getEvents = async (
     });
   }
 
-  return buildShortEvents(filteredEvents as EventRow[]);
+  return buildShortEvents(filteredEvents as EventRow[], invitationByEventId);
+};
+
+export const recommendEventToFollowers = async (
+  eventId: string
+): Promise<void> => {
+  const recommenderEntityId = await ensureUserId();
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("user_type")
+    .eq("id", recommenderEntityId)
+    .single();
+
+  if (profileError || !profile) {
+    throw profileError ?? new Error("User not found");
+  }
+
+  if (profile.user_type !== "organization") {
+    throw new Error("Only organizations can recommend events to followers.");
+  }
+
+  const [{ data: followers, error: followersError }, { data: rosters, error: rostersError }] =
+    await Promise.all([
+      supabase
+        .from("follows")
+        .select("follower_id")
+        .eq("following_id", recommenderEntityId),
+      supabase
+        .from("rosters")
+        .select("id")
+        .eq("roster_owner_id", recommenderEntityId),
+    ]);
+
+  if (followersError) throw followersError;
+  if (rostersError) throw rostersError;
+
+  const rosterIds = (rosters ?? []).map((roster) => roster.id);
+  const { data: rosterMembers, error: rosterMembersError } = rosterIds.length
+    ? await supabase
+        .from("roster_members")
+        .select("user_id")
+        .in("roster_id", rosterIds)
+    : { data: [], error: null };
+
+  if (rosterMembersError) throw rosterMembersError;
+
+  const recipientUserIds = Array.from(
+    new Set([
+      ...(followers ?? []).map((follower) => follower.follower_id),
+      ...((rosterMembers ?? []).map((member) => member.user_id)),
+    ])
+  ).filter((recipientUserId) => recipientUserId !== recommenderEntityId);
+
+  if (!recipientUserIds.length) {
+    return;
+  }
+
+  const { data: recipientProfiles, error: recipientProfilesError } = await supabase
+    .from("profiles")
+    .select("id")
+    .in("id", recipientUserIds)
+    .eq("user_type", "individual");
+
+  if (recipientProfilesError) throw recipientProfilesError;
+
+  const rows = (recipientProfiles ?? []).map((recipient) => ({
+    event_id: eventId,
+    recommender_entity_id: recommenderEntityId,
+    recipient_user_id: recipient.id,
+  }));
+
+  if (!rows.length) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("event_recommendations")
+    .upsert(rows, {
+      onConflict: "event_id,recommender_entity_id,recipient_user_id",
+    });
+
+  if (error) throw error;
 };
 
 export const getEntityEventCounts = async (

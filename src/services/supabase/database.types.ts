@@ -725,6 +725,30 @@ export interface Database {
         };
         Relationships: [];
       };
+      event_recommendations: {
+        Row: {
+          id: string;
+          event_id: string;
+          recommender_entity_id: string;
+          recipient_user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          event_id: string;
+          recommender_entity_id: string;
+          recipient_user_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          event_id?: string;
+          recommender_entity_id?: string;
+          recipient_user_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       events: {
         Row: {
           id: string;

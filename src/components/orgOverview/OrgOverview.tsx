@@ -23,6 +23,8 @@ export interface OrgOverviewProps {
   entityId?: string;
   followersCount?: number;
   followers?: OrgOverviewFollower[];
+  followingCount?: number;
+  following?: OrgOverviewFollower[];
   mutualFollowers?: OrgOverviewFollower[];
   mutualCount?: number;
   partnersCount?: number;
@@ -57,6 +59,8 @@ export const OrgOverview = ({
   entityId,
   followersCount = 0,
   followers = [],
+  followingCount = 0,
+  following = [],
   mutualFollowers = [],
   mutualCount,
   partnersCount = 0,
@@ -69,7 +73,7 @@ export const OrgOverview = ({
 }: OrgOverviewProps) => {
   const navigate = useNavigate();
   const [activeList, setActiveList] = useState<
-    "followers" | "members" | "sponsors" | "projects" | null
+    "followers" | "following" | "members" | "sponsors" | "projects" | null
   >(null);
   const { data: rosterMembers = [] } = useGetEntityRosterMembersQuery(
     entityId ?? "",
@@ -97,6 +101,8 @@ export const OrgOverview = ({
   const activeListTitle =
     activeList === "followers"
       ? "Followers"
+      : activeList === "following"
+      ? "Following"
       : activeList === "members"
       ? "Members"
       : activeList === "sponsors"
@@ -163,6 +169,17 @@ export const OrgOverview = ({
               {mutualTotal} mutual
             </span>
           )}
+        </button>
+
+        <button
+          type="button"
+          className={styles.orgOverviewRowButton}
+          onClick={() => setActiveList("following")}
+          disabled={followingCount === 0}
+        >
+          <span className={styles.orgOverviewRowText}>
+            Following&nbsp;&nbsp;{followingCount}
+          </span>
         </button>
 
         <button
@@ -293,6 +310,8 @@ export const OrgOverview = ({
                 <>
                   {(activeList === "followers"
                     ? followers
+                    : activeList === "following"
+                    ? following
                     : activeList === "members"
                     ? membersToDisplay
                     : businessSponsors
@@ -318,6 +337,8 @@ export const OrgOverview = ({
                   ))}
                   {(activeList === "followers"
                     ? followers
+                    : activeList === "following"
+                    ? following
                     : activeList === "members"
                     ? membersToDisplay
                     : businessSponsors

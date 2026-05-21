@@ -15,6 +15,7 @@ interface EventMatchesProps {
   hideLoadingSpinner?: boolean;
   queryScope?: "default" | "recommendable";
   showVolunteerAndPassActions?: boolean;
+  showRecommendToFollowersAction?: boolean;
 }
 
 const getDateOnlyTime = (date: Date) =>
@@ -46,6 +47,7 @@ export const EventMatches = ({
   hideLoadingSpinner = false,
   queryScope = "default",
   showVolunteerAndPassActions = true,
+  showRecommendToFollowersAction = false,
 }: EventMatchesProps) => {
   const currentUserId = useAppSelector(selectCurrentUserId);
   const queryArg = queryScope === "recommendable" ? { scope: queryScope } : undefined;
@@ -128,9 +130,13 @@ export const EventMatches = ({
             variant="match"
             canExpandVolunteers
             showVolunteerAndPassActions={showVolunteerAndPassActions}
-            hideVolunteerActions={!showVolunteerAndPassActions}
+            showRecommendToFollowersAction={showRecommendToFollowersAction}
+            hideVolunteerActions={
+              !showVolunteerAndPassActions && !showRecommendToFollowersAction
+            }
             onVolunteerSuccess={handleDismissMatch}
             onPassSuccess={handleDismissMatch}
+            onRecommendSuccess={handleDismissMatch}
           />
         ))}
     </div>

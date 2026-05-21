@@ -185,6 +185,7 @@ export const Matches = () => {
             hideLoadingSpinner
             queryScope={isRecommendationTab ? "recommendable" : "default"}
             showVolunteerAndPassActions={!isRecommendationTab}
+            showRecommendToFollowersAction={isRecommendationTab}
           />
         ) : (
           <VolunteerMatches

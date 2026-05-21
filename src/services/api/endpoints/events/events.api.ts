@@ -23,6 +23,7 @@ import {
   getRosterAdminEvents,
   getSignedUpEvents,
   getVolunteerMatches,
+  recommendEventToFollowers,
   checkInForEvent,
   checkOutFromEvent,
   markNoShowForEvent,
@@ -196,6 +197,22 @@ const eventsApi = darbeBaseApi.injectEndpoints({
       async queryFn(eventId) {
         try {
           await passOnEvent(eventId);
+          return { data: undefined };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      invalidatesTags: ["Events"],
+    }),
+    recommendEventToFollowers: builder.mutation<void, string>({
+      async queryFn(eventId) {
+        try {
+          await recommendEventToFollowers(eventId);
           return { data: undefined };
         } catch (error) {
           return {
@@ -442,6 +459,7 @@ export const {
   useDeleteEventMutation,
   useVolunteerForEventMutation,
   usePassOnEventMutation,
+  useRecommendEventToFollowersMutation,
   useCheckInForEventMutation,
   useCheckOutFromEventMutation,
   useMarkNoShowForEventMutation,

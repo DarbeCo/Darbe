@@ -77,6 +77,7 @@ export {
   getSignedUpEvents,
   getVolunteerMatches,
   passOnEvent,
+  recommendEventToFollowers,
   unvolunteerFromEvent,
   updateEventDetails,
   updateEventSignupImpactDetails,

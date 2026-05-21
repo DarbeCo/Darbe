@@ -34,6 +34,7 @@ import {
   useApproveAllEventVolunteersMutation,
   useApproveEventVolunteerMutation,
   usePassOnEventMutation,
+  useRecommendEventToFollowersMutation,
   useCheckInForEventMutation,
   useCheckOutFromEventMutation,
   useDenyEventVolunteerMutation,
@@ -61,8 +62,10 @@ interface EventCardProps {
   onIncompleteAction?: (eventId: string) => void;
   useCurrentEventTimingActions?: boolean;
   showVolunteerAndPassActions?: boolean;
+  showRecommendToFollowersAction?: boolean;
   onVolunteerSuccess?: (eventId: string) => void;
   onPassSuccess?: (eventId: string) => void;
+  onRecommendSuccess?: (eventId: string) => void;
   allowCoordinatorVolunteerManagement?: boolean;
   enableAdminControls?: boolean;
   additionalVolunteerCoordinators?: SimpleUserInfo[];
@@ -196,8 +199,10 @@ export const EventCard = ({
   onIncompleteAction,
   useCurrentEventTimingActions = false,
   showVolunteerAndPassActions = false,
+  showRecommendToFollowersAction = false,
   onVolunteerSuccess,
   onPassSuccess,
+  onRecommendSuccess,
   allowCoordinatorVolunteerManagement = true,
   enableAdminControls = false,
   additionalVolunteerCoordinators = [],
@@ -205,6 +210,8 @@ export const EventCard = ({
   const navigate = useNavigate();
   const currentUserId = useAppSelector(selectCurrentUserId);
   const [passOnEvent, { isLoading: isPassing }] = usePassOnEventMutation();
+  const [recommendEventToFollowers, { isLoading: isRecommending }] =
+    useRecommendEventToFollowersMutation();
   const [checkInForEvent, { isLoading: isCheckingIn }] =
     useCheckInForEventMutation();
   const [checkOutFromEvent, { isLoading: isCheckingOut }] =
@@ -294,6 +301,15 @@ export const EventCard = ({
       } else {
         console.error("Error volunteering for event", error);
       }
+    }
+  };
+
+  const handleRecommendEvent = async () => {
+    try {
+      await recommendEventToFollowers(event.id).unwrap();
+      onRecommendSuccess?.(event.id);
+    } catch (error) {
+      console.error("Error recommending event to followers", error);
     }
   };
 
@@ -531,6 +547,10 @@ export const EventCard = ({
     event.eventOwner.userType === "organization"
       ? event.eventOwner.organizationName
       : event.eventOwner.nonprofitName;
+  const invitationFromName =
+    event.invitationFrom?.organizationName ||
+    event.invitationFrom?.nonprofitName ||
+    event.invitationFrom?.fullName;
 
   const eventDuration = event?.endTime
     ? `${(event.endTime - event.startTime).toFixed(1)} Hours`
@@ -766,6 +786,11 @@ export const EventCard = ({
 
   return (
     <div className={eventCardClassName}>
+      {isMatchVariant && invitationFromName && (
+        <div className={styles.eventInvitationBanner}>
+          Invitation from: {invitationFromName}
+        </div>
+      )}
       <div className={styles.eventMatchHeader}>
         <div className={styles.eventMatchHeaderUserInfo}>
           <UserAvatars
@@ -952,7 +977,22 @@ export const EventCard = ({
           </button>
           {!isEventPoster && !hideVolunteerActions && (
             <div className={styles.eventMatchActions}>
-              {showVolunteerAndPassActions && !hasVolunteered && !isSignedUpCard ? (
+              {showRecommendToFollowersAction ? (
+                <>
+                  <DarbeButton
+                    buttonText="Pass"
+                    onClick={handlePassEvent}
+                    darbeButtonType="secondaryNextButton"
+                    isDisabled={isPassing}
+                  />
+                  <DarbeButton
+                    buttonText="Recommend To Followers"
+                    onClick={handleRecommendEvent}
+                    darbeButtonType="nextButton"
+                    isDisabled={isRecommending}
+                  />
+                </>
+              ) : showVolunteerAndPassActions && !hasVolunteered && !isSignedUpCard ? (
                 <>
                   <DarbeButton
                     buttonText="Pass"

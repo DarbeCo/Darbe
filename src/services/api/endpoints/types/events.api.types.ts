@@ -101,6 +101,7 @@ export interface ShortEventState {
   id: string;
   eventOwner: SimpleUserInfo;
   eventCoordinator?: SimpleUserInfo;
+  invitationFrom?: SimpleUserInfo;
   eventName: string;
   eventDate: string;
   startTime: number;

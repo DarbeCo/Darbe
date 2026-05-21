@@ -111,6 +111,7 @@ export const Home = () => {
   const isProfileEntityPending = isProfileRoute && !viewedProfile;
   const overviewProfile = showOrgOverview ? viewedProfile : currentUserProfile;
   const overviewProfileFollowers = overviewProfile?.followers ?? [];
+  const overviewProfileFollowing = overviewProfile?.following ?? [];
   const currentUserFollowingIds = new Set(
     currentUserProfile?.following?.map((following) => following.id) ?? []
   );
@@ -121,6 +122,8 @@ export const Home = () => {
     entityId: overviewEntityId,
     followersCount: overviewProfileFollowers.length,
     followers: overviewProfileFollowers,
+    followingCount: overviewProfileFollowing.length,
+    following: overviewProfileFollowing,
     mutualFollowers,
     mutualCount: mutualFollowers.length,
     partnersCount: overviewEntityRosterAccess?.memberCount ?? 0,

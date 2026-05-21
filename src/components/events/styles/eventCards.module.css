@@ -436,6 +436,11 @@
   gap: 16px;
 }
 
+.eventMatchActions :global(.MuiButton-root) {
+  white-space: normal;
+  text-align: center;
+}
+
 .eventLocationSection {
   align-items: flex-start;
 }
