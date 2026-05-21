@@ -169,7 +169,7 @@ export const SimpleCreateRoster = ({
       </label>
 
       <section className={styles.createRosterRecentSection}>
-        <h2>Most Recent Members Joined</h2>
+        <h2>Member Roster</h2>
         <div className={styles.createRosterRecentList}>
           {isLoading && (
             <div className={styles.createRosterLoading}>

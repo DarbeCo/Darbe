@@ -36,7 +36,9 @@
 .deletePostActions {
   display: flex;
   gap: 25px;
+  justify-content: center;
   margin-top: 26px;
+  width: 100%;
 }
 
 .deletePostYesButton,
@@ -44,17 +46,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 107px;
+  min-width: 107px;
   height: 47px;
-  padding: 12px 40px;
+  padding: 12px 16px;
   border: 1px solid #c4c4c4;
   border-radius: 4px;
   background-color: #ffffff;
+  box-sizing: border-box;
   color: #717070;
   cursor: pointer;
   font-size: 16px;
   font-weight: 600;
   line-height: 22px;
+  white-space: nowrap;
 }
 
 .deletePostYesButton:hover,

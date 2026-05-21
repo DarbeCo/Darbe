@@ -56,6 +56,14 @@ export const Modal = () => {
   const [modalContainer] = useState(() => document.createElement("div"));
   const modalUserId = useAppSelector(getModalUserId);
   const externalData = useAppSelector(getExternalData);
+  const initialPostText =
+    externalData &&
+    typeof externalData === "object" &&
+    "initialPostText" in externalData &&
+    typeof (externalData as { initialPostText?: unknown }).initialPostText ===
+      "string"
+      ? (externalData as { initialPostText: string }).initialPostText
+      : "";
 
   useEffect(() => {
     document.body.appendChild(modalContainer);
@@ -266,9 +274,7 @@ export const Modal = () => {
                   />
                   <CreatePost
                     handleSubmit={handleSubmit}
-                    initialText={
-                      typeof externalData === "string" ? externalData : ""
-                    }
+                    initialText={initialPostText}
                   />
                 </div>
               );
