@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { DarbeButton } from "../../../../components/buttons/DarbeButton";
+import { NONPROFIT_TYPES } from "../../../../components/dropdowns/dropdownTypes/NonprofitTypes";
 import { hideModal } from "../../../../components/modal/modalSlice";
 import { useUpdateEntityProfileMutation } from "../../../../services/api/endpoints/profiles/profiles.api";
 import { useAppDispatch, useAppSelector } from "../../../../services/hooks";
@@ -114,6 +115,36 @@ export const EditEntityProfileInfo = () => {
     );
   };
 
+  const renderNonprofitTypeSelect = () => {
+    const value = getFieldValue("nonprofitType");
+
+    return (
+      <div
+        className={`${styles.profileDialogField} ${styles.profileDialogFieldFullWidth}`.trim()}
+      >
+        <label className={styles.profileDialogLabel} htmlFor="nonprofitType">
+          Nonprofit Type
+        </label>
+        <select
+          id="nonprofitType"
+          className={`${styles.profileDialogSelect} ${
+            value ? styles.profileDialogFieldFilled : ""
+          }`.trim()}
+          name="nonprofitType"
+          onChange={handleChange}
+          value={value}
+        >
+          <option value="">Update your nonprofit type</option>
+          {NONPROFIT_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {type}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  };
+
   const saveProfile = useCallback(async () => {
     const payload = {
       ...editProfileInfo,
@@ -159,13 +190,7 @@ export const EditEntityProfileInfo = () => {
             `Update your parent ${capitalizedEntityName}`,
             styles.profileDialogFieldFullWidth
           )}
-          {entityType === "nonprofit" &&
-            renderInput(
-              "Nonprofit Type",
-              "nonprofitType",
-              "Update your nonprofit type",
-              styles.profileDialogFieldFullWidth
-            )}
+          {entityType === "nonprofit" && renderNonprofitTypeSelect()}
           {renderInput("Tagline", "tagLine", "Update your tagline")}
           {renderInput("EIN", "ein", "Update your EIN")}
           {renderInput("Address", "address", "Update your address")}
