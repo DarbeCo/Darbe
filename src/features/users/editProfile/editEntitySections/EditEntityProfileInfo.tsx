@@ -151,6 +151,7 @@ export const EditEntityProfileInfo = () => {
       phoneNumber: formatPhoneNumber(editProfileInfo.phoneNumber),
       user: {
         id: userId,
+        ein: editProfileInfo.ein,
         nonprofitName: editProfileInfo.nonprofitName,
         organizationName: editProfileInfo.organizationName,
       },
