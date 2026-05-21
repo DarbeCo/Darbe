@@ -751,6 +751,28 @@ export const getEvents = async (
       }
     });
 
+    const availableEventIds = new Set(filteredEvents.map((event) => event.id));
+    const missingRecommendedEventIds = Array.from(recommendedEventIds).filter(
+      (eventId) => !availableEventIds.has(eventId)
+    );
+
+    if (missingRecommendedEventIds.length) {
+      const { data: recommendedEvents, error: recommendedEventsError } =
+        await supabase
+          .from("events")
+          .select(
+            "id, event_owner_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_coordinator_id"
+          )
+          .in("id", missingRecommendedEventIds);
+
+      if (recommendedEventsError) throw recommendedEventsError;
+
+      filteredEvents = [
+        ...filteredEvents,
+        ...((recommendedEvents ?? []) as EventRow[]),
+      ];
+    }
+
     const blockedEventIds = new Set(
       (signups ?? [])
         .filter((row) =>
@@ -800,6 +822,16 @@ export const getEvents = async (
       ...memberEntityIds,
       ...((staffEntries ?? []).map((row) => row.entity_id)),
     ]);
+    const followingEntityIds = Array.from(
+      new Set((following ?? []).map((row) => row.following_id))
+    );
+    const followingProfiles = await getProfilesByIds(followingEntityIds);
+    const followingProfileMap = new Map(
+      followingProfiles.map((profile) => [
+        profile.id,
+        mapProfileToSimpleUserInfo(profile),
+      ])
+    );
 
     filteredEvents = filteredEvents.filter((event) => {
       if (event.event_coordinator_id === userId) return true;
@@ -807,7 +839,15 @@ export const getEvents = async (
       if (blockedEventIds.has(event.id)) return false;
       if (recommendedEventIds.has(event.id)) return true;
       if (memberEntityIds.has(event.event_owner_id)) return true;
-      if (affiliatedEntityIds.has(event.event_owner_id)) return true;
+      if (affiliatedEntityIds.has(event.event_owner_id)) {
+        const followedEntity = followingProfileMap.get(event.event_owner_id);
+
+        if (followedEntity && !invitationByEventId.has(event.id)) {
+          invitationByEventId.set(event.id, followedEntity);
+        }
+
+        return true;
+      }
       if (event.is_followers_only) return false;
       return true;
     });
@@ -835,8 +875,11 @@ export const recommendEventToFollowers = async (
     throw new Error("Only organizations can recommend events to followers.");
   }
 
-  const [{ data: followers, error: followersError }, { data: rosters, error: rostersError }] =
-    await Promise.all([
+  const [
+    { data: followers, error: followersError },
+    { data: rosters, error: rostersError },
+    { data: userOrganizations, error: userOrganizationsError },
+  ] = await Promise.all([
       supabase
         .from("follows")
         .select("follower_id")
@@ -845,10 +888,15 @@ export const recommendEventToFollowers = async (
         .from("rosters")
         .select("id")
         .eq("roster_owner_id", recommenderEntityId),
+      supabase
+        .from("user_organizations")
+        .select("user_id")
+        .eq("parent_organization_id", recommenderEntityId),
     ]);
 
   if (followersError) throw followersError;
   if (rostersError) throw rostersError;
+  if (userOrganizationsError) throw userOrganizationsError;
 
   const rosterIds = (rosters ?? []).map((roster) => roster.id);
   const { data: rosterMembers, error: rosterMembersError } = rosterIds.length
@@ -864,6 +912,7 @@ export const recommendEventToFollowers = async (
     new Set([
       ...(followers ?? []).map((follower) => follower.follower_id),
       ...((rosterMembers ?? []).map((member) => member.user_id)),
+      ...((userOrganizations ?? []).map((organization) => organization.user_id)),
     ])
   ).filter((recipientUserId) => recipientUserId !== recommenderEntityId);
 
