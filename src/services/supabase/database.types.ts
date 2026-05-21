@@ -1189,6 +1189,14 @@ export interface Database {
           hours_volunteered: number;
         }[];
       };
+      get_public_entity_volunteer_impact: {
+        Args: { target_entity_id: string };
+        Returns: {
+          id: string;
+          event_id: string;
+          hours_volunteered: number;
+        }[];
+      };
       get_roster_admin_events: {
         Args: Record<PropertyKey, never>;
         Returns: {

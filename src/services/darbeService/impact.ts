@@ -16,6 +16,86 @@ const getHoursBetweenTimestamps = (start?: string | null, end?: string | null) =
   return Math.max((endTime - startTime) / 3600000, 0);
 };
 
+const mapImpactRowsToEvents = async (
+  rows: Array<{ id: string; event_id: string | null; hours_volunteered: number | null }>
+): Promise<EventImpact[]> => {
+  const eventIds = Array.from(
+    new Set(
+      rows
+        .map((row) => row.event_id)
+        .filter((eventId): eventId is string => Boolean(eventId))
+    )
+  );
+  const events = await getShortEventsByIds(eventIds);
+  const eventMap = new Map(events.map((event) => [event.id, event]));
+
+  return rows
+    .filter((impact) => impact.event_id && eventMap.has(impact.event_id))
+    .map((impact) => ({
+      id: impact.id,
+      impactType: "individual" as const,
+      hoursVolunteered: Number(impact.hours_volunteered ?? 0),
+      volunteerValue: 0,
+      event: eventMap.get(impact.event_id as string)!,
+    }));
+};
+
+const getEntityVolunteerImpact = async (entityId: string): Promise<EventImpact[]> => {
+  const { data: publicImpactRows, error: publicImpactError } =
+    await supabase.rpc("get_public_entity_volunteer_impact", {
+      target_entity_id: entityId,
+    });
+
+  if (!publicImpactError) {
+    return mapImpactRowsToEvents(publicImpactRows ?? []);
+  }
+
+  if ((publicImpactError as { code?: string }).code !== "PGRST202") {
+    throw publicImpactError;
+  }
+
+  console.warn(
+    "get_public_entity_volunteer_impact is not available yet. Apply the latest Supabase migrations and reload the PostgREST schema cache."
+  );
+
+  const { data: events, error: eventsError } = await supabase
+    .from("events")
+    .select("id")
+    .eq("event_owner_id", entityId);
+
+  if (eventsError) throw eventsError;
+
+  const eventIds = (events ?? []).map((event) => event.id);
+  if (!eventIds.length) return [];
+
+  const { data: signups, error: signupsError } = await supabase
+    .from("event_signups")
+    .select("event_id, check_in_at, check_out_at")
+    .in("event_id", eventIds)
+    .eq("status", "approved")
+    .not("check_in_at", "is", null)
+    .not("check_out_at", "is", null);
+
+  if (signupsError) throw signupsError;
+
+  const hoursByEvent = new Map<string, number>();
+  (signups ?? []).forEach((signup) => {
+    hoursByEvent.set(
+      signup.event_id,
+      (hoursByEvent.get(signup.event_id) ?? 0) +
+        getHoursBetweenTimestamps(signup.check_in_at, signup.check_out_at)
+    );
+  });
+
+  return mapImpactRowsToEvents(
+    Array.from(hoursByEvent.entries()).map(([eventId, hoursVolunteered]) => ({
+      id: eventId,
+      event_id: eventId,
+      hours_volunteered: hoursVolunteered,
+    }))
+  );
+};
+
 export const getUserImpact = async (userId?: string): Promise<EventImpact[]> => {
   const currentUserId = userId ?? (await ensureUserId());
   const signedInUserId = await ensureUserId();
@@ -27,6 +107,10 @@ export const getUserImpact = async (userId?: string): Promise<EventImpact[]> => 
 
   if (profileError || !profile) {
     throw profileError ?? new Error("User profile not found");
+  }
+
+  if (profile.user_type !== "individual") {
+    return getEntityVolunteerImpact(currentUserId);
   }
 
   if (currentUserId !== signedInUserId) {
@@ -46,25 +130,7 @@ export const getUserImpact = async (userId?: string): Promise<EventImpact[]> => 
       throw publicImpactError;
     }
 
-    const eventIds = Array.from(
-      new Set(
-        (publicImpactRows ?? [])
-          .map((row) => row.event_id)
-          .filter((eventId): eventId is string => Boolean(eventId))
-      )
-    );
-    const events = await getShortEventsByIds(eventIds);
-    const eventMap = new Map(events.map((event) => [event.id, event]));
-
-    return (publicImpactRows ?? [])
-      .filter((impact) => eventMap.has(impact.event_id))
-      .map((impact) => ({
-        id: impact.id,
-        impactType: "individual" as const,
-        hoursVolunteered: Number(impact.hours_volunteered ?? 0),
-        volunteerValue: 0,
-        event: eventMap.get(impact.event_id)!,
-      }));
+    return mapImpactRowsToEvents(publicImpactRows ?? []);
   }
 
   const { data: initialImpactRows, error } = await supabase
@@ -149,30 +215,5 @@ export const getUserImpact = async (userId?: string): Promise<EventImpact[]> => 
 
   if (refreshedImpactError) throw refreshedImpactError;
 
-  const eventIds = Array.from(
-    new Set(
-      (impactRows ?? [])
-        .map((row) => row.event_id)
-        .filter((eventId): eventId is string => Boolean(eventId))
-    )
-  );
-  const events = await getShortEventsByIds(eventIds);
-  const eventMap = new Map(events.map((event) => [event.id, event]));
-
-  return (impactRows ?? [])
-    .filter((impact) => {
-      if (!impact.event_id) return false;
-      return eventMap.has(impact.event_id);
-    })
-    .map((impact) => {
-      const event = eventMap.get(impact.event_id as string)!;
-
-      return {
-        id: impact.id,
-        impactType: "individual" as const,
-        hoursVolunteered: Number(impact.hours_volunteered ?? 0),
-        volunteerValue: 0,
-        event,
-      };
-    });
+  return mapImpactRowsToEvents(impactRows ?? []);
 };
