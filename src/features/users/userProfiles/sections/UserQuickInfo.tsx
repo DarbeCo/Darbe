@@ -120,14 +120,78 @@ export const UserQuickInfo = ({
   const userClassOverride = isEntity
     ? styles.entityQuickInfoGroupsNonMobile
     : styles.userQuickInfoOverride;
-  const organizationDetails = [
-    website,
-    associatedEntityName,
-  ].filter(Boolean);
+  const organizationDetails = [website, associatedEntityName].filter(Boolean);
+
+  const entityDetailsDisplay = entityName ? (
+    <div className={styles.userQuickInfoGroupsEntity}>
+      {!isOrganizationProfile && (
+        <>
+          <Typography
+            variant="blueTextSmall"
+            textToDisplay={`EIN ID: ${ein ? ein : "Unknown"}`}
+          />
+          <Typography
+            variant="blueTextSmall"
+            textToDisplay={
+              nonprofitType ? `Type: ${nonprofitType}` : "Type: Unknown"
+            }
+          />
+          <Typography
+            variant="blueTextSmall"
+            textToDisplay={
+              formattedContactNumber
+                ? `Phone #: ${formattedContactNumber}`
+                : "Phone #: Unknown"
+            }
+          />
+          <a
+            href={websiteUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-disabled={!websiteUrl}
+          >
+            <Typography
+              variant="blueTextSmall"
+              textToDisplay={
+                website ? `Website: ${website}` : "Website: Unknown"
+              }
+            />
+          </a>
+        </>
+      )}
+      {isOrganizationProfile &&
+        (organizationDetails.length ? (
+          organizationDetails.map((detail) =>
+            detail === website ? (
+              <a
+                key={detail}
+                href={websiteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-disabled={!websiteUrl}
+              >
+                <Typography variant="blueTextSmall" textToDisplay={detail} />
+              </a>
+            ) : (
+              <Typography
+                key={detail}
+                variant="blueTextSmall"
+                textToDisplay={detail}
+              />
+            )
+          )
+        ) : (
+          <Typography
+            variant="blueTextSmall"
+            textToDisplay="Organization details unavailable"
+          />
+        ))}
+    </div>
+  ) : null;
 
   const userInfoDisplay = (
     <>
-      <div>
+      <div className={styles.userQuickInfoSummary}>
         <div className={styles.userQuickInfoGroupsSections}>
           <div className={styles.userQuickInfoGroups}>
             <CustomSvgs
@@ -176,86 +240,16 @@ export const UserQuickInfo = ({
             </button>
           )}
         </div>
-      {entityName && !isOrganizationProfile && (
-        <div className={styles.userQuickInfoGroupsEntity}>
-          <Typography
-            variant="blueTextSmall"
-            textToDisplay={`EIN ID: ${ein ? ein : "Unknown"}`}
-            extraClass="paddingTop"
-          />
-          <Typography
-            variant="blueTextSmall"
-            textToDisplay={
-              nonprofitType ? `Type: ${nonprofitType}` : "Type: Unknown"
-            }
-            extraClass="paddingTop"
-          />
-          <Typography
-            variant="blueTextSmall"
-            textToDisplay={
-              formattedContactNumber
-                ? `Phone #: ${formattedContactNumber}`
-                : "Phone #: Unknown"
-            }
-            extraClass="paddingTop"
-          />
-          <a
-            href={websiteUrl}
-            target="_blank"
-            className="paddingTop"
-            rel="noopener noreferrer"
-            aria-disabled={!websiteUrl}
-          >
-            <Typography
-              variant="blueTextSmall"
-              textToDisplay={
-                website ? `Website: ${website}` : "Website: Unknown"
-              }
-            />
-          </a>
-        </div>
-      )}
-      {entityName && isOrganizationProfile && (
-        <div className={styles.userQuickInfoGroupsEntity}>
-          {organizationDetails.length ? (
-            organizationDetails.map((detail) =>
-              detail === website ? (
-                <a
-                  key={detail}
-                  href={websiteUrl}
-                  target="_blank"
-                  className="paddingTop"
-                  rel="noopener noreferrer"
-                  aria-disabled={!websiteUrl}
-                >
-                  <Typography
-                    variant="blueTextSmall"
-                    textToDisplay={detail}
-                  />
-                </a>
-              ) : (
-                <Typography
-                  key={detail}
-                  variant="blueTextSmall"
-                  textToDisplay={detail}
-                  extraClass="paddingTop"
-                />
-              )
-            )
-          ) : (
-            <Typography
-              variant="blueTextSmall"
-              textToDisplay="Organization details unavailable"
-              extraClass="paddingTop"
-            />
-          )}
-        </div>
-      )}
+      {(!isEntity || isMobile) && entityDetailsDisplay}
     </>
   );
 
   return (
-    <div className={styles.userHeader}>
+    <div
+      className={`${styles.userHeader} ${
+        !isMobile && isEntity ? styles.entityUserHeader : ""
+      }`.trim()}
+    >
       <div className={styles.userHeaderSection}>
         <div className={styles.userHeaderTitle}>
           <Typography
@@ -263,7 +257,7 @@ export const UserQuickInfo = ({
             textToDisplay={fullName || entityName}
             extraClass="paddingLeft"
           />
-          {canEdit && <EditProfileIcon onClick={handleEditProfile} />}
+          {canEdit && !isEntity && <EditProfileIcon onClick={handleEditProfile} />}
         </div>
         {isEntity && parentEntityName && (
           <Typography
@@ -277,25 +271,31 @@ export const UserQuickInfo = ({
           textToDisplay={tagLine}
           extraClass="paddingLeft"
         />
+        {!isMobile && isEntity && userInfoDisplay}
       </div>
+      {!isMobile && isEntity && entityDetailsDisplay}
+      {!isMobile && isEntity && canEdit && (
+        <EditProfileIcon
+          className={styles.entityHeaderEditIcon}
+          onClick={handleEditProfile}
+        />
+      )}
       {isMobile && userInfoDisplay}
-      {!isMobile && (
+      {!isMobile && !isEntity && (
         <div className={userClassOverride}>
           {userInfoDisplay}
-          {!isEntity && (
-            <div className={styles.userQuickFriendsCauses}>
-              <UserProfileButtons
-                canEdit={canEdit}
-                userId={userId}
-                friendCount={friendCount ?? 0}
-                causesCount={causesCount ?? 0}
-                mutualCauses={mutualCauses ?? 0}
-                mutualFriends={mutualFriends ?? 0}
-                friends={friends}
-                causes={causes}
-              />
-            </div>
-          )}
+          <div className={styles.userQuickFriendsCauses}>
+            <UserProfileButtons
+              canEdit={canEdit}
+              userId={userId}
+              friendCount={friendCount ?? 0}
+              causesCount={causesCount ?? 0}
+              mutualCauses={mutualCauses ?? 0}
+              mutualFriends={mutualFriends ?? 0}
+              friends={friends}
+              causes={causes}
+            />
+          </div>
         </div>
       )}
       {isContactDialogOpen && (

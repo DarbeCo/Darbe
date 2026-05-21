@@ -140,6 +140,39 @@
     align-items: center;
   }
 
+  .entityUserHeader {
+    display: flex;
+    flex-direction: row;
+    align-items: start;
+    justify-content: space-between;
+    column-gap: 18px;
+    padding-right: 8px;
+    box-sizing: border-box;
+  }
+
+  .entityUserHeader > .userHeaderSection {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+  }
+
+  .entityUserHeader > .userQuickInfoGroupsEntity {
+    flex: 0 1 260px;
+    align-self: start;
+    width: auto;
+    min-width: 200px;
+    margin-left: 0;
+    margin-top: 32px;
+    padding-top: 0;
+  }
+
+  .entityHeaderEditIcon {
+    flex: 0 0 auto;
+    align-self: flex-start;
+    margin-top: -4px;
+    padding: 4px !important;
+  }
+
   .parentOrganizationName {
     padding-left: 16px;
   }
@@ -189,6 +222,12 @@
     align-items: start;
   }
 
+  .userQuickInfoSummary {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+  }
+
   .userQuickInfoGroups {
     display: flex;
     flex-direction: row;
@@ -212,11 +251,11 @@
   .userQuickInfoGroupsEntity {
     display: flex;
     flex-direction: column;
-    row-gap: 8px;
+    row-gap: 4px;
     width: 95%;
     align-items: flex-start;
     padding-left: 20px;
-    padding-bottom: 20px;
+    padding-bottom: 8px;
   }
 
   .entityContactButton {
@@ -734,6 +773,7 @@
     margin-left: auto;
     align-items: flex-end;
     text-align: right;
+    padding-top: 0;
   }
 
   .userProfileFriendButtons {
