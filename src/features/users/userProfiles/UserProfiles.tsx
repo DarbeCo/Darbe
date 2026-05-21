@@ -59,6 +59,7 @@ export const UserProfiles = () => {
 
   const { data: userImpacts } = useGetUserImpactQuery(userId ?? "", {
     skip: !userId,
+    refetchOnMountOrArgChange: true,
   });
   const totalVolunteerHours = useMemo(() => {
     const currentYear = new Date().getFullYear();

@@ -66,7 +66,10 @@ export const UserVolunteerImpacts = ({
   const [showAll, setShowAll] = useState(false);
   const { data: userImpacts = [], isLoading } = useGetUserImpactQuery(
     userId ?? "",
-    { skip: !userId }
+    {
+      skip: !userId,
+      refetchOnMountOrArgChange: true,
+    }
   );
   const visibleImpacts = showAll
     ? userImpacts

@@ -159,7 +159,7 @@ const eventsApi = darbeBaseApi.injectEndpoints({
           };
         }
       },
-      invalidatesTags: ["Events"],
+      invalidatesTags: ["Events", "Impact"],
     }),
     deleteEvent: builder.mutation<void, string>({
       async queryFn(eventId) {

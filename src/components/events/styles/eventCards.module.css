@@ -471,6 +471,14 @@
   max-width: 100%;
 }
 
+.eventTitleEditableLine {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+}
+
 .eventFieldEditButton {
   display: inline-flex;
   align-items: center;

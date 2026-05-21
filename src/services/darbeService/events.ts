@@ -1315,6 +1315,13 @@ export const updateEventDetails = async ({
         { onConflict: "event_id" }
       )
     );
+    updates.push(
+      supabase
+        .from("impact")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("event_id", eventId)
+        .gt("events_attended", 0)
+    );
   }
 
   const results = await Promise.all(updates);

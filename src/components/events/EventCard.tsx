@@ -138,6 +138,56 @@ const formatVolunteerActionTime = (timestamp?: string) => {
   });
 };
 
+const timeTextToTimeInputValue = (value?: string) => {
+  if (!value) {
+    return "";
+  }
+
+  const trimmedValue = value.trim();
+  const twentyFourHourMatch = trimmedValue.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+
+  if (twentyFourHourMatch) {
+    const [, hour, minute] = twentyFourHourMatch;
+    return `${hour.padStart(2, "0")}:${minute}`;
+  }
+
+  const twelveHourMatch = trimmedValue.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+
+  if (!twelveHourMatch) {
+    return "";
+  }
+
+  const [, hourValue, minute, meridiem] = twelveHourMatch;
+  let hour = Number(hourValue);
+
+  if (meridiem.toUpperCase() === "PM" && hour < 12) {
+    hour += 12;
+  }
+
+  if (meridiem.toUpperCase() === "AM" && hour === 12) {
+    hour = 0;
+  }
+
+  return `${hour.toString().padStart(2, "0")}:${minute}`;
+};
+
+const timeInputValueToDisplayTime = (value?: string) => {
+  const timeInputValue = timeTextToTimeInputValue(value);
+
+  if (!timeInputValue) {
+    return value ?? "";
+  }
+
+  const [hourValue, minuteValue] = timeInputValue.split(":").map(Number);
+  const date = new Date();
+  date.setHours(hourValue, minuteValue, 0, 0);
+
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+};
+
 type ImpactEditState = {
   signupId: string;
   startTime: string;
@@ -880,18 +930,20 @@ export const EventCard = ({
         </div>
       </div>
       <div className={styles.eventMatchBodyDescription}>
-        <Typography
-          variant="sectionTitle"
-          textToDisplay={event.eventName}
-          extraClass={styles.eventCardEventName}
-        />
-        {renderEditPencil("event name", () =>
-          openEventFieldEdit({
-            field: "eventName",
-            label: "Event Name",
-            value: event.eventName,
-          })
-        )}
+        <div className={styles.eventTitleEditableLine}>
+          <Typography
+            variant="sectionTitle"
+            textToDisplay={event.eventName}
+            extraClass={styles.eventCardEventName}
+          />
+          {renderEditPencil("event name", () =>
+            openEventFieldEdit({
+              field: "eventName",
+              label: "Event Name",
+              value: event.eventName,
+            })
+          )}
+        </div>
         <div className={`${styles.eventEditableLine} ${styles.eventLocationSection}`}>
           <div className={styles.eventLocationText}>
             <strong>Location</strong>
@@ -1227,19 +1279,23 @@ export const EventCard = ({
             const impactDetailOverride = impactDetailOverrides[signup.id];
             const canUseDefaultVolunteerTimes = !isPastEvent || isCheckedIn;
             const candidateStartTime =
-              impactDetailOverride?.startTime ||
-              signup.volunteerStartTime ||
-              formatVolunteerActionTime(signup.checkInAt) ||
-              (canUseDefaultVolunteerTimes
-                ? formatEventTimeRangeValue(event.startTime)
-                : "");
+              timeInputValueToDisplayTime(
+                impactDetailOverride?.startTime ||
+                  signup.volunteerStartTime ||
+                  formatVolunteerActionTime(signup.checkInAt) ||
+                  (canUseDefaultVolunteerTimes
+                    ? formatEventTimeRangeValue(event.startTime)
+                    : "")
+              );
             const candidateEndTime =
-              impactDetailOverride?.endTime ||
-              signup.volunteerEndTime ||
-              formatVolunteerActionTime(signup.checkOutAt) ||
-              (canUseDefaultVolunteerTimes
-                ? formatEventTimeRangeValue(event.endTime)
-                : "");
+              timeInputValueToDisplayTime(
+                impactDetailOverride?.endTime ||
+                  signup.volunteerEndTime ||
+                  formatVolunteerActionTime(signup.checkOutAt) ||
+                  (canUseDefaultVolunteerTimes
+                    ? formatEventTimeRangeValue(event.endTime)
+                    : "")
+              );
             const candidateLocation =
               impactDetailOverride?.location ||
               signup.volunteerLocation ||
@@ -1373,8 +1429,8 @@ export const EventCard = ({
                       onClick={() => {
                         setImpactEditState({
                           signupId: signup.id,
-                          startTime: candidateStartTime,
-                          endTime: candidateEndTime,
+                          startTime: timeTextToTimeInputValue(candidateStartTime),
+                          endTime: timeTextToTimeInputValue(candidateEndTime),
                           location: candidateLocation,
                           impact: candidateImpact,
                         });
@@ -1742,6 +1798,7 @@ export const EventCard = ({
             <label>
               <span>Start Time:</span>
               <input
+                type="time"
                 value={impactEditState.startTime}
                 onChange={(event) =>
                   setImpactEditState((currentState) =>
@@ -1755,6 +1812,7 @@ export const EventCard = ({
             <label>
               <span>End Time:</span>
               <input
+                type="time"
                 value={impactEditState.endTime}
                 onChange={(event) =>
                   setImpactEditState((currentState) =>
