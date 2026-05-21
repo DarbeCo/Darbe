@@ -1367,11 +1367,17 @@ export const volunteerForEvent = async (eventId: string): Promise<void> => {
     throw new Error("You have already volunteered for this event");
   }
 
-  const { error } = await supabase.from("event_signups").insert({
-    event_id: eventId,
-    user_id: userId,
-    status: "volunteered",
-  });
+  const { error } = await supabase.from("event_signups").upsert(
+    {
+      event_id: eventId,
+      user_id: userId,
+      status: "volunteered",
+      check_in_at: null,
+      check_out_at: null,
+      event_action_timestamp: new Date().toISOString(),
+    },
+    { onConflict: "event_id,user_id" }
+  );
 
   if (error) throw error;
 };
@@ -1413,11 +1419,17 @@ export const passOnEvent = async (eventId: string): Promise<void> => {
     return;
   }
 
-  const { error } = await supabase.from("event_signups").insert({
-    event_id: eventId,
-    user_id: userId,
-    status: "passed",
-  });
+  const { error } = await supabase.from("event_signups").upsert(
+    {
+      event_id: eventId,
+      user_id: userId,
+      status: "passed",
+      check_in_at: null,
+      check_out_at: null,
+      event_action_timestamp: new Date().toISOString(),
+    },
+    { onConflict: "event_id,user_id" }
+  );
 
   if (error) throw error;
 
