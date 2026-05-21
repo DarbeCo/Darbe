@@ -1,4 +1,5 @@
 import { AttachMoney } from "@mui/icons-material";
+import { useState } from "react";
 import { useAppDispatch } from "../../../../services/hooks";
 
 import { EditProfileIcon } from "./EditProfileIcon";
@@ -30,6 +31,7 @@ interface UserQuickInfoProps {
   website?: string;
   nonprofitType?: string;
   contactNumber?: string;
+  address?: string;
   state?: string;
   userType?: string;
   parentEntityName?: string;
@@ -68,6 +70,7 @@ export const UserQuickInfo = ({
   website,
   nonprofitType,
   contactNumber,
+  address,
   state,
   userType,
   parentEntityName,
@@ -82,6 +85,7 @@ export const UserQuickInfo = ({
   isEntity,
 }: UserQuickInfoProps) => {
   const dispatch = useAppDispatch();
+  const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
   const formattedContactNumber = formatPhoneNumber(contactNumber);
   const websiteUrl = getExternalWebsiteUrl(website);
   const handleEditProfile = () => {
@@ -94,9 +98,7 @@ export const UserQuickInfo = ({
     dispatch(showModal());
   };
   const handleContactClick = () => {
-    if (formattedContactNumber) {
-      window.location.href = `tel:${formattedContactNumber}`;
-    }
+    setIsContactDialogOpen(true);
   };
 
   const isFullStateName = state?.length && state?.length > 2;
@@ -112,11 +114,13 @@ export const UserQuickInfo = ({
   const entityName = organizationName || nonprofitName;
   const isOrganizationProfile = userType === "organization";
   const locationDisplay = [city, stateDisplay].filter(Boolean).join(", ");
+  const addressDisplay = [address, locationDisplay, zipCode]
+    .filter(Boolean)
+    .join(", ");
   const userClassOverride = isEntity
     ? styles.entityQuickInfoGroupsNonMobile
     : styles.userQuickInfoOverride;
   const organizationDetails = [
-    locationDisplay,
     website,
     associatedEntityName,
   ].filter(Boolean);
@@ -149,17 +153,19 @@ export const UserQuickInfo = ({
             />
           </div>
         </div>
-        <div className={styles.userQuickInfoGroups}>
-          <CustomSvgs
-            svgPath="/svgs/common/locationIcon.svg"
-            altText="Location Icon"
-            variant="tiny"
-          />
+        {!isOrganizationProfile && (
+          <div className={styles.userQuickInfoGroups}>
+            <CustomSvgs
+              svgPath="/svgs/common/locationIcon.svg"
+              altText="Location Icon"
+              variant="tiny"
+            />
             <Typography
               variant="locationSmall"
               textToDisplay={locationDisplay}
             />
           </div>
+        )}
           {isOrganizationProfile && (
             <button
               type="button"
@@ -290,6 +296,65 @@ export const UserQuickInfo = ({
               />
             </div>
           )}
+        </div>
+      )}
+      {isContactDialogOpen && (
+        <div
+          className={styles.entityContactDialogOverlay}
+          onClick={() => setIsContactDialogOpen(false)}
+        >
+          <div
+            className={styles.entityContactDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="entity-contact-dialog-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className={styles.entityContactDialogHeader}>
+              <h2 id="entity-contact-dialog-title">Contact Us</h2>
+              <button
+                type="button"
+                onClick={() => setIsContactDialogOpen(false)}
+                aria-label="Close contact dialog"
+              >
+                x
+              </button>
+            </div>
+            <dl className={styles.entityContactDialogDetails}>
+              <div>
+                <dt>Address</dt>
+                <dd>{addressDisplay || "Unknown"}</dd>
+              </div>
+              <div>
+                <dt>Phone</dt>
+                <dd>
+                  {formattedContactNumber ? (
+                    <a href={`tel:${formattedContactNumber}`}>
+                      {formattedContactNumber}
+                    </a>
+                  ) : (
+                    "Unknown"
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt>Website</dt>
+                <dd>
+                  {websiteUrl ? (
+                    <a
+                      href={websiteUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {website}
+                    </a>
+                  ) : (
+                    "Unknown"
+                  )}
+                </dd>
+              </div>
+            </dl>
+          </div>
         </div>
       )}
     </div>

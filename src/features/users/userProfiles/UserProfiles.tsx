@@ -159,6 +159,7 @@ export const UserProfiles = () => {
           tagLine={userInformation?.tagLine}
           nonprofitType={userInformation?.nonprofitType}
           contactNumber={userInformation?.phoneNumber}
+          address={userInformation?.address}
           isMobile={isMobile}
           userType={userInformation?.user?.userType}
           parentEntityName={userInformation?.parentEntity?.fullName}
