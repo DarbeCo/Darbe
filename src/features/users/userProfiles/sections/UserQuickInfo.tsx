@@ -44,6 +44,15 @@ interface UserQuickInfoProps {
   isEntity?: boolean;
 }
 
+const getExternalWebsiteUrl = (website?: string) => {
+  const trimmedWebsite = website?.trim();
+  if (!trimmedWebsite) return undefined;
+
+  return /^https?:\/\//i.test(trimmedWebsite)
+    ? trimmedWebsite
+    : `https://${trimmedWebsite}`;
+};
+
 // TODO: too big, split into smaller components
 export const UserQuickInfo = ({
   canEdit,
@@ -74,6 +83,7 @@ export const UserQuickInfo = ({
 }: UserQuickInfoProps) => {
   const dispatch = useAppDispatch();
   const formattedContactNumber = formatPhoneNumber(contactNumber);
+  const websiteUrl = getExternalWebsiteUrl(website);
   const handleEditProfile = () => {
     if (isEntity) {
       dispatch(setModalType(EDIT_SECTIONS.entityProfile));
@@ -184,10 +194,11 @@ export const UserQuickInfo = ({
             extraClass="paddingTop"
           />
           <a
-            href={website ? website : "#"}
+            href={websiteUrl}
             target="_blank"
             className="paddingTop"
             rel="noopener noreferrer"
+            aria-disabled={!websiteUrl}
           >
             <Typography
               variant="blueTextSmall"
@@ -205,10 +216,11 @@ export const UserQuickInfo = ({
               detail === website ? (
                 <a
                   key={detail}
-                  href={website ? website : "#"}
+                  href={websiteUrl}
                   target="_blank"
                   className="paddingTop"
                   rel="noopener noreferrer"
+                  aria-disabled={!websiteUrl}
                 >
                   <Typography
                     variant="blueTextSmall"
