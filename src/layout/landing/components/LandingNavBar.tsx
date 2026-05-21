@@ -4,6 +4,7 @@ import { IconButton, Menu, MenuItem } from "@mui/material";
 import darbeLogo from "/svgs/common/darbeLogo.svg";
 import { assetUrl } from "../../../utils/assetUrl";
 import useScreenWidthHook from "../../../utils/commonHooks/UseScreenWidth";
+import sigma from "/svgs/common/sigma.svg";
 
 import styles from "../styles/landingComponents.module.css";
 
@@ -85,6 +86,9 @@ export const LandingNavBar = () => {
       )}
       {isDesktop && (
         <div className={styles.navLinksDesktop}>
+          <a className={styles.navLinkDesktopSigma} href="login">
+            <img src={assetUrl(sigma)} alt="" />
+          </a>
           <a className={styles.navLinkDesktopText} href="#whatWeDo">
             What We Do
           </a>
