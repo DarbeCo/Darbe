@@ -54,12 +54,16 @@ type EventTimeUpdate = {
   endTime?: number;
 };
 
+type GetEventsArgs = {
+  scope?: "default" | "recommendable";
+};
+
 const eventsApi = darbeBaseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getEvents: builder.query<ShortEventState[], void>({
-      async queryFn() {
+    getEvents: builder.query<ShortEventState[], GetEventsArgs | void>({
+      async queryFn(arg) {
         try {
-          const data = await getEvents();
+          const data = await getEvents(arg?.scope);
           return { data };
         } catch (error) {
           return {

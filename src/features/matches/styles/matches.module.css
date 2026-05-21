@@ -127,6 +127,37 @@
   box-sizing: border-box;
 }
 
+.matchesTabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  padding: 6px;
+  background-color: #ffffff;
+  border: 1px solid #c4c4c4;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.matchesTab {
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 6px;
+  background-color: transparent;
+  color: #717070;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 17px;
+  cursor: pointer;
+}
+
+.matchesTabActive {
+  background-color: #263238;
+  color: #ffffff;
+}
+
 .matchesFilterTitle {
   color: #000000;
   font-family: "Open Sans", sans-serif;
@@ -306,6 +337,10 @@
     border-color: #c4c4c4;
   }
 
+  .matchesTabs {
+    padding: 6px;
+  }
+
   .matchesFilterTitle,
   .matchesFilterButton {
     font-family: "Open Sans", sans-serif;
@@ -402,6 +437,19 @@
     border: 0;
     border-radius: 0;
     background-color: #ffffff;
+  }
+
+  .matchesTabs {
+    width: calc(100% - 32px);
+    margin: 0 16px;
+    border-radius: 8px;
+  }
+
+  .matchesTab {
+    min-height: 40px;
+    padding: 8px;
+    font-size: 12px;
+    line-height: 17px;
   }
 
   .matchesFilterTitle {

@@ -13,6 +13,8 @@ interface EventMatchesProps {
   matchFilter?: "Event Matches" | "Cause Matches" | "Availability Matches";
   recentFilter?: "Most Recent" | "Least Recent" | "A - Z";
   hideLoadingSpinner?: boolean;
+  queryScope?: "default" | "recommendable";
+  showVolunteerAndPassActions?: boolean;
 }
 
 const getDateOnlyTime = (date: Date) =>
@@ -42,9 +44,12 @@ export const EventMatches = ({
   matchFilter = "Event Matches",
   recentFilter = "Most Recent",
   hideLoadingSpinner = false,
+  queryScope = "default",
+  showVolunteerAndPassActions = true,
 }: EventMatchesProps) => {
   const currentUserId = useAppSelector(selectCurrentUserId);
-  const { data, isLoading } = useGetEventsQuery();
+  const queryArg = queryScope === "recommendable" ? { scope: queryScope } : undefined;
+  const { data, isLoading } = useGetEventsQuery(queryArg);
   const [dismissedEventIds, setDismissedEventIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -122,7 +127,8 @@ export const EventMatches = ({
             event={event}
             variant="match"
             canExpandVolunteers
-            showVolunteerAndPassActions
+            showVolunteerAndPassActions={showVolunteerAndPassActions}
+            hideVolunteerActions={!showVolunteerAndPassActions}
             onVolunteerSuccess={handleDismissMatch}
             onPassSuccess={handleDismissMatch}
           />

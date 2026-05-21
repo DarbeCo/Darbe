@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAppSelector } from "../../services/hooks";
@@ -6,39 +6,72 @@ import {
   EventMatches,
   getUpcomingEventMatches,
 } from "../events/eventMatches/EventMatches";
-import { useGetEventsQuery, useGetVolunteerMatchesQuery } from "../../services/api/endpoints/events/events.api";
+import {
+  useGetEventsQuery,
+  useGetVolunteerMatchesQuery,
+} from "../../services/api/endpoints/events/events.api";
 import { selectUserType } from "../users/selectors";
 import { VolunteerMatches } from "../volunteerMatches/VolunteerMatches";
 import { EDIT_PROFILE_ROUTE } from "../../routes/route.constants";
 import { EDIT_SECTIONS } from "../users/userProfiles/constants";
 import styles from "./styles/matches.module.css";
 
+type OrganizationMatchTab = "eventVolunteers" | "recommendations";
+
 export const Matches = () => {
   const navigate = useNavigate();
   const userType = useAppSelector(selectUserType);
+  const isOrganization = userType === "organization";
+  const [organizationMatchTab, setOrganizationMatchTab] =
+    useState<OrganizationMatchTab>("eventVolunteers");
 
   const { data: eventMatchesData } = useGetEventsQuery(undefined, {
     skip: userType !== "individual",
   });
+  const { data: recommendableEventMatchesData } = useGetEventsQuery(
+    { scope: "recommendable" },
+    {
+      skip: !isOrganization,
+    }
+  );
   const { data: volunteerMatchesData } = useGetVolunteerMatchesQuery(undefined, {
     skip: userType === "individual",
   });
 
+  const activeEventMatchesData = isOrganization
+    ? recommendableEventMatchesData
+    : eventMatchesData;
+  const isRecommendationTab =
+    isOrganization && organizationMatchTab === "recommendations";
+  const showEventMatches = userType === "individual" || isRecommendationTab;
+  const activeMatchTitle = isRecommendationTab
+    ? "Matches to Recommend"
+    : userType === "individual"
+    ? "Event Matches"
+    : isOrganization
+    ? "My Event Volunteers"
+    : "Matches";
+  const volunteerMatchLabel = isOrganization
+    ? "My Event Volunteers"
+    : userType === "individual"
+    ? "Event Matches"
+    : "Volunteer Matches";
+
   const upcomingEventMatchCount = useMemo(
-    () => getUpcomingEventMatches(eventMatchesData).length,
-    [eventMatchesData]
+    () => getUpcomingEventMatches(activeEventMatchesData).length,
+    [activeEventMatchesData]
   );
-  const matchCount =
-    userType === "individual"
-      ? upcomingEventMatchCount
-      : volunteerMatchesData?.length ?? 0;
-  const defaultMatchFilter =
-    userType === "individual" ? "Event Matches" : "Matches";
+  const activeShowAllCount = showEventMatches
+    ? upcomingEventMatchCount
+    : volunteerMatchesData?.length ?? 0;
 
   const summaryCards = [
     {
-      label: userType === "individual" ? "Event Matches" : "Volunteer Matches",
-      value: matchCount,
+      label: volunteerMatchLabel,
+      value:
+        userType === "individual"
+          ? upcomingEventMatchCount
+          : volunteerMatchesData?.length ?? 0,
       delta: "+1 since last month",
       editSection: undefined,
     },
@@ -64,7 +97,7 @@ export const Matches = () => {
 
   return (
     <div className={styles.matchesPage}>
-      <h1 className={styles.matchesResponsiveTitle}>{defaultMatchFilter}</h1>
+      <h1 className={styles.matchesResponsiveTitle}>{activeMatchTitle}</h1>
       <div className={styles.matchesSummaryPanel}>
         <p className={styles.matchesTitle}>
           Matches based on your selected causes and availability
@@ -101,6 +134,41 @@ export const Matches = () => {
         </div>
       </div>
 
+      {isOrganization && (
+        <div
+          className={styles.matchesTabs}
+          role="tablist"
+          aria-label="Organization match views"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={organizationMatchTab === "eventVolunteers"}
+            className={`${styles.matchesTab} ${
+              organizationMatchTab === "eventVolunteers"
+                ? styles.matchesTabActive
+                : ""
+            }`.trim()}
+            onClick={() => setOrganizationMatchTab("eventVolunteers")}
+          >
+            My Event Volunteers
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={organizationMatchTab === "recommendations"}
+            className={`${styles.matchesTab} ${
+              organizationMatchTab === "recommendations"
+                ? styles.matchesTabActive
+                : ""
+            }`.trim()}
+            onClick={() => setOrganizationMatchTab("recommendations")}
+          >
+            Matches to Recommend
+          </button>
+        </div>
+      )}
+
       {userType === "individual" && (
         <div className={styles.matchesFilterBar}>
           <span className={styles.matchesFilterTitle}>Filter</span>
@@ -111,9 +179,13 @@ export const Matches = () => {
       )}
 
       <div className={styles.matchesContent}>
-        <h1 className={styles.matchesSectionTitle}>{defaultMatchFilter}</h1>
-        {userType === "individual" ? (
-          <EventMatches hideLoadingSpinner />
+        <h1 className={styles.matchesSectionTitle}>{activeMatchTitle}</h1>
+        {showEventMatches ? (
+          <EventMatches
+            hideLoadingSpinner
+            queryScope={isRecommendationTab ? "recommendable" : "default"}
+            showVolunteerAndPassActions={!isRecommendationTab}
+          />
         ) : (
           <VolunteerMatches
             matchFilter="Volunteer Matches"
@@ -121,7 +193,7 @@ export const Matches = () => {
             hideLoadingSpinner
           />
         )}
-        {matchCount > 0 && (
+        {activeShowAllCount > 0 && (
           <button type="button" className={styles.showAllButton}>
             Show all
           </button>

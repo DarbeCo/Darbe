@@ -624,7 +624,9 @@ const syncApprovedVolunteerImpactSummary = async (
   if (detailsError) throw detailsError;
 };
 
-export const getEvents = async (): Promise<ShortEventState[]> => {
+export const getEvents = async (
+  scope: "default" | "recommendable" = "default"
+): Promise<ShortEventState[]> => {
   const userId = await ensureUserId();
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
@@ -635,6 +637,7 @@ export const getEvents = async (): Promise<ShortEventState[]> => {
   if (profileError || !profile) throw profileError ?? new Error("User not found");
 
   const isIndividual = profile.user_type === "individual";
+  const isRecommendableEntityScope = !isIndividual && scope === "recommendable";
 
   let eventsQuery = supabase
     .from("events")
@@ -643,15 +646,26 @@ export const getEvents = async (): Promise<ShortEventState[]> => {
     )
     .order("event_date", { ascending: true });
 
-  eventsQuery = isIndividual
-    ? eventsQuery.neq("event_owner_id", userId)
-    : eventsQuery.or(`event_owner_id.eq.${userId},event_coordinator_id.eq.${userId}`);
+  if (!isRecommendableEntityScope) {
+    eventsQuery = isIndividual
+      ? eventsQuery.neq("event_owner_id", userId)
+      : eventsQuery.or(`event_owner_id.eq.${userId},event_coordinator_id.eq.${userId}`);
+  }
 
   const { data: events, error } = await eventsQuery;
 
   if (error) throw error;
 
   let filteredEvents = events ?? [];
+
+  if (isRecommendableEntityScope) {
+    filteredEvents = filteredEvents.filter(
+      (event) =>
+        event.event_owner_id !== userId &&
+        event.event_coordinator_id !== userId &&
+        !event.is_followers_only
+    );
+  }
 
   if (isIndividual) {
     const [
