@@ -262,6 +262,15 @@
     justify-content: space-evenly;
     align-items: center;
     width: 100%;
+    margin-top: 15px;
+  }
+
+  .dobLabel {
+    font-size: 20px;
+    line-height: 24px;
+    font-weight: 400;
+    color: #000000;
+    opacity: 63%;
   }
 
   .signUpButtonArea {

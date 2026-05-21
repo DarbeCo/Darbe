@@ -189,6 +189,7 @@ export const UserInputs = ({
         isRequired
       />
       <div className={styles.dob}>
+        <p className={styles.dobLabel}>Date of Birth *</p>
         <Dropdown
           name="day"
           label="Day"
