@@ -11,6 +11,7 @@ export const LandingPage = () => {
         <LandingNavBar />
       </header>
       <main>
+        
         <AboutUs />
         <WhoWeServe />
         <FAQ />
