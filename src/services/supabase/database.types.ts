@@ -1253,6 +1253,10 @@ export interface Database {
         Args: { target_user_id: string; target_entity_id: string };
         Returns: undefined;
       };
+      remove_roster_member: {
+        Args: { target_roster_id: string; target_user_id: string };
+        Returns: undefined;
+      };
       manage_event_signup_check_time: {
         Args: {
           target_event_id: string;

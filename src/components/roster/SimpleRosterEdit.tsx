@@ -1,4 +1,4 @@
-import { CircularProgress, IconButton } from "@mui/material";
+import { CircularProgress } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { AddCircle, Remove } from "@mui/icons-material";
 
@@ -28,77 +28,117 @@ export const SimpleRosterEdit = ({ externalData }: SimpleRosterEditProps) => {
   const { data, isLoading } = useGetRosterMembersQuery(rosterId);
   const { data: followers, isLoading: isLoadingFollowers } =
     useGetEntityFollowersQuery(userId);
-  const [addToRoster] = useAddFollowerToRosterMutation();
-  const [removeFromRoster] = useRemoveMemberFromRosterMutation();
+  const [addToRoster, { isLoading: isAddingToRoster }] =
+    useAddFollowerToRosterMutation();
+  const [removeFromRoster, { isLoading: isRemovingFromRoster }] =
+    useRemoveMemberFromRosterMutation();
   const followersNotInRoster = followers?.filter(
     (follower) => !data?.some((member) => member.user.id === follower.id)
   );
+  const isBusy = isAddingToRoster || isRemovingFromRoster;
 
   const handleAvatarClick = (userId: string) => {
     navigate(`${PROFILE_ROUTE}/${userId}`);
   };
 
-  const handleAddFollowerToRoster = (followerId: string) => {
-    addToRoster({ followerId, rosterId });
+  const handleAddFollowerToRoster = async (followerId: string) => {
+    await addToRoster({ followerId, rosterId }).unwrap();
   };
 
-  const handleRemoveMemberFromRoster = (memberId: string) => {
-    removeFromRoster({ memberId, rosterId });
+  const handleRemoveMemberFromRoster = async (memberId: string) => {
+    await removeFromRoster({ memberId, rosterId }).unwrap();
   };
 
   return (
-    <div>
-      {isLoading && isLoadingFollowers && <CircularProgress />}
-      <div className={styles.organizationFollowers}>
-        <Typography variant="sectionTitle" textToDisplay={"Your Followers"} />
-        {followersNotInRoster?.map((follower) => (
-          <div className={styles.rosterRow} key={follower.id}>
-            <UserAvatars
-              key={follower.id}
-              userId={follower.id}
-              fullName={
-                follower.fullName ||
-                follower.nonprofitName ||
-                follower.organizationName
-              }
-              profilePicture={follower.profilePicture}
-              onClick={() => handleAvatarClick(follower.id)}
-            />
-            <IconButton
-              sx={{ backgroundColor: "white" }}
-              onClick={() => handleAddFollowerToRoster(follower.id)}
-            >
-              <AddCircle sx={{ color: "#2c77e7" }} />
-            </IconButton>
-          </div>
-        ))}
-      </div>
-      <div className={styles.rosterMembers}>
-        <Typography
-          variant="sectionTitle"
-          textToDisplay={"Current Roster Members"}
-        />
-        {data?.map((member) => (
-          <div className={styles.rosterRow} key={member.user.id}>
-            <UserAvatars
-              userId={member.user.id}
-              fullName={
-                member.user.fullName ||
-                member.user.nonprofitName ||
-                member.user.organizationName
-              }
-              profilePicture={member.user.profilePicture}
-              onClick={() => handleAvatarClick(member.user.id)}
-            />
-            <IconButton
-              sx={{ backgroundColor: "white" }}
-              onClick={() => handleRemoveMemberFromRoster(member.user.id)}
-            >
-              <Remove sx={{ color: "#FF0000" }} />
-            </IconButton>
-          </div>
-        ))}
-      </div>
+    <div className={styles.editRosterContent}>
+      {(isLoading || isLoadingFollowers) && (
+        <div className={styles.editRosterLoading}>
+          <CircularProgress />
+        </div>
+      )}
+
+      {!isLoading && !isLoadingFollowers && (
+        <>
+          <section className={styles.editRosterSection}>
+            <div className={styles.editRosterSectionHeader}>
+              <Typography variant="sectionTitle" textToDisplay="Your Followers" />
+              <span>{followersNotInRoster?.length ?? 0} available</span>
+            </div>
+
+            <div className={styles.editRosterList}>
+              {!followersNotInRoster?.length && (
+                <p className={styles.editRosterEmpty}>No followers to add</p>
+              )}
+              {followersNotInRoster?.map((follower) => (
+                <div className={styles.editRosterRow} key={follower.id}>
+                  <UserAvatars
+                    userId={follower.id}
+                    fullName={
+                      follower.fullName ||
+                      follower.nonprofitName ||
+                      follower.organizationName
+                    }
+                    profilePicture={follower.profilePicture}
+                    onClick={() => handleAvatarClick(follower.id)}
+                    className={styles.editRosterAvatar}
+                    infoClassName={styles.editRosterAvatarInfo}
+                  />
+                  <button
+                    type="button"
+                    className={styles.editRosterIconButton}
+                    onClick={() => handleAddFollowerToRoster(follower.id)}
+                    disabled={isBusy}
+                    aria-label="Add follower to roster"
+                  >
+                    <AddCircle />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className={styles.editRosterSection}>
+            <div className={styles.editRosterSectionHeader}>
+              <Typography
+                variant="sectionTitle"
+                textToDisplay="Current Roster Members"
+              />
+              <span>{data?.length ?? 0} members</span>
+            </div>
+
+            <div className={styles.editRosterList}>
+              {!data?.length && (
+                <p className={styles.editRosterEmpty}>No members in this roster</p>
+              )}
+              {data?.map((member) => (
+                <div className={styles.editRosterRow} key={member.user.id}>
+                  <UserAvatars
+                    userId={member.user.id}
+                    fullName={
+                      member.user.fullName ||
+                      member.user.nonprofitName ||
+                      member.user.organizationName
+                    }
+                    profilePicture={member.user.profilePicture}
+                    onClick={() => handleAvatarClick(member.user.id)}
+                    className={styles.editRosterAvatar}
+                    infoClassName={styles.editRosterAvatarInfo}
+                  />
+                  <button
+                    type="button"
+                    className={`${styles.editRosterIconButton} ${styles.editRosterRemoveButton}`}
+                    onClick={() => handleRemoveMemberFromRoster(member.user.id)}
+                    disabled={isBusy}
+                    aria-label="Remove member from roster"
+                  >
+                    <Remove />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 };

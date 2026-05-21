@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { PROFILE_ROUTE, ROSTER_ROUTE } from "../../routes/route.constants";
+import {
+  EVENTS_ROUTE,
+  PROFILE_ROUTE,
+  ROSTER_ROUTE,
+} from "../../routes/route.constants";
 import { useGetEntityUpcomingEventsQuery } from "../../services/api/endpoints/events/events.api";
 import { useGetOrgJoinRequestsQuery } from "../../services/api/endpoints/friends/friends.api";
 import { useGetEntityRosterMembersQuery } from "../../services/api/endpoints/roster/roster.api";
@@ -130,6 +134,12 @@ export const OrgOverview = ({
     navigate(`${ROSTER_ROUTE}?view=pendingRequests`);
   };
 
+  const handleCompletedProjectsClick = () => {
+    navigate(EVENTS_ROUTE, {
+      state: { activeEventsTab: "Past" },
+    });
+  };
+
   return (
     <div className={styles.orgOverviewWrapper}>
       <section className={styles.orgOverviewCard}>
@@ -235,11 +245,15 @@ export const OrgOverview = ({
           </span>
         </button>
 
-        <div className={styles.orgOverviewRow}>
-          <span className={styles.orgOverviewRowTextMuted}>
+        <button
+          type="button"
+          className={styles.orgOverviewRowButton}
+          onClick={handleCompletedProjectsClick}
+        >
+          <span className={styles.orgOverviewRowText}>
             {completedProjectsCount} Completed Projects
           </span>
-        </div>
+        </button>
       </section>
 
       <button

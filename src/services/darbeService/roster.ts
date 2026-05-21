@@ -43,6 +43,27 @@ const sortRosterRows = <
     );
   });
 
+const getVisibleRosterRows = <
+  T extends { roster_name: string | null; created_at: string | null }
+>(
+  rosters: T[]
+) => {
+  let hasMemberRoster = false;
+
+  return sortRosterRows(rosters).filter((roster) => {
+    if (displayRosterName(roster.roster_name) !== MEMBER_ROSTER_NAME) {
+      return true;
+    }
+
+    if (hasMemberRoster) {
+      return false;
+    }
+
+    hasMemberRoster = true;
+    return true;
+  });
+};
+
 const getRosterInfo = async (
   rosterId: string
 ): Promise<{ ownerId: string; name: string }> => {
@@ -452,7 +473,7 @@ export const getRosters = async (ownerId?: string): Promise<Roster[]> => {
       ? mapProfileToSimpleEntityInfo(ownerProfile)
       : ({ id: ownerId } as SimpleEntityInfo);
 
-    return sortRosterRows(Array.from(rostersById.values())).map((roster) => ({
+    return getVisibleRosterRows(Array.from(rostersById.values())).map((roster) => ({
       id: roster.id,
       rosterOwner: ownerInfo,
       rosterName: displayRosterName(roster.roster_name),
@@ -523,7 +544,7 @@ export const getRosters = async (ownerId?: string): Promise<Roster[]> => {
     ? mapProfileToSimpleEntityInfo(ownerProfile)
     : ({ id: rosterOwnerId } as SimpleEntityInfo);
 
-  return rosterRows.map((roster) => ({
+  return getVisibleRosterRows(rosterRows).map((roster) => ({
     id: roster.id,
     rosterOwner: ownerInfo,
     rosterName: displayRosterName(roster.roster_name),
@@ -727,18 +748,56 @@ export const addToRoster = async (followerId: string, rosterId: string): Promise
 
 export const removeFromRoster = async (memberId: string, rosterId: string): Promise<void> => {
   const roster = await getRosterInfo(rosterId);
-  const { error } = await supabase
-    .from("roster_members")
-    .delete()
-    .match({ roster_id: rosterId, user_id: memberId });
-  if (error) throw error;
+  const isMemberRoster = displayRosterName(roster.name) === MEMBER_ROSTER_NAME;
 
-  if (roster.name === VOLUNTEER_COORDINATORS_ROSTER_NAME) {
-    return;
-  }
+  if (isMemberRoster) {
+    const { data: membershipRosters, error: rosterError } = await supabase
+      .from("rosters")
+      .select("id, roster_name")
+      .eq("roster_owner_id", roster.ownerId);
 
-  if (isMembershipRoster(roster.name)) {
-    await removeUserOrganizationMembershipIfNeeded(memberId, roster.ownerId);
+    if (rosterError) throw rosterError;
+
+    const membershipRosterIds = (membershipRosters ?? [])
+      .filter((row) => isMembershipRoster(row.roster_name))
+      .map((row) => row.id);
+
+    if (membershipRosterIds.length) {
+      const { error } = await supabase
+        .from("roster_members")
+        .delete()
+        .eq("user_id", memberId)
+        .in("roster_id", membershipRosterIds);
+
+      if (error) throw error;
+    }
+
+    const { data: organizationRows, error: organizationRowsError } = await supabase
+      .from("organizations")
+      .select("id")
+      .or(`id.eq.${roster.ownerId},organization_user_id.eq.${roster.ownerId}`);
+
+    if (organizationRowsError) throw organizationRowsError;
+
+    const organizationIds = Array.from(
+      new Set([roster.ownerId, ...(organizationRows ?? []).map((row) => row.id)])
+    );
+
+    const { error: organizationError } = await supabase
+      .from("user_organizations")
+      .delete()
+      .eq("user_id", memberId)
+      .in("parent_organization_id", organizationIds)
+      .eq("position", "Member");
+
+    if (organizationError) throw organizationError;
+  } else {
+    const { error } = await supabase
+      .from("roster_members")
+      .delete()
+      .match({ roster_id: rosterId, user_id: memberId });
+
+    if (error) throw error;
   }
 };
 
