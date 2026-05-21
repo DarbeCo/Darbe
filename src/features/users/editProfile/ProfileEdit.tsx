@@ -13,6 +13,20 @@ import { runProfileEditAutosave } from "./profileEditAutosave";
 
 import styles from "./styles/profileEdit.module.css";
 
+const EDIT_SECTION_TITLES: Record<string, string> = {
+  [EDIT_SECTIONS.causes]: "Edit Causes",
+  [EDIT_SECTIONS.availability]: "Edit Availability",
+  [EDIT_SECTIONS.organizations]: "Edit Organizations",
+  [EDIT_SECTIONS.profile]: "Edit Profile",
+  [EDIT_SECTIONS.entityProfile]: "Edit Profile",
+  [EDIT_SECTIONS.donors]: "Edit Supporters",
+  [EDIT_SECTIONS.staff]: "Edit Staff",
+  [EDIT_SECTIONS.values]: "Edit Values",
+  [EDIT_SECTIONS.programs]: "Edit Programs",
+  [EDIT_SECTIONS.documents]: "Edit Documents",
+  [EDIT_SECTIONS.activity]: "Edit Activity",
+};
+
 export const ProfileEdit = () => {
   const navigate = useNavigate();
   const userId = useAppSelector(selectCurrentUserId);
@@ -23,14 +37,7 @@ export const ProfileEdit = () => {
   const shouldShowBackButton =
     isEntityProfile || section !== EDIT_SECTIONS.about;
   const isTallEditStep = !isEntityProfile && section === EDIT_SECTIONS.background;
-  const editHeaderTitle =
-    section === EDIT_SECTIONS.causes
-      ? "Edit Causes"
-      : section === EDIT_SECTIONS.availability
-        ? "Edit Availability"
-        : section === EDIT_SECTIONS.organizations
-          ? "Edit Organizations"
-          : "Edit About";
+  const editHeaderTitle = EDIT_SECTION_TITLES[section] ?? "Edit About";
 
   const handleGoBack = async () => {
     const didAutosave = await runProfileEditAutosave();

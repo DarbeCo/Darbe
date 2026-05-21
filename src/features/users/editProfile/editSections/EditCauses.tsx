@@ -4,7 +4,11 @@ import { Checkbox } from "@mui/material";
 import { Causes } from "../../../../components/causes/Causes";
 import { DarbeButton } from "../../../../components/buttons/DarbeButton";
 import { useAppDispatch, useAppSelector } from "../../../../services/hooks";
-import { selectCurrentUserCauses, selectCurrentUserId } from "../../selectors";
+import {
+  selectCurrentUserCauses,
+  selectCurrentUserId,
+  selectUser,
+} from "../../selectors";
 import { useGetCausesQuery } from "../../../../services/api/endpoints/causes/causes.api";
 import { useUpdateEntityProfileMutation } from "../../../../services/api/endpoints/profiles/profiles.api";
 import { updateUserCauses } from "../../userSlice";
@@ -22,6 +26,7 @@ export const EditCauses = () => {
   const dispatch = useAppDispatch();
   const currentCauses = useAppSelector(selectCurrentUserCauses);
   const userId = useAppSelector(selectCurrentUserId);
+  const userType = useAppSelector(selectUser).user?.userType;
   const [updateUserProfile] = useUpdateEntityProfileMutation();
   const { data: causes = [] } = useGetCausesQuery();
   const [updatedCauses, setUpdatedCauses] = useState<string[]>(currentCauses);
@@ -100,7 +105,13 @@ export const EditCauses = () => {
     const didAutosave = await autosaveCauses();
 
     if (didAutosave) {
-      dispatch(setModalType(EDIT_SECTIONS.profile));
+      dispatch(
+        setModalType(
+          userType === "individual"
+            ? EDIT_SECTIONS.profile
+            : EDIT_SECTIONS.entityProfile
+        )
+      );
     }
   };
 

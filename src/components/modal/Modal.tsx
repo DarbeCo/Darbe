@@ -114,7 +114,10 @@ export const Modal = () => {
   const isEventPhotoCarouselModal =
     modalType === MODAL_TYPE.eventPhotoCarousel;
   const profileBackTargets: Partial<Record<string, string>> = {
-    [MODAL_TYPE.causes]: MODAL_TYPE.profile,
+    [MODAL_TYPE.causes]:
+      currentUser?.userType === "individual"
+        ? MODAL_TYPE.profile
+        : MODAL_TYPE.entityProfile,
     [MODAL_TYPE.availability]: MODAL_TYPE.causes,
     [MODAL_TYPE.background]: MODAL_TYPE.about,
     [MODAL_TYPE.military]: MODAL_TYPE.background,

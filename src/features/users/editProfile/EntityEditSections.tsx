@@ -7,6 +7,7 @@ import { EditEntityUsers } from "./editEntitySections/EditEntityUsers";
 import { EditEntityValues } from "./editEntitySections/EditEntityValues";
 import { EditProfileProps } from "./editSections/types";
 import { EditActivity } from "./editSections/EditActivity";
+import { EditCauses } from "./editSections/EditCauses";
 
 import styles from "./styles/profileEdit.module.css";
 
@@ -31,6 +32,7 @@ export const EntityEditSections = ({
       {section === EDIT_SECTIONS.values && <EditEntityValues />}
       {section === EDIT_SECTIONS.programs && <EditEntityPrograms />}
       {section === EDIT_SECTIONS.profile && <EditEntityProfileInfo />}
+      {section === EDIT_SECTIONS.causes && <EditCauses />}
       {section === EDIT_SECTIONS.donors && (
         <EditEntityUsers
           entityType={entityType}

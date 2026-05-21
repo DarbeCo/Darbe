@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { DarbeButton } from "../../../../components/buttons/DarbeButton";
 import { NONPROFIT_TYPES } from "../../../../components/dropdowns/dropdownTypes/NonprofitTypes";
-import { hideModal } from "../../../../components/modal/modalSlice";
+import { getModalStatus } from "../../../../components/modal/selectors";
+import { hideModal, setModalType } from "../../../../components/modal/modalSlice";
+import { EDIT_PROFILE_ROUTE } from "../../../../routes/route.constants";
 import { useUpdateEntityProfileMutation } from "../../../../services/api/endpoints/profiles/profiles.api";
 import { useAppDispatch, useAppSelector } from "../../../../services/hooks";
 import { splitStringndCapitalize } from "../../../../utils/CommonFunctions";
 import { formatPhoneNumber } from "../../../../utils/formUtils/formUtils";
 import { selectCurrentUserId, selectUser } from "../../selectors";
 import { setUserProfile } from "../../userSlice";
+import { EDIT_SECTIONS } from "../../userProfiles/constants";
 import { useEditEntityProfileInformation } from "../hooks";
 import { registerProfileEditAutosave } from "../profileEditAutosave";
 
@@ -30,8 +34,10 @@ type EntityProfileField =
 
 export const EditEntityProfileInfo = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const user = useAppSelector(selectUser);
   const userId = useAppSelector(selectCurrentUserId);
+  const isModalOpen = useAppSelector(getModalStatus);
   const entityType = user.user?.userType;
   const { editEntityProfileState } = useEditEntityProfileInformation();
 
@@ -145,6 +151,22 @@ export const EditEntityProfileInfo = () => {
     );
   };
 
+  const renderCausesLink = () => (
+    <div className={styles.profileDialogField}>
+      <label className={styles.profileDialogLabel} htmlFor="entityCausesLink">
+        Causes
+      </label>
+      <button
+        id="entityCausesLink"
+        type="button"
+        className={styles.profileDialogLinkButton}
+        onClick={handleEditCauses}
+      >
+        Edit Causes
+      </button>
+    </div>
+  );
+
   const saveProfile = useCallback(async () => {
     const payload = {
       ...editProfileInfo,
@@ -169,6 +191,17 @@ export const EditEntityProfileInfo = () => {
     await saveProfile();
 
     dispatch(hideModal());
+  };
+
+  const handleEditCauses = async () => {
+    await saveProfile();
+
+    if (isModalOpen) {
+      dispatch(setModalType(EDIT_SECTIONS.causes));
+      return;
+    }
+
+    navigate(`${EDIT_PROFILE_ROUTE}?section=${EDIT_SECTIONS.causes}`);
   };
 
   const capitalizedEntityName = splitStringndCapitalize(entityType, true);
@@ -198,7 +231,9 @@ export const EditEntityProfileInfo = () => {
           {renderInput("State", "state", "Update your state")}
           {renderInput("City", "city", "Update your city")}
           {renderInput("Zip", "zip", "Update your zip")}
-          {renderInput("Phone Number", "phoneNumber", "Update your phone number")}
+          {entityType === "nonprofit"
+            ? renderCausesLink()
+            : renderInput("Phone Number", "phoneNumber", "Update your phone number")}
           {renderInput("Website", "website", "Update your website")}
         </div>
 
