@@ -33,7 +33,7 @@ export const EditEntityUsers = ({
   const { data: donorsAndStaff } = useGetDonorsAndStaffQuery({ userId });
   const [removeDonor] = useRemoveFromDonorsMutation();
   const [removeStaff] = useRemoveFromStaffMutation();
-  const textToDisplay = editType === "donors" ? "Donors" : "Staff";
+  const textToDisplay = editType === "donors" ? "Supporters" : "Staff";
   const dataToRender =
     editType === "donors" ? donorsAndStaff?.donors : donorsAndStaff?.staff;
   const mutationToUse = editType === "donors" ? removeDonor : removeStaff;
@@ -52,7 +52,7 @@ export const EditEntityUsers = ({
         <div className={styles.editEntityUserHeader}>
           <Typography
             variant="header"
-            textToDisplay={`Major ${textToDisplay}`}
+            textToDisplay={textToDisplay}
           />
           <DarbeButton
             darbeButtonType={isAddingStaff ? "postButton" : "nextButton"}
