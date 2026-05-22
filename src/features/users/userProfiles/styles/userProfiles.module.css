@@ -228,6 +228,16 @@
     row-gap: 8px;
   }
 
+  .userQuickInfoPublicId {
+    color: #303030;
+    font-family: "Open Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 17px;
+    position: relative;
+    left: 16px;
+  }
+
   .userQuickInfoGroups {
     display: flex;
     flex-direction: row;

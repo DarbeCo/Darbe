@@ -119,6 +119,7 @@ const resolveCauseIds = async (causeValues: string[]) => {
 const mapProfileToUserState = (
   profile: {
     id: string;
+    public_id?: string | null;
     email: string;
     full_name: string | null;
     first_name: string | null;
@@ -137,6 +138,7 @@ const mapProfileToUserState = (
   availability?: Availability
 ): UserState => ({
   id: profile.id,
+  publicId: profile.public_id ?? undefined,
   email: profile.email,
   fullName:
     profile.full_name ??
@@ -764,7 +766,7 @@ export const getUserProfile = async (userId: string): Promise<DarbeProfileShared
     supabase
       .from("profiles")
       .select(
-        "id, email, full_name, first_name, last_name, user_type, zip, city, date_of_birth, ein, nonprofit_name, organization_name, profile_picture_url, cover_photo_url"
+        "id, public_id, email, full_name, first_name, last_name, user_type, zip, city, date_of_birth, ein, nonprofit_name, organization_name, profile_picture_url, cover_photo_url"
       )
       .eq("id", userId)
       .single(),

@@ -17,6 +17,7 @@ export interface Database {
           first_name: string | null;
           last_name: string | null;
           full_name: string | null;
+          public_id: string | null;
           organization_name: string | null;
           nonprofit_name: string | null;
           ein: string | null;
@@ -34,6 +35,7 @@ export interface Database {
           email: string;
           first_name?: string | null;
           last_name?: string | null;
+          public_id?: string | null;
           organization_name?: string | null;
           nonprofit_name?: string | null;
           ein?: string | null;
@@ -51,6 +53,7 @@ export interface Database {
           email?: string;
           first_name?: string | null;
           last_name?: string | null;
+          public_id?: string | null;
           organization_name?: string | null;
           nonprofit_name?: string | null;
           ein?: string | null;
@@ -60,6 +63,21 @@ export interface Database {
           profile_picture_url?: string | null;
           cover_photo_url?: string | null;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      profile_public_id_counters: {
+        Row: {
+          user_type: string;
+          next_value: number;
+        };
+        Insert: {
+          user_type: string;
+          next_value?: number;
+        };
+        Update: {
+          user_type?: string;
+          next_value?: number;
         };
         Relationships: [];
       };

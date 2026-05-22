@@ -174,7 +174,7 @@ const fetchUserState = async (userId: string): Promise<UserState> => {
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select(
-      "id, email, full_name, first_name, last_name, user_type, zip, city, ein, nonprofit_name, organization_name, profile_picture_url, cover_photo_url"
+      "id, public_id, email, full_name, first_name, last_name, user_type, zip, city, ein, nonprofit_name, organization_name, profile_picture_url, cover_photo_url"
     )
     .eq("id", userId)
     .single();
@@ -203,6 +203,7 @@ const fetchUserState = async (userId: string): Promise<UserState> => {
 
   return {
     id: profile.id,
+    publicId: profile.public_id ?? undefined,
     email: profile.email,
     fullName: profile.full_name ?? `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim(),
     firstName: profile.first_name ?? "",

@@ -20,6 +20,7 @@ import {
 
 export interface UserState {
   id: string;
+  publicId?: string;
   email: string;
   fullName: string;
   firstName: string;

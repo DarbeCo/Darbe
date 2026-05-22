@@ -20,6 +20,7 @@ import styles from "../styles/userProfiles.module.css";
 interface UserQuickInfoProps {
   canEdit: boolean;
   isMobile: boolean;
+  publicId?: string;
   volunteerHours?: number;
   tagLine?: string;
   city?: string;
@@ -59,6 +60,7 @@ const getExternalWebsiteUrl = (website?: string) => {
 export const UserQuickInfo = ({
   canEdit,
   isMobile,
+  publicId,
   volunteerHours,
   tagLine,
   city,
@@ -189,6 +191,9 @@ export const UserQuickInfo = ({
   const userInfoDisplay = (
     <>
       <div className={styles.userQuickInfoSummary}>
+        {publicId && (
+          <div className={styles.userQuickInfoPublicId}>{publicId}</div>
+        )}
         <div className={styles.userQuickInfoGroupsSections}>
           <div className={styles.userQuickInfoGroups}>
             <CustomSvgs

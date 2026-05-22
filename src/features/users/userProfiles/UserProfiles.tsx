@@ -147,6 +147,7 @@ export const UserProfiles = () => {
         </div>
         <UserQuickInfo
           canEdit={canEdit}
+          publicId={userInformation?.user?.publicId}
           volunteerHours={totalVolunteerHours}
           city={userInformation?.user?.city}
           zipCode={userInformation?.user?.zip}
