@@ -227,7 +227,8 @@ export const EditEntityProfileInfo = () => {
           {entityType === "nonprofit" && renderNonprofitTypeSelect()}
           {renderInput("Tagline", "tagLine", "Update your tagline")}
           {renderInput("EIN", "ein", "Update your EIN")}
-          {renderInput("Address", "address", "Update your address")}
+          {entityType !== "organization" &&
+            renderInput("Address", "address", "Update your address")}
           {renderInput("State", "state", "Update your state")}
           {renderInput("City", "city", "Update your city")}
           {renderInput("Zip", "zip", "Update your zip")}

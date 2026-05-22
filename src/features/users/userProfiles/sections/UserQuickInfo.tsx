@@ -24,6 +24,7 @@ interface UserQuickInfoProps {
   tagLine?: string;
   city?: string;
   zipCode?: string;
+  email?: string;
   fullName?: string;
   organizationName?: string;
   nonprofitName?: string;
@@ -31,7 +32,6 @@ interface UserQuickInfoProps {
   website?: string;
   nonprofitType?: string;
   contactNumber?: string;
-  address?: string;
   state?: string;
   userType?: string;
   parentEntityName?: string;
@@ -63,6 +63,7 @@ export const UserQuickInfo = ({
   tagLine,
   city,
   zipCode,
+  email,
   fullName,
   organizationName,
   nonprofitName,
@@ -70,7 +71,6 @@ export const UserQuickInfo = ({
   website,
   nonprofitType,
   contactNumber,
-  address,
   state,
   userType,
   parentEntityName,
@@ -114,9 +114,6 @@ export const UserQuickInfo = ({
   const entityName = organizationName || nonprofitName;
   const isOrganizationProfile = userType === "organization";
   const locationDisplay = [city, stateDisplay].filter(Boolean).join(", ");
-  const addressDisplay = [address, locationDisplay, zipCode]
-    .filter(Boolean)
-    .join(", ");
   const userClassOverride = isEntity
     ? styles.entityQuickInfoGroupsNonMobile
     : styles.userQuickInfoOverride;
@@ -322,8 +319,16 @@ export const UserQuickInfo = ({
             </div>
             <dl className={styles.entityContactDialogDetails}>
               <div>
-                <dt>Address</dt>
-                <dd>{addressDisplay || "Unknown"}</dd>
+                <dt>Email</dt>
+                <dd>
+                  {email ? (
+                    <a href={`mailto:${email}`}>
+                      {email}
+                    </a>
+                  ) : (
+                    "Unknown"
+                  )}
+                </dd>
               </div>
               <div>
                 <dt>Phone</dt>

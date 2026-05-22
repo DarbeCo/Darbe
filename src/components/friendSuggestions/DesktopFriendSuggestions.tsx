@@ -1,9 +1,11 @@
 import { AddCircleTwoTone } from "@mui/icons-material";
 import { Avatar, Card, CardContent, CardHeader } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 import { SuggestedFriendState } from "../../features/friends/types";
 import { useSendFriendRequestMutation } from "../../services/api/endpoints/friends/friends.api";
 import { Typography } from "../typography/Typography";
+import { PROFILE_ROUTE } from "../../routes/route.constants";
 
 import styles from "./styles/friendSuggestions.module.css";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -32,17 +34,23 @@ const sortSuggestionsByName = (suggestions: SuggestedFriendState[]) =>
 const FriendSuggestion = ({ 
   suggestedFriend, 
   handleSendFriendRequest,
+  handleProfileClick,
   isRequesting,
 }: { 
   suggestedFriend: SuggestedFriendState,  
   handleSendFriendRequest: (suggestedFriendId: string) => Promise<void> 
+  handleProfileClick: (suggestedFriendId: string) => void;
   isRequesting: boolean;
 }) => {
 
   const nameToUse = getSuggestionName(suggestedFriend);
   return (
     <div className={styles.suggestedFriendCard} >
-      <div className={styles.friendSuggestionIdentity}>
+      <button
+        type="button"
+        className={styles.friendSuggestionIdentity}
+        onClick={() => handleProfileClick(suggestedFriend.id)}
+      >
         <Avatar
           className={styles.friendSuggestionAvatar}
           alt={nameToUse}
@@ -54,20 +62,21 @@ const FriendSuggestion = ({
             {suggestedFriend.city}, {suggestedFriend.zip}
           </span>
         </div>
-      </div>
-      <div
+      </button>
+      <button
+        type="button"
         onClick={() => {
           if (isRequesting) return;
           handleSendFriendRequest(suggestedFriend.id);
         }}
-        aria-disabled={isRequesting}
+        disabled={isRequesting}
         className={styles.addFriendCardAddIcon}
-        style={isRequesting ? { opacity: 0.5, pointerEvents: "none" } : undefined}
+        aria-label={`Add ${nameToUse}`}
       >
         <AddCircleTwoTone 
           htmlColor="#1976d2"
         />
-      </div>
+      </button>
     </div>
   )
 }
@@ -77,8 +86,10 @@ export const DesktopFriendSuggestions = ({
 }: DesktopFriendSuggestionsProps) => {
 
 
+  const navigate = useNavigate();
   const [sendFriendRequest] = useSendFriendRequestMutation();
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_SUGGESTIONS);
+  const [hiddenSuggestionIds, setHiddenSuggestionIds] = useState<string[]>([]);
   const [requestingIds, setRequestingIds] = useState<Record<string, boolean>>(
     {}
   );
@@ -93,6 +104,12 @@ export const DesktopFriendSuggestions = ({
 
       try {
         await sendFriendRequest(suggestedFriendId).unwrap();
+        setHiddenSuggestionIds((currentIds) =>
+          currentIds.includes(suggestedFriendId)
+            ? currentIds
+            : [...currentIds, suggestedFriendId]
+        );
+        setRequestingIds((prev) => ({ ...prev, [suggestedFriendId]: false }));
       } catch (error) {
         requestLocksRef.current.delete(suggestedFriendId);
         setRequestingIds((prev) => ({ ...prev, [suggestedFriendId]: false }));
@@ -109,14 +126,25 @@ export const DesktopFriendSuggestions = ({
 
   const suggestions = useMemo(() => {
     if (!suggestedFriends) return []
-    return sortSuggestionsByName(suggestedFriends).slice(0, visibleCount)
-  }, [suggestedFriends, visibleCount])
+    const hiddenIds = new Set(hiddenSuggestionIds);
+    return sortSuggestionsByName(suggestedFriends)
+      .filter((suggestedFriend) => !hiddenIds.has(suggestedFriend.id))
+      .slice(0, visibleCount)
+  }, [hiddenSuggestionIds, suggestedFriends, visibleCount])
 
   const hasMoreSuggestions =
-    Boolean(suggestedFriends) && suggestions.length < (suggestedFriends?.length ?? 0);
+    Boolean(suggestedFriends) &&
+    suggestions.length <
+      (suggestedFriends?.filter(
+        (suggestedFriend) => !hiddenSuggestionIds.includes(suggestedFriend.id)
+      ).length ?? 0);
 
   const handleShowMore = () => {
     setVisibleCount((currentCount) => currentCount + SUGGESTIONS_INCREMENT);
+  };
+
+  const handleProfileClick = (suggestedFriendId: string) => {
+    navigate(`${PROFILE_ROUTE}/${suggestedFriendId}`);
   };
 
   return (
@@ -136,6 +164,7 @@ export const DesktopFriendSuggestions = ({
                       key={suggestedFriend.id}
                       suggestedFriend={suggestedFriend}
                       handleSendFriendRequest={handleSendFriendRequest}
+                      handleProfileClick={handleProfileClick}
                       isRequesting={isRequesting}
                     />
                 );

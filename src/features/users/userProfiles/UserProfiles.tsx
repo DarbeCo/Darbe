@@ -150,6 +150,7 @@ export const UserProfiles = () => {
           volunteerHours={totalVolunteerHours}
           city={userInformation?.user?.city}
           zipCode={userInformation?.user?.zip}
+          email={userInformation?.user?.email}
           fullName={userInformation?.user?.fullName}
           organizationName={userInformation?.user?.organizationName}
           nonprofitName={userInformation?.user?.nonprofitName}
@@ -159,7 +160,6 @@ export const UserProfiles = () => {
           tagLine={userInformation?.tagLine}
           nonprofitType={userInformation?.nonprofitType}
           contactNumber={userInformation?.phoneNumber}
-          address={userInformation?.address}
           isMobile={isMobile}
           userType={userInformation?.user?.userType}
           parentEntityName={userInformation?.parentEntity?.fullName}
