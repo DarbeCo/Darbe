@@ -471,6 +471,14 @@ export const EditProfileInfo = () => {
             maxLength={50}
           />
           <ProfileTextField
+            label="ID Number"
+            placeholder="ID Number"
+            value={formData.user?.publicId}
+            onChange={() => undefined}
+            required={false}
+            readOnly
+          />
+          <ProfileTextField
             label="Location"
             placeholder="Houston, TX"
             value={location}

@@ -19,6 +19,7 @@ import { registerProfileEditAutosave } from "../profileEditAutosave";
 import styles from "../styles/profileEdit.module.css";
 
 type EntityProfileField =
+  | "publicId"
   | "nonprofitName"
   | "organizationName"
   | "parentEntity"
@@ -52,6 +53,7 @@ export const EditEntityProfileInfo = () => {
   }, [
     editEntityProfileState.nonprofitName,
     editEntityProfileState.organizationName,
+    editEntityProfileState.publicId,
     editEntityProfileState.parentEntity?.id,
     editEntityProfileState.parentEntity?.fullName,
     editEntityProfileState.nonprofitType,
@@ -96,7 +98,8 @@ export const EditEntityProfileInfo = () => {
     label: string,
     name: EntityProfileField,
     placeholder: string,
-    className?: string
+    className?: string,
+    readOnly = false
   ) => {
     const value = getFieldValue(name);
 
@@ -116,6 +119,7 @@ export const EditEntityProfileInfo = () => {
           value={value}
           maxLength={name === "phoneNumber" ? 14 : undefined}
           type={name === "phoneNumber" ? "tel" : "text"}
+          readOnly={readOnly}
         />
       </div>
     );
@@ -217,6 +221,13 @@ export const EditEntityProfileInfo = () => {
             formNameIdentifier,
             `Update your ${capitalizedEntityName} name`,
             styles.profileDialogFieldFullWidth
+          )}
+          {renderInput(
+            "ID Number",
+            "publicId",
+            "ID Number",
+            styles.profileDialogFieldFullWidth,
+            true
           )}
           {renderInput(
             `Parent ${capitalizedEntityName}`,

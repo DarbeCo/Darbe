@@ -63,6 +63,7 @@ export const useEditProfileInformation = () => {
       relation: profileInformation?.emergencyContact?.relation,
     },
     user: {
+      publicId: profileInformation?.user?.publicId,
       firstName: profileInformation?.user?.firstName,
       lastName: profileInformation?.user?.lastName,
       city: profileInformation?.user?.city,
@@ -284,6 +285,7 @@ export const useEditEntityProfileInformation = () => {
   const profileInformation = useGetProfileInformation();
 
   const editEntityProfileState = {
+    publicId: profileInformation?.user?.publicId,
     nonprofitName:
       profileInformation?.nonprofitName ||
       profileInformation?.user?.nonprofitName,
