@@ -1044,7 +1044,7 @@ export const EventCard = ({
                     isDisabled={isPassing}
                   />
                   <DarbeButton
-                    buttonText="Recommend To Followers"
+                    buttonText="Invite Members"
                     onClick={handleRecommendEvent}
                     darbeButtonType="nextButton"
                     isDisabled={isRecommending}

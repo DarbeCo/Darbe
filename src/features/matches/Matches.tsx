@@ -45,7 +45,7 @@ export const Matches = () => {
     isOrganization && organizationMatchTab === "recommendations";
   const showEventMatches = userType === "individual" || isRecommendationTab;
   const activeMatchTitle = isRecommendationTab
-    ? "Matches to Recommend"
+    ? "Invitations"
     : userType === "individual"
     ? "Event Matches"
     : isOrganization
@@ -164,7 +164,7 @@ export const Matches = () => {
             }`.trim()}
             onClick={() => setOrganizationMatchTab("recommendations")}
           >
-            Matches to Recommend
+            Invitations
           </button>
         </div>
       )}
