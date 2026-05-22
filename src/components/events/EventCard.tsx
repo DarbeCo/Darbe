@@ -238,6 +238,10 @@ type EventFieldEditState =
 
 type VolunteerSignupRow = ShortEventState["signups"][number] & {
   isCoordinator: boolean;
+  isInvitationGroup?: boolean;
+  isInvitationChild?: boolean;
+  invitedVolunteerCount?: number;
+  invitedVolunteerCheckedInCount?: number;
 };
 
 export const EventCard = ({
@@ -301,6 +305,9 @@ export const EventCard = ({
   const [showPassRejectedDialog, setShowPassRejectedDialog] = useState(false);
   const [approvalDialogMessage, setApprovalDialogMessage] = useState("");
   const [isVolunteerListOpen, setIsVolunteerListOpen] = useState(false);
+  const [openInvitationGroupIds, setOpenInvitationGroupIds] = useState<
+    Set<string>
+  >(new Set());
   const [isAddVolunteerOpen, setIsAddVolunteerOpen] = useState(false);
   const [addVolunteerSearch, setAddVolunteerSearch] = useState("");
   const [impactEditState, setImpactEditState] =
@@ -324,6 +331,20 @@ export const EventCard = ({
 
   const handleAvatarClick = (userId: string) => {
     navigate(`${PROFILE_ROUTE}/${userId}`);
+  };
+
+  const handleInvitationGroupToggle = (inviterId: string) => {
+    setOpenInvitationGroupIds((groupIds) => {
+      const nextGroupIds = new Set(groupIds);
+
+      if (nextGroupIds.has(inviterId)) {
+        nextGroupIds.delete(inviterId);
+      } else {
+        nextGroupIds.add(inviterId);
+      }
+
+      return nextGroupIds;
+    });
   };
 
   const handlePassEvent = () => {
@@ -707,13 +728,43 @@ export const EventCard = ({
         (candidate) => candidate.id === coordinator.id
       ) === index
   );
+  const nonCoordinatorSignups = (event.signups ?? []).filter(
+    (signup) =>
+      !volunteerCoordinators.some(
+        (coordinator) => coordinator.id === signup.user.id
+      )
+  );
+  const fallbackVolunteerCoordinator = volunteerCoordinators.find(
+    (coordinator) =>
+      coordinator.userType === "organization" ||
+      coordinator.userType === "nonprofit"
+  );
+  const signupsByInviter = new Map<string, ShortEventState["signups"]>();
+  const inviterById = new Map<string, NonNullable<ShortEventState["signups"][number]["invitedByEntity"]>>();
+  const ungroupedSignups: ShortEventState["signups"] = [];
+
+  nonCoordinatorSignups.forEach((signup) => {
+    const invitedByEntity = signup.invitedByEntity ?? fallbackVolunteerCoordinator;
+
+    if (!invitedByEntity?.id) {
+      ungroupedSignups.push(signup);
+      return;
+    }
+
+    inviterById.set(invitedByEntity.id, invitedByEntity);
+    const groupSignups = signupsByInviter.get(invitedByEntity.id) ?? [];
+    groupSignups.push(signup);
+    signupsByInviter.set(invitedByEntity.id, groupSignups);
+  });
+
   const coordinatorVolunteerRow: VolunteerSignupRow[] =
-    volunteerCoordinators.map((coordinator) => {
+    volunteerCoordinators.flatMap((coordinator) => {
       const coordinatorSignup = event.signups?.find(
         (signup) => signup.user.id === coordinator.id
       );
-
-      return {
+      const groupSignups = signupsByInviter.get(coordinator.id) ?? [];
+      const hasInvitedVolunteers = groupSignups.length > 0;
+      const coordinatorRow: VolunteerSignupRow = {
         id: coordinatorSignup?.id ?? `coordinator-${coordinator.id}`,
         user: coordinator,
         eventId: event.id,
@@ -726,19 +777,82 @@ export const EventCard = ({
         volunteerEndTime: coordinatorSignup?.volunteerEndTime,
         volunteerLocation: coordinatorSignup?.volunteerLocation,
         volunteerImpact: coordinatorSignup?.volunteerImpact,
+        invitedByEntity: coordinatorSignup?.invitedByEntity,
         isCoordinator: true,
+        isInvitationGroup: hasInvitedVolunteers,
+        invitedVolunteerCount: groupSignups.length,
+        invitedVolunteerCheckedInCount: groupSignups.filter((signup) =>
+          Boolean(signup.checkInAt)
+        ).length,
       };
+
+      if (!hasInvitedVolunteers) {
+        return [coordinatorRow];
+      }
+
+      signupsByInviter.delete(coordinator.id);
+
+      if (!openInvitationGroupIds.has(coordinator.id)) {
+        return [coordinatorRow];
+      }
+
+      return [
+        coordinatorRow,
+        ...groupSignups.map((signup): VolunteerSignupRow => ({
+          ...signup,
+          isCoordinator: false,
+          isInvitationChild: true,
+        })),
+      ];
     });
+
+  const invitationVolunteerRows: VolunteerSignupRow[] = Array.from(
+    signupsByInviter.entries()
+  ).flatMap(([inviterId, groupSignups]) => {
+    const inviter = inviterById.get(inviterId);
+
+    if (!inviter) {
+      return groupSignups.map((signup): VolunteerSignupRow => ({
+        ...signup,
+        isCoordinator: false,
+      }));
+    }
+
+    const invitationGroupRow: VolunteerSignupRow = {
+      id: `invitation-${event.id}-${inviter.id}`,
+      user: inviter,
+      eventId: event.id,
+      status: "volunteered",
+      eventActionTimeStamp: new Date(0).toISOString(),
+      isCoordinator: false,
+      isInvitationGroup: true,
+      invitedVolunteerCount: groupSignups.length,
+      invitedVolunteerCheckedInCount: groupSignups.filter((signup) =>
+        Boolean(signup.checkInAt)
+      ).length,
+    };
+
+    if (!openInvitationGroupIds.has(inviter.id)) {
+      return [invitationGroupRow];
+    }
+
+    return [
+      invitationGroupRow,
+      ...groupSignups.map((signup): VolunteerSignupRow => ({
+        ...signup,
+        isCoordinator: false,
+        isInvitationChild: true,
+      })),
+    ];
+  });
+
   const volunteerRows: VolunteerSignupRow[] = [
     ...coordinatorVolunteerRow,
-    ...(event.signups ?? [])
-      .filter(
-        (signup) =>
-          !volunteerCoordinators.some(
-            (coordinator) => coordinator.id === signup.user.id
-          )
-      )
-      .map((signup): VolunteerSignupRow => ({ ...signup, isCoordinator: false })),
+    ...invitationVolunteerRows,
+    ...ungroupedSignups.map((signup): VolunteerSignupRow => ({
+      ...signup,
+      isCoordinator: false,
+    })),
   ];
   const volunteerUserIds = new Set(volunteerRows.map((signup) => signup.user.id));
   const addableVolunteerResults = addVolunteerResults.filter(
@@ -1242,7 +1356,9 @@ export const EventCard = ({
               signup.user.nonprofitName ||
               `${signup.user.firstName ?? ""} ${signup.user.lastName ?? ""}`.trim();
             const isCurrentVolunteer = signup.user.id === currentUserId;
-            const hasSignupRecord = !signup.id.startsWith("coordinator-");
+            const hasSignupRecord =
+              !signup.id.startsWith("coordinator-") &&
+              !signup.id.startsWith("invitation-");
             const isCheckableUser =
               signup.user.userType !== "organization" &&
               signup.user.userType !== "nonprofit";
@@ -1270,7 +1386,9 @@ export const EventCard = ({
             const hasVolunteeredForPastEvent =
               isPastEvent && isCheckedIn && !canShowApprovalActions;
             const isPostEventNoShow = isPastEvent && !isCheckedIn;
-            const checkStatusText = isNoShow
+            const checkStatusText = !isCheckableUser
+              ? ""
+              : isNoShow
               ? "No Show"
               : isDenied
               ? "No Show"
@@ -1356,12 +1474,31 @@ export const EventCard = ({
               signup.volunteerImpact ||
               eventImpactText ||
               "--";
+            const isInvitationGroupOpen =
+              signup.isInvitationGroup &&
+              openInvitationGroupIds.has(signup.user.id);
+            const invitationGroupName =
+              signup.user.organizationName ||
+              signup.user.nonprofitName ||
+              volunteerName;
+            const invitationGroupSubtitle =
+              signup.user.fullName && signup.user.fullName !== invitationGroupName
+                ? signup.user.fullName
+                : signup.user.jobTitle;
 
             return (
               <div
                 className={`${styles.eventVolunteerRow} ${
                   showApprovalCandidateLayout
                     ? styles.eventVolunteerApprovalRow
+                    : ""
+                } ${
+                  signup.isInvitationChild
+                    ? styles.eventVolunteerInvitationChild
+                    : ""
+                } ${
+                  signup.isInvitationGroup
+                    ? styles.eventVolunteerInvitationGroup
                     : ""
                 }`.trim()}
                 key={signup.id}
@@ -1388,11 +1525,15 @@ export const EventCard = ({
                         type="button"
                         onClick={() => handleAvatarClick(signup.user.id)}
                       >
-                        {volunteerName}
+                        {signup.isInvitationGroup
+                          ? invitationGroupName
+                          : volunteerName}
                       </button>
                       <span>
                         {signup.isCoordinator
                           ? "Volunteer Coordinator"
+                          : signup.isInvitationGroup
+                          ? invitationGroupSubtitle
                           : signup.user.jobTitle}
                       </span>
                     </div>
@@ -1416,9 +1557,36 @@ export const EventCard = ({
                       </span>
                     </div>
                   )}
+                  {signup.isInvitationGroup && (
+                    <div className={styles.eventInvitationGroupFooter}>
+                      <strong>
+                        Check in status: {signup.invitedVolunteerCheckedInCount ?? 0}/
+                        {event.maxVolunteerCount} Volunteers Checked in
+                      </strong>
+                      <button
+                        type="button"
+                        className={styles.eventInvitationSeeVolunteersButton}
+                        onClick={() =>
+                          handleInvitationGroupToggle(signup.user.id)
+                        }
+                        aria-expanded={Boolean(isInvitationGroupOpen)}
+                      >
+                        See Volunteers
+                        <CustomSvgs
+                          svgPath={
+                            isInvitationGroupOpen
+                              ? "/svgs/common/goUpIcon.svg"
+                              : "/svgs/common/goDownIcon.svg"
+                          }
+                          variant="small"
+                          altText=""
+                        />
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className={styles.eventVolunteerCheckIn}>
-                  {!showApprovalCandidateLayout && (
+                  {!signup.isInvitationGroup && !showApprovalCandidateLayout && (
                     <div className={styles.eventVolunteerCheckStatus}>
                       {checkStatusText && <strong>{checkStatusText}</strong>}
                       {checkedOutTimeText && (
@@ -1433,12 +1601,14 @@ export const EventCard = ({
                       )}
                     </div>
                   )}
-                  {showApprovalCandidateLayout && !canShowApprovalActions && (
+                  {!signup.isInvitationGroup &&
+                    showApprovalCandidateLayout &&
+                    !canShowApprovalActions && (
                     <div className={styles.eventVolunteerCheckStatus}>
                       {checkStatusText && <strong>{checkStatusText}</strong>}
                     </div>
                   )}
-                  {canShowCheckAction && (
+                  {!signup.isInvitationGroup && canShowCheckAction && (
                     <button
                       type="button"
                       className={styles.eventVolunteerCheckInButton}
@@ -1452,7 +1622,7 @@ export const EventCard = ({
                       {checkButtonText}
                     </button>
                   )}
-                  {canShowApprovalActions && (
+                  {!signup.isInvitationGroup && canShowApprovalActions && (
                     <div className={styles.eventVolunteerApprovalActions}>
                       <button
                         type="button"
@@ -1472,7 +1642,7 @@ export const EventCard = ({
                       </button>
                     </div>
                   )}
-                  {canEditImpactDetails && (
+                  {!signup.isInvitationGroup && canEditImpactDetails && (
                     <button
                       type="button"
                       className={styles.eventVolunteerApprovalMark}

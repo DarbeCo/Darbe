@@ -313,7 +313,23 @@ const buildShortEvents = async (
   const signupUserIds = Array.from(
     new Set((signupRowsRes.data ?? []).map((signup) => signup.user_id))
   );
-  const signupJobTitleMap = await getJobTitleMap(signupUserIds);
+  const invitedByEntityIds = Array.from(
+    new Set(
+      (signupRowsRes.data ?? [])
+        .map((signup) => signup.invited_by_entity_id)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+  const [signupJobTitleMap, invitedByEntityProfiles] = await Promise.all([
+    getJobTitleMap(signupUserIds),
+    getProfilesByIds(invitedByEntityIds),
+  ]);
+  const invitedByEntityMap = new Map(
+    invitedByEntityProfiles.map((profile) => [
+      profile.id,
+      mapProfileToSimpleUserInfo(profile),
+    ])
+  );
   const signupsByEvent = new Map<
     string,
     {
@@ -334,6 +350,7 @@ const buildShortEvents = async (
       volunteerEndTime?: string;
       volunteerLocation?: string;
       volunteerImpact?: string;
+      invitedByEntity?: SimpleUserInfo;
     }[]
   >();
 
@@ -360,6 +377,9 @@ const buildShortEvents = async (
       volunteerEndTime: signup.volunteer_end_time ?? undefined,
       volunteerLocation: signup.volunteer_location ?? undefined,
       volunteerImpact: signup.volunteer_impact ?? undefined,
+      invitedByEntity: signup.invited_by_entity_id
+        ? invitedByEntityMap.get(signup.invited_by_entity_id)
+        : undefined,
     });
     signupsByEvent.set(signup.event_id, eventSignups);
   });
@@ -1425,8 +1445,98 @@ export const deleteEvent = async (eventId: string): Promise<void> => {
   if (error) throw error;
 };
 
+const isMissingInvitedByEntityColumnError = (error: unknown) => {
+  const message = String((error as { message?: string })?.message ?? "");
+  return (
+    message.includes("invited_by_entity_id") &&
+    message.includes("schema cache")
+  );
+};
+
+const getInvitationEntityIdForVolunteerSignup = async (
+  eventId: string,
+  userId: string
+): Promise<string | null> => {
+  const { data: directRecommendation, error: directRecommendationError } =
+    await supabase
+      .from("event_recommendations")
+      .select("recommender_entity_id, created_at")
+      .eq("event_id", eventId)
+      .eq("recipient_user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+  if (directRecommendationError) throw directRecommendationError;
+
+  if (directRecommendation?.recommender_entity_id) {
+    return directRecommendation.recommender_entity_id;
+  }
+
+  const [
+    { data: savedOrganizations, error: savedOrganizationsError },
+    { data: memberships, error: membershipsError },
+  ] = await Promise.all([
+    supabase
+      .from("user_organizations")
+      .select("parent_organization_id")
+      .eq("user_id", userId),
+    supabase
+      .from("roster_members")
+      .select("roster_id")
+      .eq("user_id", userId),
+  ]);
+
+  if (savedOrganizationsError) throw savedOrganizationsError;
+  if (membershipsError) throw membershipsError;
+
+  const rosterIds = (memberships ?? []).map((membership) => membership.roster_id);
+  const { data: memberRosters, error: memberRostersError } = rosterIds.length
+    ? await supabase
+        .from("rosters")
+        .select("roster_owner_id, roster_name")
+        .in("id", rosterIds)
+    : { data: [], error: null };
+
+  if (memberRostersError) throw memberRostersError;
+
+  const memberEntityIds = Array.from(
+    new Set([
+      ...((savedOrganizations ?? [])
+        .map((organization) => organization.parent_organization_id)
+        .filter(Boolean) as string[]),
+      ...((memberRosters ?? [])
+        .filter((roster) => roster.roster_name !== "Followers")
+        .map((roster) => roster.roster_owner_id)),
+    ])
+  );
+
+  if (!memberEntityIds.length) {
+    return null;
+  }
+
+  const { data: entityRecommendation, error: entityRecommendationError } =
+    await supabase
+      .from("event_recommendations")
+      .select("recommender_entity_id, created_at")
+      .eq("event_id", eventId)
+      .is("recipient_user_id", null)
+      .in("recommender_entity_id", memberEntityIds)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+  if (entityRecommendationError) throw entityRecommendationError;
+
+  return entityRecommendation?.recommender_entity_id ?? null;
+};
+
 export const volunteerForEvent = async (eventId: string): Promise<void> => {
   const userId = await ensureUserId();
+  const invitedByEntityId = await getInvitationEntityIdForVolunteerSignup(
+    eventId,
+    userId
+  );
 
   const { data: existing, error: existingError } = await supabase
     .from("event_signups")
@@ -1441,15 +1551,32 @@ export const volunteerForEvent = async (eventId: string): Promise<void> => {
   );
 
   if (passedSignups.length) {
+    const passedSignupIds = passedSignups.map((signup) => signup.id);
+    const updatePayload = {
+      status: "volunteered",
+      event_action_timestamp: new Date().toISOString(),
+      invited_by_entity_id: invitedByEntityId,
+    };
     const { error } = await supabase
       .from("event_signups")
-      .update({
-        status: "volunteered",
-        event_action_timestamp: new Date().toISOString(),
-      })
-      .in("id", passedSignups.map((signup) => signup.id));
+      .update(updatePayload)
+      .in("id", passedSignupIds);
 
-    if (error) throw error;
+    if (error) {
+      if (!isMissingInvitedByEntityColumnError(error)) {
+        throw error;
+      }
+
+      const { error: fallbackError } = await supabase
+        .from("event_signups")
+        .update({
+          status: updatePayload.status,
+          event_action_timestamp: updatePayload.event_action_timestamp,
+        })
+        .in("id", passedSignupIds);
+
+      if (fallbackError) throw fallbackError;
+    }
     return;
   }
 
@@ -1457,19 +1584,38 @@ export const volunteerForEvent = async (eventId: string): Promise<void> => {
     throw new Error("You have already volunteered for this event");
   }
 
-  const { error } = await supabase.from("event_signups").upsert(
-    {
-      event_id: eventId,
-      user_id: userId,
-      status: "volunteered",
-      check_in_at: null,
-      check_out_at: null,
-      event_action_timestamp: new Date().toISOString(),
-    },
-    { onConflict: "event_id,user_id" }
-  );
+  const insertPayload = {
+    event_id: eventId,
+    user_id: userId,
+    status: "volunteered",
+    check_in_at: null,
+    check_out_at: null,
+    invited_by_entity_id: invitedByEntityId,
+    event_action_timestamp: new Date().toISOString(),
+  };
+  const { error } = await supabase
+    .from("event_signups")
+    .upsert(insertPayload, { onConflict: "event_id,user_id" });
 
-  if (error) throw error;
+  if (error) {
+    if (!isMissingInvitedByEntityColumnError(error)) {
+      throw error;
+    }
+
+    const { error: fallbackError } = await supabase.from("event_signups").upsert(
+      {
+        event_id: insertPayload.event_id,
+        user_id: insertPayload.user_id,
+        status: insertPayload.status,
+        check_in_at: insertPayload.check_in_at,
+        check_out_at: insertPayload.check_out_at,
+        event_action_timestamp: insertPayload.event_action_timestamp,
+      },
+      { onConflict: "event_id,user_id" }
+    );
+
+    if (fallbackError) throw fallbackError;
+  }
 };
 
 export const passOnEvent = async (eventId: string): Promise<void> => {

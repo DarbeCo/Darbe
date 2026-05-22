@@ -49,6 +49,7 @@ interface Signups  {
   volunteerEndTime?: string;
   volunteerLocation?: string;
   volunteerImpact?: string;
+  invitedByEntity?: SimpleUserInfo;
 } 
 
 export interface SimpleEventState {

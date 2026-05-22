@@ -672,6 +672,53 @@
   box-sizing: border-box;
 }
 
+.eventVolunteerInvitationChild {
+  margin-left: 60px;
+  width: calc(100% - 60px);
+}
+
+.eventVolunteerInvitationGroup {
+  align-items: stretch;
+  min-height: 84px;
+  padding: 10px 16px;
+  background-color: #e7e2e2;
+}
+
+.eventVolunteerInvitationGroup .eventVolunteerMain {
+  width: 100%;
+  gap: 8px;
+}
+
+.eventVolunteerInvitationGroup .eventVolunteerCheckIn {
+  display: none;
+}
+
+.eventVolunteerInvitationGroup .eventVolunteerInfo {
+  gap: 10px;
+}
+
+.eventVolunteerInvitationGroup .eventVolunteerAvatarButton,
+.eventVolunteerInvitationGroup .eventVolunteerAvatar {
+  width: 34px;
+  height: 34px;
+}
+
+.eventInvitationGroupFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-left: 44px;
+}
+
+.eventInvitationGroupFooter strong {
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
 .eventVolunteerApprovalRow {
   align-items: flex-start;
 }
@@ -884,6 +931,22 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 17px;
+  cursor: pointer;
+}
+
+.eventInvitationSeeVolunteersButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
   padding: 0;
   border: 0;
   background: transparent;
