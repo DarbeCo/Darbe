@@ -825,6 +825,15 @@ export const EventCard = ({
     });
   };
 
+  const handleEventNameClick = () => {
+    navigate(EVENTS_ROUTE, {
+      state: {
+        ...(returnToEventsTab ? { activeEventsTab: returnToEventsTab } : {}),
+        focusEventId: event.id,
+      },
+    });
+  };
+
   const eventImpactText = calculateEventImpact();
   const isMatchVariant = variant === "match";
   const eventShareUrl = `${window.location.origin}/home/events/${event.id}`;
@@ -953,7 +962,7 @@ export const EventCard = ({
           <button
             type="button"
             className={styles.eventCardEventNameButton}
-            onClick={handleDetailsClick}
+            onClick={handleEventNameClick}
           >
             <Typography
               variant="sectionTitle"

@@ -131,6 +131,9 @@ export const EventSignup = () => {
   const location = useLocation();
   const restoredTab = (location.state as { activeEventsTab?: string } | null)
     ?.activeEventsTab;
+  const focusEventId = (
+    location.state as { focusEventId?: string } | null
+  )?.focusEventId;
   const [showAllSummaryRows, setShowAllSummaryRows] = useState(false);
   const [incompleteDraftEvents, setIncompleteDraftEvents] = useState<
     ShortEventState[]
@@ -379,6 +382,19 @@ export const EventSignup = () => {
   const summaryEvents = showAllSummaryRows
     ? volunteerEvents
     : volunteerEvents.slice(0, COLLAPSED_SUMMARY_COUNT);
+
+  useEffect(() => {
+    if (!focusEventId || isLoadingVolunteerEvents) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      eventCardRefs.current[focusEventId]?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }, [focusEventId, isLoadingVolunteerEvents, volunteerEvents]);
 
   const handleSummaryEventClick = (eventId: string) => {
     eventCardRefs.current[eventId]?.scrollIntoView({

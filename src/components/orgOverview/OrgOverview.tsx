@@ -301,7 +301,9 @@ export const OrgOverview = ({
                       className={styles.orgFollowersItem}
                       onClick={() => {
                         setActiveList(null);
-                        navigate(`/home/events/${project.id}`);
+                        navigate(EVENTS_ROUTE, {
+                          state: { focusEventId: project.id },
+                        });
                       }}
                     >
                       <img

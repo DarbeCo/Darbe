@@ -57,7 +57,9 @@ export const VolunteerMatches = ({
 
   const handleEventClick = (eventId?: string) => {
     if (eventId) {
-      navigate(`${EVENTS_ROUTE}/${eventId}`);
+      navigate(EVENTS_ROUTE, {
+        state: { focusEventId: eventId },
+      });
     }
   };
 
