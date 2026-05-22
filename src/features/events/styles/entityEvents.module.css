@@ -38,7 +38,7 @@
   .volunteerEventsPanel {
     display: flex;
     flex-direction: column;
-    width: min(100%, 750px);
+    width: min(100%, 780px);
     margin: 0 auto;
     padding: 0 8px 80px;
     gap: 16px;
@@ -310,7 +310,7 @@
   }
 
   .volunteerEventsPanel {
-    width: 750px;
+    width: 898px;
     margin: 0;
     padding: 16px;
     border: 1px solid #d8d8d8;
