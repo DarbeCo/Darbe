@@ -931,11 +931,17 @@ export const EventCard = ({
       </div>
       <div className={styles.eventMatchBodyDescription}>
         <div className={styles.eventTitleEditableLine}>
-          <Typography
-            variant="sectionTitle"
-            textToDisplay={event.eventName}
-            extraClass={styles.eventCardEventName}
-          />
+          <button
+            type="button"
+            className={styles.eventCardEventNameButton}
+            onClick={handleDetailsClick}
+          >
+            <Typography
+              variant="sectionTitle"
+              textToDisplay={event.eventName}
+              extraClass={styles.eventCardEventName}
+            />
+          </button>
           {renderEditPencil("event name", () =>
             openEventFieldEdit({
               field: "eventName",

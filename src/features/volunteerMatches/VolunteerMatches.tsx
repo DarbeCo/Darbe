@@ -1,7 +1,9 @@
 import { CircularProgress } from "@mui/material";
 import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useGetVolunteerMatchesQuery } from "../../services/api/endpoints/events/events.api";
 import { VolunteerCard } from "./VolunteerCard";
+import { EVENTS_ROUTE } from "../../routes/route.constants";
 
 import styles from "./styles/volunteerMathces.module.css";
 
@@ -19,6 +21,7 @@ export const VolunteerMatches = ({
   recentFilter,
   hideLoadingSpinner = false,
 }: VolunteerMatchesProps) => {
+  const navigate = useNavigate();
   const { data, isLoading } = useGetVolunteerMatchesQuery();
   const filteredMatches = useMemo(() => {
     if (!data || matchFilter === "Availability Matches") {
@@ -52,6 +55,12 @@ export const VolunteerMatches = ({
     return sortedMatches;
   }, [data, matchFilter, recentFilter]);
 
+  const handleEventClick = (eventId?: string) => {
+    if (eventId) {
+      navigate(`${EVENTS_ROUTE}/${eventId}`);
+    }
+  };
+
   return (
     <div className={styles.volunteerMatchesList}>
       {isLoading && !hideLoadingSpinner && <CircularProgress />}
@@ -66,7 +75,11 @@ export const VolunteerMatches = ({
             <div className={styles.volunteerMatchGroup} key={match.id}>
               <div className={styles.volunteerCardHeader}>
                 <strong>Volunteer # {index + 1}/15</strong>
-                <button type="button">
+                <button
+                  type="button"
+                  disabled={!match.nextEvent?.id}
+                  onClick={() => handleEventClick(match.nextEvent?.id)}
+                >
                   {match.nextEvent?.eventName || "No upcoming event"}
                 </button>
               </div>
