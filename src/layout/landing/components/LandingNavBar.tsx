@@ -38,9 +38,30 @@ export const LandingNavBar = () => {
           <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
             <MenuItem
               onClick={() => {
+                window.location.href = "/login";
+              }}
+
+              sx={{
+                color: "#263238",
+                fontSize: "18px",
+                lineHeight: "25px",
+                fontFamily: '"Open Sans", sans-serif',
+                borderBottom: "1px solid #2c77e7",
+                img: {
+                  width: "15px",
+                  height: "15px",
+                  marginRight: "8px",
+                }
+              }}
+            >
+              <img src={assetUrl(sigma)} alt="" />
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
                 handleScrollToSection("whatWeDo");
                 handleClose();
               }}
+
               sx={{
                 color: "#263238",
                 fontSize: "18px",
