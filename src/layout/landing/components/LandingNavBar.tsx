@@ -38,7 +38,7 @@ export const LandingNavBar = () => {
           <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
             <MenuItem
               onClick={() => {
-                window.location.href = "/login";
+                window.location.href = "login";
               }}
 
               sx={{
