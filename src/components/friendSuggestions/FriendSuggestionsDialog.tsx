@@ -34,7 +34,7 @@ export const FriendSuggestionsDialog = () => {
 
   const filteredSuggestedFriends = useMemo(() => {
     if (!suggestedFriends) return [];
-    return suggestedFriends
+    return [...suggestedFriends]
       .sort((firstSuggestion, secondSuggestion) =>
         getSuggestionName(firstSuggestion).localeCompare(
           getSuggestionName(secondSuggestion),
