@@ -669,6 +669,7 @@ export const getEvents = async (
     const [
       { data: passedRows, error: passedRowsError },
       { data: followingRows, error: followingRowsError },
+      { data: recommendedRows, error: recommendedRowsError },
     ] = await Promise.all([
       supabase
         .from("event_signups")
@@ -679,13 +680,21 @@ export const getEvents = async (
         .from("follows")
         .select("following_id")
         .eq("follower_id", userId),
+      supabase
+        .from("event_recommendations")
+        .select("event_id")
+        .eq("recommender_entity_id", userId),
     ]);
 
     if (passedRowsError) throw passedRowsError;
     if (followingRowsError) throw followingRowsError;
+    if (recommendedRowsError) throw recommendedRowsError;
 
     const passedEventIds = new Set(
       (passedRows ?? []).map((signup) => signup.event_id)
+    );
+    const recommendedEventIds = new Set(
+      (recommendedRows ?? []).map((recommendation) => recommendation.event_id)
     );
     const followedEntityIds = new Set(
       (followingRows ?? []).map((follow) => follow.following_id)
@@ -705,6 +714,7 @@ export const getEvents = async (
           event.event_owner_id !== userId &&
           event.event_coordinator_id !== userId &&
           !passedEventIds.has(event.id) &&
+          !recommendedEventIds.has(event.id) &&
           (!event.is_followers_only || isFollowedEntityEvent);
 
         if (canShowEvent && isFollowedEntityEvent) {
