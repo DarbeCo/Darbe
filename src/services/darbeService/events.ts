@@ -908,8 +908,8 @@ export const recommendEventToFollowers = async (
     throw profileError ?? new Error("User not found");
   }
 
-  if (profile.user_type !== "organization") {
-    throw new Error("Only organizations can recommend events to followers.");
+  if (profile.user_type !== "organization" && profile.user_type !== "nonprofit") {
+    throw new Error("Only organizations and nonprofits can recommend events to followers.");
   }
 
   const [
@@ -945,20 +945,41 @@ export const recommendEventToFollowers = async (
 
   if (rosterMembersError) throw rosterMembersError;
 
-  const { error: entityRecommendationError } = await supabase
+  const { data: existingEntityRecommendation, error: existingEntityRecommendationError } =
+    await supabase
+      .from("event_recommendations")
+      .select("id")
+      .eq("event_id", eventId)
+      .eq("recommender_entity_id", recommenderEntityId)
+      .is("recipient_user_id", null)
+      .limit(1)
+      .maybeSingle();
+
+  if (existingEntityRecommendationError) {
+    throw existingEntityRecommendationError;
+  }
+
+  if (!existingEntityRecommendation) {
+    const { error: entityRecommendationError } = await supabase
     .from("event_recommendations")
-    .upsert(
-      {
+      .insert({
         event_id: eventId,
         recommender_entity_id: recommenderEntityId,
         recipient_user_id: null,
-      },
-      {
-        onConflict: "event_id,recommender_entity_id",
-      }
-    );
+      });
 
-  if (entityRecommendationError) throw entityRecommendationError;
+    if (entityRecommendationError) {
+      const errorCode = (entityRecommendationError as { code?: string }).code;
+
+      if (errorCode !== "23502") {
+        throw entityRecommendationError;
+      }
+
+      console.warn(
+        "Org-level event recommendations require recipient_user_id to allow null. Apply the latest Supabase migrations to support future members."
+      );
+    }
+  }
 
   const recipientUserIds = Array.from(
     new Set([
