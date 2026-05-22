@@ -462,25 +462,17 @@ export const PostNeed = () => {
       !isEntityUser && !hasValue(eventData.eventCoordinator)
         ? "Coordinator"
         : "",
-      !eventData.volunteerImpact.isIndividualImpact &&
-      !eventData.volunteerImpact.isGroupImpact
-        ? "Volunteer Impact Type"
+      !hasValue(
+        eventData.volunteerImpact.individualImpactPerHour ||
+          eventData.volunteerImpact.groupImpactPerHour
+      )
+        ? "Impact Number"
         : "",
-      eventData.volunteerImpact.isIndividualImpact &&
-      !hasValue(eventData.volunteerImpact.individualImpactPerHour)
-        ? "Individual Impact Per Hour"
-        : "",
-      eventData.volunteerImpact.isIndividualImpact &&
-      !hasValue(eventData.volunteerImpact.individualImpact)
-        ? "Individual Impact"
-        : "",
-      eventData.volunteerImpact.isGroupImpact &&
-      !hasValue(eventData.volunteerImpact.groupImpactPerHour)
-        ? "Group Impact Total"
-        : "",
-      eventData.volunteerImpact.isGroupImpact &&
-      !hasValue(eventData.volunteerImpact.groupImpact)
-        ? "Group Impact"
+      !hasValue(
+        eventData.volunteerImpact.individualImpact ||
+          eventData.volunteerImpact.groupImpact
+      )
+        ? "Impact"
         : "",
     ].filter(Boolean);
 
@@ -534,25 +526,17 @@ export const PostNeed = () => {
       !isEntityUser && !hasValue(eventData.eventCoordinator)
         ? "Coordinator"
         : "",
-      !eventData.volunteerImpact.isIndividualImpact &&
-      !eventData.volunteerImpact.isGroupImpact
-        ? "Volunteer Impact Type"
+      !hasValue(
+        eventData.volunteerImpact.individualImpactPerHour ||
+          eventData.volunteerImpact.groupImpactPerHour
+      )
+        ? "Impact Number"
         : "",
-      eventData.volunteerImpact.isIndividualImpact &&
-      !hasValue(eventData.volunteerImpact.individualImpactPerHour)
-        ? "Individual Impact Per Hour"
-        : "",
-      eventData.volunteerImpact.isIndividualImpact &&
-      !hasValue(eventData.volunteerImpact.individualImpact)
-        ? "Individual Impact"
-        : "",
-      eventData.volunteerImpact.isGroupImpact &&
-      !hasValue(eventData.volunteerImpact.groupImpactPerHour)
-        ? "Group Impact Total"
-        : "",
-      eventData.volunteerImpact.isGroupImpact &&
-      !hasValue(eventData.volunteerImpact.groupImpact)
-        ? "Group Impact"
+      !hasValue(
+        eventData.volunteerImpact.individualImpact ||
+          eventData.volunteerImpact.groupImpact
+      )
+        ? "Impact"
         : "",
     ].filter(Boolean);
 

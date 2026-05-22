@@ -1143,10 +1143,8 @@
 }
 
 .internalImpactOptions {
-  display: grid;
-  grid-template-columns: 343px 343px;
-  column-gap: 16px;
-  width: 702px;
+  display: flex;
+  width: 343px;
   margin-top: 5px;
 }
 
@@ -2347,9 +2345,7 @@
   }
 
   .internalImpactOptions {
-    grid-template-columns: 312px 312px;
-    column-gap: 16px;
-    width: 640px;
+    width: 312px;
   }
 
   .internalImpactInputs {
