@@ -1838,23 +1838,6 @@ export const getVolunteerMatches = async (): Promise<VolunteerMatch[]> => {
       }
     : undefined;
 
-  const { data: entityCauses, error: causeError } = await supabase
-    .from("user_causes")
-    .select("cause_id")
-    .eq("user_id", entityId);
-
-  if (causeError) throw causeError;
-
-  const causeIds = (entityCauses ?? []).map((row) => row.cause_id);
-  const { data: matchingUsers, error: matchError } = causeIds.length
-    ? await supabase
-        .from("user_causes")
-        .select("user_id, cause_id")
-        .in("cause_id", causeIds)
-    : { data: [], error: null };
-
-  if (matchError) throw matchError;
-
   const { data: entityEvents, error: entityEventsError } = await supabase
     .from("events")
     .select("id")
@@ -1868,7 +1851,7 @@ export const getVolunteerMatches = async (): Promise<VolunteerMatch[]> => {
   const { data: volunteeredSignups, error: volunteeredSignupsError } =
     await supabase
       .from("event_signups")
-      .select("user_id")
+      .select("event_id, user_id, check_in_at, check_out_at")
       .in("event_id", entityEventIds)
       .in("status", ["volunteered", "confirmed", "approved"]);
 
@@ -1883,6 +1866,34 @@ export const getVolunteerMatches = async (): Promise<VolunteerMatch[]> => {
 
   if (!volunteeredUserIds.length) return [];
 
+  const matchedEventIdsByUser = new Map<string, Set<string>>();
+  const signupImpactFallbackByUser = new Map<
+    string,
+    { hoursVolunteered: number; eventsAttended: number }
+  >();
+  (volunteeredSignups ?? []).forEach((signup) => {
+    const eventIds = matchedEventIdsByUser.get(signup.user_id) ?? new Set<string>();
+    eventIds.add(signup.event_id);
+    matchedEventIdsByUser.set(signup.user_id, eventIds);
+
+    const hoursVolunteered = getHoursBetweenTimestamps(
+      signup.check_in_at,
+      signup.check_out_at
+    );
+    if (hoursVolunteered <= 0) {
+      return;
+    }
+
+    const current = signupImpactFallbackByUser.get(signup.user_id) ?? {
+      hoursVolunteered: 0,
+      eventsAttended: 0,
+    };
+    signupImpactFallbackByUser.set(signup.user_id, {
+      hoursVolunteered: current.hoursVolunteered + hoursVolunteered,
+      eventsAttended: current.eventsAttended + 1,
+    });
+  });
+
   const { data: profiles, error: profileError } = await supabase
     .from("profiles")
     .select(
@@ -1896,15 +1907,7 @@ export const getVolunteerMatches = async (): Promise<VolunteerMatch[]> => {
   const profileIds = (profiles ?? []).map((profile) => profile.id);
   if (!profileIds.length) return [];
 
-  const profileCauseIds = Array.from(
-    new Set(
-      (matchingUsers ?? [])
-        .filter((row) => profileIds.includes(row.user_id))
-        .map((row) => row.cause_id)
-    )
-  );
-
-  const [detailsRes, impactRes, causeRowsRes] = await Promise.all([
+  const [detailsRes, impactRes, liveImpactRes, causeLinksRes] = await Promise.all([
     supabase
       .from("user_details")
       .select("user_id, emergency_contact_name, emergency_contact_phone, emergency_contact_email, emergency_contact_relation")
@@ -1914,17 +1917,51 @@ export const getVolunteerMatches = async (): Promise<VolunteerMatch[]> => {
       .select("impact_owner_id, hours_volunteered, events_attended")
       .in("impact_owner_id", profileIds)
       .is("event_id", null),
-    profileCauseIds.length
-      ? supabase
-          .from("causes")
-          .select("id, name, description, image_url, active")
-          .in("id", profileCauseIds)
-      : Promise.resolve({ data: [], error: null }),
+    supabase
+      .from("impact")
+      .select("impact_owner_id, hours_volunteered, events_attended")
+      .in("impact_owner_id", profileIds)
+      .not("event_id", "is", null)
+      .gt("events_attended", 0),
+    supabase
+      .from("user_causes")
+      .select("user_id, cause_id")
+      .in("user_id", profileIds),
   ]);
 
   if (detailsRes.error) throw detailsRes.error;
   if (impactRes.error) throw impactRes.error;
-  if (causeRowsRes.error) throw causeRowsRes.error;
+  if (liveImpactRes.error) throw liveImpactRes.error;
+  if (causeLinksRes.error) throw causeLinksRes.error;
+
+  const publicImpactSummaries = await Promise.all(
+    profileIds.map(async (profileId) => {
+      const { data, error } = await supabase.rpc("get_public_user_impact", {
+        target_user_id: profileId,
+      });
+
+      if (error) {
+        if ((error as { code?: string }).code === "PGRST202") {
+          return {
+            userId: profileId,
+            hoursVolunteered: undefined,
+            eventsAttended: undefined,
+          };
+        }
+
+        throw error;
+      }
+
+      return {
+        userId: profileId,
+        hoursVolunteered: (data ?? []).reduce(
+          (total, impact) => total + Number(impact.hours_volunteered ?? 0),
+          0
+        ),
+        eventsAttended: (data ?? []).length,
+      };
+    })
+  );
 
   const detailMap = new Map(
     (detailsRes.data ?? []).map((row) => [row.user_id, row])
@@ -1933,9 +1970,41 @@ export const getVolunteerMatches = async (): Promise<VolunteerMatch[]> => {
   const impactMap = new Map(
     (impactRes.data ?? []).map((row) => [row.impact_owner_id, row])
   );
+  const publicImpactMap = new Map(
+    publicImpactSummaries.map((summary) => [summary.userId, summary])
+  );
+  const liveImpactMap = new Map<
+    string,
+    { hoursVolunteered: number; eventsAttended: number }
+  >();
+  (liveImpactRes.data ?? []).forEach((impact) => {
+    const current = liveImpactMap.get(impact.impact_owner_id) ?? {
+      hoursVolunteered: 0,
+      eventsAttended: 0,
+    };
+
+    liveImpactMap.set(impact.impact_owner_id, {
+      hoursVolunteered:
+        current.hoursVolunteered + Number(impact.hours_volunteered ?? 0),
+      eventsAttended:
+        current.eventsAttended + Number(impact.events_attended ?? 0),
+    });
+  });
+
+  const profileCauseIds = Array.from(
+    new Set((causeLinksRes.data ?? []).map((row) => row.cause_id))
+  );
+  const { data: causeRows, error: causeRowsError } = profileCauseIds.length
+    ? await supabase
+        .from("causes")
+        .select("id, name, description, image_url, active")
+        .in("id", profileCauseIds)
+    : { data: [], error: null };
+
+  if (causeRowsError) throw causeRowsError;
 
   const causeMap = new Map(
-    (causeRowsRes.data ?? []).map((row) => [
+    (causeRows ?? []).map((row) => [
       row.id,
       {
         id: row.id,
@@ -1948,7 +2017,7 @@ export const getVolunteerMatches = async (): Promise<VolunteerMatch[]> => {
   );
 
   const causesByUser = new Map<string, Cause[]>();
-  (matchingUsers ?? []).forEach((row) => {
+  (causeLinksRes.data ?? []).forEach((row) => {
     const list = causesByUser.get(row.user_id) ?? [];
     const cause = causeMap.get(row.cause_id);
     if (cause) list.push(cause);
@@ -1958,6 +2027,23 @@ export const getVolunteerMatches = async (): Promise<VolunteerMatch[]> => {
   return (profiles ?? []).map((profile) => {
     const details = detailMap.get(profile.id);
     const impact = impactMap.get(profile.id);
+    const publicImpact = publicImpactMap.get(profile.id);
+    const liveImpact = liveImpactMap.get(profile.id);
+    const signupImpactFallback = signupImpactFallbackByUser.get(profile.id);
+    const hoursVolunteered = Number(
+      publicImpact?.hoursVolunteered ??
+        liveImpact?.hoursVolunteered ??
+        impact?.hours_volunteered ??
+        signupImpactFallback?.hoursVolunteered ??
+        0
+    );
+    const eventsAttended = Number(
+      publicImpact?.eventsAttended ??
+        liveImpact?.eventsAttended ??
+        impact?.events_attended ??
+        signupImpactFallback?.eventsAttended ??
+        0
+    );
     const causes = causesByUser.get(profile.id) ?? [];
 
     return {
@@ -1971,10 +2057,11 @@ export const getVolunteerMatches = async (): Promise<VolunteerMatch[]> => {
         relation: details?.emergency_contact_relation ?? "",
       },
       nextEvent: nextEventMatch,
+      matchedEventCount: matchedEventIdsByUser.get(profile.id)?.size ?? 0,
       volunteerSummary: {
-        hoursVolunteered: Number(impact?.hours_volunteered ?? 0),
-        volunteerValue: Number(impact?.hours_volunteered ?? 0) * 33.49,
-        eventsAttended: impact?.events_attended ?? 0,
+        hoursVolunteered,
+        volunteerValue: hoursVolunteered * 33.49,
+        eventsAttended,
       },
     };
   });

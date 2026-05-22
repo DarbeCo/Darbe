@@ -87,7 +87,7 @@ export const VolunteerCurrentMatches = ({
           subtitle:
             match.causes.slice(0, 2).map((cause) => cause.name).join(", ") ||
             "Volunteer match",
-          meta: `${match.volunteerSummary?.eventsAttended ?? 0} events`,
+          meta: `${match.matchedEventCount ?? 0} events`,
         }));
 
   const content = (

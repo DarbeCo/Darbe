@@ -57,7 +57,7 @@ const profilesApi = darbeBaseApi.injectEndpoints({
           };
         }
       },
-      invalidatesTags: ["Users", "Profile"],
+      invalidatesTags: ["Users", "Profile", "VolunteerMatches"],
     }),
     updateEntityProfile: builder.mutation<
       DarbeProfileSharedState,
@@ -76,7 +76,7 @@ const profilesApi = darbeBaseApi.injectEndpoints({
           };
         }
       },
-      invalidatesTags: ["Users", "Profile"],
+      invalidatesTags: ["Users", "Profile", "VolunteerMatches"],
     }),
     removeUserOrganizationMutation: builder.mutation<
       Partial<DarbeProfileSharedState>,

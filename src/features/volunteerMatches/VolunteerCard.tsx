@@ -1,6 +1,9 @@
+import { useNavigate } from "react-router-dom";
+
 import { assetUrl } from "../../utils/assetUrl";
 import { VolunteerMatch } from "../../services/api/endpoints/types/events.api.types";
 import { formatPhoneNumber } from "../../utils/formUtils/formUtils";
+import { PROFILE_ROUTE } from "../../routes/route.constants";
 
 import styles from "./styles/volunteerMathces.module.css";
 
@@ -15,9 +18,7 @@ const formatMemberSince = (createdAt: string) =>
   });
 
 const formatCurrency = (value?: number) =>
-  `$${Number(value ?? 0).toLocaleString("en-US", {
-    maximumFractionDigits: 2,
-  })}`;
+  `$${Math.floor(Number(value ?? 0)).toLocaleString("en-US")}`;
 
 const formatNumber = (value?: number) =>
   Number(value ?? 0).toLocaleString("en-US", {
@@ -31,22 +32,35 @@ const getCauseImage = (cause: VolunteerMatch["causes"][number]) =>
   typeof cause === "string" ? undefined : cause.imageUrl;
 
 export const VolunteerCard = ({ match }: VolunteerCardProps) => {
+  const navigate = useNavigate();
   const visibleCauses = match.causes?.slice(0, 3) ?? [];
   const extraCauseCount = Math.max((match.causes?.length ?? 0) - 3, 0);
   const memberSince = formatMemberSince(match.createdAt);
   const emergencyContact = match.emergencyContact;
   const emergencyContactPhone = formatPhoneNumber(emergencyContact?.phone);
+  const handleProfileClick = () => {
+    navigate(`${PROFILE_ROUTE}/${match.id}`);
+  };
 
   return (
       <article className={styles.volunteerCard}>
         <div className={styles.volunteerProfileRow}>
-          <img
-            src={match.profilePicture || assetUrl("/images/defaultProfilePicture.jpg")}
-            alt=""
-            className={styles.volunteerAvatar}
-          />
+          <button
+            type="button"
+            className={styles.volunteerAvatarButton}
+            onClick={handleProfileClick}
+            aria-label={`View ${match.fullName || "volunteer"} profile`}
+          >
+            <img
+              src={match.profilePicture || assetUrl("/images/defaultProfilePicture.jpg")}
+              alt=""
+              className={styles.volunteerAvatar}
+            />
+          </button>
           <div className={styles.volunteerProfileText}>
-            <button type="button">{match.fullName}</button>
+            <button type="button" onClick={handleProfileClick}>
+              {match.fullName}
+            </button>
             {match.jobTitle && <span>{match.jobTitle}</span>}
           </div>
         </div>

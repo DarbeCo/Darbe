@@ -141,6 +141,7 @@ export interface VolunteerMatch extends SimpleUserInfo {
     eventName: string;
     impactValue: string;
   };
+  matchedEventCount?: number;
   volunteerSummary: ShortVolunteerImpact;
 }
 
