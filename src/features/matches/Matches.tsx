@@ -43,10 +43,15 @@ export const Matches = () => {
 
   const individualInvitationMatches = getUpcomingEventMatches(
     eventMatchesData
-  ).filter((event) => event.invitationFrom);
+  ).filter(
+    (event) => event.invitationFrom || event.eventOwner.userType === "organization"
+  );
   const individualNonprofitMatches = getUpcomingEventMatches(
     eventMatchesData
-  ).filter((event) => !event.invitationFrom);
+  ).filter(
+    (event) =>
+      !event.invitationFrom && event.eventOwner.userType !== "organization"
+  );
   const activeEventMatchesData = isOrganization
     ? recommendableEventMatchesData
     : individualMatchTab === "invitation"

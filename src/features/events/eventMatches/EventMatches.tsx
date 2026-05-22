@@ -81,7 +81,9 @@ export const EventMatches = ({
       "no_show",
     ]);
     const sortedEvents = getUpcomingEventMatches(data).filter((event) => {
-      const isInvitation = Boolean(event.invitationFrom);
+      const isInvitation =
+        Boolean(event.invitationFrom) ||
+        event.eventOwner.userType === "organization";
       const currentUserSignup = event.signups?.find(
         (signup) =>
           signup.user.id === currentUserId &&
@@ -144,6 +146,11 @@ export const EventMatches = ({
             canExpandVolunteers
             showVolunteerAndPassActions={showVolunteerAndPassActions}
             showRecommendToFollowersAction={showRecommendToFollowersAction}
+            showInvitationBanner={
+              showRecommendToFollowersAction ||
+              invitationFilter === "invitation" ||
+              Boolean(event.invitationFrom)
+            }
             hideVolunteerActions={
               !showVolunteerAndPassActions && !showRecommendToFollowersAction
             }

@@ -64,6 +64,7 @@ interface EventCardProps {
   useCurrentEventTimingActions?: boolean;
   showVolunteerAndPassActions?: boolean;
   showRecommendToFollowersAction?: boolean;
+  showInvitationBanner?: boolean;
   onVolunteerSuccess?: (eventId: string) => void;
   onPassSuccess?: (eventId: string) => void;
   onRecommendSuccess?: (eventId: string) => void;
@@ -256,6 +257,7 @@ export const EventCard = ({
   useCurrentEventTimingActions = false,
   showVolunteerAndPassActions = false,
   showRecommendToFollowersAction = false,
+  showInvitationBanner = false,
   onVolunteerSuccess,
   onPassSuccess,
   onRecommendSuccess,
@@ -864,9 +866,9 @@ export const EventCard = ({
 
   return (
     <div className={eventCardClassName}>
-      {isMatchVariant && invitationFromName && (
+      {isMatchVariant && (showInvitationBanner || invitationFromName) && (
         <div className={styles.eventInvitationBanner}>
-          Invitation from: {invitationFromName}
+          Invitation from: {invitationFromName || displayName}
         </div>
       )}
       <div className={styles.eventMatchHeader}>
