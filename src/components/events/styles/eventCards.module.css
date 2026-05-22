@@ -479,6 +479,28 @@
   min-width: 0;
 }
 
+.eventCardEventNameButton {
+  display: inline-flex;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.eventCardEventNameButton:hover .eventCardEventName,
+.eventCardEventNameButton:focus-visible .eventCardEventName {
+  color: #2c77e7;
+  text-decoration: underline;
+}
+
+.eventCardEventNameButton:focus-visible {
+  outline: 2px solid #2c77e7;
+  outline-offset: 2px;
+}
+
 .eventFieldEditButton {
   display: inline-flex;
   align-items: center;

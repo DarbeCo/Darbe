@@ -78,6 +78,11 @@
   line-height: 17px;
 }
 
+.volunteerCardHeader button:disabled {
+  color: #717070;
+  cursor: default;
+}
+
 .volunteerProfileRow {
   display: flex;
   align-items: center;

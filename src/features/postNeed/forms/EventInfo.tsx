@@ -21,6 +21,9 @@ export const EventInfo = ({
       onChange((prevState) => ({
         ...prevState,
         [name]: value,
+        ...(name === "startTime"
+          ? { endTime: Math.min(Number(value) + 1, 23.5) }
+          : {}),
       }));
     }
   };

@@ -257,7 +257,7 @@ export const EventDetailCard = ({
   };
 
   const handleShareToNewsFeed = () => {
-    dispatch(setExternalData(eventShareUrl));
+    dispatch(setExternalData({ initialPostText: eventShareUrl }));
     dispatch(setModalType(MODAL_TYPE.createPost));
     dispatch(showModal());
     setIsShareMenuOpen(false);

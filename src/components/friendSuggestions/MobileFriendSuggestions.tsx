@@ -29,17 +29,22 @@ export const MobileFriendSuggestions = ({
   const [requestingIds, setRequestingIds] = useState<Record<string, boolean>>(
     {}
   );
+  const [hiddenSuggestionIds, setHiddenSuggestionIds] = useState<string[]>([]);
   const requestLocksRef = useRef(new Set<string>());
   const sortedSuggestedFriends = useMemo(
-    () =>
-      [...(suggestedFriends ?? [])].sort((firstSuggestion, secondSuggestion) =>
+    () => {
+      const hiddenIds = new Set(hiddenSuggestionIds);
+      return [...(suggestedFriends ?? [])]
+        .filter((suggestedFriend) => !hiddenIds.has(suggestedFriend.id))
+        .sort((firstSuggestion, secondSuggestion) =>
         getSuggestionName(firstSuggestion).localeCompare(
           getSuggestionName(secondSuggestion),
           undefined,
           { sensitivity: "base" }
         )
-      ),
-    [suggestedFriends]
+      );
+    },
+    [hiddenSuggestionIds, suggestedFriends]
   );
 
   const handleSendFriendRequest = async (suggestedFriendId: string) => {
@@ -50,6 +55,12 @@ export const MobileFriendSuggestions = ({
 
     try {
       await sendFriendRequest(suggestedFriendId).unwrap();
+      setHiddenSuggestionIds((currentIds) =>
+        currentIds.includes(suggestedFriendId)
+          ? currentIds
+          : [...currentIds, suggestedFriendId]
+      );
+      setRequestingIds((prev) => ({ ...prev, [suggestedFriendId]: false }));
     } catch (error) {
       requestLocksRef.current.delete(suggestedFriendId);
       setRequestingIds((prev) => ({ ...prev, [suggestedFriendId]: false }));

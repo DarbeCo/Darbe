@@ -11,10 +11,11 @@
 
 .volunteerStatCard {
   width: 320px;
-  height: 250px;
+  min-height: 250px;
   border: 1px solid #eaeaea;
   border-radius: 8px;
   background-color: #fff;
+  box-sizing: border-box;
 }
 
 .volunteerStatCardTitle {

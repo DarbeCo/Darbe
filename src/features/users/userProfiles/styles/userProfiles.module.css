@@ -140,6 +140,39 @@
     align-items: center;
   }
 
+  .entityUserHeader {
+    display: flex;
+    flex-direction: row;
+    align-items: start;
+    justify-content: space-between;
+    column-gap: 18px;
+    padding-right: 8px;
+    box-sizing: border-box;
+  }
+
+  .entityUserHeader > .userHeaderSection {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+  }
+
+  .entityUserHeader > .userQuickInfoGroupsEntity {
+    flex: 0 1 260px;
+    align-self: start;
+    width: auto;
+    min-width: 200px;
+    margin-left: 0;
+    margin-top: 32px;
+    padding-top: 0;
+  }
+
+  .entityHeaderEditIcon {
+    flex: 0 0 auto;
+    align-self: flex-start;
+    margin-top: -4px;
+    padding: 4px !important;
+  }
+
   .parentOrganizationName {
     padding-left: 16px;
   }
@@ -189,6 +222,12 @@
     align-items: start;
   }
 
+  .userQuickInfoSummary {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+  }
+
   .userQuickInfoGroups {
     display: flex;
     flex-direction: row;
@@ -212,17 +251,18 @@
   .userQuickInfoGroupsEntity {
     display: flex;
     flex-direction: column;
-    row-gap: 8px;
+    row-gap: 4px;
     width: 95%;
     align-items: flex-start;
     padding-left: 20px;
-    padding-bottom: 20px;
+    padding-bottom: 8px;
   }
 
   .entityContactButton {
     position: relative;
     left: 16px;
     align-self: flex-start;
+    margin-top: 8px;
     padding: 0;
     border: 0;
     background: transparent;
@@ -232,6 +272,100 @@
     font-weight: 600;
     line-height: normal;
     cursor: pointer;
+  }
+
+  .entityContactDialogOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(0, 0, 0, 0.35);
+    box-sizing: border-box;
+  }
+
+  .entityContactDialog {
+    width: min(420px, 100%);
+    padding: 18px;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.18);
+    box-sizing: border-box;
+  }
+
+  .entityContactDialogHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .entityContactDialogHeader h2 {
+    margin: 0;
+    color: #000000;
+    font-family: "Open Sans", sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 28px;
+  }
+
+  .entityContactDialogHeader button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #717070;
+    font-family: "Open Sans", sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .entityContactDialogDetails {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: 0;
+  }
+
+  .entityContactDialogDetails div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .entityContactDialogDetails dt,
+  .entityContactDialogDetails dd {
+    margin: 0;
+    font-family: "Open Sans", sans-serif;
+    line-height: 20px;
+  }
+
+  .entityContactDialogDetails dt {
+    color: #717070;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .entityContactDialogDetails dd,
+  .entityContactDialogDetails a {
+    color: #000000;
+    font-size: 15px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .entityContactDialogDetails a {
+    color: #2c77e7;
+    text-decoration: none;
   }
 
   .userConnectionButtons {
@@ -639,6 +773,7 @@
     margin-left: auto;
     align-items: flex-end;
     text-align: right;
+    padding-top: 0;
   }
 
   .userProfileFriendButtons {

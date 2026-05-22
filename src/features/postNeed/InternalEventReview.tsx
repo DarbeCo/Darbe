@@ -58,13 +58,12 @@ export const InternalEventReview = ({
     "John Doe";
   const coordinatorPhoto = coordinator?.profilePicture || defaultProfilePicture;
   const coverPhoto = data.eventCoverPhoto || defaultCoverPhoto;
-  const hasIndividualImpact = data.volunteerImpact.isIndividualImpact;
-  const impactHours = hasIndividualImpact
-    ? data.volunteerImpact.individualImpactPerHour
-    : data.volunteerImpact.groupImpactPerHour;
-  const impactText = hasIndividualImpact
-    ? data.volunteerImpact.individualImpact
-    : data.volunteerImpact.groupImpact;
+  const impactHours =
+    data.volunteerImpact.individualImpactPerHour ||
+    data.volunteerImpact.groupImpactPerHour;
+  const impactText =
+    data.volunteerImpact.individualImpact ||
+    data.volunteerImpact.groupImpact;
   const hasImpact = hasText(impactHours) && hasText(impactText);
   const impactDisplay = `${impactHours} hr ${impactText}`;
   const eventDate = data.eventDate ? new Date(data.eventDate) : null;

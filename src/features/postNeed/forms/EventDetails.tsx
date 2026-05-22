@@ -3,8 +3,6 @@ import {
   AddCircleOutline,
   InfoOutlined,
   KeyboardArrowDown,
-  RadioButtonChecked,
-  RadioButtonUnchecked,
 } from "@mui/icons-material";
 import { CircularProgress } from "@mui/material";
 
@@ -86,32 +84,6 @@ export const EventDetails = ({
     }
   }, [data.eventCoordinator, entityCoordinator?.id, onChange, rosterMembers]);
 
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (onChange) {
-      const { name, checked } = e.target;
-      onChange((prevState) => {
-        // When one option is checked, ensure the other is unchecked
-        const updatedVolunteerImpact = {
-          ...prevState.volunteerImpact,
-          [name]: checked,
-        };
-
-        if (checked) {
-          if (name === "isIndividualImpact") {
-            updatedVolunteerImpact.isGroupImpact = false;
-          } else if (name === "isGroupImpact") {
-            updatedVolunteerImpact.isIndividualImpact = false;
-          }
-        }
-
-        return {
-          ...prevState,
-          volunteerImpact: updatedVolunteerImpact,
-        };
-      });
-    }
-  };
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (onChange) {
       const { name, value } = e.target;
@@ -120,6 +92,10 @@ export const EventDetails = ({
         volunteerImpact: {
           ...prevState.volunteerImpact,
           [name]: value,
+          groupImpact: "",
+          groupImpactPerHour: "",
+          isIndividualImpact: true,
+          isGroupImpact: false,
         },
       }));
     }
@@ -273,72 +249,45 @@ export const EventDetails = ({
     }
   };
 
-  const renderInternalImpactOption = ({
-    amountName,
-    amountPlaceholder,
-    checked,
-    impactName,
-    label,
-    textPlaceholder,
-    toggleName,
-  }: {
-    amountName: "individualImpactPerHour" | "groupImpactPerHour";
-    amountPlaceholder: string;
-    checked: boolean;
-    impactName: "individualImpact" | "groupImpact";
-    label: string;
-    textPlaceholder: string;
-    toggleName: "isIndividualImpact" | "isGroupImpact";
-  }) => {
+  const renderInternalImpactInputs = () => {
+    const impactAmount =
+      data.volunteerImpact.individualImpactPerHour ||
+      data.volunteerImpact.groupImpactPerHour ||
+      "";
+    const impactText =
+      data.volunteerImpact.individualImpact ||
+      data.volunteerImpact.groupImpact ||
+      "";
     const hasValues =
-      Boolean(data.volunteerImpact[amountName]) &&
-      Boolean(data.volunteerImpact[impactName]);
+      Boolean(impactAmount) &&
+      Boolean(impactText);
     const inputGroupClass = [
       styles.internalImpactInputs,
-      checked ? styles.internalImpactActiveInputs : "",
-      checked && hasValues ? styles.internalImpactValidInputs : "",
+      hasValues ? styles.internalImpactValidInputs : "",
     ]
       .filter(Boolean)
       .join(" ");
 
     return (
-      <div className={styles.internalImpactOption}>
-        <button
-          className={styles.internalImpactRadio}
-          type="button"
-          onClick={() =>
-            handleCheckboxChange({
-              target: { checked: !checked, name: toggleName },
-            } as React.ChangeEvent<HTMLInputElement>)
-          }
-        >
-          {checked ? (
-            <RadioButtonChecked sx={{ color: "#088F26", fontSize: 24 }} />
-          ) : (
-            <RadioButtonUnchecked sx={{ color: "#263238", fontSize: 24 }} />
-          )}
-          <span>{label}</span>
-        </button>
-        <div className={inputGroupClass}>
+      <div className={inputGroupClass}>
+        <Inputs
+          label=""
+          name="individualImpactPerHour"
+          darbeInputType="standardInput"
+          placeholder="1"
+          value={impactAmount}
+          handleChange={handleChange}
+        />
+        <div className={styles.internalImpactTextInput}>
           <Inputs
             label=""
-            name={amountName}
+            name="individualImpact"
             darbeInputType="standardInput"
-            placeholder={amountPlaceholder}
-            value={data.volunteerImpact[amountName]}
+            placeholder="Office Work"
+            value={impactText}
             handleChange={handleChange}
           />
-          <div className={styles.internalImpactTextInput}>
-            <Inputs
-              label=""
-              name={impactName}
-              darbeInputType="standardInput"
-              placeholder={textPlaceholder}
-              value={data.volunteerImpact[impactName]}
-              handleChange={handleChange}
-            />
-            <span>0/150</span>
-          </div>
+          <span>{impactText.length}/150</span>
         </div>
       </div>
     );
@@ -467,24 +416,7 @@ export const EventDetails = ({
             <InfoOutlined sx={{ color: "#2C77E7", fontSize: 12 }} />
           </div>
           <div className={styles.internalImpactOptions}>
-            {renderInternalImpactOption({
-              amountName: "individualImpactPerHour",
-              amountPlaceholder: "1",
-              checked: !!data.volunteerImpact.isIndividualImpact,
-              impactName: "individualImpact",
-              label: "Individual Goal (per hour)",
-              textPlaceholder: "Dog washed",
-              toggleName: "isIndividualImpact",
-            })}
-            {renderInternalImpactOption({
-              amountName: "groupImpactPerHour",
-              amountPlaceholder: "10",
-              checked: !!data.volunteerImpact.isGroupImpact,
-              impactName: "groupImpact",
-              label: "Group Goal (total)",
-              textPlaceholder: "Dogs washed",
-              toggleName: "isGroupImpact",
-            })}
+            {renderInternalImpactInputs()}
           </div>
         </section>
 
@@ -686,24 +618,7 @@ export const EventDetails = ({
             <InfoOutlined sx={{ color: "#2C77E7", fontSize: 12 }} />
           </div>
           <div className={styles.internalImpactOptions}>
-            {renderInternalImpactOption({
-              amountName: "individualImpactPerHour",
-              amountPlaceholder: "1",
-              checked: !!data.volunteerImpact.isIndividualImpact,
-              impactName: "individualImpact",
-              label: "Individual Impact (per hour)",
-              textPlaceholder: "Office Work",
-              toggleName: "isIndividualImpact",
-            })}
-            {renderInternalImpactOption({
-              amountName: "groupImpactPerHour",
-              amountPlaceholder: "10",
-              checked: !!data.volunteerImpact.isGroupImpact,
-              impactName: "groupImpact",
-              label: "Group Impact (total)",
-              textPlaceholder: "Office Work",
-              toggleName: "isGroupImpact",
-            })}
+            {renderInternalImpactInputs()}
           </div>
         </section>
 

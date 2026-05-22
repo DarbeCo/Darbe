@@ -28,6 +28,7 @@ const modalSlice = createSlice({
     },
     hideModal: (state) => {
       state.isModalVisible = false;
+      state.externalData = undefined;
     },
     setModalType: (state, action) => {
       state.modalType = action.payload;
