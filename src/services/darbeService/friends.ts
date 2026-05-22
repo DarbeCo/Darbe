@@ -255,6 +255,27 @@ export const followEntity = async (entityId: string): Promise<void> => {
   });
 };
 
+export const unfollowEntity = async (entityId: string): Promise<void> => {
+  const userId = await ensureUserId();
+  const { error: followError } = await supabase
+    .from("follows")
+    .delete()
+    .eq("follower_id", userId)
+    .eq("following_id", entityId);
+
+  if (followError) throw followError;
+
+  const { error: rosterSyncError } = await supabase.rpc(
+    "unsync_entity_followers_roster",
+    {
+      target_entity_id: entityId,
+      target_follower_id: userId,
+    }
+  );
+
+  if (rosterSyncError) throw rosterSyncError;
+};
+
 const getOrCreateDefaultRoster = async (entityId: string): Promise<string> => {
   const { data: memberRoster, error: memberRosterError } = await supabase
     .from("rosters")

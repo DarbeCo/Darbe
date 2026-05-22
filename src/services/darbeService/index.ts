@@ -36,6 +36,7 @@ export {
   getUserFollowers,
   sendFriendRequest,
   sendOrgJoinRequest,
+  unfollowEntity,
 } from "./friends";
 export { deletePost, getPost, getUserPosts, submitPost } from "./posts";
 export {

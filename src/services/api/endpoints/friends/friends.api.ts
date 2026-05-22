@@ -25,6 +25,7 @@ import {
   getUserFollowers,
   sendFriendRequest,
   sendOrgJoinRequest,
+  unfollowEntity,
 } from "../../../darbeService";
 
 const friendsApi = darbeBaseApi.injectEndpoints({
@@ -206,6 +207,22 @@ const friendsApi = darbeBaseApi.injectEndpoints({
       },
       invalidatesTags: ["Profiles", "Followers", "Friends", "FriendRequests", "Profile"],
     }),
+    unfollowEntity: builder.mutation<void, string>({
+      async queryFn(userId) {
+        try {
+          await unfollowEntity(userId);
+          return { data: undefined };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      invalidatesTags: ["Profiles", "Followers", "Friends", "FriendRequests", "Profile", "Roster", "RosterMembers"],
+    }),
     sendOrgJoinRequest: builder.mutation<void, string>({
       async queryFn(entityId) {
         try {
@@ -336,6 +353,7 @@ export const {
   useGetSentFriendRequestsQuery,
   useGetOrgJoinRequestsQuery,
   useFollowEntityMutation,
+  useUnfollowEntityMutation,
   useSendOrgJoinRequestMutation,
   useGetOrgJoinRequestStatusQuery,
   useAcceptOrgJoinRequestMutation,

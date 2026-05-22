@@ -459,6 +459,10 @@
   font-weight: 700;
 }
 
+.eventRosterText {
+  font-size: 12px;
+}
+
 .eventEditableValue,
 .eventEditableLine {
   display: inline-flex;

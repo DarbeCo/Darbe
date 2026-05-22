@@ -28,7 +28,6 @@ export const EventDetails = ({
   const internalPhotoInputRef = useRef<HTMLInputElement>(null);
   const adultWaiverInputRef = useRef<HTMLInputElement>(null);
   const minorWaiverInputRef = useRef<HTMLInputElement>(null);
-  const [selectedRosterId, setSelectedRosterId] = useState("");
   const [isInviteDropdownOpen, setIsInviteDropdownOpen] = useState(false);
   const [isCoordinatorDropdownOpen, setIsCoordinatorDropdownOpen] =
     useState(false);
@@ -61,7 +60,7 @@ export const EventDetails = ({
   );
 
   const selectedRoster = inviteRosterGroups.find(
-    (roster) => roster.id === selectedRosterId,
+    (roster) => roster.id === data.rosterId,
   );
 
   const selectedRosterDisplayText =
@@ -113,7 +112,10 @@ export const EventDetails = ({
   };
 
   const handleInviteRosterSelect = (rosterId: string) => {
-    setSelectedRosterId(rosterId);
+    onChange?.((prevState) => ({
+      ...prevState,
+      rosterId,
+    }));
     setIsInviteDropdownOpen(false);
   };
 

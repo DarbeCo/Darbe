@@ -730,21 +730,21 @@ export interface Database {
           id: string;
           event_id: string;
           recommender_entity_id: string;
-          recipient_user_id: string;
+          recipient_user_id: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           event_id: string;
           recommender_entity_id: string;
-          recipient_user_id: string;
+          recipient_user_id?: string | null;
           created_at?: string;
         };
         Update: {
           id?: string;
           event_id?: string;
           recommender_entity_id?: string;
-          recipient_user_id?: string;
+          recipient_user_id?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -767,6 +767,7 @@ export interface Database {
           max_volunteer_count: number;
           event_cover_photo_url: string | null;
           event_coordinator_id: string;
+          roster_id: string | null;
           adult_waiver_url: string | null;
           minor_waiver_url: string | null;
           created_at: string;
@@ -789,6 +790,7 @@ export interface Database {
           max_volunteer_count: number;
           event_cover_photo_url?: string | null;
           event_coordinator_id: string;
+          roster_id?: string | null;
           adult_waiver_url?: string | null;
           minor_waiver_url?: string | null;
           created_at?: string;
@@ -811,6 +813,7 @@ export interface Database {
           max_volunteer_count?: number;
           event_cover_photo_url?: string | null;
           event_coordinator_id?: string;
+          roster_id?: string | null;
           adult_waiver_url?: string | null;
           minor_waiver_url?: string | null;
           created_at?: string;
@@ -1254,6 +1257,10 @@ export interface Database {
         }[];
       };
       sync_entity_followers_roster: {
+        Args: { target_entity_id: string; target_follower_id: string };
+        Returns: undefined;
+      };
+      unsync_entity_followers_roster: {
         Args: { target_entity_id: string; target_follower_id: string };
         Returns: undefined;
       };

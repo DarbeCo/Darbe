@@ -91,6 +91,7 @@ export interface EventsState {
   eventCoverPhoto?: string;
   eventCoordinator:  SimpleUserInfo;
   eventOwner?: Omit<SimpleUserInfo, 'firstName' | 'lastName' | 'fullName'>;
+  rosterId?: string;
   volunteerImpact: VolunteerImpactSchema;
   adultWaiver?: string;
   minorWaiver?: string;
@@ -102,6 +103,7 @@ export interface ShortEventState {
   eventOwner: SimpleUserInfo;
   eventCoordinator?: SimpleUserInfo;
   invitationFrom?: SimpleUserInfo;
+  rosterId?: string;
   eventName: string;
   eventDate: string;
   startTime: number;
@@ -147,6 +149,7 @@ export type EventEditableUpdate = {
   eventName?: string;
   eventDescription?: string;
   maxVolunteerCount?: number;
+  rosterId?: string | null;
   eventAddress?: Partial<EventAddressSchema>;
   volunteerImpact?: Partial<VolunteerImpactSchema>;
 };

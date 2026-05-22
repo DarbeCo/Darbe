@@ -14,6 +14,7 @@ interface EventMatchesProps {
   recentFilter?: "Most Recent" | "Least Recent" | "A - Z";
   hideLoadingSpinner?: boolean;
   queryScope?: "default" | "recommendable";
+  invitationFilter?: "all" | "nonprofit" | "invitation";
   showVolunteerAndPassActions?: boolean;
   showRecommendToFollowersAction?: boolean;
 }
@@ -46,6 +47,7 @@ export const EventMatches = ({
   recentFilter = "Most Recent",
   hideLoadingSpinner = false,
   queryScope = "default",
+  invitationFilter = "all",
   showVolunteerAndPassActions = true,
   showRecommendToFollowersAction = false,
 }: EventMatchesProps) => {
@@ -79,6 +81,7 @@ export const EventMatches = ({
       "no_show",
     ]);
     const sortedEvents = getUpcomingEventMatches(data).filter((event) => {
+      const isInvitation = Boolean(event.invitationFrom);
       const currentUserSignup = event.signups?.find(
         (signup) =>
           signup.user.id === currentUserId &&
@@ -86,6 +89,9 @@ export const EventMatches = ({
       );
 
       return (
+        (invitationFilter === "all" ||
+          (invitationFilter === "invitation" && isInvitation) ||
+          (invitationFilter === "nonprofit" && !isInvitation)) &&
         !dismissedEventIdSet.has(event.id) &&
         !currentUserSignup
       );
@@ -114,7 +120,14 @@ export const EventMatches = ({
     }
 
     return sortedEvents;
-  }, [currentUserId, data, dismissedEventIds, matchFilter, recentFilter]);
+  }, [
+    currentUserId,
+    data,
+    dismissedEventIds,
+    invitationFilter,
+    matchFilter,
+    recentFilter,
+  ]);
 
   return (
     <div className={styles.darbeEventCards}>

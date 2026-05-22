@@ -60,6 +60,7 @@ const INITIAL_EVENT_STATE: CreateEvent = {
   },
   eventOwner: "",
   eventCoordinator: "",
+  rosterId: "",
   volunteerImpact: {
     individualImpact: "",
     individualImpactPerHour: "",

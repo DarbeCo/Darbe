@@ -44,6 +44,7 @@ import {
   useUpdateEventTimeMutation,
   useVolunteerForEventMutation,
 } from "../../services/api/endpoints/events/events.api";
+import { useGetRostersQuery } from "../../services/api/endpoints/roster/roster.api";
 import { useGetSearchResultsQuery } from "../../services/api/endpoints/search/search.api";
 
 interface EventCardProps {
@@ -227,6 +228,11 @@ type EventFieldEditState =
       amount: string;
       impact: string;
       impactType: "individual" | "group";
+    }
+  | {
+      field: "rosterId";
+      label: string;
+      rosterId: string;
     };
 
 type VolunteerSignupRow = ShortEventState["signups"][number] & {
@@ -284,6 +290,9 @@ export const EventCard = ({
     useUnvolunteerFromEventMutation();
   const [volunteerForEvent, { isLoading: isVolunteering }] =
     useVolunteerForEventMutation();
+  const { data: eventOwnerRosters = [] } = useGetRostersQuery(event.eventOwner.id, {
+    skip: !event.eventOwner.id,
+  });
   const [hasVolunteered, setHasVolunteered] = useState(Boolean(isSignedUp));
   const [showVolunteerDialog, setShowVolunteerDialog] = useState(false);
   const [showPassConfirmDialog, setShowPassConfirmDialog] = useState(false);
@@ -571,6 +580,10 @@ export const EventCard = ({
       };
     }
 
+    if (eventFieldEditState.field === "rosterId") {
+      update.rosterId = eventFieldEditState.rosterId || null;
+    }
+
     try {
       await updateEventDetails(update).unwrap();
       setEventFieldEditState(null);
@@ -730,6 +743,12 @@ export const EventCard = ({
     (result) =>
       result.userType === "individual" && !volunteerUserIds.has(result.id)
   );
+  const rosterOptions = [...eventOwnerRosters].sort((firstRoster, secondRoster) =>
+    firstRoster.rosterName.localeCompare(secondRoster.rosterName)
+  );
+  const selectedRosterName =
+    rosterOptions.find((roster) => roster.id === event.rosterId)?.rosterName ||
+    "No roster selected";
   const hasApprovableVolunteers =
     canManageVolunteerCheckIns &&
     isPastEvent &&
@@ -950,6 +969,20 @@ export const EventCard = ({
             })
           )}
         </div>
+        {canEditEventFields && (
+          <div className={styles.eventEditableLine}>
+            <span className={styles.eventRosterText}>
+              <strong>Roster:</strong> {selectedRosterName}
+            </span>
+            {renderEditPencil("event roster", () =>
+              openEventFieldEdit({
+                field: "rosterId",
+                label: "Roster",
+                rosterId: event.rosterId ?? "",
+              })
+            )}
+          </div>
+        )}
         <div className={`${styles.eventEditableLine} ${styles.eventLocationSection}`}>
           <div className={styles.eventLocationText}>
             <strong>Location</strong>
@@ -1699,6 +1732,28 @@ export const EventCard = ({
                   />
                 </label>
               </>
+            )}
+            {eventFieldEditState.field === "rosterId" && (
+              <label>
+                <span>Roster</span>
+                <select
+                  value={eventFieldEditState.rosterId}
+                  onChange={(event) =>
+                    setEventFieldEditState((currentState) =>
+                      currentState?.field === "rosterId"
+                        ? { ...currentState, rosterId: event.target.value }
+                        : currentState
+                    )
+                  }
+                >
+                  <option value="">No roster selected</option>
+                  {rosterOptions.map((roster) => (
+                    <option key={roster.id} value={roster.id}>
+                      {roster.rosterName}
+                    </option>
+                  ))}
+                </select>
+              </label>
             )}
             <div className={styles.eventTimeEditActions}>
               <button

@@ -6,6 +6,7 @@ import {
   useGetOrgJoinRequestStatusQuery,
   useSendOrgJoinRequestMutation,
   useSendFriendRequestMutation,
+  useUnfollowEntityMutation,
 } from "../../../../services/api/endpoints/friends/friends.api";
 import useScreenWidthHook from "../../../../utils/commonHooks/UseScreenWidth";
 import { MESSAGING_ROUTE } from "../../../../routes/route.constants";
@@ -35,7 +36,10 @@ export const UserProfileConnectionButtons = ({
   const dispatch = useAppDispatch();
   const [sendFriendRequest] = useSendFriendRequestMutation();
   const [acceptFriendRequest] = useAcceptFriendRequestMutation();
-  const [followEntity] = useFollowEntityMutation();
+  const [followEntity, { isLoading: isFollowingEntity }] =
+    useFollowEntityMutation();
+  const [unfollowEntity, { isLoading: isUnfollowingEntity }] =
+    useUnfollowEntityMutation();
   const [sendOrgJoinRequest, { isLoading: isSendingJoinRequest }] =
     useSendOrgJoinRequestMutation();
   const { data: orgJoinRequestStatus = "none" } =
@@ -51,8 +55,13 @@ export const UserProfileConnectionButtons = ({
     sendFriendRequest(userId);
   };
 
-  const handleFollow = () => {
-    followEntity(userId);
+  const handleFollow = async () => {
+    if (isFollowing) {
+      await unfollowEntity(userId).unwrap();
+      return;
+    }
+
+    await followEntity(userId).unwrap();
   };
 
   const handleJoin = async () => {
@@ -64,7 +73,8 @@ export const UserProfileConnectionButtons = ({
   };
 
   const friendtTextToShow = hasSentRequest ? "Pending" : "Connect";
-  const followTextToShow = isFollowing ? "Following" : "Follow";
+  const followTextToShow = isFollowing ? "Unfollow" : "Follow";
+  const isFollowLoading = isFollowingEntity || isUnfollowingEntity;
   const isJoinPending =
     isSendingJoinRequest || orgJoinRequestStatus === "pending";
   const isJoined = orgJoinRequestStatus === "approved";
@@ -83,7 +93,7 @@ export const UserProfileConnectionButtons = ({
         onClick={handleJoin}
       />
       <DarbeButton
-        isDisabled={hasSentRequest || isFollowing}
+        isDisabled={hasSentRequest || isFollowLoading}
         darbeButtonType="friendRequestButton"
         buttonText={followTextToShow}
         onClick={handleFollow}

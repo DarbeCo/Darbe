@@ -17,6 +17,7 @@ import { EDIT_SECTIONS } from "../users/userProfiles/constants";
 import styles from "./styles/matches.module.css";
 
 type OrganizationMatchTab = "eventVolunteers" | "recommendations";
+type IndividualMatchTab = "nonprofit" | "invitation";
 
 export const Matches = () => {
   const navigate = useNavigate();
@@ -24,6 +25,8 @@ export const Matches = () => {
   const isOrganization = userType === "organization";
   const [organizationMatchTab, setOrganizationMatchTab] =
     useState<OrganizationMatchTab>("eventVolunteers");
+  const [individualMatchTab, setIndividualMatchTab] =
+    useState<IndividualMatchTab>("nonprofit");
 
   const { data: eventMatchesData } = useGetEventsQuery(undefined, {
     skip: userType !== "individual",
@@ -38,16 +41,26 @@ export const Matches = () => {
     skip: userType === "individual",
   });
 
+  const individualInvitationMatches = getUpcomingEventMatches(
+    eventMatchesData
+  ).filter((event) => event.invitationFrom);
+  const individualNonprofitMatches = getUpcomingEventMatches(
+    eventMatchesData
+  ).filter((event) => !event.invitationFrom);
   const activeEventMatchesData = isOrganization
     ? recommendableEventMatchesData
-    : eventMatchesData;
+    : individualMatchTab === "invitation"
+    ? individualInvitationMatches
+    : individualNonprofitMatches;
   const isRecommendationTab =
     isOrganization && organizationMatchTab === "recommendations";
   const showEventMatches = userType === "individual" || isRecommendationTab;
   const activeMatchTitle = isRecommendationTab
     ? "Invitations"
     : userType === "individual"
-    ? "Event Matches"
+    ? individualMatchTab === "invitation"
+      ? "Invitations"
+      : "Non-Profit Matches"
     : isOrganization
     ? "My Event Volunteers"
     : "Matches";
@@ -170,11 +183,33 @@ export const Matches = () => {
       )}
 
       {userType === "individual" && (
-        <div className={styles.matchesFilterBar}>
-          <span className={styles.matchesFilterTitle}>Filter</span>
-          <div className={styles.matchesFilterControls}>
-            <span className={styles.matchesFilterButton}>Event Matches</span>
-          </div>
+        <div
+          className={styles.matchesTabs}
+          role="tablist"
+          aria-label="Individual match views"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={individualMatchTab === "nonprofit"}
+            className={`${styles.matchesTab} ${
+              individualMatchTab === "nonprofit" ? styles.matchesTabActive : ""
+            }`.trim()}
+            onClick={() => setIndividualMatchTab("nonprofit")}
+          >
+            Non-Profit
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={individualMatchTab === "invitation"}
+            className={`${styles.matchesTab} ${
+              individualMatchTab === "invitation" ? styles.matchesTabActive : ""
+            }`.trim()}
+            onClick={() => setIndividualMatchTab("invitation")}
+          >
+            Invitation
+          </button>
         </div>
       )}
 
@@ -184,6 +219,13 @@ export const Matches = () => {
           <EventMatches
             hideLoadingSpinner
             queryScope={isRecommendationTab ? "recommendable" : "default"}
+            invitationFilter={
+              userType === "individual"
+                ? individualMatchTab === "invitation"
+                  ? "invitation"
+                  : "nonprofit"
+                : "all"
+            }
             showVolunteerAndPassActions={!isRecommendationTab}
             showRecommendToFollowersAction={isRecommendationTab}
           />
