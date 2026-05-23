@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useSelector } from "react-redux";
 import { CircularProgress } from "@mui/material";
 
-import { Inputs } from "../inputs/Inputs";
 import { DarbeButton } from "../buttons/DarbeButton";
 import { FileUpload } from "../fileUpload/FileUpload";
 import { selectUser } from "../../features/users/selectors";
@@ -28,9 +27,7 @@ export const CreatePost = ({ handleSubmit, initialText = "" }: CreatePostProps) 
     useSubmitPostMutation();
   const [uploadedFiles, setUploadedFiles] = useState<File[] | null>(null);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setPost(e.target.value);
   };
 
@@ -79,15 +76,13 @@ export const CreatePost = ({ handleSubmit, initialText = "" }: CreatePostProps) 
 
   return (
     <div className={styles.createPostContainer}>
-      <Inputs
-        label=""
-        darbeInputType="textBoxInput"
-        handleChange={handleChange}
+      <textarea
+        className={styles.createPostTextarea}
         name="createPost"
         placeholder="Write something or add hashtags..."
         value={post}
-        isTextArea
-        extraClassName={styles.createPostInput}
+        onChange={handleChange}
+        rows={6}
       />
       <FilePreviews
         uploadedFiles={uploadedFiles}

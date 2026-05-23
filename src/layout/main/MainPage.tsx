@@ -35,6 +35,7 @@ export const Home = () => {
   const isHomePage = pathName.length === 2;
   const isPostNeedPage = location.pathname === POST_A_NEED;
   const isRosterPage = location.pathname.startsWith(ROSTER_ROUTE);
+  const isEventDetailPage = /^\/home\/events\/[^/]+$/.test(location.pathname);
   const isCreateRosterView =
     isRosterPage &&
     new URLSearchParams(location.search).get("view") === "createRoster";
@@ -145,7 +146,10 @@ export const Home = () => {
     (isPostNeedPage ||
       (pathName.length > 2 && user.user?.userType === "individual"));
   const showMobileRightPanel =
-    !isMessagingPage && !isProfileEditPage && !isCreateRosterView;
+    !isMessagingPage &&
+    !isProfileEditPage &&
+    !isCreateRosterView &&
+    !isEventDetailPage;
   const rightPanelProps = {
     showSuggestedFriends,
     showOrgOverview,

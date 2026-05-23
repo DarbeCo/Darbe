@@ -45,7 +45,7 @@ export const FilePreviews = ({
 
   const containerClassNames = nonPostMode
     ? styles.pictureImagePreview
-    : styles.filePreview;
+    : styles.postFilePreviewItem;
 
   const imageClassNames = determinePictureStyles();
   const imageId = determinePictureId();

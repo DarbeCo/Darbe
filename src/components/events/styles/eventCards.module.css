@@ -1792,6 +1792,20 @@
 }
 
 @media (max-width: 699px) {
+  .eventDetailPage {
+    gap: 10px;
+    padding-bottom: 0;
+  }
+
+  .eventDetailHeroCard,
+  .eventDetailSection,
+  .eventDetailImpact,
+  .eventDetailCoordinator {
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+  }
+
   .eventDetailHeader,
   .eventDetailHeroGrid,
   .eventDetailTwoColumn,

@@ -9,39 +9,28 @@
   box-sizing: border-box;
 }
 
-.createPostInput {
-  width: 100%;
-}
-
-.createPostInput :global(.MuiInputBase-root) {
+.createPostTextarea {
   width: 100%;
   min-height: 150px;
-  height: auto;
   margin: 0;
   padding: 14px 16px;
   border: 1px solid #d8d8d8;
   border-radius: 8px;
   background-color: #ffffff;
-  box-sizing: border-box;
-  align-items: flex-start;
-}
-
-.createPostInput :global(.MuiInputBase-root.Mui-focused) {
-  border-color: #2c77e7;
-}
-
-.createPostInput :global(.MuiInputBase-inputMultiline) {
-  min-height: 122px;
-  padding: 0;
   color: #000000;
   font-family: "Open Sans", sans-serif;
   font-size: 14px;
   line-height: 20px;
-  overflow-y: auto;
-  resize: none;
+  box-sizing: border-box;
+  outline: none;
+  resize: vertical;
 }
 
-.createPostInput :global(.MuiInputBase-inputMultiline::placeholder) {
+.createPostTextarea:focus {
+  border-color: #2c77e7;
+}
+
+.createPostTextarea::placeholder {
   color: #717070;
   opacity: 1;
 }

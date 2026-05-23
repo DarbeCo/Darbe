@@ -9,13 +9,13 @@
   box-sizing: border-box;
 }
 
-.filePreview > div {
+.postFilePreviewItem {
   position: relative;
   width: 92px;
   height: 92px;
 }
 
-.filePreview img {
+.postFilePreviewItem > img {
   display: block;
   width: 92px;
   height: 92px;
@@ -53,8 +53,15 @@
   height: 28px;
   padding: 0;
   border: 1px solid #eaeaea;
+  border-radius: 50%;
   background: #ffffff;
   box-shadow: none;
+}
+
+.removeFileButton img {
+  width: 20px;
+  height: 20px;
+  border-radius: 0;
 }
 
 #fileImagePreview {
