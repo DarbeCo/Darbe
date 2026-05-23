@@ -14,7 +14,9 @@ import { PROFILE_ROUTE } from "../../routes/route.constants";
 import { DATE_CONSTANTS } from "../../utils/CommonConstants";
 import { assetUrl } from "../../utils/assetUrl";
 import {
+  useAcceptFriendRequestMutation,
   useAcceptOrgJoinRequestMutation,
+  useDenyFriendRequestMutation,
   useDenyOrgJoinRequestMutation,
 } from "../../services/api/endpoints/friends/friends.api";
 
@@ -32,6 +34,10 @@ export const NotificationCard = ({ notification }: NotificationCardProps) => {
     useAcceptOrgJoinRequestMutation();
   const [denyOrgJoinRequest, { isLoading: isDenyingJoinRequest }] =
     useDenyOrgJoinRequestMutation();
+  const [acceptFriendRequest, { isLoading: isAcceptingFriendRequest }] =
+    useAcceptFriendRequestMutation();
+  const [denyFriendRequest, { isLoading: isDenyingFriendRequest }] =
+    useDenyFriendRequestMutation();
   const [actionDialogMessage, setActionDialogMessage] = useState("");
   const formattedDate = formatDateTime(createdAt, DATE_CONSTANTS.N_TIME_AGO);
 
@@ -61,7 +67,9 @@ export const NotificationCard = ({ notification }: NotificationCardProps) => {
           icon: <PersonAdd />,
           iconClassName: styles.notificationFriendBadge,
           actionText: "sent you a friend request.",
-          previewText: "View their profile to respond.",
+          previewText: notification.read
+            ? "This friend request has been handled."
+            : "Accept or reject this friend request.",
         };
       case "acceptedFriendRequest":
         return {
@@ -160,6 +168,31 @@ export const NotificationCard = ({ notification }: NotificationCardProps) => {
       setTimeout(() => setActionDialogMessage(""), 1800);
     }
   };
+
+  const handleAcceptFriendRequest = async () => {
+    try {
+      await acceptFriendRequest(senderUserId.id).unwrap();
+      setActionDialogMessage("Friend request accepted.");
+      setTimeout(() => setActionDialogMessage(""), 1400);
+    } catch (error) {
+      console.error("Error accepting friend request", error);
+      setActionDialogMessage("Unable to accept this friend request.");
+      setTimeout(() => setActionDialogMessage(""), 1800);
+    }
+  };
+
+  const handleDenyFriendRequest = async () => {
+    try {
+      await denyFriendRequest(senderUserId.id).unwrap();
+      setActionDialogMessage("Friend request rejected.");
+      setTimeout(() => setActionDialogMessage(""), 1400);
+    } catch (error) {
+      console.error("Error rejecting friend request", error);
+      setActionDialogMessage("Unable to reject this friend request.");
+      setTimeout(() => setActionDialogMessage(""), 1800);
+    }
+  };
+
   const nameToUse =
     senderUserId?.fullName ||
     senderUserId?.organizationName ||
@@ -168,7 +201,10 @@ export const NotificationCard = ({ notification }: NotificationCardProps) => {
     "Someone";
   const notificationDetails = getNotificationDetails(contentType);
   const isJoinRequest = contentType === "orgJoinRequest";
+  const isFriendRequest = contentType === "friendRequest" && !notification.read;
   const isJoinActionLoading = isAcceptingJoinRequest || isDenyingJoinRequest;
+  const isFriendActionLoading =
+    isAcceptingFriendRequest || isDenyingFriendRequest;
 
   return (
     <>
@@ -228,6 +264,26 @@ export const NotificationCard = ({ notification }: NotificationCardProps) => {
               disabled={isJoinActionLoading}
             >
               Deny
+            </button>
+          </div>
+        )}
+        {isFriendRequest && (
+          <div className={styles.notificationActions}>
+            <button
+              type="button"
+              className={styles.notificationAcceptButton}
+              onClick={handleAcceptFriendRequest}
+              disabled={isFriendActionLoading}
+            >
+              Accept
+            </button>
+            <button
+              type="button"
+              className={styles.notificationDenyButton}
+              onClick={handleDenyFriendRequest}
+              disabled={isFriendActionLoading}
+            >
+              Reject
             </button>
           </div>
         )}

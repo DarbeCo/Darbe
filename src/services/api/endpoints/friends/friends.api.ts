@@ -167,7 +167,14 @@ const friendsApi = darbeBaseApi.injectEndpoints({
           };
         }
       },
-      invalidatesTags: ["Friends", "FriendRequests", "Feed", "Profile"],
+      invalidatesTags: [
+        "Friends",
+        "FriendRequests",
+        "Feed",
+        "Profile",
+        "Notifications",
+        "NotificationCount",
+      ],
     }),
     denyFriendRequest: builder.mutation<void, string>({
       async queryFn(userId) {
@@ -350,6 +357,7 @@ export const {
   useDeleteFriendRequestMutation,
   useDeleteFriendMutation,
   useAcceptFriendRequestMutation,
+  useDenyFriendRequestMutation,
   useGetSentFriendRequestsQuery,
   useGetOrgJoinRequestsQuery,
   useFollowEntityMutation,

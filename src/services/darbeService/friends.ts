@@ -129,12 +129,19 @@ export const sendFriendRequest = async (friendId: string): Promise<void> => {
 
   if (error) throw error;
 
-  await createNotifications({
-    recipientUserIds: [friendId],
-    senderUserId: userId,
-    contentType: "friendRequest",
-    contentTypeId: data?.id ?? friendId,
-  });
+  try {
+    await createNotifications({
+      recipientUserIds: [friendId],
+      senderUserId: userId,
+      contentType: "friendRequest",
+      contentTypeId: data?.id ?? friendId,
+    });
+  } catch (notificationError) {
+    console.error(
+      notificationError,
+      "Error creating friend request notification"
+    );
+  }
 };
 
 export const deleteFriendRequest = async (friendId: string): Promise<void> => {
@@ -615,7 +622,19 @@ export const getSuggestedFriends = async (
   if (friendIdsError) throw friendIdsError;
 
   const friendIds = (friendIdsData ?? []).map((row) => row.friend_id);
-  const excludeIds = new Set([userId, ...friendIds]);
+  const { data: pendingRequests, error: pendingRequestsError } = await supabase
+    .from("friend_requests")
+    .select("requester_id, receiver_id")
+    .eq("request_type", "friend")
+    .eq("status", "pending")
+    .or(`requester_id.eq.${userId},receiver_id.eq.${userId}`);
+
+  if (pendingRequestsError) throw pendingRequestsError;
+
+  const pendingRequestUserIds = (pendingRequests ?? []).map((request) =>
+    request.requester_id === userId ? request.receiver_id : request.requester_id
+  );
+  const excludeIds = new Set([userId, ...friendIds, ...pendingRequestUserIds]);
 
   const { data, error } = await supabase
     .from("profiles")
