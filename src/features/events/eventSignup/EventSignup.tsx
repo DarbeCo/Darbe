@@ -655,6 +655,10 @@ export const EventSignup = () => {
                         additionalVolunteerCoordinators={
                           getAdditionalVolunteerCoordinators()
                         }
+                        showInvitationBanner={
+                          Boolean(event.invitationFrom) ||
+                          event.eventOwner.userType === "organization"
+                        }
                         useCurrentEventTimingActions={
                           userType === "individual" && activeTab === "Current"
                         }
