@@ -28,7 +28,9 @@ export const CreatePost = ({ handleSubmit, initialText = "" }: CreatePostProps) 
     useSubmitPostMutation();
   const [uploadedFiles, setUploadedFiles] = useState<File[] | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setPost(e.target.value);
   };
 
@@ -85,6 +87,7 @@ export const CreatePost = ({ handleSubmit, initialText = "" }: CreatePostProps) 
         placeholder="Write something or add hashtags..."
         value={post}
         isTextArea
+        extraClassName={styles.createPostInput}
       />
       <FilePreviews
         uploadedFiles={uploadedFiles}

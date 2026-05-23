@@ -1,19 +1,83 @@
 .createPostContainer {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  row-gap: 10px;
+  flex-direction: column;
+  align-items: stretch;
+  row-gap: 14px;
   width: 100%;
-  font-family: Roboto;
-  /* background-color: #a09292; */
+  min-width: 0;
+  font-family: "Open Sans", sans-serif;
+  box-sizing: border-box;
+}
+
+.createPostInput {
+  width: 100%;
+}
+
+.createPostInput :global(.MuiInputBase-root) {
+  width: 100%;
+  min-height: 150px;
+  height: auto;
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-sizing: border-box;
+  align-items: flex-start;
+}
+
+.createPostInput :global(.MuiInputBase-root.Mui-focused) {
+  border-color: #2c77e7;
+}
+
+.createPostInput :global(.MuiInputBase-inputMultiline) {
+  min-height: 122px;
+  padding: 0;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  overflow-y: auto;
+  resize: none;
+}
+
+.createPostInput :global(.MuiInputBase-inputMultiline::placeholder) {
+  color: #717070;
+  opacity: 1;
 }
 
 .darbePostActions {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   width: 100%;
-  column-gap: 10px;
-  padding-bottom: 10px;
+  column-gap: 12px;
+  padding-top: 4px;
+}
+
+.darbePostActions :global(.MuiIconButton-root) {
+  width: 42px;
+  height: 42px;
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  background-color: #ffffff;
+}
+
+.darbePostActions :global(.MuiButton-root) {
+  flex: 0 0 auto;
+  min-width: 112px;
+  height: 40px;
+  border-color: #2c77e7;
+  background-color: #2c77e7;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.darbePostActions :global(.MuiButton-root.Mui-disabled) {
+  border-color: #d8d8d8;
+  background-color: #f5f5f5;
+  color: #8a8a8a;
 }
 
 .shareConfirmationDialog {
@@ -60,33 +124,6 @@
 
 @media (min-width: 560px) {
   .createPostContainer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    row-gap: 10px;
-    width: 100%;
-    height: auto;
-    position: relative;
-    top: -60px;
-    left: 10px;
-    
+    row-gap: 16px;
   }
-
-  .darbePostActions {
-    /* display: flex;
-    justify-content: space-between;
-    align-content: center;
-    width: 85%;
-    column-gap: 10px;
-    padding-bottom: 10px;
-    position: relative;
-    bottom: 65px;
-    left: 15px; */
-    button:nth-of-type(1) {
-    position: relative;
-    left: 68px;
-  }
-
-}
-
 }

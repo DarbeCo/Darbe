@@ -10,7 +10,7 @@ type DarbeInputType = "standardInput" | "shortInput" | "textAreaInput" | "textBo
 interface InputsProps {
   label: string;
   darbeInputType: DarbeInputType;
-  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleChange: (e: React.ChangeEvent<any>) => void;
   name: string;
   isRequired?: boolean;
   defaultValue?: string;
@@ -21,6 +21,7 @@ interface InputsProps {
   value?: string | number;
   error?: boolean;
   errorHelperText?: string;
+  extraClassName?: string;
 }
 
 export const Inputs = ({
@@ -37,6 +38,7 @@ export const Inputs = ({
   value,
   error,
   errorHelperText,
+  extraClassName,
 }: InputsProps) => {
   const [inputType, setInputType] = useState(type);
   const sxDefinitions: Record<DarbeInputType, object> = {
@@ -53,7 +55,7 @@ export const Inputs = ({
   };
 
   return (
-    <div className={styles.darbeInputs}>
+    <div className={`${styles.darbeInputs} ${extraClassName ?? ""}`.trim()}>
       <FormControl error={!!error} sx={{ width: "100%" }} required={isRequired}>
         {label ? (
           <InputLabel
