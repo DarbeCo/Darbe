@@ -5,7 +5,10 @@ import { BottomNavBar } from "./components/BottomNavBar";
 import { Modal } from "../../components/modal/Modal";
 import { SearchBar } from "../../components/searchBar/SearchBar";
 import { LeftPanel } from "./components/LeftPanel";
-import { RightPanel } from "./components/RightPanel";
+import {
+  MobileRightPanelDrawer,
+  RightPanel,
+} from "./components/RightPanel";
 import { VolunteerCarouselCards } from "../../components/volunteerStats/VolunteerCarouselCards";
 import { Feed } from "../../features/feed/Feed";
 import { useAppSelector } from "../../services/hooks";
@@ -141,6 +144,15 @@ export const Home = () => {
     !isProfileEntityPending &&
     (isPostNeedPage ||
       (pathName.length > 2 && user.user?.userType === "individual"));
+  const showMobileRightPanel =
+    !isMessagingPage && !isProfileEditPage && !isCreateRosterView;
+  const rightPanelProps = {
+    showSuggestedFriends,
+    showOrgOverview,
+    showOrgOverviewInStats,
+    showRosterPanel: isRosterPage,
+    orgOverviewProps,
+  };
 
   return (
     <div className={styles.homePage}>
@@ -151,6 +163,9 @@ export const Home = () => {
             <SearchBar showMessageIcon={true} showAvatar={true} />
           )}
           {isHomePage && <VolunteerCarouselCards />}
+          {showMobileRightPanel && (
+            <MobileRightPanelDrawer {...rightPanelProps} />
+          )}
           <Outlet />
           {isHomePage && <Feed />}
           {!hideBottomNavBar && <BottomNavBar />}
@@ -161,6 +176,9 @@ export const Home = () => {
         <>
           {!hideNavBar && <NavBar hideSearchBar={hideSearchBar} />}
           {isHomePage && <VolunteerCarouselCards />}
+          {showMobileRightPanel && (
+            <MobileRightPanelDrawer {...rightPanelProps} />
+          )}
           <Outlet />
           {isHomePage && <Feed />}
           <BottomNavBar />
@@ -195,11 +213,7 @@ export const Home = () => {
               }`}
             >
               <RightPanel
-                showSuggestedFriends={showSuggestedFriends}
-                showOrgOverview={showOrgOverview}
-                showOrgOverviewInStats={showOrgOverviewInStats}
-                showRosterPanel={isRosterPage}
-                orgOverviewProps={orgOverviewProps}
+                {...rightPanelProps}
               />
             </div>
           )}

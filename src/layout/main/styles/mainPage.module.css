@@ -70,6 +70,118 @@
     align-items: center;
     justify-content: center;
   }
+
+  .mobileDashboardButton {
+    position: fixed;
+    right: 14px;
+    bottom: 74px;
+    z-index: 4;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 38px;
+    padding: 8px 12px;
+    border: 1px solid #2c77e7;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #2c77e7;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    font-family: "Open Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 17px;
+    cursor: pointer;
+  }
+
+  .mobileRightPanelDrawerPaper {
+    width: min(360px, 92vw);
+    background: #e7e2e2;
+  }
+
+  .mobileRightPanelDrawer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 100%;
+    padding: 16px 12px 28px;
+    box-sizing: border-box;
+  }
+
+  .mobileRightPanelDrawerHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .mobileRightPanelDrawerHeader h2 {
+    margin: 0;
+    color: #000000;
+    font-family: "Open Sans", sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 24px;
+  }
+
+  .mobileRightPanelDrawerHeader button {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #2c77e7;
+    font-family: "Open Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 17px;
+    cursor: pointer;
+  }
+
+  .mobileRightPanelMenu {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .mobileRightPanelMenuItem {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 38px;
+    padding: 8px 12px;
+    border: 1px solid #d8d8d8;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #303030;
+    font-family: "Open Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 17px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .mobileRightPanelMenuItemActive {
+    border-color: #2c77e7;
+    background: #2c77e7;
+    color: #ffffff;
+  }
+
+  .mobileRightPanelDrawerContent {
+    width: 100%;
+    overflow-y: auto;
+  }
+
+  .mobileRightPanelDrawerContent > * {
+    width: 100%;
+  }
+
+  .rightPanelStats {
+    display: flex;
+    flex-direction: column;
+    row-gap: 12px;
+    align-items: center;
+    width: 100%;
+  }
 }
 
 @media (min-width: 1260px) {
