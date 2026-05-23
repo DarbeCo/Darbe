@@ -423,6 +423,109 @@ export const getShortEventsByIds = async (eventIds: string[]): Promise<ShortEven
   return buildShortEvents((data ?? []) as EventRow[]);
 };
 
+const getInvitationByEventIdForUser = async (
+  userId: string,
+  eventIds?: string[]
+) => {
+  const scopedEventIds = eventIds?.filter(Boolean) ?? [];
+
+  const directRecommendationsQuery = supabase
+    .from("event_recommendations")
+    .select("event_id, recommender_entity_id")
+    .eq("recipient_user_id", userId);
+
+  if (scopedEventIds.length) {
+    directRecommendationsQuery.in("event_id", scopedEventIds);
+  }
+
+  const [
+    { data: directRecommendations, error: directRecommendationsError },
+    { data: savedOrganizations, error: savedOrganizationsError },
+    { data: memberships, error: membershipsError },
+  ] = await Promise.all([
+    directRecommendationsQuery,
+    supabase
+      .from("user_organizations")
+      .select("parent_organization_id")
+      .eq("user_id", userId),
+    supabase
+      .from("roster_members")
+      .select("roster_id")
+      .eq("user_id", userId),
+  ]);
+
+  if (directRecommendationsError) throw directRecommendationsError;
+  if (savedOrganizationsError) throw savedOrganizationsError;
+  if (membershipsError) throw membershipsError;
+
+  const rosterIds = (memberships ?? []).map((membership) => membership.roster_id);
+  const { data: memberRosters, error: memberRostersError } = rosterIds.length
+    ? await supabase
+        .from("rosters")
+        .select("roster_owner_id, roster_name")
+        .in("id", rosterIds)
+    : { data: [], error: null };
+
+  if (memberRostersError) throw memberRostersError;
+
+  const memberEntityIds = Array.from(
+    new Set([
+      ...((savedOrganizations ?? [])
+        .map((organization) => organization.parent_organization_id)
+        .filter(Boolean) as string[]),
+      ...((memberRosters ?? [])
+        .filter((roster) => roster.roster_name !== "Followers")
+        .map((roster) => roster.roster_owner_id)),
+    ])
+  );
+
+  let entityRecommendations:
+    | { event_id: string; recommender_entity_id: string }[]
+    | null = [];
+
+  if (memberEntityIds.length) {
+    const entityRecommendationsQuery = supabase
+      .from("event_recommendations")
+      .select("event_id, recommender_entity_id")
+      .is("recipient_user_id", null)
+      .in("recommender_entity_id", memberEntityIds);
+
+    if (scopedEventIds.length) {
+      entityRecommendationsQuery.in("event_id", scopedEventIds);
+    }
+
+    const { data, error } = await entityRecommendationsQuery;
+    if (error) throw error;
+    entityRecommendations = data;
+  }
+
+  const recommendations = [
+    ...(directRecommendations ?? []),
+    ...(entityRecommendations ?? []),
+  ];
+  const recommenderIds = Array.from(
+    new Set(recommendations.map((row) => row.recommender_entity_id))
+  );
+  const recommenderProfiles = await getProfilesByIds(recommenderIds);
+  const recommenderMap = new Map(
+    recommenderProfiles.map((profile) => [
+      profile.id,
+      mapProfileToSimpleUserInfo(profile),
+    ])
+  );
+  const invitationByEventId = new Map<string, SimpleUserInfo>();
+
+  recommendations.forEach((recommendation) => {
+    const recommender = recommenderMap.get(recommendation.recommender_entity_id);
+
+    if (recommender) {
+      invitationByEventId.set(recommendation.event_id, recommender);
+    }
+  });
+
+  return invitationByEventId;
+};
+
 const incrementImpact = async (
   userId: string,
   fields: Partial<{
@@ -1894,7 +1997,9 @@ export const getSignedUpEvents = async (
   const userId = await ensureUserId();
   const { data: signups, error } = await supabase
     .from("event_signups")
-    .select("event_id, status, event_action_timestamp, check_in_at, check_out_at")
+    .select(
+      "event_id, status, event_action_timestamp, check_in_at, check_out_at, invited_by_entity_id"
+    )
     .eq("user_id", userId)
     .in("status", ["volunteered", "confirmed", "approved", "no_show"]);
 
@@ -1926,7 +2031,46 @@ export const getSignedUpEvents = async (
     });
   }
 
-  const shortEvents = await buildShortEvents(filteredEvents as EventRow[]);
+  const visibleEventIds = filteredEvents.map((event) => event.id);
+  const invitationByEventId = await getInvitationByEventIdForUser(
+    userId,
+    visibleEventIds
+  );
+  const invitedByEntityIds = Array.from(
+    new Set(
+      (signups ?? [])
+        .filter((signup) => visibleEventIds.includes(signup.event_id))
+        .map((signup) => signup.invited_by_entity_id)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+
+  if (invitedByEntityIds.length) {
+    const invitedByProfiles = await getProfilesByIds(invitedByEntityIds);
+    const invitedByMap = new Map(
+      invitedByProfiles.map((profile) => [
+        profile.id,
+        mapProfileToSimpleUserInfo(profile),
+      ])
+    );
+
+    (signups ?? []).forEach((signup) => {
+      if (!visibleEventIds.includes(signup.event_id) || !signup.invited_by_entity_id) {
+        return;
+      }
+
+      const inviter = invitedByMap.get(signup.invited_by_entity_id);
+
+      if (inviter) {
+        invitationByEventId.set(signup.event_id, inviter);
+      }
+    });
+  }
+
+  const shortEvents = await buildShortEvents(
+    filteredEvents as EventRow[],
+    invitationByEventId
+  );
   const eventMap = new Map(shortEvents.map((event) => [event.id, event]));
 
   const profile = (await getProfilesByIds([userId]))[0];
@@ -1941,6 +2085,7 @@ export const getSignedUpEvents = async (
       event_action_timestamp: string;
       check_in_at: string | null;
       check_out_at: string | null;
+      invited_by_entity_id: string | null;
     }
   >();
 

@@ -119,6 +119,7 @@ export const Modal = () => {
     modalType === MODAL_TYPE.values ||
     modalType === MODAL_TYPE.programs;
   const isCreateRosterModal = modalType === MODAL_TYPE.createRoster;
+  const isCreatePostModal = modalType === MODAL_TYPE.createPost;
   const isEventPhotoCarouselModal =
     modalType === MODAL_TYPE.eventPhotoCarousel;
   const profileBackTargets: Partial<Record<string, string>> = {
@@ -154,12 +155,15 @@ export const Modal = () => {
         className={`${styles.modalContent} ${
           isProfileModal ? styles.profileModalContent : ""
         } ${isCreateRosterModal ? styles.createRosterModalContent : ""} ${
+          isCreatePostModal ? styles.createPostDialogContent : ""
+        } ${
           isEventPhotoCarouselModal ? styles.eventPhotoCarouselModalContent : ""
         }`.trim()}
       >
         <div
           className={`${styles.modalContentHeader} ${
             isProfileModal ? styles.profileModalHeader : ""
+          } ${isCreatePostModal ? styles.createPostDialogHeader : ""
           }`.trim()}
         >
           <div

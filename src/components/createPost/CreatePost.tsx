@@ -89,7 +89,10 @@ export const CreatePost = ({ handleSubmit, initialText = "" }: CreatePostProps) 
         handleRemovingImage={handleRemovingImage}
       />
       <div className={styles.darbePostActions}>
-        <FileUpload handleFileUploads={handleFileUploads} />
+        <div className={styles.uploadAction}>
+          <FileUpload handleFileUploads={handleFileUploads} />
+          <span>Add photo</span>
+        </div>
         <DarbeButton
           buttonText="Post"
           darbeButtonType="postButton"
@@ -110,7 +113,11 @@ export const CreatePost = ({ handleSubmit, initialText = "" }: CreatePostProps) 
           <span>Event shared</span>
         </div>
       )}
-      {isLoading && <CircularProgress />}
+      {isLoading && (
+        <div className={styles.postLoading} role="status" aria-label="Posting">
+          <CircularProgress size={24} />
+        </div>
+      )}
     </div>
   );
 };
