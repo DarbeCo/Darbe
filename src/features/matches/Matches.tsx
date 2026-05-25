@@ -19,6 +19,9 @@ import styles from "./styles/matches.module.css";
 type OrganizationMatchTab = "eventVolunteers" | "recommendations";
 type IndividualMatchTab = "nonprofit" | "invitation";
 
+const formatEventTabCount = (count: number) =>
+  `${count} ${count === 1 ? "event" : "events"}`;
+
 export const Matches = () => {
   const navigate = useNavigate();
   const userType = useAppSelector(selectUserType);
@@ -82,6 +85,11 @@ export const Matches = () => {
   const activeShowAllCount = showEventMatches
     ? upcomingEventMatchCount
     : volunteerMatchesData?.length ?? 0;
+  const nonprofitMatchCount = individualNonprofitMatches.length;
+  const invitationMatchCount = individualInvitationMatches.length;
+  const organizationInvitationMatchCount = getUpcomingEventMatches(
+    recommendableEventMatchesData
+  ).length;
 
   const summaryCards = [
     {
@@ -182,7 +190,7 @@ export const Matches = () => {
             }`.trim()}
             onClick={() => setOrganizationMatchTab("recommendations")}
           >
-            Invitations
+            Invitations ({formatEventTabCount(organizationInvitationMatchCount)})
           </button>
         </div>
       )}
@@ -202,7 +210,7 @@ export const Matches = () => {
             }`.trim()}
             onClick={() => setIndividualMatchTab("nonprofit")}
           >
-            Non-Profit
+            Non-Profit ({formatEventTabCount(nonprofitMatchCount)})
           </button>
           <button
             type="button"
@@ -213,7 +221,7 @@ export const Matches = () => {
             }`.trim()}
             onClick={() => setIndividualMatchTab("invitation")}
           >
-            Invitation
+            Invitation ({formatEventTabCount(invitationMatchCount)})
           </button>
         </div>
       )}
