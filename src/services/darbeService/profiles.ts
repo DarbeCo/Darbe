@@ -1008,6 +1008,53 @@ export const getUserProfile = async (userId: string): Promise<DarbeProfileShared
     });
   }
 
+  const organizationsMissingProfileIds = organizations.filter(
+    (organization) =>
+      !organization.parentOrganization?.id && organization.organizationName?.trim()
+  );
+
+  if (organizationsMissingProfileIds.length) {
+    const resolvedOrganizationIds = await Promise.all(
+      organizationsMissingProfileIds.map((organization) =>
+        resolveEntityId(organization.organizationName)
+      )
+    );
+    const resolvedEntityProfiles = await getProfilesByIds(
+      Array.from(
+        new Set(
+          resolvedOrganizationIds.filter((id): id is string => Boolean(id))
+        )
+      )
+    );
+    const resolvedEntityProfileMap = new Map(
+      resolvedEntityProfiles.map((entityProfile) => [
+        entityProfile.id,
+        entityProfile,
+      ])
+    );
+
+    organizationsMissingProfileIds.forEach((organization, index) => {
+      const resolvedOrganizationId = resolvedOrganizationIds[index];
+
+      if (!resolvedOrganizationId) {
+        return;
+      }
+
+      const resolvedProfile = resolvedEntityProfileMap.get(resolvedOrganizationId);
+      const resolvedOrganizationName =
+        resolvedProfile?.organization_name ||
+        resolvedProfile?.nonprofit_name ||
+        resolvedProfile?.full_name ||
+        organization.organizationName ||
+        "";
+
+      organization.parentOrganization = {
+        id: resolvedOrganizationId,
+        organizationName: resolvedOrganizationName,
+      };
+    });
+  }
+
   const seenOrganizationIds = new Set<string>();
   const seenOrganizationNames = new Set<string>();
   const uniqueOrganizations = organizations.filter((organization) => {

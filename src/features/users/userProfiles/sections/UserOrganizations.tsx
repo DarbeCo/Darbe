@@ -1,7 +1,10 @@
+import { useNavigate } from "react-router-dom";
+
 import { Typography } from "../../../../components/typography/Typography";
 import { EDIT_SECTIONS } from "../constants";
 import { OrganizationState } from "../types";
 import { EditProfileIcon } from "./EditProfileIcon";
+import { PROFILE_ROUTE } from "../../../../routes/route.constants";
 import {
   capitalizeFirstLetter,
   formatDateTime,
@@ -26,10 +29,16 @@ export const UserOrganizations = ({
   canEdit,
 }: UserOrganizationsProps) => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   const handleEdit = () => {
     dispatch(setModalType(EDIT_SECTIONS.organizations));
     dispatch(showModal());
+  };
+
+  const handleOrganizationClick = (organizationId?: string) => {
+    if (!organizationId) return;
+    navigate(`${PROFILE_ROUTE}/${organizationId}`);
   };
 
   return (
@@ -52,6 +61,10 @@ export const UserOrganizations = ({
       )}
       <div className={styles.userOrganizationsList}>
         {organizations?.map((organization, index) => {
+          const organizationId = organization.parentOrganization?.id;
+          const organizationName = capitalizeFirstLetter(
+            organization?.organizationName
+          );
           const formattedStartDate = formatDateTime(
             organization.startDate,
             DATE_CONSTANTS.YEAR_ONLY
@@ -64,13 +77,21 @@ export const UserOrganizations = ({
             // This reuses some styles from the about section for ease of use
             <div key={index} className="paddingLeft paddingBottom">
               <div className={styles.profileRow}>
-                <Typography
-                  variant="text"
-                  textToDisplay={capitalizeFirstLetter(
-                    organization?.organizationName
-                  )}
-                  extraClass={styles.userOrganizationName}
-                />
+                {organizationId ? (
+                  <button
+                    type="button"
+                    className={styles.userOrganizationNameButton}
+                    onClick={() => handleOrganizationClick(organizationId)}
+                  >
+                    {organizationName}
+                  </button>
+                ) : (
+                  <Typography
+                    variant="text"
+                    textToDisplay={organizationName}
+                    extraClass={styles.userOrganizationName}
+                  />
+                )}
                 <div className={styles.profileRowDates}>
                   <Typography
                     variant="text"

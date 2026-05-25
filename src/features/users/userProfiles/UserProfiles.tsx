@@ -52,6 +52,7 @@ export const UserProfiles = () => {
   useEffect(() => {
     if (!userId) return;
 
+    window.scrollTo({ top: 0, left: 0 });
     triggerUserProfile(userId);
     triggerFriends(userId);
     triggerFollowingData(userId);
