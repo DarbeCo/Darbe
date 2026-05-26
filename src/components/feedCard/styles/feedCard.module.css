@@ -137,7 +137,7 @@
     border-radius: 10px;
     background-color: #fff;
     width: 100%;
-    max-width: 700px;
+    max-width: 100%;
     box-shadow: 0 8px 24px rgba(38, 50, 56, 0.12);
   }
 }
