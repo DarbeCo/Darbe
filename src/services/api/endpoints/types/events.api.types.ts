@@ -105,6 +105,7 @@ export interface ShortEventState {
   eventCoordinator?: SimpleUserInfo;
   invitationFrom?: SimpleUserInfo;
   rosterId?: string;
+  isFollowersOnly?: boolean;
   eventName: string;
   eventDate: string;
   startTime: number;

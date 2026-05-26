@@ -328,6 +328,79 @@
   cursor: pointer;
 }
 
+.eventDeleteButton {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #b42318;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 17px;
+  cursor: pointer;
+}
+
+.eventDeleteButton:hover,
+.eventDeleteButton:focus-visible {
+  text-decoration: underline;
+}
+
+.eventDeleteConfirmDialog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(320px, calc(100vw - 48px));
+  padding: 28px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-shadow: 0 0 18px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+}
+
+.eventDeleteConfirmTitle {
+  margin: 0;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+}
+
+.eventDeleteConfirmActions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.eventDeleteConfirmYes,
+.eventDeleteConfirmCancel {
+  min-width: 72px;
+  border: 1px solid #2c77e7;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #2c77e7;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.eventDeleteConfirmYes {
+  border-color: #b42318;
+  background: #b42318;
+  color: #ffffff;
+}
+
+.eventDeleteConfirmYes:disabled,
+.eventDeleteConfirmCancel:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .eventMatchPreviewCard .eventMatchBodyQuickInfo {
   display: grid;
   grid-template-columns: 351px minmax(0, 1fr);

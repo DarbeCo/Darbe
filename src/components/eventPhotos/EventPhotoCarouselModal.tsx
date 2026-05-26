@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { CircularProgress } from "@mui/material";
 import {
+  DeleteOutline,
   ArrowBackIos,
   ArrowForwardIos,
   CloudUpload,
 } from "@mui/icons-material";
 
 import {
+  useCanDeleteEventPhotosQuery,
   useCanUploadEventPhotosQuery,
+  useDeleteEventPhotoMutation,
   useGetEventPhotosQuery,
   useUploadEventPhotoMutation,
 } from "../../services/api/endpoints/eventPhotos/eventPhotos.api";
@@ -78,6 +81,8 @@ export const EventPhotoCarouselModal = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const { data: photos, isLoading } = useGetEventPhotosQuery(eventId, {
     skip: !eventId,
@@ -85,8 +90,14 @@ export const EventPhotoCarouselModal = ({
   const { data: canUpload } = useCanUploadEventPhotosQuery(eventId, {
     skip: !eventId,
   });
+  const { data: canDelete } = useCanDeleteEventPhotosQuery(eventId, {
+    skip: !eventId,
+  });
   const [uploadPhoto, { isLoading: isUploading }] =
     useUploadEventPhotoMutation();
+  const [deletePhoto, { isLoading: isDeleting }] =
+    useDeleteEventPhotoMutation();
+  const currentPhoto = photos?.[currentIndex];
 
   useEffect(() => {
     if (!photos?.length) {
@@ -95,6 +106,11 @@ export const EventPhotoCarouselModal = ({
     }
     setCurrentIndex((current) => Math.min(current, photos.length - 1));
   }, [photos?.length]);
+
+  useEffect(() => {
+    setShowDeleteConfirm(false);
+    setDeleteError(null);
+  }, [currentPhoto?.id]);
 
   const handleBackToList = () => {
     dispatch(setExternalData({ userId: listUserId, scope: listScope }));
@@ -146,13 +162,34 @@ export const EventPhotoCarouselModal = ({
     }
   };
 
+  const handleDeletePhoto = async () => {
+    if (!currentPhoto) return;
+
+    setDeleteError(null);
+    try {
+      await deletePhoto({
+        photoId: currentPhoto.id,
+        eventId,
+        entityId:
+          listScope === "entity" && listUserId ? listUserId : entityId,
+        individualId:
+          listScope === "individual" && listUserId ? listUserId : undefined,
+      }).unwrap();
+      setShowDeleteConfirm(false);
+    } catch (error) {
+      const message =
+        (error as { data?: { message?: string } })?.data?.message ||
+        (error as Error)?.message ||
+        "Delete failed";
+      setDeleteError(message);
+    }
+  };
+
   if (!eventId) {
     return (
       <div className={styles.eventPhotoCarouselEmpty}>No event selected</div>
     );
   }
-
-  const currentPhoto = photos?.[currentIndex];
 
   return (
     <div className={styles.eventPhotoCarousel}>
@@ -193,6 +230,9 @@ export const EventPhotoCarouselModal = ({
       {uploadError && (
         <div className={styles.eventPhotoCarouselError}>{uploadError}</div>
       )}
+      {deleteError && (
+        <div className={styles.eventPhotoCarouselError}>{deleteError}</div>
+      )}
 
       {isLoading && (
         <div className={styles.eventPhotoCarouselLoading}>
@@ -228,6 +268,19 @@ export const EventPhotoCarouselModal = ({
             alt=""
           />
 
+          {canDelete && (
+            <button
+              type="button"
+              className={styles.eventPhotoCarouselDeleteButton}
+              onClick={() => setShowDeleteConfirm(true)}
+              aria-label="Delete photo"
+              disabled={isDeleting}
+            >
+              <DeleteOutline fontSize="small" />
+              <span>Delete</span>
+            </button>
+          )}
+
           <button
             type="button"
             className={`${styles.eventPhotoCarouselNav} ${styles.eventPhotoCarouselNavNext}`}
@@ -247,6 +300,36 @@ export const EventPhotoCarouselModal = ({
                 "a member"}
             </div>
           )}
+        </div>
+      )}
+
+      {showDeleteConfirm && (
+        <div className={styles.eventPhotoConfirmOverlay}>
+          <div
+            className={styles.eventPhotoConfirmDialog}
+            role="dialog"
+            aria-modal="true"
+          >
+            <h2>Delete this photo?</h2>
+            <div className={styles.eventPhotoConfirmActions}>
+              <button
+                type="button"
+                className={styles.eventPhotoConfirmDelete}
+                onClick={handleDeletePhoto}
+                disabled={isDeleting}
+              >
+                Delete
+              </button>
+              <button
+                type="button"
+                className={styles.eventPhotoConfirmCancel}
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

@@ -41,6 +41,8 @@ export {
 export { deletePost, getPost, getUserPosts, submitPost } from "./posts";
 export {
   canUploadEventPhotos,
+  canDeleteEventPhotos,
+  deleteEventPhoto,
   getEntityEventPhotoSummaries,
   getEventPhotos,
   getIndividualEventPhotoSummaries,

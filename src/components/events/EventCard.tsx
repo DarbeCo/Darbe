@@ -61,6 +61,7 @@ interface EventCardProps {
   variant?: "default" | "match";
   incompleteActionLabel?: string;
   onIncompleteAction?: (eventId: string) => void;
+  onDeleteEvent?: (eventId: string) => Promise<void> | void;
   useCurrentEventTimingActions?: boolean;
   showVolunteerAndPassActions?: boolean;
   showRecommendToFollowersAction?: boolean;
@@ -70,6 +71,7 @@ interface EventCardProps {
   onRecommendSuccess?: (eventId: string) => void;
   allowCoordinatorVolunteerManagement?: boolean;
   enableAdminControls?: boolean;
+  canDeleteEvent?: boolean;
   additionalVolunteerCoordinators?: SimpleUserInfo[];
 }
 
@@ -258,6 +260,7 @@ export const EventCard = ({
   variant = "default",
   incompleteActionLabel,
   onIncompleteAction,
+  onDeleteEvent,
   useCurrentEventTimingActions = false,
   showVolunteerAndPassActions = false,
   showRecommendToFollowersAction = false,
@@ -267,6 +270,7 @@ export const EventCard = ({
   onRecommendSuccess,
   allowCoordinatorVolunteerManagement = true,
   enableAdminControls = false,
+  canDeleteEvent = false,
   additionalVolunteerCoordinators = [],
 }: EventCardProps) => {
   const navigate = useNavigate();
@@ -303,6 +307,8 @@ export const EventCard = ({
   const [showVolunteerDialog, setShowVolunteerDialog] = useState(false);
   const [showPassConfirmDialog, setShowPassConfirmDialog] = useState(false);
   const [showPassRejectedDialog, setShowPassRejectedDialog] = useState(false);
+  const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false);
+  const [isDeletingEvent, setIsDeletingEvent] = useState(false);
   const [approvalDialogMessage, setApprovalDialogMessage] = useState("");
   const [isVolunteerListOpen, setIsVolunteerListOpen] = useState(false);
   const [openInvitationGroupIds, setOpenInvitationGroupIds] = useState<
@@ -953,6 +959,22 @@ export const EventCard = ({
     });
   };
 
+  const handleConfirmDeleteEvent = async () => {
+    if (!onDeleteEvent) {
+      return;
+    }
+
+    try {
+      setIsDeletingEvent(true);
+      await onDeleteEvent(event.id);
+      setShowDeleteConfirmDialog(false);
+    } catch (error) {
+      console.error("Error deleting event", error);
+    } finally {
+      setIsDeletingEvent(false);
+    }
+  };
+
   const eventImpactText = calculateEventImpact();
   const isMatchVariant = variant === "match";
   const eventShareUrl = `${window.location.origin}/home/events/${event.id}`;
@@ -1014,6 +1036,15 @@ export const EventCard = ({
               onClick={handleDetailsClick}
               extraClass="clickable"
             />
+          )}
+          {canDeleteEvent && onDeleteEvent && (
+            <button
+              type="button"
+              className={styles.eventDeleteButton}
+              onClick={() => setShowDeleteConfirmDialog(true)}
+            >
+              Delete
+            </button>
           )}
         </div>
       </div>
@@ -1689,6 +1720,41 @@ export const EventCard = ({
                 />
               </button>
             )}
+          </div>
+        </div>
+      )}
+      {showDeleteConfirmDialog && (
+        <div className={styles.eventVolunteerDialogOverlay}>
+          <div
+            className={styles.eventDeleteConfirmDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={`delete-event-dialog-title-${event.id}`}
+          >
+            <h2
+              className={styles.eventDeleteConfirmTitle}
+              id={`delete-event-dialog-title-${event.id}`}
+            >
+              Are you sure you want to delete this event?
+            </h2>
+            <div className={styles.eventDeleteConfirmActions}>
+              <button
+                type="button"
+                className={styles.eventDeleteConfirmYes}
+                onClick={handleConfirmDeleteEvent}
+                disabled={isDeletingEvent}
+              >
+                Yes
+              </button>
+              <button
+                type="button"
+                className={styles.eventDeleteConfirmCancel}
+                onClick={() => setShowDeleteConfirmDialog(false)}
+                disabled={isDeletingEvent}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

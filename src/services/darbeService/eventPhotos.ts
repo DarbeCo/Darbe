@@ -56,6 +56,59 @@ const fetchUploadersByIds = async (
   );
 };
 
+const getVisibleInternalEventOwnerIds = async (
+  userId: string
+): Promise<Set<string>> => {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("user_type")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (profile?.user_type === "organization" || profile?.user_type === "nonprofit") {
+    return new Set([userId]);
+  }
+
+  const [
+    { data: memberships, error: membershipsError },
+    { data: savedOrganizations, error: savedOrganizationsError },
+    { data: staffEntries, error: staffEntriesError },
+  ] = await Promise.all([
+    supabase.from("roster_members").select("roster_id").eq("user_id", userId),
+    supabase
+      .from("user_organizations")
+      .select("parent_organization_id")
+      .eq("user_id", userId),
+    supabase.from("entity_staff").select("entity_id").eq("user_id", userId),
+  ]);
+
+  if (membershipsError) throw membershipsError;
+  if (savedOrganizationsError) throw savedOrganizationsError;
+  if (staffEntriesError) throw staffEntriesError;
+
+  const rosterIds = (memberships ?? []).map((membership) => membership.roster_id);
+  const { data: rosters, error: rostersError } = rosterIds.length
+    ? await supabase
+        .from("rosters")
+        .select("roster_owner_id, roster_name")
+        .in("id", rosterIds)
+    : { data: [], error: null };
+
+  if (rostersError) throw rostersError;
+
+  return new Set(
+    [
+      ...((rosters ?? [])
+        .filter((roster) => roster.roster_name !== "Followers")
+        .map((roster) => roster.roster_owner_id)),
+      ...((savedOrganizations ?? [])
+        .map((organization) => organization.parent_organization_id)
+        .filter(Boolean) as string[]),
+      ...((staffEntries ?? []).map((staffEntry) => staffEntry.entity_id)),
+    ].filter(Boolean)
+  );
+};
+
 export const uploadEventPhoto = async (
   eventId: string,
   file: File
@@ -135,17 +188,67 @@ export const getEventPhotos = async (
   }));
 };
 
+export const canDeleteEventPhotos = async (
+  eventId: string
+): Promise<boolean> => {
+  const { data: authData } = await supabase.auth.getUser();
+  const userId = authData?.user?.id;
+  if (!userId) return false;
+
+  const { data: event, error: eventError } = await supabase
+    .from("events")
+    .select("event_owner_id")
+    .eq("id", eventId)
+    .maybeSingle();
+
+  if (eventError || !event) return false;
+
+  return event.event_owner_id === userId;
+};
+
+export const deleteEventPhoto = async (photoId: string): Promise<void> => {
+  await ensureUserId();
+
+  const { data: photo, error: photoError } = await supabase
+    .from("event_photos")
+    .select("id, storage_path")
+    .eq("id", photoId)
+    .single();
+
+  if (photoError || !photo) throw photoError ?? new Error("Photo not found");
+
+  const { error: storageError } = await supabase.storage
+    .from("event-photos")
+    .remove([photo.storage_path]);
+
+  if (storageError) throw storageError;
+
+  const { error: deleteError } = await supabase
+    .from("event_photos")
+    .delete()
+    .eq("id", photoId);
+
+  if (deleteError) throw deleteError;
+};
+
 export const getEntityEventPhotoSummaries = async (
   entityId: string
 ): Promise<EntityEventPhotoSummary[]> => {
+  const userId = await ensureUserId();
   const { data: events, error: eventsError } = await supabase
     .from("events")
-    .select("id, event_name, event_date, event_cover_photo_url")
+    .select("id, event_owner_id, event_name, event_date, event_cover_photo_url, is_followers_only")
     .eq("event_owner_id", entityId);
 
   if (eventsError) throw eventsError;
 
-  const eventIds = (events ?? []).map((event) => event.id);
+  const visibleInternalOwnerIds = await getVisibleInternalEventOwnerIds(userId);
+  const visibleEvents = (events ?? []).filter(
+    (event) =>
+      !event.is_followers_only ||
+      visibleInternalOwnerIds.has(event.event_owner_id)
+  );
+  const eventIds = visibleEvents.map((event) => event.id);
   if (!eventIds.length) return [];
 
   const { data: photos, error: photosError } = await supabase
@@ -163,7 +266,7 @@ export const getEntityEventPhotoSummaries = async (
     );
   });
 
-  return (events ?? [])
+  return visibleEvents
     .map((event) => ({
       eventId: event.id,
       eventName: event.event_name ?? "",

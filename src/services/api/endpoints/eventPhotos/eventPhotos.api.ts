@@ -1,6 +1,8 @@
 import { darbeBaseApi } from "../darbe.api";
 import {
+  canDeleteEventPhotos,
   canUploadEventPhotos,
+  deleteEventPhoto,
   getEntityEventPhotoSummaries,
   getEventPhotos,
   getIndividualEventPhotoSummaries,
@@ -86,6 +88,57 @@ const EventPhotosApi = darbeBaseApi.injectEndpoints({
         }
       },
     }),
+    canDeleteEventPhotos: builder.query<boolean, string>({
+      async queryFn(eventId) {
+        try {
+          const data = await canDeleteEventPhotos(eventId);
+          return { data };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+    }),
+    deleteEventPhoto: builder.mutation<
+      void,
+      {
+        photoId: string;
+        eventId: string;
+        entityId?: string;
+        individualId?: string;
+      }
+    >({
+      async queryFn({ photoId }) {
+        try {
+          await deleteEventPhoto(photoId);
+          return { data: undefined };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      invalidatesTags: (_result, _error, { eventId, entityId, individualId }) => {
+        const tags = [{ type: "EventPhotos" as const, id: eventId }];
+        if (entityId) {
+          tags.push({ type: "EventPhotos" as const, id: `entity-${entityId}` });
+        }
+        if (individualId) {
+          tags.push({
+            type: "EventPhotos" as const,
+            id: `individual-${individualId}`,
+          });
+        }
+        return tags;
+      },
+    }),
     uploadEventPhoto: builder.mutation<
       EventPhoto,
       {
@@ -129,6 +182,8 @@ export const {
   useGetEventPhotosQuery,
   useGetEntityEventPhotoSummariesQuery,
   useGetIndividualEventPhotoSummariesQuery,
+  useCanDeleteEventPhotosQuery,
   useCanUploadEventPhotosQuery,
+  useDeleteEventPhotoMutation,
   useUploadEventPhotoMutation,
 } = EventPhotosApi;

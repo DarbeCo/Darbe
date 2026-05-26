@@ -164,6 +164,71 @@ const hasEventEnded = (
   return eventDate < startOfToday;
 };
 
+const getVisibleInternalEventOwnerIds = async (
+  userId: string
+): Promise<Set<string>> => {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("user_type")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (profile?.user_type === "organization" || profile?.user_type === "nonprofit") {
+    return new Set([userId]);
+  }
+
+  const [
+    { data: memberships, error: membershipsError },
+    { data: savedOrganizations, error: savedOrganizationsError },
+    { data: staffEntries, error: staffEntriesError },
+  ] = await Promise.all([
+    supabase.from("roster_members").select("roster_id").eq("user_id", userId),
+    supabase
+      .from("user_organizations")
+      .select("parent_organization_id")
+      .eq("user_id", userId),
+    supabase.from("entity_staff").select("entity_id").eq("user_id", userId),
+  ]);
+
+  if (membershipsError) throw membershipsError;
+  if (savedOrganizationsError) throw savedOrganizationsError;
+  if (staffEntriesError) throw staffEntriesError;
+
+  const rosterIds = (memberships ?? []).map((membership) => membership.roster_id);
+  const { data: rosters, error: rostersError } = rosterIds.length
+    ? await supabase
+        .from("rosters")
+        .select("roster_owner_id, roster_name")
+        .in("id", rosterIds)
+    : { data: [], error: null };
+
+  if (rostersError) throw rostersError;
+
+  return new Set(
+    [
+      ...((rosters ?? [])
+        .filter((roster) => roster.roster_name !== "Followers")
+        .map((roster) => roster.roster_owner_id)),
+      ...((savedOrganizations ?? [])
+        .map((organization) => organization.parent_organization_id)
+        .filter(Boolean) as string[]),
+      ...((staffEntries ?? []).map((staffEntry) => staffEntry.entity_id)),
+    ].filter(Boolean)
+  );
+};
+
+const filterInternalEventsForViewer = async <T extends { event_owner_id: string; is_followers_only?: boolean | null }>(
+  events: T[],
+  userId: string
+): Promise<T[]> => {
+  const internalEventOwnerIds = await getVisibleInternalEventOwnerIds(userId);
+
+  return events.filter(
+    (event) =>
+      !event.is_followers_only || internalEventOwnerIds.has(event.event_owner_id)
+  );
+};
+
 const calculateEventImpactValue = (
   event: {
     start_time: string | null;
@@ -396,6 +461,7 @@ const buildShortEvents = async (
         : undefined,
       invitationFrom: invitationByEventId.get(event.id),
       rosterId: event.roster_id ?? undefined,
+      isFollowersOnly: event.is_followers_only ?? false,
       eventName: event.event_name,
       eventDate: event.event_date,
       startTime: timeToDecimal(event.start_time) ?? 0,
@@ -1087,7 +1153,10 @@ export const getEvents = async (
       if (blockedEventIds.has(event.id)) return false;
       if (recommendedEventIds.has(event.id)) return true;
       if (memberEntityIds.has(event.event_owner_id)) return true;
-      if (affiliatedEntityIds.has(event.event_owner_id)) {
+      if (
+        affiliatedEntityIds.has(event.event_owner_id) &&
+        !event.is_followers_only
+      ) {
         const followedEntity = followingProfileMap.get(event.event_owner_id);
 
         if (followedEntity && !invitationByEventId.has(event.id)) {
@@ -1234,16 +1303,24 @@ export const recommendEventToFollowers = async (
 export const getEntityEventCounts = async (
   entityId: string
 ): Promise<EntityEventCounts> => {
+  const userId = await ensureUserId();
   const { data, error } = await supabase
     .from("events")
-    .select("event_date, start_time, end_time")
+    .select("event_owner_id, event_date, start_time, end_time, is_followers_only")
     .eq("event_owner_id", entityId);
 
   if (error) throw error;
 
   const now = new Date();
+  const visibleEvents = await filterInternalEventsForViewer(
+    (data ?? []) as Pick<
+      EventRow,
+      "event_owner_id" | "event_date" | "start_time" | "end_time" | "is_followers_only"
+    >[],
+    userId
+  );
 
-  return (data ?? []).reduce<EntityEventCounts>(
+  return visibleEvents.reduce<EntityEventCounts>(
     (counts, event) => {
       if (hasEventEnded(event, now)) {
         counts.completedProjectsCount += 1;
@@ -1260,6 +1337,7 @@ export const getEntityEventCounts = async (
 export const getEntityUpcomingEvents = async (
   entityId: string
 ): Promise<ShortEventState[]> => {
+  const userId = await ensureUserId();
   const { data, error } = await supabase
     .from("events")
     .select(
@@ -1273,7 +1351,11 @@ export const getEntityUpcomingEvents = async (
   if (error) throw error;
 
   const now = new Date();
-  const upcomingEvents = ((data ?? []) as EventRow[]).filter(
+  const visibleEvents = await filterInternalEventsForViewer(
+    (data ?? []) as EventRow[],
+    userId
+  );
+  const upcomingEvents = visibleEvents.filter(
     (event) => !hasEventEnded(event, now)
   );
 
@@ -1630,8 +1712,55 @@ export const updateEventDetails = async ({
 };
 
 export const deleteEvent = async (eventId: string): Promise<void> => {
+  const userId = await ensureUserId();
+  const { data: event, error: eventError } = await supabase
+    .from("events")
+    .select("event_owner_id, event_date, end_time, is_followers_only")
+    .eq("id", eventId)
+    .single();
+
+  if (eventError || !event) throw eventError ?? new Error("Event not found");
+
+  const eventEndTime = timeToDecimal(event.end_time);
+  const hasEventEnded =
+    eventEndTime !== undefined
+      ? new Date() > parseEventDateTimeAsLocalDate(event.event_date, eventEndTime)
+      : parseEventDateAsLocalDate(event.event_date) <
+        new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+
+  if (hasEventEnded) {
+    throw new Error("Past events cannot be deleted");
+  }
+
+  const canDelete =
+    event.event_owner_id === userId ||
+    (await hasEventAdminPermission(
+      event.event_owner_id,
+      userId,
+      event.is_followers_only ? "internal" : "external"
+    ));
+
+  if (!canDelete) {
+    throw new Error("You do not have permission to delete this event");
+  }
+
+  const deletes = await Promise.all([
+    supabase.from("event_recommendations").delete().eq("event_id", eventId),
+    supabase.from("event_signups").delete().eq("event_id", eventId),
+    supabase.from("event_addresses").delete().eq("event_id", eventId),
+    supabase.from("event_requirements").delete().eq("event_id", eventId),
+    supabase.from("event_volunteer_impacts").delete().eq("event_id", eventId),
+    supabase.from("impact").delete().eq("event_id", eventId),
+  ]);
+
+  deletes.forEach((result) => {
+    if (result.error) throw result.error;
+  });
+
   const { error } = await supabase.from("events").delete().eq("id", eventId);
   if (error) throw error;
+
+  await incrementImpact(event.event_owner_id, { events_created: -1 });
 };
 
 const isMissingInvitedByEntityColumnError = (error: unknown) => {

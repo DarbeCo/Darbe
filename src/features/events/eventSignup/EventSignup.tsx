@@ -10,6 +10,7 @@ import { CircularProgress } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
+  useDeleteEventMutation,
   useGetEventsQuery,
   useGetRosterAdminEventsQuery,
   useGetSignedUpEventsQuery,
@@ -29,6 +30,7 @@ import { CREATE_EVENT_ROUTE, PROFILE_ROUTE } from "../../../routes/route.constan
 import {
   getIncompletePostNeedEventsForUser,
   incompletePostNeedEventToShortEvent,
+  removeIncompletePostNeedEvent,
 } from "../../postNeed/incompleteEvents";
 import {
   parseEventDateAsLocalDate,
@@ -142,6 +144,7 @@ export const EventSignup = () => {
   const [hiddenEventIds, setHiddenEventIds] = useState<string[]>([]);
   const eventCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const { data: events, isLoading } = useGetEventsQuery();
+  const [deleteEvent] = useDeleteEventMutation();
   const { data: rosterAdminEntityIds = [] } = useGetRosterAdminEntityIdsQuery();
   const { data: rosterEventAdminEntityAccess = [] } =
     useGetRosterEventAdminEntityAccessQuery(undefined, {
@@ -476,6 +479,58 @@ export const EventSignup = () => {
     );
   };
 
+  const hasEventAdminDeleteAccess = (event: ShortEventState) => {
+    if (userType === "organization" || userType === "nonprofit") {
+      return event.eventOwner.id === currentUserId;
+    }
+
+    if (userType !== "individual") {
+      return false;
+    }
+
+    const entityIds = event.isFollowersOnly
+      ? internalEventAdminEntityIds
+      : externalEventAdminEntityIds;
+
+    return entityIds.includes(event.eventOwner.id);
+  };
+
+  const canDeleteDisplayedEvent = (event: ShortEventState) => {
+    if (activeTab !== "Current" && activeTab !== "Incomplete") {
+      return false;
+    }
+
+    if (activeTab === "Current" && !isCurrentEvent(event)) {
+      return false;
+    }
+
+    return hasEventAdminDeleteAccess(event);
+  };
+
+  const handleDeleteDisplayedEvent = async (event: ShortEventState) => {
+    const maybeIncompleteEvent = event as ShortEventState & {
+      incompleteDraftId?: string;
+      status?: string;
+    };
+
+    if (maybeIncompleteEvent.incompleteDraftId || isIncompleteEvent(event)) {
+      removeIncompletePostNeedEvent(
+        maybeIncompleteEvent.incompleteDraftId ?? event.id
+      );
+      setIncompleteDraftEvents((currentEvents) =>
+        currentEvents.filter((draftEvent) => draftEvent.id !== event.id)
+      );
+      return;
+    }
+
+    await deleteEvent(event.id).unwrap();
+    setHiddenEventIds((currentHiddenEventIds) =>
+      currentHiddenEventIds.includes(event.id)
+        ? currentHiddenEventIds
+        : [...currentHiddenEventIds, event.id]
+    );
+  };
+
   return (
     <section
       className={`${styles.volunteerEventsPanel} ${
@@ -711,6 +766,8 @@ export const EventSignup = () => {
                             ? handleFinishIncompleteEvent
                             : undefined
                         }
+                        canDeleteEvent={canDeleteDisplayedEvent(event)}
+                        onDeleteEvent={() => handleDeleteDisplayedEvent(event)}
                       />
                     </div>
                   );
