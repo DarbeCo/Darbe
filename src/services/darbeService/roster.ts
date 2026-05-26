@@ -3,6 +3,7 @@ import type {
   NewRoster,
   Roster,
   RosterAdminPermissions,
+  RosterEventAdminEntityAccess,
   RosterMember,
 } from "../api/endpoints/types/roster.api.types";
 import type { SimpleEntityInfo, SimpleUserInfo } from "../api/endpoints/types/user.api.types";
@@ -177,6 +178,51 @@ const hasVolunteerCoordinatorPermission = async (
   if (error) throw error;
 
   return Boolean(membership);
+};
+
+const canManageEntityRoster = async (
+  entityId: string,
+  userId: string
+): Promise<boolean> => {
+  if (entityId === userId) return true;
+
+  const { data: rosters, error: rosterError } = await supabase
+    .from("rosters")
+    .select("id")
+    .eq("roster_owner_id", entityId);
+
+  if (rosterError) throw rosterError;
+
+  const rosterIds = (rosters ?? []).map((roster) => roster.id);
+  if (!rosterIds.length) return false;
+
+  const { data: membership, error } = await supabase
+    .from("roster_members")
+    .select("user_id")
+    .eq("user_id", userId)
+    .eq("is_admin", true)
+    .eq("can_edit_assigned_roster", true)
+    .in("roster_id", rosterIds)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return Boolean(membership);
+};
+
+const ensureCanManageEntityRoster = async (
+  entityId: string,
+  actionLabel = "manage this roster"
+) => {
+  const userId = await ensureUserId();
+  const canManageRoster = await canManageEntityRoster(entityId, userId);
+
+  if (!canManageRoster) {
+    throw new Error(`You do not have permission to ${actionLabel}.`);
+  }
+
+  return userId;
 };
 
 const syncUserOrganizationMembership = async (
@@ -574,6 +620,8 @@ export const getRosterMembers = async (rosterId: string): Promise<RosterMember[]
 
 export const createRoster = async (newRoster: NewRoster): Promise<Roster> => {
   const rosterName = newRoster.rosterName.trim();
+  await ensureCanManageEntityRoster(newRoster.rosterOwner, "create rosters");
+
   const { data: existingRosters, error: existingRosterError } = await supabase
     .from("rosters")
     .select("id, roster_name")
@@ -635,17 +683,17 @@ export const createRoster = async (newRoster: NewRoster): Promise<Roster> => {
 };
 
 export const deleteRoster = async (rosterId: string): Promise<void> => {
-  const userId = await ensureUserId();
   const { data: roster, error: rosterError } = await supabase
     .from("rosters")
-    .select("id")
+    .select("id, roster_owner_id")
     .eq("id", rosterId)
-    .eq("roster_owner_id", userId)
     .single();
 
   if (rosterError || !roster) {
     throw rosterError ?? new Error("Roster not found");
   }
+
+  await ensureCanManageEntityRoster(roster.roster_owner_id, "delete rosters");
 
   const { data: existingMembers, error: existingMembersError } = await supabase
     .from("roster_members")
@@ -664,14 +712,13 @@ export const deleteRoster = async (rosterId: string): Promise<void> => {
   const { error } = await supabase
     .from("rosters")
     .delete()
-    .eq("id", rosterId)
-    .eq("roster_owner_id", userId);
+    .eq("id", rosterId);
 
   if (error) throw error;
 
   await Promise.all(
     (existingMembers ?? []).map((member) =>
-      removeUserOrganizationMembershipIfNeeded(member.user_id, userId)
+      removeUserOrganizationMembershipIfNeeded(member.user_id, roster.roster_owner_id)
     )
   );
 };
@@ -686,6 +733,12 @@ export const promoteUserToAdmin = async (
     canEditExternalEvents: false,
   }
 ): Promise<void> => {
+  const roster = await getRosterInfo(rosterId);
+  await ensureCanManageEntityRoster(
+    roster.ownerId,
+    "update roster administrators"
+  );
+
   const { error } = await supabase
     .from("roster_members")
     .update({
@@ -699,7 +752,6 @@ export const promoteUserToAdmin = async (
     .match({ roster_id: rosterId, user_id: userId });
   if (error) throw error;
 
-  const roster = await getRosterInfo(rosterId);
   const shouldBeVolunteerCoordinator =
     permissions.canAssignVolunteerCoordinators ||
     (await hasVolunteerCoordinatorPermission(roster.ownerId, userId));
@@ -712,6 +764,12 @@ export const promoteUserToAdmin = async (
 };
 
 export const demoteUserFromAdmin = async (userId: string, rosterId: string): Promise<void> => {
+  const roster = await getRosterInfo(rosterId);
+  await ensureCanManageEntityRoster(
+    roster.ownerId,
+    "update roster administrators"
+  );
+
   const { error } = await supabase
     .from("roster_members")
     .update({
@@ -724,7 +782,6 @@ export const demoteUserFromAdmin = async (userId: string, rosterId: string): Pro
     .match({ roster_id: rosterId, user_id: userId });
   if (error) throw error;
 
-  const roster = await getRosterInfo(rosterId);
   await syncVolunteerCoordinatorRoster(
     roster.ownerId,
     userId,
@@ -733,6 +790,9 @@ export const demoteUserFromAdmin = async (userId: string, rosterId: string): Pro
 };
 
 export const addToRoster = async (followerId: string, rosterId: string): Promise<void> => {
+  const roster = await getRosterInfo(rosterId);
+  await ensureCanManageEntityRoster(roster.ownerId, "edit rosters");
+
   const { error } = await supabase.from("roster_members").upsert({
     roster_id: rosterId,
     user_id: followerId,
@@ -740,7 +800,6 @@ export const addToRoster = async (followerId: string, rosterId: string): Promise
   });
   if (error) throw error;
 
-  const roster = await getRosterInfo(rosterId);
   if (isMembershipRoster(roster.name)) {
     await syncUserOrganizationMembership(followerId, roster.ownerId);
   }
@@ -748,6 +807,8 @@ export const addToRoster = async (followerId: string, rosterId: string): Promise
 
 export const removeFromRoster = async (memberId: string, rosterId: string): Promise<void> => {
   const roster = await getRosterInfo(rosterId);
+  await ensureCanManageEntityRoster(roster.ownerId, "edit rosters");
+
   const isMemberRoster = displayRosterName(roster.name) === MEMBER_ROSTER_NAME;
 
   if (isMemberRoster) {
@@ -801,12 +862,13 @@ export const removeFromRoster = async (memberId: string, rosterId: string): Prom
   }
 };
 
-export const getRosterAdmins = async (): Promise<SimpleUserInfo[]> => {
+export const getRosterAdmins = async (ownerId?: string): Promise<SimpleUserInfo[]> => {
   const userId = await ensureUserId();
+  const rosterOwnerId = ownerId ?? userId;
   const { data: rosterIds, error: rosterError } = await supabase
     .from("rosters")
     .select("id, roster_name")
-    .eq("roster_owner_id", userId);
+    .eq("roster_owner_id", rosterOwnerId);
 
   if (rosterError) throw rosterError;
 
@@ -814,16 +876,31 @@ export const getRosterAdmins = async (): Promise<SimpleUserInfo[]> => {
     .filter((row) => isMembershipRoster(row.roster_name))
     .map((row) => row.id);
   if (!ids.length) return [];
+  const volunteerCoordinatorRosterIds = new Set(
+    (rosterIds ?? [])
+      .filter((row) => row.roster_name === VOLUNTEER_COORDINATORS_ROSTER_NAME)
+      .map((row) => row.id)
+  );
 
   const { data: admins, error } = await supabase
     .from("roster_members")
-    .select("user_id")
+    .select("roster_id, user_id, can_assign_volunteer_coordinators")
     .in("roster_id", ids)
     .eq("is_admin", true);
 
   if (error) throw error;
 
-  const adminIds = Array.from(new Set((admins ?? []).map((row) => row.user_id)));
+  const adminIds = Array.from(
+    new Set(
+      (admins ?? [])
+        .filter(
+          (row) =>
+            row.can_assign_volunteer_coordinators ||
+            volunteerCoordinatorRosterIds.has(row.roster_id)
+        )
+        .map((row) => row.user_id)
+    )
+  );
   const profiles = await getProfilesByIds(adminIds);
   return profiles.map(mapProfileToSimpleUserInfo);
 };
@@ -906,24 +983,67 @@ export const getEntityRosterMembers = async (
 };
 
 export const getRosterAdminEntityIds = async (): Promise<string[]> => {
+  const accessRows = await getRosterEventAdminEntityAccess();
+
+  return accessRows.map((access) => access.entityId);
+};
+
+export const getRosterEventAdminEntityAccess = async (): Promise<
+  RosterEventAdminEntityAccess[]
+> => {
   const userId = await ensureUserId();
   const { data: memberships, error: membershipsError } = await supabase
     .from("roster_members")
-    .select("roster_id")
+    .select("roster_id, can_edit_internal_events, can_edit_external_events")
     .eq("user_id", userId)
     .eq("is_admin", true);
 
   if (membershipsError) throw membershipsError;
 
-  const rosterIds = (memberships ?? []).map((membership) => membership.roster_id);
+  const eventAdminMemberships = (memberships ?? []).filter(
+    (membership) =>
+      membership.can_edit_internal_events || membership.can_edit_external_events
+  );
+  const rosterIds = eventAdminMemberships.map((membership) => membership.roster_id);
   if (!rosterIds.length) return [];
 
   const { data: rosters, error: rostersError } = await supabase
     .from("rosters")
-    .select("roster_owner_id")
+    .select("id, roster_owner_id")
     .in("id", rosterIds);
 
   if (rostersError) throw rostersError;
 
-  return Array.from(new Set((rosters ?? []).map((roster) => roster.roster_owner_id)));
+  const rosterOwnerByRosterId = new Map(
+    (rosters ?? []).map((roster) => [roster.id, roster.roster_owner_id])
+  );
+  const accessByEntityId = new Map<string, RosterEventAdminEntityAccess>();
+
+  eventAdminMemberships.forEach((membership) => {
+    const entityId = rosterOwnerByRosterId.get(membership.roster_id);
+
+    if (!entityId) {
+      return;
+    }
+
+    const currentAccess = accessByEntityId.get(entityId) ?? {
+      entityId,
+      canEditInternalEvents: false,
+      canEditExternalEvents: false,
+    };
+
+    accessByEntityId.set(entityId, {
+      entityId,
+      canEditInternalEvents: Boolean(
+        currentAccess.canEditInternalEvents ||
+          membership.can_edit_internal_events
+      ),
+      canEditExternalEvents: Boolean(
+        currentAccess.canEditExternalEvents ||
+          membership.can_edit_external_events
+      ),
+    });
+  });
+
+  return Array.from(accessByEntityId.values());
 };

@@ -18,16 +18,28 @@ import styles from "./rosterComponents.module.css";
 
 // TODO: These should be a generic
 interface SimpleRosterEditProps {
-  externalData: any;
+  externalData:
+    | string
+    | {
+        rosterId: string;
+        rosterOwnerId?: string;
+      }
+    | undefined;
 }
 
 export const SimpleRosterEdit = ({ externalData }: SimpleRosterEditProps) => {
-  const rosterId = externalData;
+  const rosterId =
+    typeof externalData === "string" ? externalData : externalData?.rosterId ?? "";
+  const rosterOwnerId =
+    typeof externalData === "string" ? undefined : externalData?.rosterOwnerId;
   const navigate = useNavigate();
   const userId = useAppSelector(selectCurrentUserId);
-  const { data, isLoading } = useGetRosterMembersQuery(rosterId);
+  const ownerId = rosterOwnerId ?? userId;
+  const { data, isLoading } = useGetRosterMembersQuery(rosterId, {
+    skip: !rosterId,
+  });
   const { data: followers, isLoading: isLoadingFollowers } =
-    useGetEntityFollowersQuery(userId);
+    useGetEntityFollowersQuery(ownerId);
   const [addToRoster, { isLoading: isAddingToRoster }] =
     useAddFollowerToRosterMutation();
   const [removeFromRoster, { isLoading: isRemovingFromRoster }] =
@@ -51,13 +63,17 @@ export const SimpleRosterEdit = ({ externalData }: SimpleRosterEditProps) => {
 
   return (
     <div className={styles.editRosterContent}>
+      {!rosterId && (
+        <p className={styles.editRosterEmpty}>No roster selected.</p>
+      )}
+
       {(isLoading || isLoadingFollowers) && (
         <div className={styles.editRosterLoading}>
           <CircularProgress />
         </div>
       )}
 
-      {!isLoading && !isLoadingFollowers && (
+      {rosterId && !isLoading && !isLoadingFollowers && (
         <>
           <section className={styles.editRosterSection}>
             <div className={styles.editRosterSectionHeader}>

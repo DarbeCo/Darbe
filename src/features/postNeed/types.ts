@@ -7,4 +7,5 @@ export interface EventFormCommonProps {
   data: CreateEvent;
   onChange?: Dispatch<SetStateAction<CreateEvent>>;
   markError?: (hasError: boolean) => void;
+  eventOwnerId?: string;
 }

@@ -45,3 +45,9 @@ export interface EligibleRosterMembers {
   eligibleDonors: SimpleUserInfo[];
   eligibleStaff: SimpleUserInfo[];
 }
+
+export interface RosterEventAdminEntityAccess {
+  entityId: string;
+  canEditInternalEvents: boolean;
+  canEditExternalEvents: boolean;
+}

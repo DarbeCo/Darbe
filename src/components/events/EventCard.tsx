@@ -693,11 +693,12 @@ export const EventCard = ({
   const isAdditionalVolunteerCoordinator = additionalVolunteerCoordinators.some(
     (coordinator) => coordinator.id === currentUserId
   );
+  const canAdminManageVolunteers = enableAdminControls || isEventPoster;
+  const canCoordinateVolunteers =
+    allowCoordinatorVolunteerManagement &&
+    (isEventCoordinator || isAdditionalVolunteerCoordinator);
   const canManageVolunteerCheckIns =
-    enableAdminControls ||
-    isEventPoster ||
-    (allowCoordinatorVolunteerManagement &&
-      (isEventCoordinator || isAdditionalVolunteerCoordinator));
+    canAdminManageVolunteers || canCoordinateVolunteers;
   const canEditEventFields = isEventPoster || enableAdminControls;
   const isPastEvent =
     hasEventEnded !== undefined ? hasEventEnded : eventDateTime < todayTime;
@@ -857,7 +858,9 @@ export const EventCard = ({
   const volunteerUserIds = new Set(volunteerRows.map((signup) => signup.user.id));
   const addableVolunteerResults = addVolunteerResults.filter(
     (result) =>
-      result.userType === "individual" && !volunteerUserIds.has(result.id)
+      ["individual", "organization", "nonprofit"].includes(
+        result.userType ?? ""
+      ) && !volunteerUserIds.has(result.id)
   );
   const rosterOptions = [...eventOwnerRosters].sort((firstRoster, secondRoster) =>
     firstRoster.rosterName.localeCompare(secondRoster.rosterName)
@@ -866,7 +869,7 @@ export const EventCard = ({
     rosterOptions.find((roster) => roster.id === event.rosterId)?.rosterName ||
     "No roster selected";
   const hasApprovableVolunteers =
-    canManageVolunteerCheckIns &&
+    canAdminManageVolunteers &&
     isPastEvent &&
     volunteerRows.some(
       (signup) =>
@@ -1310,14 +1313,16 @@ export const EventCard = ({
                 >
                   Add Volunteer
                 </button>
-                <button
-                  type="button"
-                  className={styles.eventVolunteerApproveAllButton}
-                  onClick={handleApproveAllVolunteers}
-                  disabled={isCheckInLocked || !hasApprovableVolunteers}
-                >
-                  Approve All
-                </button>
+                {canAdminManageVolunteers && (
+                  <button
+                    type="button"
+                    className={styles.eventVolunteerApproveAllButton}
+                    onClick={handleApproveAllVolunteers}
+                    disabled={isCheckInLocked || !hasApprovableVolunteers}
+                  >
+                    Approve All
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -1344,7 +1349,7 @@ export const EventCard = ({
               })}
               {addableVolunteerResults.length === 0 && (
                 <p className={styles.eventVolunteerNoSearchResults}>
-                  No volunteers found.
+                  No volunteers or organizations found.
                 </p>
               )}
             </div>
@@ -1370,7 +1375,7 @@ export const EventCard = ({
             const isApproved = signup.status === "approved";
             const isDenied = signup.status === "denied";
             const canShowApprovalActions =
-              canManageVolunteerCheckIns &&
+              canAdminManageVolunteers &&
               isCheckableUser &&
               isPastEvent &&
               isCheckedIn &&

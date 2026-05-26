@@ -161,6 +161,7 @@ type ActivePostNeedDraft = {
   currentStep: number;
   eventType: string;
   incompleteEventId: string;
+  eventOwnerId?: string;
   eventData: CreateEvent;
 };
 
@@ -204,14 +205,23 @@ export const PostNeed = () => {
     location.state as {
       incompleteEventId?: string;
       initialEventType?: string;
+      initialEventOwnerId?: string;
     } | null
   )?.incompleteEventId;
   const routeInitialEventType = (
     location.state as {
       incompleteEventId?: string;
       initialEventType?: string;
+      initialEventOwnerId?: string;
     } | null
   )?.initialEventType;
+  const routeInitialEventOwnerId = (
+    location.state as {
+      incompleteEventId?: string;
+      initialEventType?: string;
+      initialEventOwnerId?: string;
+    } | null
+  )?.initialEventOwnerId;
   const draftToFinish = routeIncompleteEventId
     ? getIncompletePostNeedEventById(routeIncompleteEventId)
     : undefined;
@@ -229,10 +239,16 @@ export const PostNeed = () => {
   const [eventData, setEventData] = useState<CreateEvent>({
     ...INITIAL_EVENT_STATE,
     ...(activeDraft?.eventData ?? draftToFinish?.data ?? {}),
+    eventOwner:
+      activeDraft?.eventOwnerId ??
+      draftToFinish?.data.eventOwner ??
+      routeInitialEventOwnerId ??
+      "",
     isFollowersOnly:
       (activeDraft?.eventData ?? draftToFinish?.data ?? {}).isFollowersOnly ??
       routeInitialEventType === "internalEvent",
   });
+  const eventOwnerId = eventData.eventOwner || userId;
   const [submitValidationDialog, setSubmitValidationDialog] = useState<{
     missingFields: string[];
     nextStep: number;
@@ -253,9 +269,10 @@ export const PostNeed = () => {
       currentStep,
       eventType,
       incompleteEventId,
+      eventOwnerId,
       eventData,
     });
-  }, [currentStep, eventData, eventType, incompleteEventId, userId]);
+  }, [currentStep, eventData, eventOwnerId, eventType, incompleteEventId, userId]);
 
   const handlePostEvent = async () => {
     if (eventActionLockRef.current || isPostingEvent || isSavingIncomplete) {
@@ -281,7 +298,7 @@ export const PostNeed = () => {
         maxVolunteerCount: toNumber(eventData.maxVolunteerCount),
         isFollowersOnly: isInternalEvent || Boolean(eventData.isFollowersOnly),
         // set the event owner to the current user
-        eventOwner: userId,
+        eventOwner: eventOwnerId,
         eventCoordinator: eventData.eventCoordinator || userId,
       };
 
@@ -320,6 +337,7 @@ export const PostNeed = () => {
 
     setEventData((prevState) => ({
       ...(isChangingEventType ? INITIAL_EVENT_STATE : prevState),
+      eventOwner: eventOwnerId,
       isFollowersOnly: isInternalEvent,
     }));
   };
@@ -550,7 +568,7 @@ export const PostNeed = () => {
     startTime: toNumber(eventData.startTime),
     endTime: toNumber(eventData.endTime),
     maxVolunteerCount: toNumber(eventData.maxVolunteerCount),
-    eventOwner: userId,
+    eventOwner: eventOwnerId,
     eventCoordinator: eventData.eventCoordinator || userId,
   });
 
@@ -622,6 +640,7 @@ export const PostNeed = () => {
       data={eventData}
       eventType={eventType}
       onChange={setEventData}
+      eventOwnerId={eventOwnerId}
     />,
     <InternalEventReview
       data={eventData}

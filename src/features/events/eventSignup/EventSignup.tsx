@@ -16,6 +16,7 @@ import {
 } from "../../../services/api/endpoints/events/events.api";
 import {
   useGetRosterAdminEntityIdsQuery,
+  useGetRosterEventAdminEntityAccessQuery,
 } from "../../../services/api/endpoints/roster/roster.api";
 import { EventCard } from "../../../components/events/EventCard";
 import { ShortEventState } from "../../../services/api/endpoints/types/events.api.types";
@@ -142,6 +143,10 @@ export const EventSignup = () => {
   const eventCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const { data: events, isLoading } = useGetEventsQuery();
   const { data: rosterAdminEntityIds = [] } = useGetRosterAdminEntityIdsQuery();
+  const { data: rosterEventAdminEntityAccess = [] } =
+    useGetRosterEventAdminEntityAccessQuery(undefined, {
+      skip: userType !== "individual",
+    });
   const {
     data: rosterAdminEvents = [],
     isLoading: isLoadingRosterAdminEvents,
@@ -161,6 +166,20 @@ export const EventSignup = () => {
   const rosterAdminEventIdSet = useMemo(
     () => new Set(rosterAdminEvents.map((event) => event.id)),
     [rosterAdminEvents]
+  );
+  const internalEventAdminEntityIds = useMemo(
+    () =>
+      rosterEventAdminEntityAccess
+        .filter((access) => access.canEditInternalEvents)
+        .map((access) => access.entityId),
+    [rosterEventAdminEntityAccess]
+  );
+  const externalEventAdminEntityIds = useMemo(
+    () =>
+      rosterEventAdminEntityAccess
+        .filter((access) => access.canEditExternalEvents)
+        .map((access) => access.entityId),
+    [rosterEventAdminEntityAccess]
   );
   const hasCoordinatorEvents = Boolean(
     currentUserId &&
@@ -434,8 +453,18 @@ export const EventSignup = () => {
   };
 
   const handleCreateEvent = (eventType: "externalEvent" | "internalEvent") => {
+    const delegatedEventOwnerId =
+      userType === "individual"
+        ? eventType === "internalEvent"
+          ? internalEventAdminEntityIds[0]
+          : externalEventAdminEntityIds[0]
+        : undefined;
+
     navigate(CREATE_EVENT_ROUTE, {
-      state: { initialEventType: eventType },
+      state: {
+        initialEventType: eventType,
+        initialEventOwnerId: delegatedEventOwnerId,
+      },
     });
   };
 
@@ -461,32 +490,43 @@ export const EventSignup = () => {
           />
           <h1>Events</h1>
         </div>
-        {userType === "nonprofit" && (
+        {((userType === "organization" || userType === "nonprofit") ||
+          (userType === "individual" && rosterAdminEntityIds.length > 0)) && (
           <div className={styles.nonprofitEventActions}>
-            <button
-              type="button"
-              className={styles.nonprofitEventAction}
-              onClick={() => handleCreateEvent("externalEvent")}
-            >
-              <CustomSvgs
-                svgPath="/svgs/common/postAddIcon.svg"
-                variant="small"
-                altText=""
-              />
-              <span>Post A Need</span>
-            </button>
-            <button
-              type="button"
-              className={styles.nonprofitEventAction}
-              onClick={() => handleCreateEvent("internalEvent")}
-            >
-              <CustomSvgs
-                svgPath="/svgs/common/eventsIcon.svg"
-                variant="small"
-                altText=""
-              />
-              <span>Create Internal Event</span>
-            </button>
+            {(userType === "organization" ||
+              userType === "nonprofit" ||
+              (userType === "individual" &&
+                externalEventAdminEntityIds.length > 0)) && (
+              <button
+                type="button"
+                className={styles.nonprofitEventAction}
+                onClick={() => handleCreateEvent("externalEvent")}
+              >
+                <CustomSvgs
+                  svgPath="/svgs/common/postAddIcon.svg"
+                  variant="small"
+                  altText=""
+                />
+                <span>Post A Need</span>
+              </button>
+            )}
+            {(userType === "organization" ||
+              userType === "nonprofit" ||
+              (userType === "individual" &&
+                internalEventAdminEntityIds.length > 0)) && (
+              <button
+                type="button"
+                className={styles.nonprofitEventAction}
+                onClick={() => handleCreateEvent("internalEvent")}
+              >
+                <CustomSvgs
+                  svgPath="/svgs/common/eventsIcon.svg"
+                  variant="small"
+                  altText=""
+                />
+                <span>Create Internal Event</span>
+              </button>
+            )}
           </div>
         )}
         <div className={styles.volunteerEventsTabs} role="tablist">
@@ -648,9 +688,7 @@ export const EventSignup = () => {
                         }
                         enableAdminControls={
                           activeTab === "Admin" &&
-                          (isPostNeedAdmin ||
-                            event.eventCoordinator?.id === currentUserId ||
-                            isRosterAdminForEvent)
+                          (isPostNeedAdmin || isRosterAdminForEvent)
                         }
                         additionalVolunteerCoordinators={
                           getAdditionalVolunteerCoordinators()

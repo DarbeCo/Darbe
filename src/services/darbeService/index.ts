@@ -106,6 +106,7 @@ export {
   getEntityRosterAccess,
   getEntityRosterMembers,
   getRosterAdminEntityIds,
+  getRosterEventAdminEntityAccess,
   getRosterAdmins,
   getRosterMembers,
   getRosters,

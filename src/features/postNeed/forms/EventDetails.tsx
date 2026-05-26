@@ -23,6 +23,7 @@ export const EventDetails = ({
   data,
   eventType,
   onChange,
+  eventOwnerId,
 }: EventFormCommonProps) => {
   const [imagePreview, setImagePreview] = useState<File | null>();
   const internalPhotoInputRef = useRef<HTMLInputElement>(null);
@@ -31,13 +32,14 @@ export const EventDetails = ({
   const [isInviteDropdownOpen, setIsInviteDropdownOpen] = useState(false);
   const [isCoordinatorDropdownOpen, setIsCoordinatorDropdownOpen] =
     useState(false);
-  const { data: rosterMembers, isLoading } = useGetRosterAdminsQuery();
-  const { data: rosters } = useGetRostersQuery();
   const currentUserId = useAppSelector(selectCurrentUserId);
+  const ownerId = eventOwnerId ?? currentUserId;
+  const { data: rosterMembers, isLoading } = useGetRosterAdminsQuery(ownerId);
+  const { data: rosters } = useGetRostersQuery(ownerId);
   const { user } = useAppSelector(selectUser);
   const isEntityUser =
     user?.userType === "organization" || user?.userType === "nonprofit";
-  const entityCoordinator = isEntityUser && currentUserId
+  const entityCoordinator = isEntityUser && currentUserId === ownerId
     ? {
         id: currentUserId,
         fullName: user?.fullName,

@@ -67,13 +67,20 @@ export const RosterRightPanel = () => {
   const currentRoster =
     rosters?.find((roster) => roster.id === selectedRosterId) ?? rosters?.[0];
   const rosterMembers = currentRoster?.members ?? [];
-  const currentUserRosterMember = rosterMembers.find(
-    (member) => member.user.id === currentUserId
+  const hasCreateEditAssignedRosterAccess = Boolean(
+    rosters?.some((roster) =>
+      roster.members.some(
+        (member) =>
+          member.user.id === currentUserId &&
+          member.isAdmin &&
+          member.adminPermissions?.canEditAssignedRoster
+      )
+    )
   );
   const canManageRoster =
     !rosterOwnerId ||
     rosterOwnerId === currentUserId ||
-    Boolean(currentUserRosterMember?.adminPermissions?.canEditAssignedRoster);
+    hasCreateEditAssignedRosterAccess;
   const hasMultipleRosters = (rosters?.length ?? 0) > 1;
 
   const handleSelectRoster = (rosterId: string) => {

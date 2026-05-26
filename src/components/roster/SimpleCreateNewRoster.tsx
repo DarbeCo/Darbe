@@ -30,6 +30,7 @@ const normalizeRosterName = (rosterName: string) =>
 interface SimpleCreateRosterProps {
   embedded?: boolean;
   memberSearchQuery?: string;
+  rosterOwnerId?: string;
   onCancel?: () => void;
   onComplete?: (createdRosterId?: string) => void;
 }
@@ -37,18 +38,20 @@ interface SimpleCreateRosterProps {
 export const SimpleCreateRoster = ({
   embedded = false,
   memberSearchQuery = "",
+  rosterOwnerId,
   onCancel,
   onComplete,
 }: SimpleCreateRosterProps) => {
   const dispatch = useAppDispatch();
   const userId = useAppSelector(selectCurrentUserId);
+  const ownerId = rosterOwnerId ?? userId;
   const [newRosterData, setNewRosterData] = useState<NewRoster>({
     rosterName: "",
-    rosterOwner: userId,
+    rosterOwner: ownerId,
     members: [],
   });
-  const { data: followers, isLoading } = useGetEntityFollowersQuery(userId);
-  const { data: rosters = [] } = useGetRostersQuery();
+  const { data: followers, isLoading } = useGetEntityFollowersQuery(ownerId);
+  const { data: rosters = [] } = useGetRostersQuery(ownerId);
   const [createNewRoster, { isLoading: isCreatingRoster }] =
     useCreateRosterMutation();
   const [rosterNameError, setRosterNameError] = useState("");
@@ -83,9 +86,9 @@ export const SimpleCreateRoster = ({
   useEffect(() => {
     setNewRosterData((currentData) => ({
       ...currentData,
-      rosterOwner: userId,
+      rosterOwner: ownerId,
     }));
-  }, [userId]);
+  }, [ownerId]);
 
   const handleRosterNameChange = (event: ChangeEvent<HTMLInputElement>) => {
     setRosterNameError("");

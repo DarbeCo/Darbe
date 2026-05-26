@@ -141,12 +141,19 @@ export const Roster = () => {
   const currentRosterName = getRosterDisplayName(currentRoster?.rosterName);
   const rosterId = currentRoster?.id;
   const rosterMembers = currentRoster?.members ?? [];
-  const currentUserRosterMember = rosterMembers.find(
-    (member) => member.user.id === user.user?.id
+  const hasCreateEditAssignedRosterAccess = Boolean(
+    data?.some((roster) =>
+      roster.members.some(
+        (member) =>
+          member.user.id === user.user?.id &&
+          member.isAdmin &&
+          member.adminPermissions?.canEditAssignedRoster
+      )
+    )
   );
   const canManageRoster =
     isViewingOwnRoster ||
-    Boolean(currentUserRosterMember?.adminPermissions?.canEditAssignedRoster);
+    hasCreateEditAssignedRosterAccess;
   const hasMultipleRosters = (data?.length ?? 0) > 1;
   const canDeleteRoster = Boolean(canManageRoster && currentRoster?.id && hasMultipleRosters);
   const filteredMembers = useMemo(() => {
@@ -177,7 +184,12 @@ export const Roster = () => {
     if (!rosterId) return;
 
     dispatch(setModalType(EDIT_SECTIONS.editRoster));
-    dispatch(setExternalData(rosterId));
+    dispatch(
+      setExternalData({
+        rosterId,
+        rosterOwnerId: currentRoster.rosterOwner.id,
+      })
+    );
     dispatch(showModal());
   };
 
@@ -363,6 +375,7 @@ export const Roster = () => {
           <SimpleCreateRoster
             embedded
             memberSearchQuery={searchText}
+            rosterOwnerId={currentRoster?.rosterOwner.id ?? rosterOwnerId}
             onCancel={exitCreateRosterView}
             onComplete={(createdRosterId) => {
               setSearchParams((currentParams) => {
@@ -656,7 +669,7 @@ export const Roster = () => {
                   }
                   disabled={removeAsAdmin}
                 />
-                <span>Assign Volunteer Coordinators</span>
+                <span>Volunteer Coordinator Candidate</span>
               </label>
               <label>
                 <input

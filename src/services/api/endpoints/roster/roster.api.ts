@@ -4,6 +4,7 @@ import {
     NewRoster,
     Roster,
     RosterAdminPermissions,
+    RosterEventAdminEntityAccess,
     RosterMember,
 } from "../types/roster.api.types";
 import { SimpleUserInfo } from "../types/user.api.types";
@@ -15,6 +16,7 @@ import {
     getAllRosterMembers,
     getEntityRosterAccess,
     getEntityRosterMembers,
+    getRosterEventAdminEntityAccess,
     getRosterAdminEntityIds,
     getRosterAdmins,
     getRosterMembers,
@@ -157,10 +159,10 @@ const rosterApi = darbeBaseApi.injectEndpoints({
             },
             invalidatesTags: ["Roster", "RosterMembers"],
         }),
-        getRosterAdmins: builder.query<SimpleUserInfo[], void>({
-            async queryFn() {
+        getRosterAdmins: builder.query<SimpleUserInfo[], string | void>({
+            async queryFn(ownerId) {
                 try {
-                    const data = await getRosterAdmins();
+                    const data = await getRosterAdmins(ownerId || undefined);
                     return { data };
                 } catch (error) {
                     return {
@@ -240,6 +242,25 @@ const rosterApi = darbeBaseApi.injectEndpoints({
             },
             providesTags: ["Roster", "RosterMembers"],
         }),
+        getRosterEventAdminEntityAccess: builder.query<
+            RosterEventAdminEntityAccess[],
+            void
+        >({
+            async queryFn() {
+                try {
+                    const data = await getRosterEventAdminEntityAccess();
+                    return { data };
+                } catch (error) {
+                    return {
+                        error: {
+                            status: "CUSTOM_ERROR",
+                            data: { message: (error as Error).message },
+                        },
+                    };
+                }
+            },
+            providesTags: ["Roster", "RosterMembers"],
+        }),
     }),
 });
 
@@ -256,5 +277,6 @@ export const {
     useGetAllRosterMembersQuery,
     useGetEntityRosterAccessQuery,
     useGetEntityRosterMembersQuery,
-    useGetRosterAdminEntityIdsQuery
+    useGetRosterAdminEntityIdsQuery,
+    useGetRosterEventAdminEntityAccessQuery
 } = rosterApi;

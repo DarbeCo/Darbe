@@ -526,6 +526,84 @@ const getInvitationByEventIdForUser = async (
   return invitationByEventId;
 };
 
+type EventAdminEntityAccess = {
+  entityId: string;
+  canEditInternalEvents: boolean;
+  canEditExternalEvents: boolean;
+};
+
+const getEventAdminEntityAccessForUser = async (
+  userId: string
+): Promise<EventAdminEntityAccess[]> => {
+  const { data: memberships, error: membershipsError } = await supabase
+    .from("roster_members")
+    .select("roster_id, can_edit_internal_events, can_edit_external_events")
+    .eq("user_id", userId)
+    .eq("is_admin", true);
+
+  if (membershipsError) throw membershipsError;
+
+  const eventAdminMemberships = (memberships ?? []).filter(
+    (membership) =>
+      membership.can_edit_internal_events || membership.can_edit_external_events
+  );
+  const rosterIds = eventAdminMemberships.map((membership) => membership.roster_id);
+  if (!rosterIds.length) return [];
+
+  const { data: rosters, error: rostersError } = await supabase
+    .from("rosters")
+    .select("id, roster_owner_id")
+    .in("id", rosterIds);
+
+  if (rostersError) throw rostersError;
+
+  const rosterOwnerByRosterId = new Map(
+    (rosters ?? []).map((roster) => [roster.id, roster.roster_owner_id])
+  );
+  const accessByEntityId = new Map<string, EventAdminEntityAccess>();
+
+  eventAdminMemberships.forEach((membership) => {
+    const entityId = rosterOwnerByRosterId.get(membership.roster_id);
+
+    if (!entityId) {
+      return;
+    }
+
+    const currentAccess = accessByEntityId.get(entityId) ?? {
+      entityId,
+      canEditInternalEvents: false,
+      canEditExternalEvents: false,
+    };
+
+    accessByEntityId.set(entityId, {
+      entityId,
+      canEditInternalEvents: Boolean(
+        currentAccess.canEditInternalEvents ||
+          membership.can_edit_internal_events
+      ),
+      canEditExternalEvents: Boolean(
+        currentAccess.canEditExternalEvents ||
+          membership.can_edit_external_events
+      ),
+    });
+  });
+
+  return Array.from(accessByEntityId.values());
+};
+
+const hasEventAdminPermission = async (
+  entityId: string,
+  userId: string,
+  eventType: "internal" | "external"
+) => {
+  const entityAccess = await getEventAdminEntityAccessForUser(userId);
+  const access = entityAccess.find((entity) => entity.entityId === entityId);
+
+  return eventType === "internal"
+    ? Boolean(access?.canEditInternalEvents)
+    : Boolean(access?.canEditExternalEvents);
+};
+
 const incrementImpact = async (
   userId: string,
   fields: Partial<{
@@ -1203,14 +1281,43 @@ export const getEntityUpcomingEvents = async (
 };
 
 export const getRosterAdminEvents = async (): Promise<ShortEventState[]> => {
-  await ensureUserId();
-  const { data: events, error: eventsError } = await supabase.rpc(
-    "get_roster_admin_events"
+  const userId = await ensureUserId();
+  const eventAdminEntityAccess = await getEventAdminEntityAccessForUser(userId);
+  const eventAdminEntityIds = eventAdminEntityAccess.map(
+    (access) => access.entityId
   );
+  const eventFilter = [
+    `event_coordinator_id.eq.${userId}`,
+    ...eventAdminEntityIds.map((entityId) => `event_owner_id.eq.${entityId}`),
+  ].join(",");
+
+  if (!eventFilter) return [];
+
+  const { data: events, error: eventsError } = await supabase
+    .from("events")
+    .select(
+      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_repeating, is_followers_only, event_parking_info, event_internal_location, is_indoor, is_outdoor, max_volunteer_count, event_cover_photo_url, event_coordinator_id, adult_waiver_url, minor_waiver_url"
+    )
+    .or(eventFilter)
+    .order("event_date", { ascending: false });
 
   if (eventsError) throw eventsError;
 
-  return buildShortEvents((events ?? []) as EventRow[]);
+  const accessByEntityId = new Map(
+    eventAdminEntityAccess.map((access) => [access.entityId, access])
+  );
+  const filteredEvents = ((events ?? []) as EventRow[]).filter((event) => {
+    if (event.event_coordinator_id === userId) {
+      return true;
+    }
+
+    const access = accessByEntityId.get(event.event_owner_id);
+    return event.is_followers_only
+      ? Boolean(access?.canEditInternalEvents)
+      : Boolean(access?.canEditExternalEvents);
+  });
+
+  return buildShortEvents(filteredEvents);
 };
 
 export const getEventDetails = async (eventId: string): Promise<EventsState> => {
@@ -1288,6 +1395,21 @@ export const createEvent = async (newEvent: CreateEvent): Promise<SimpleEventSta
   const userId = await ensureUserId();
   const eventOwnerId = newEvent.eventOwner || userId;
   const eventDate = toDatabaseDateString(newEvent.eventDate);
+
+  if (eventOwnerId !== userId) {
+    const eventType = newEvent.isFollowersOnly ? "internal" : "external";
+    const canCreateEvent = await hasEventAdminPermission(
+      eventOwnerId,
+      userId,
+      eventType
+    );
+
+    if (!canCreateEvent) {
+      throw new Error(
+        `You do not have permission to create ${eventType} events for this entity.`
+      );
+    }
+  }
 
   const { data: event, error } = await supabase
     .from("events")
@@ -1371,38 +1493,20 @@ export const updateEventTime = async ({
   const userId = await ensureUserId();
   const { data: event, error: eventError } = await supabase
     .from("events")
-    .select("event_owner_id, event_coordinator_id")
+    .select("event_owner_id, event_coordinator_id, is_followers_only")
     .eq("id", eventId)
     .single();
 
   if (eventError || !event) throw eventError ?? new Error("Event not found");
 
-  let canEdit =
-    event.event_owner_id === userId || event.event_coordinator_id === userId;
-
-  if (!canEdit) {
-    const { data: rosters, error: rosterError } = await supabase
-      .from("rosters")
-      .select("id")
-      .eq("roster_owner_id", event.event_owner_id);
-
-    if (rosterError) throw rosterError;
-
-    const rosterIds = (rosters ?? []).map((roster) => roster.id);
-    if (rosterIds.length) {
-      const { data: adminMembership, error: adminError } = await supabase
-        .from("roster_members")
-        .select("user_id")
-        .eq("user_id", userId)
-        .eq("is_admin", true)
-        .in("roster_id", rosterIds)
-        .limit(1)
-        .maybeSingle();
-
-      if (adminError) throw adminError;
-      canEdit = Boolean(adminMembership);
-    }
-  }
+  const canEdit =
+    event.event_owner_id === userId ||
+    event.event_coordinator_id === userId ||
+    (await hasEventAdminPermission(
+      event.event_owner_id,
+      userId,
+      event.is_followers_only ? "internal" : "external"
+    ));
 
   if (!canEdit) {
     throw new Error("You do not have permission to edit this event");
@@ -1424,38 +1528,20 @@ const ensureCanEditEvent = async (eventId: string) => {
   const userId = await ensureUserId();
   const { data: event, error: eventError } = await supabase
     .from("events")
-    .select("event_owner_id, event_coordinator_id")
+    .select("event_owner_id, event_coordinator_id, is_followers_only")
     .eq("id", eventId)
     .single();
 
   if (eventError || !event) throw eventError ?? new Error("Event not found");
 
-  let canEdit =
-    event.event_owner_id === userId || event.event_coordinator_id === userId;
-
-  if (!canEdit) {
-    const { data: rosters, error: rosterError } = await supabase
-      .from("rosters")
-      .select("id")
-      .eq("roster_owner_id", event.event_owner_id);
-
-    if (rosterError) throw rosterError;
-
-    const rosterIds = (rosters ?? []).map((roster) => roster.id);
-    if (rosterIds.length) {
-      const { data: adminMembership, error: adminError } = await supabase
-        .from("roster_members")
-        .select("user_id")
-        .eq("user_id", userId)
-        .eq("is_admin", true)
-        .in("roster_id", rosterIds)
-        .limit(1)
-        .maybeSingle();
-
-      if (adminError) throw adminError;
-      canEdit = Boolean(adminMembership);
-    }
-  }
+  const canEdit =
+    event.event_owner_id === userId ||
+    event.event_coordinator_id === userId ||
+    (await hasEventAdminPermission(
+      event.event_owner_id,
+      userId,
+      event.is_followers_only ? "internal" : "external"
+    ));
 
   if (!canEdit) {
     throw new Error("You do not have permission to edit this event");
