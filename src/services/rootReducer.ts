@@ -5,12 +5,14 @@ import { darbeBaseApi } from "./api/endpoints/darbe.api";
 import userReducer from "../features/users/userSlice";
 import modalReducer from "../components/modal/modalSlice";
 import feedReducer from "../features/feed/feedSlice";
+import toastReducer from "../components/toast/toastSlice";
 
 const appReducer = combineReducers({
   [darbeBaseApi.reducerPath]: darbeBaseApi.reducer,
   users: userReducer,
   modal: modalReducer,
   feed: feedReducer,
+  toast: toastReducer,
 });
 
 export const rootReducer = (state: any | undefined, action: Action) => {

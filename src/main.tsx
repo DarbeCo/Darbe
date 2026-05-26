@@ -5,6 +5,7 @@ import { RouterProvider } from "react-router-dom";
 import { PersistGate } from "redux-persist/integration/react";
 
 import { GlobalLoadingOverlay } from "./components/loading/GlobalLoadingOverlay";
+import { GlobalToast } from "./components/toast/GlobalToast";
 import { router } from "./routes/paths";
 import { persistor, store } from "./services/store";
 
@@ -23,6 +24,7 @@ createRoot(document.getElementById("root")!).render(
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <GlobalLoadingOverlay />
+        <GlobalToast />
         <RouterProvider router={router} />
       </PersistGate>
     </Provider>
