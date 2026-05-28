@@ -1309,6 +1309,14 @@ export interface Database {
         };
         Returns: undefined;
       };
+      remove_event_invitation_volunteer: {
+        Args: {
+          target_event_id: string;
+          target_user_id: string;
+          target_inviter_entity_id: string;
+        };
+        Returns: undefined;
+      };
       approve_all_event_volunteers: {
         Args: { target_event_id: string };
         Returns: undefined;

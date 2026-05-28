@@ -1993,11 +1993,17 @@ export const passOnEvent = async (eventId: string): Promise<void> => {
 type EventSignupAction = {
   eventId: string;
   userId?: string;
+  invitedByEntityId?: string;
+};
+
+type NormalizedEventSignupAction = {
+  eventId: string;
+  userId: string;
 };
 
 const normalizeEventSignupAction = (
   action: string | EventSignupAction
-): Required<EventSignupAction> => ({
+): NormalizedEventSignupAction => ({
   eventId: typeof action === "string" ? action : action.eventId,
   userId: typeof action === "string" ? "" : action.userId ?? "",
 });
@@ -2070,6 +2076,26 @@ export const addEventVolunteer = async (
   });
 
   if (error) throw error;
+
+  if (!action.invitedByEntityId) {
+    return;
+  }
+
+  const { error: invitationError } = await supabase
+    .from("event_signups")
+    .update({ invited_by_entity_id: action.invitedByEntityId })
+    .eq("event_id", action.eventId)
+    .eq("user_id", action.userId);
+
+  if (invitationError) {
+    if (!isMissingInvitedByEntityColumnError(invitationError)) {
+      throw invitationError;
+    }
+
+    console.warn(
+      "Adding volunteers under an organization requires the invited_by_entity_id column. Apply the latest Supabase migrations to support grouped volunteer adds."
+    );
+  }
 };
 
 export const approveEventVolunteer = async (
@@ -2105,6 +2131,28 @@ export const denyEventVolunteer = async (
   const { error } = await supabase.rpc("deny_event_volunteer_as_no_show", {
     target_event_id: action.eventId,
     target_user_id: action.userId,
+  });
+
+  if (error) throw error;
+};
+
+export const removeEventInvitationVolunteer = async (
+  action: EventSignupAction
+): Promise<void> => {
+  await ensureUserId();
+
+  if (!action.userId) {
+    throw new Error("Volunteer is required");
+  }
+
+  if (!action.invitedByEntityId) {
+    throw new Error("Organization is required");
+  }
+
+  const { error } = await supabase.rpc("remove_event_invitation_volunteer", {
+    target_event_id: action.eventId,
+    target_user_id: action.userId,
+    target_inviter_entity_id: action.invitedByEntityId,
   });
 
   if (error) throw error;

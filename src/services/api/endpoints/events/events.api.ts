@@ -24,6 +24,7 @@ import {
   getSignedUpEvents,
   getVolunteerMatches,
   recommendEventToFollowers,
+  removeEventInvitationVolunteer,
   checkInForEvent,
   checkOutFromEvent,
   markNoShowForEvent,
@@ -38,6 +39,7 @@ import {
 type EventSignupAction = {
   eventId: string;
   userId?: string;
+  invitedByEntityId?: string;
 };
 
 type EventSignupImpactDetails = {
@@ -321,6 +323,22 @@ const eventsApi = darbeBaseApi.injectEndpoints({
       },
       invalidatesTags: ["Events"],
     }),
+    removeEventInvitationVolunteer: builder.mutation<void, EventSignupAction>({
+      async queryFn(action) {
+        try {
+          await removeEventInvitationVolunteer(action);
+          return { data: undefined };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      invalidatesTags: ["Events"],
+    }),
     approveAllEventVolunteers: builder.mutation<void, string>({
       async queryFn(eventId) {
         try {
@@ -456,6 +474,7 @@ export const {
   useApproveEventVolunteerMutation,
   useCreateEventMutation,
   useDenyEventVolunteerMutation,
+  useRemoveEventInvitationVolunteerMutation,
   useDeleteEventMutation,
   useVolunteerForEventMutation,
   usePassOnEventMutation,

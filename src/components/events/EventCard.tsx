@@ -38,6 +38,7 @@ import {
   useCheckInForEventMutation,
   useCheckOutFromEventMutation,
   useDenyEventVolunteerMutation,
+  useRemoveEventInvitationVolunteerMutation,
   useUnvolunteerFromEventMutation,
   useUpdateEventDetailsMutation,
   useUpdateEventSignupImpactDetailsMutation,
@@ -242,6 +243,7 @@ type VolunteerSignupRow = ShortEventState["signups"][number] & {
   isCoordinator: boolean;
   isInvitationGroup?: boolean;
   isInvitationChild?: boolean;
+  effectiveInvitedByEntity?: SimpleUserInfo;
   invitedVolunteerCount?: number;
   invitedVolunteerCheckedInCount?: number;
 };
@@ -288,6 +290,10 @@ export const EventCard = ({
     useApproveEventVolunteerMutation();
   const [denyEventVolunteer, { isLoading: isDenyingVolunteer }] =
     useDenyEventVolunteerMutation();
+  const [
+    removeEventInvitationVolunteer,
+    { isLoading: isRemovingInvitationVolunteer },
+  ] = useRemoveEventInvitationVolunteerMutation();
   const [approveAllEventVolunteers, { isLoading: isApprovingAllVolunteers }] =
     useApproveAllEventVolunteersMutation();
   const [updateEventDetails, { isLoading: isUpdatingEventDetails }] =
@@ -316,6 +322,12 @@ export const EventCard = ({
   >(new Set());
   const [isAddVolunteerOpen, setIsAddVolunteerOpen] = useState(false);
   const [addVolunteerSearch, setAddVolunteerSearch] = useState("");
+  const [invitationGroupSearches, setInvitationGroupSearches] = useState<
+    Record<string, string>
+  >({});
+  const [activeInvitationAddGroupId, setActiveInvitationAddGroupId] =
+    useState<string | null>(null);
+  const [invitationAddSearch, setInvitationAddSearch] = useState("");
   const [impactEditState, setImpactEditState] =
     useState<ImpactEditState | null>(null);
   const [impactEditError, setImpactEditError] = useState("");
@@ -328,10 +340,12 @@ export const EventCard = ({
   const [impactDetailOverrides, setImpactDetailOverrides] = useState<
     Record<string, Omit<ImpactEditState, "signupId">>
   >({});
+  const activeAddVolunteerSearch =
+    activeInvitationAddGroupId ? invitationAddSearch : addVolunteerSearch;
   const { data: addVolunteerResults = [] } = useGetSearchResultsQuery(
-    addVolunteerSearch,
+    activeAddVolunteerSearch,
     {
-      skip: addVolunteerSearch.trim().length < 3,
+      skip: activeAddVolunteerSearch.trim().length < 3,
     }
   );
 
@@ -351,6 +365,24 @@ export const EventCard = ({
 
       return nextGroupIds;
     });
+  };
+
+  const handleInvitationGroupSearchChange = (
+    inviterId: string,
+    value: string
+  ) => {
+    setInvitationGroupSearches((searches) => ({
+      ...searches,
+      [inviterId]: value,
+    }));
+  };
+
+  const handleInvitationAddToggle = (inviterId: string) => {
+    setIsAddVolunteerOpen(false);
+    setActiveInvitationAddGroupId((currentInviterId) =>
+      currentInviterId === inviterId ? null : inviterId
+    );
+    setInvitationAddSearch("");
   };
 
   const handlePassEvent = () => {
@@ -444,6 +476,28 @@ export const EventCard = ({
     }
   };
 
+  const handleAddInvitationVolunteer = async (
+    targetUserId: string,
+    invitedByEntityId: string
+  ) => {
+    try {
+      await addEventVolunteer({
+        eventId: event.id,
+        userId: targetUserId,
+        invitedByEntityId,
+      }).unwrap();
+      setInvitationAddSearch("");
+      setActiveInvitationAddGroupId(null);
+      setOpenInvitationGroupIds((groupIds) => {
+        const nextGroupIds = new Set(groupIds);
+        nextGroupIds.add(invitedByEntityId);
+        return nextGroupIds;
+      });
+    } catch (error) {
+      console.error("Error adding volunteer to invitation group", error);
+    }
+  };
+
   const handleApproveVolunteer = async (targetUserId: string) => {
     try {
       await approveEventVolunteer({
@@ -465,6 +519,21 @@ export const EventCard = ({
       }).unwrap();
     } catch (error) {
       console.error("Error denying volunteer impact", error);
+    }
+  };
+
+  const handleRemoveInvitationVolunteer = async (
+    targetUserId: string,
+    invitedByEntityId: string
+  ) => {
+    try {
+      await removeEventInvitationVolunteer({
+        eventId: event.id,
+        userId: targetUserId,
+        invitedByEntityId,
+      }).unwrap();
+    } catch (error) {
+      console.error("Error removing volunteer from organization list", error);
     }
   };
 
@@ -715,6 +784,7 @@ export const EventCard = ({
     isAddingVolunteer ||
     isApprovingVolunteer ||
     isDenyingVolunteer ||
+    isRemovingInvitationVolunteer ||
     isApprovingAllVolunteers ||
     isUpdatingImpactDetails ||
     isUpdatingEventTime;
@@ -746,6 +816,31 @@ export const EventCard = ({
       coordinator.userType === "organization" ||
       coordinator.userType === "nonprofit"
   );
+  const getVolunteerDisplayName = (user: SimpleUserInfo) =>
+    user.fullName ||
+    user.organizationName ||
+    user.nonprofitName ||
+    `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim();
+  const matchesInvitationGroupSearch = (
+    signup: ShortEventState["signups"][number],
+    searchValue: string
+  ) => {
+    const normalizedSearchValue = searchValue.trim().toLowerCase();
+
+    if (!normalizedSearchValue) {
+      return true;
+    }
+
+    return [
+      getVolunteerDisplayName(signup.user),
+      signup.user.firstName,
+      signup.user.lastName,
+      signup.user.fullName,
+      signup.user.jobTitle,
+    ]
+      .filter(Boolean)
+      .some((value) => value?.toLowerCase().includes(normalizedSearchValue));
+  };
   const signupsByInviter = new Map<string, ShortEventState["signups"]>();
   const inviterById = new Map<string, NonNullable<ShortEventState["signups"][number]["invitedByEntity"]>>();
   const ungroupedSignups: ShortEventState["signups"] = [];
@@ -770,6 +865,10 @@ export const EventCard = ({
         (signup) => signup.user.id === coordinator.id
       );
       const groupSignups = signupsByInviter.get(coordinator.id) ?? [];
+      const groupSearchValue = invitationGroupSearches[coordinator.id] ?? "";
+      const visibleGroupSignups = groupSignups.filter((signup) =>
+        matchesInvitationGroupSearch(signup, groupSearchValue)
+      );
       const hasInvitedVolunteers = groupSignups.length > 0;
       const coordinatorRow: VolunteerSignupRow = {
         id: coordinatorSignup?.id ?? `coordinator-${coordinator.id}`,
@@ -805,10 +904,11 @@ export const EventCard = ({
 
       return [
         coordinatorRow,
-        ...groupSignups.map((signup): VolunteerSignupRow => ({
+        ...visibleGroupSignups.map((signup): VolunteerSignupRow => ({
           ...signup,
           isCoordinator: false,
           isInvitationChild: true,
+          effectiveInvitedByEntity: signup.invitedByEntity ?? coordinator,
         })),
       ];
     });
@@ -817,11 +917,16 @@ export const EventCard = ({
     signupsByInviter.entries()
   ).flatMap(([inviterId, groupSignups]) => {
     const inviter = inviterById.get(inviterId);
+    const groupSearchValue = invitationGroupSearches[inviterId] ?? "";
+    const visibleGroupSignups = groupSignups.filter((signup) =>
+      matchesInvitationGroupSearch(signup, groupSearchValue)
+    );
 
     if (!inviter) {
-      return groupSignups.map((signup): VolunteerSignupRow => ({
+      return visibleGroupSignups.map((signup): VolunteerSignupRow => ({
         ...signup,
         isCoordinator: false,
+        effectiveInvitedByEntity: signup.invitedByEntity,
       }));
     }
 
@@ -845,10 +950,11 @@ export const EventCard = ({
 
     return [
       invitationGroupRow,
-      ...groupSignups.map((signup): VolunteerSignupRow => ({
+      ...visibleGroupSignups.map((signup): VolunteerSignupRow => ({
         ...signup,
         isCoordinator: false,
         isInvitationChild: true,
+        effectiveInvitedByEntity: signup.invitedByEntity ?? inviter,
       })),
     ];
   });
@@ -867,6 +973,10 @@ export const EventCard = ({
       ["individual", "organization", "nonprofit"].includes(
         result.userType ?? ""
       ) && !volunteerUserIds.has(result.id)
+  );
+  const addableInvitationVolunteerResults = addVolunteerResults.filter(
+    (result) =>
+      result.userType === "individual" && !volunteerUserIds.has(result.id)
   );
   const rosterOptions = [...eventOwnerRosters].sort((firstRoster, secondRoster) =>
     firstRoster.rosterName.localeCompare(secondRoster.rosterName)
@@ -1340,7 +1450,11 @@ export const EventCard = ({
                 <button
                   type="button"
                   className={styles.eventVolunteerAddButton}
-                  onClick={() => setIsAddVolunteerOpen((isOpen) => !isOpen)}
+                  onClick={() => {
+                    setActiveInvitationAddGroupId(null);
+                    setInvitationAddSearch("");
+                    setIsAddVolunteerOpen((isOpen) => !isOpen);
+                  }}
                 >
                   Add Volunteer
                 </button>
@@ -1386,11 +1500,7 @@ export const EventCard = ({
             </div>
           )}
           {volunteerRows.map((signup) => {
-            const volunteerName =
-              signup.user.fullName ||
-              signup.user.organizationName ||
-              signup.user.nonprofitName ||
-              `${signup.user.firstName ?? ""} ${signup.user.lastName ?? ""}`.trim();
+            const volunteerName = getVolunteerDisplayName(signup.user);
             const isCurrentVolunteer = signup.user.id === currentUserId;
             const hasSignupRecord =
               !signup.id.startsWith("coordinator-") &&
@@ -1469,6 +1579,12 @@ export const EventCard = ({
               !isNoShow;
             const canShowCheckAction =
               canShowSelfCheckAction || canShowManagedCheckAction;
+            const canRemoveFromInvitationGroup = Boolean(
+              signup.isInvitationChild &&
+                signup.effectiveInvitedByEntity?.id &&
+                (canManageVolunteerCheckIns ||
+                  signup.effectiveInvitedByEntity.id === currentUserId)
+            );
             const canEditImpactDetails =
               canManageVolunteerCheckIns &&
               isCheckableUser &&
@@ -1594,31 +1710,119 @@ export const EventCard = ({
                     </div>
                   )}
                   {signup.isInvitationGroup && (
-                    <div className={styles.eventInvitationGroupFooter}>
-                      <strong>
-                        Check in status: {signup.invitedVolunteerCheckedInCount ?? 0}/
-                        {event.maxVolunteerCount} Volunteers Checked in
-                      </strong>
-                      <button
-                        type="button"
-                        className={styles.eventInvitationSeeVolunteersButton}
-                        onClick={() =>
-                          handleInvitationGroupToggle(signup.user.id)
-                        }
-                        aria-expanded={Boolean(isInvitationGroupOpen)}
-                      >
-                        See Volunteers
-                        <CustomSvgs
-                          svgPath={
-                            isInvitationGroupOpen
-                              ? "/svgs/common/goUpIcon.svg"
-                              : "/svgs/common/goDownIcon.svg"
+                    <>
+                      <div className={styles.eventInvitationGroupFooter}>
+                        <strong>
+                          Check in status: {signup.invitedVolunteerCheckedInCount ?? 0}/
+                          {event.maxVolunteerCount} Volunteers Checked in
+                        </strong>
+                        <button
+                          type="button"
+                          className={styles.eventInvitationSeeVolunteersButton}
+                          onClick={() =>
+                            handleInvitationGroupToggle(signup.user.id)
                           }
-                          variant="small"
-                          altText=""
-                        />
-                      </button>
-                    </div>
+                          aria-expanded={Boolean(isInvitationGroupOpen)}
+                        >
+                          See Volunteers
+                          <CustomSvgs
+                            svgPath={
+                              isInvitationGroupOpen
+                                ? "/svgs/common/goUpIcon.svg"
+                                : "/svgs/common/goDownIcon.svg"
+                            }
+                            variant="small"
+                            altText=""
+                          />
+                        </button>
+                      </div>
+                      {isInvitationGroupOpen && (
+                        <div className={styles.eventInvitationGroupTools}>
+                          <div className={styles.eventVolunteerSearchWrap}>
+                            <CustomSvgs
+                              svgPath="/svgs/common/searchIcon.svg"
+                              variant="small"
+                              altText=""
+                            />
+                            <input
+                              type="search"
+                              placeholder="Search volunteers"
+                              value={invitationGroupSearches[signup.user.id] ?? ""}
+                              onChange={(event) =>
+                                handleInvitationGroupSearchChange(
+                                  signup.user.id,
+                                  event.target.value
+                                )
+                              }
+                            />
+                          </div>
+                          {canManageVolunteerCheckIns && (
+                            <button
+                              type="button"
+                              className={styles.eventVolunteerAddButton}
+                              onClick={() =>
+                                handleInvitationAddToggle(signup.user.id)
+                              }
+                            >
+                              Click Here To Add Volunteers
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      {isInvitationGroupOpen &&
+                        canManageVolunteerCheckIns &&
+                        activeInvitationAddGroupId === signup.user.id && (
+                        <div className={styles.eventInvitationGroupAddPanel}>
+                          <div className={styles.eventVolunteerSearchWrap}>
+                            <CustomSvgs
+                              svgPath="/svgs/common/searchIcon.svg"
+                              variant="small"
+                              altText=""
+                            />
+                            <input
+                              type="search"
+                              placeholder="Search people to add"
+                              value={invitationAddSearch}
+                              onChange={(event) =>
+                                setInvitationAddSearch(event.target.value)
+                              }
+                              autoFocus
+                            />
+                          </div>
+                          {invitationAddSearch.trim().length >= 3 && (
+                            <div className={styles.eventVolunteerAddPanel}>
+                              {addableInvitationVolunteerResults.map((result) => {
+                                const resultName =
+                                  result.fullName ||
+                                  `${result.firstName ?? ""} ${result.lastName ?? ""}`.trim();
+
+                                return (
+                                  <button
+                                    type="button"
+                                    key={result.id}
+                                    onClick={() =>
+                                      handleAddInvitationVolunteer(
+                                        result.id,
+                                        signup.user.id
+                                      )
+                                    }
+                                    disabled={isCheckInLocked}
+                                  >
+                                    <span>{resultName}</span>
+                                    <strong>Add</strong>
+                                  </button>
+                                );
+                              })}
+                              {addableInvitationVolunteerResults.length === 0 && (
+                                <p className={styles.eventVolunteerNoSearchResults}>
+                                  No volunteers found.
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
                 <div className={styles.eventVolunteerCheckIn}>
@@ -1656,6 +1860,21 @@ export const EventCard = ({
                       disabled={isCheckInLocked}
                     >
                       {checkButtonText}
+                    </button>
+                  )}
+                  {!signup.isInvitationGroup && canRemoveFromInvitationGroup && (
+                    <button
+                      type="button"
+                      className={styles.eventInvitationRemoveVolunteerButton}
+                      onClick={() =>
+                        handleRemoveInvitationVolunteer(
+                          signup.user.id,
+                          signup.effectiveInvitedByEntity?.id ?? ""
+                        )
+                      }
+                      disabled={isCheckInLocked}
+                    >
+                      Remove
                     </button>
                   )}
                   {!signup.isInvitationGroup && canShowApprovalActions && (
