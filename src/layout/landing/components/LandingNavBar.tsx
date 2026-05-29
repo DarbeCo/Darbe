@@ -4,7 +4,9 @@ import { IconButton, Menu, MenuItem } from "@mui/material";
 import darbeLogo from "/svgs/common/darbeLogo.svg";
 import { assetUrl } from "../../../utils/assetUrl";
 import useScreenWidthHook from "../../../utils/commonHooks/UseScreenWidth";
-import sigma from "/svgs/common/sigma.svg";
+
+import Login_icon from "/svgs/common/Login_icon.svg";
+
 
 import styles from "../styles/landingComponents.module.css";
 
@@ -54,7 +56,27 @@ export const LandingNavBar = () => {
                 }
               }}
             >
-              <img src={assetUrl(sigma)} alt="" />
+             Login
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                window.location.href = "signup";
+              }}
+
+              sx={{
+                color: "#263238",
+                fontSize: "18px",
+                lineHeight: "25px",
+                fontFamily: '"Open Sans", sans-serif',
+                borderBottom: "1px solid #2c77e7",
+                img: {
+                  width: "15px",
+                  height: "15px",
+                  marginRight: "8px",
+                }
+              }}
+            >
+             Sign Up
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -107,8 +129,11 @@ export const LandingNavBar = () => {
       )}
       {isDesktop && (
         <div className={styles.navLinksDesktop}>
-          <a className={styles.navLinkDesktopSigma} href="login">
-            <img src={assetUrl(sigma)} alt="" />
+          <a className={styles.navLinkDesktopText} href="login">
+            Login
+          </a>
+          <a className={styles.navLinkDesktopText} href="signup">
+            Sign Up
           </a>
           <a className={styles.navLinkDesktopText} href="#whatWeDo">
             What We Do

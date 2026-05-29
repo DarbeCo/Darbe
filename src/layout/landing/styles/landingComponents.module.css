@@ -262,6 +262,10 @@
     padding-inline: 10px;
     padding-top: 10px;
     height: 100px;
+    img {
+      width: 20px;
+      height: 20px;
+    }
   }
 }
 
@@ -286,7 +290,6 @@
   }
 
   .navLinksDesktop {
-    display: flex;
     flex-direction: row;
     justify-content: space-evenly;
     align-items: center;
@@ -319,8 +322,8 @@
     transition: 80ms;
     text-decoration: none;
     img {
-      width: 21px;
-      height: 21px;
+      width: 28px;
+      height: 28px;
     }
   }
 
