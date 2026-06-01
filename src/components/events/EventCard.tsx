@@ -247,6 +247,11 @@ type EventFieldEditState =
       field: "rosterId";
       label: string;
       rosterId: string;
+    }
+  | {
+      field: "eventPhotoVisibility";
+      label: string;
+      visibility: "public" | "private";
     };
 
 type VolunteerSignupRow = ShortEventState["signups"][number] & {
@@ -719,6 +724,10 @@ export const EventCard = ({
 
     if (eventFieldEditState.field === "rosterId") {
       update.rosterId = eventFieldEditState.rosterId || null;
+    }
+
+    if (eventFieldEditState.field === "eventPhotoVisibility") {
+      update.eventPhotoVisibility = eventFieldEditState.visibility;
     }
 
     try {
@@ -1361,6 +1370,23 @@ export const EventCard = ({
             });
           })}
         </div>
+        {canEditEventFields && event.isFollowersOnly && (
+          <div className={styles.eventEditableLine}>
+            <span className={styles.eventRosterText}>
+              <strong>Photo Visibility:</strong>{" "}
+              {(event.eventPhotoVisibility ?? "public") === "private"
+                ? "Private"
+                : "Public"}
+            </span>
+            {renderEditPencil("photo visibility", () =>
+              openEventFieldEdit({
+                field: "eventPhotoVisibility",
+                label: "Photo Visibility",
+                visibility: event.eventPhotoVisibility ?? "public",
+              })
+            )}
+          </div>
+        )}
       </div>
 
       {!impactView && (
@@ -2274,6 +2300,29 @@ export const EventCard = ({
                       {roster.rosterName}
                     </option>
                   ))}
+                </select>
+              </label>
+            )}
+            {eventFieldEditState.field === "eventPhotoVisibility" && (
+              <label>
+                <span>Photo Visibility</span>
+                <select
+                  value={eventFieldEditState.visibility}
+                  onChange={(event) =>
+                    setEventFieldEditState((currentState) =>
+                      currentState?.field === "eventPhotoVisibility"
+                        ? {
+                            ...currentState,
+                            visibility: event.target.value as
+                              | "public"
+                              | "private",
+                          }
+                        : currentState
+                    )
+                  }
+                >
+                  <option value="public">Public</option>
+                  <option value="private">Private</option>
                 </select>
               </label>
             )}

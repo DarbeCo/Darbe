@@ -129,6 +129,15 @@ export const EventDetails = ({
     setIsCoordinatorDropdownOpen(false);
   };
 
+  const handlePhotoVisibilityChange = (
+    visibility: "public" | "private"
+  ) => {
+    onChange?.((prevState) => ({
+      ...prevState,
+      eventPhotoVisibility: visibility,
+    }));
+  };
+
   const handleWaiverClick = (waiverType: "adultWaiver" | "minorWaiver") => {
     if (waiverType === "adultWaiver") {
       adultWaiverInputRef.current?.click();
@@ -597,6 +606,34 @@ export const EventDetails = ({
                 )}
               </div>
             </div>
+          </div>
+          <div className={styles.internalPhotoVisibilitySection}>
+            <span className={styles.internalOtherLabel}>Photo Visibility</span>
+            <div className={styles.internalPhotoVisibilityOptions}>
+              <label>
+                <input
+                  type="radio"
+                  name="eventPhotoVisibility"
+                  value="public"
+                  checked={(data.eventPhotoVisibility ?? "public") === "public"}
+                  onChange={() => handlePhotoVisibilityChange("public")}
+                />
+                <span>Public</span>
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="eventPhotoVisibility"
+                  value="private"
+                  checked={data.eventPhotoVisibility === "private"}
+                  onChange={() => handlePhotoVisibilityChange("private")}
+                />
+                <span>Private</span>
+              </label>
+            </div>
+            <p className={styles.internalPhotoVisibilityHint}>
+              Private photos can only be viewed by members.
+            </p>
           </div>
         </section>
 

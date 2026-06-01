@@ -784,6 +784,7 @@ export interface Database {
           is_outdoor: boolean | null;
           max_volunteer_count: number;
           event_cover_photo_url: string | null;
+          event_photo_visibility: string;
           event_coordinator_id: string;
           roster_id: string | null;
           adult_waiver_url: string | null;
@@ -807,6 +808,7 @@ export interface Database {
           is_outdoor?: boolean | null;
           max_volunteer_count: number;
           event_cover_photo_url?: string | null;
+          event_photo_visibility?: string;
           event_coordinator_id: string;
           roster_id?: string | null;
           adult_waiver_url?: string | null;
@@ -830,6 +832,7 @@ export interface Database {
           is_outdoor?: boolean | null;
           max_volunteer_count?: number;
           event_cover_photo_url?: string | null;
+          event_photo_visibility?: string;
           event_coordinator_id?: string;
           roster_id?: string | null;
           adult_waiver_url?: string | null;
@@ -1357,6 +1360,10 @@ export interface Database {
       get_current_volunteer_value_per_hour: {
         Args: Record<PropertyKey, never>;
         Returns: number;
+      };
+      can_view_event_photos: {
+        Args: { target_event_id: string };
+        Returns: boolean;
       };
       approve_all_event_volunteers: {
         Args: { target_event_id: string };

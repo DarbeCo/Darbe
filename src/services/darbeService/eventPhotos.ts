@@ -121,6 +121,36 @@ const getVisibleInternalEventOwnerIds = async (
   );
 };
 
+const canViewEventPhotos = async (eventId: string): Promise<boolean> => {
+  const { data, error } = await supabase.rpc("can_view_event_photos", {
+    target_event_id: eventId,
+  });
+
+  if (error) {
+    if ((error as { code?: string }).code === "PGRST202") {
+      return true;
+    }
+
+    throw error;
+  }
+
+  return Boolean(data);
+};
+
+const canUploadUnlimitedEventPhotos = async (
+  userId: string
+): Promise<boolean> => {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("user_type")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data?.user_type === "organization" || data?.user_type === "nonprofit";
+};
+
 export const uploadEventPhoto = async (
   eventId: string,
   file: File
@@ -138,16 +168,20 @@ export const uploadEventPhoto = async (
   }
 
   const userId = await ensureUserId();
-  const { count: currentPhotoCount, error: countError } = await supabase
-    .from("event_photos")
-    .select("id", { count: "exact", head: true })
-    .eq("event_id", eventId)
-    .eq("uploaded_by", userId);
+  const canUploadUnlimited = await canUploadUnlimitedEventPhotos(userId);
 
-  if (countError) throw countError;
+  if (!canUploadUnlimited) {
+    const { count: currentPhotoCount, error: countError } = await supabase
+      .from("event_photos")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", eventId)
+      .eq("uploaded_by", userId);
 
-  if ((currentPhotoCount ?? 0) >= MAX_EVENT_PHOTOS_PER_USER_PER_EVENT) {
-    throw new Error(EVENT_PHOTO_LIMIT_MESSAGE);
+    if (countError) throw countError;
+
+    if ((currentPhotoCount ?? 0) >= MAX_EVENT_PHOTOS_PER_USER_PER_EVENT) {
+      throw new Error(EVENT_PHOTO_LIMIT_MESSAGE);
+    }
   }
 
   const storagePath = `${eventId}/${crypto.randomUUID()}-${file.name}`;
@@ -200,6 +234,12 @@ export const uploadEventPhoto = async (
 export const getEventPhotos = async (
   eventId: string
 ): Promise<EventPhoto[]> => {
+  const canViewPhotos = await canViewEventPhotos(eventId);
+
+  if (!canViewPhotos) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from("event_photos")
     .select("id, event_id, uploaded_by, storage_path, created_at")
@@ -272,16 +312,26 @@ export const getEntityEventPhotoSummaries = async (
   const userId = await ensureUserId();
   const { data: events, error: eventsError } = await supabase
     .from("events")
-    .select("id, event_owner_id, event_name, event_date, event_cover_photo_url, is_followers_only")
+    .select("id, event_owner_id, event_name, event_date, event_cover_photo_url, is_followers_only, event_photo_visibility")
     .eq("event_owner_id", entityId);
 
   if (eventsError) throw eventsError;
 
   const visibleInternalOwnerIds = await getVisibleInternalEventOwnerIds(userId);
-  const visibleEvents = (events ?? []).filter(
+  const visibleEventsByInternalAccess = (events ?? []).filter(
     (event) =>
-      !event.is_followers_only ||
-      visibleInternalOwnerIds.has(event.event_owner_id)
+      (!event.is_followers_only ||
+        visibleInternalOwnerIds.has(event.event_owner_id)) &&
+      (event.event_photo_visibility !== "private" ||
+        visibleInternalOwnerIds.has(event.event_owner_id))
+  );
+  const visibleEvents = await Promise.all(
+    visibleEventsByInternalAccess.map(async (event) => ({
+      event,
+      canView: await canViewEventPhotos(event.id),
+    }))
+  ).then((results) =>
+    results.filter((result) => result.canView).map((result) => result.event)
   );
   const eventIds = visibleEvents.map((event) => event.id);
   if (!eventIds.length) return [];
@@ -336,15 +386,29 @@ export const getIndividualEventPhotoSummaries = async (
 
   const { data: events, error: eventsError } = await supabase
     .from("events")
-    .select("id, event_name, event_date, event_cover_photo_url")
+    .select("id, event_name, event_date, event_cover_photo_url, event_photo_visibility")
     .in("id", eventIds);
 
   if (eventsError) throw eventsError;
 
+  const visibleEvents = await Promise.all(
+    (events ?? []).map(async (event) => ({
+      event,
+      canView: await canViewEventPhotos(event.id),
+    }))
+  ).then((results) =>
+    results.filter((result) => result.canView).map((result) => result.event)
+  );
+  const visibleEventIds = visibleEvents.map((event) => event.id);
+
+  if (!visibleEventIds.length) {
+    return [];
+  }
+
   const { data: photos, error: photosError } = await supabase
     .from("event_photos")
     .select("event_id")
-    .in("event_id", eventIds);
+    .in("event_id", visibleEventIds);
 
   if (photosError) throw photosError;
 
@@ -356,7 +420,7 @@ export const getIndividualEventPhotoSummaries = async (
     );
   });
 
-  return (events ?? [])
+  return visibleEvents
     .map((event) => ({
       eventId: event.id,
       eventName: event.event_name ?? "",
