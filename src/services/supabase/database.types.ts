@@ -934,6 +934,8 @@ export interface Database {
           volunteer_location: string | null;
           volunteer_impact: string | null;
           invited_by_entity_id: string | null;
+          invitation_removed_at: string | null;
+          invitation_removed_by: string | null;
           created_at: string;
         };
         Insert: {
@@ -949,6 +951,8 @@ export interface Database {
           volunteer_location?: string | null;
           volunteer_impact?: string | null;
           invited_by_entity_id?: string | null;
+          invitation_removed_at?: string | null;
+          invitation_removed_by?: string | null;
           created_at?: string;
         };
         Update: {
@@ -964,6 +968,8 @@ export interface Database {
           volunteer_location?: string | null;
           volunteer_impact?: string | null;
           invited_by_entity_id?: string | null;
+          invitation_removed_at?: string | null;
+          invitation_removed_by?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -1228,6 +1234,8 @@ export interface Database {
           volunteer_location: string | null;
           volunteer_impact: string | null;
           invited_by_entity_id: string | null;
+          invitation_removed_at: string | null;
+          invitation_removed_by: string | null;
           full_name: string | null;
           first_name: string | null;
           last_name: string | null;

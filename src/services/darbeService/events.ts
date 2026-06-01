@@ -387,12 +387,30 @@ const buildShortEvents = async (
         .filter((id): id is string => Boolean(id))
     )
   );
-  const [signupJobTitleMap, invitedByEntityProfiles] = await Promise.all([
+  const invitationRemovedByIds = Array.from(
+    new Set(
+      (signupRowsRes.data ?? [])
+        .map((signup) => signup.invitation_removed_by)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+  const [
+    signupJobTitleMap,
+    invitedByEntityProfiles,
+    invitationRemovedByProfiles,
+  ] = await Promise.all([
     getJobTitleMap(signupUserIds),
     getProfilesByIds(invitedByEntityIds),
+    getProfilesByIds(invitationRemovedByIds),
   ]);
   const invitedByEntityMap = new Map(
     invitedByEntityProfiles.map((profile) => [
+      profile.id,
+      mapProfileToSimpleUserInfo(profile),
+    ])
+  );
+  const invitationRemovedByMap = new Map(
+    invitationRemovedByProfiles.map((profile) => [
       profile.id,
       mapProfileToSimpleUserInfo(profile),
     ])
@@ -418,6 +436,8 @@ const buildShortEvents = async (
       volunteerLocation?: string;
       volunteerImpact?: string;
       invitedByEntity?: SimpleUserInfo;
+      invitationRemovedAt?: string;
+      invitationRemovedBy?: SimpleUserInfo;
     }[]
   >();
 
@@ -446,6 +466,10 @@ const buildShortEvents = async (
       volunteerImpact: signup.volunteer_impact ?? undefined,
       invitedByEntity: signup.invited_by_entity_id
         ? invitedByEntityMap.get(signup.invited_by_entity_id)
+        : undefined,
+      invitationRemovedAt: signup.invitation_removed_at ?? undefined,
+      invitationRemovedBy: signup.invitation_removed_by
+        ? invitationRemovedByMap.get(signup.invitation_removed_by)
         : undefined,
     });
     signupsByEvent.set(signup.event_id, eventSignups);
@@ -2070,10 +2094,9 @@ export const markNoShowForEvent = async (
     throw new Error("Volunteer is required");
   }
 
-  const { error } = await supabase.rpc("manage_event_signup_check_time", {
+  const { error } = await supabase.rpc("deny_event_volunteer_as_no_show", {
     target_event_id: action.eventId,
     target_user_id: action.userId,
-    check_action: "no_show",
   });
 
   if (error) throw error;
@@ -2133,7 +2156,11 @@ export const addEventVolunteer = async (
 
   const { error: invitationError } = await supabase
     .from("event_signups")
-    .update({ invited_by_entity_id: action.invitedByEntityId })
+    .update({
+      invited_by_entity_id: action.invitedByEntityId,
+      invitation_removed_at: null,
+      invitation_removed_by: null,
+    })
     .eq("event_id", action.eventId)
     .eq("user_id", action.userId);
 
