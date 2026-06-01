@@ -1,7 +1,10 @@
 import { CircularProgress } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
-import { useGetUserImpactQuery } from "../../services/api/endpoints/impact/impact.api";
+import {
+  useGetUserImpactQuery,
+  useGetVolunteerValuePerHourQuery,
+} from "../../services/api/endpoints/impact/impact.api";
 import { EventImpact } from "../../services/api/endpoints/types/impact.api.types";
 import { useAppSelector } from "../../services/hooks";
 import { EVENTS_ROUTE, PROFILE_ROUTE } from "../../routes/route.constants";
@@ -10,8 +13,6 @@ import { selectCurrentUserId } from "../users/selectors";
 import { parseEventDateAsLocalDate } from "../../utils/eventDateUtils";
 
 import styles from "./styles/impact.module.css";
-
-const VOLUNTEER_VALUE_PER_HOUR = 33.49;
 
 const getOwnerName = (impact: EventImpact) =>
   impact.event.eventOwner.organizationName ||
@@ -31,35 +32,26 @@ const formatNumber = (value: number) =>
 
 const formatCurrency = (value: number) =>
   `$ ${value.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
 
-const getImpactMetric = (impact: EventImpact) => {
-  const { event, hoursVolunteered } = impact;
+const getImpactText = (impact: EventImpact) => {
+  const { event } = impact;
   const volunteerImpact = event.volunteerImpact;
   const hasIndividualImpact = volunteerImpact.isIndividualImpact;
-  const impactLabel = hasIndividualImpact
-    ? volunteerImpact.individualImpact
-    : volunteerImpact.groupImpact;
-  const impactRate = Number(
-    hasIndividualImpact
-      ? volunteerImpact.individualImpactPerHour
-      : volunteerImpact.groupImpactPerHour
-  );
-  const impactValue = Number.isFinite(impactRate)
-    ? impactRate * Math.max(hoursVolunteered, 1)
-    : undefined;
 
-  return {
-    label: impactLabel || "Impact",
-    value: impactValue === undefined ? "--" : formatNumber(impactValue),
-  };
+  return hasIndividualImpact
+    ? volunteerImpact.individualImpact || "Impact"
+    : volunteerImpact.groupImpact || "Impact";
 };
 
 const ImpactPage = () => {
   const navigate = useNavigate();
   const userId = useAppSelector(selectCurrentUserId);
   const { data: userImpacts = [], isLoading } = useGetUserImpactQuery(userId);
+  const { data: volunteerValuePerHour = 36.14 } =
+    useGetVolunteerValuePerHourQuery();
 
   const handleProfileClick = (ownerId: string) => {
     navigate(`${PROFILE_ROUTE}/${ownerId}`);
@@ -91,8 +83,8 @@ const ImpactPage = () => {
             owner.profilePicture || assetUrl("/images/defaultProfilePicture.jpg");
           const volunteerValue =
             impact.volunteerValue ||
-            impact.hoursVolunteered * VOLUNTEER_VALUE_PER_HOUR;
-          const impactMetric = getImpactMetric(impact);
+            impact.hoursVolunteered * volunteerValuePerHour;
+          const impactText = getImpactText(impact);
 
           return (
             <article className={styles.impactCard} key={impact.id}>
@@ -126,6 +118,11 @@ const ImpactPage = () => {
                     {formatDate(impact.event.eventDate)}
                   </time>
                   <p>{impact.event.eventDescription}</p>
+                  {impactText && (
+                    <p className={styles.impactEventImpact}>
+                      <strong>Impact:</strong> {impactText}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -139,8 +136,8 @@ const ImpactPage = () => {
                   <dd>Volunteer Value</dd>
                 </div>
                 <div>
-                  <dt>{impactMetric.value}</dt>
-                  <dd>{impactMetric.label}</dd>
+                  <dt className={styles.impactTextValue}>{impactText}</dt>
+                  <dd>Impact</dd>
                 </div>
               </dl>
             </article>

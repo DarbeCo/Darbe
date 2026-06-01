@@ -143,12 +143,6 @@ export const EventDetailCard = ({
     ? previewEventData?.maxVolunteerCount ?? 0
     : event?.maxVolunteerCount ?? 0;
   const signedUpVolunteers = `${signupCount}/${maxVolunteerCount} Volunteers`;
-  const individualImpactPerHourToUse = isPreview
-    ? previewEventData?.volunteerImpact?.individualImpactPerHour
-    : event?.volunteerImpact?.individualImpactPerHour;
-  const groupImpactPerHourToUse = isPreview
-    ? previewEventData?.volunteerImpact?.groupImpactPerHour
-    : event?.volunteerImpact?.groupImpactPerHour;
   const individualImpactToUse = isPreview
     ? previewEventData?.volunteerImpact?.individualImpact
     : event?.volunteerImpact?.individualImpact;
@@ -159,8 +153,8 @@ export const EventDetailCard = ({
     ? previewEventData?.volunteerImpact?.isIndividualImpact
     : event?.volunteerImpact?.isIndividualImpact;
   const volunteerImpact = hasIndividualImpact
-    ? `${individualImpactPerHourToUse ?? ""} ${individualImpactToUse ?? ""}`.trim()
-    : `${groupImpactPerHourToUse ?? ""} ${groupImpactToUse ?? ""}`.trim();
+    ? individualImpactToUse ?? ""
+    : groupImpactToUse ?? "";
   const eventNameToUse = isPreview
     ? previewEventData?.eventName
     : event?.eventName;

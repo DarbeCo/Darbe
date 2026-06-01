@@ -14,6 +14,7 @@ import {
 } from "../../../../components/modal/modalSlice";
 import { ProfileFriendState } from "../../../friends/types";
 import { formatPhoneNumber } from "../../../../utils/formUtils/formUtils";
+import { useGetVolunteerValuePerHourQuery } from "../../../../services/api/endpoints/impact/impact.api";
 
 import styles from "../styles/userProfiles.module.css";
 
@@ -55,6 +56,12 @@ const getExternalWebsiteUrl = (website?: string) => {
     : `https://${trimmedWebsite}`;
 };
 
+const formatCurrency = (value: number) =>
+  value.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
 // TODO: too big, split into smaller components
 export const UserQuickInfo = ({
   canEdit,
@@ -85,6 +92,8 @@ export const UserQuickInfo = ({
   isEntity,
 }: UserQuickInfoProps) => {
   const dispatch = useAppDispatch();
+  const { data: volunteerValuePerHour = 36.14 } =
+    useGetVolunteerValuePerHourQuery();
   const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
   const formattedContactNumber = formatPhoneNumber(contactNumber);
   const websiteUrl = getExternalWebsiteUrl(website);
@@ -106,7 +115,7 @@ export const UserQuickInfo = ({
     ? state
     : getUserStateFromZip(zipCode)?.state;
   const monetaryVolunteerValue = volunteerHours
-    ? Math.floor(volunteerHours * 33.49)
+    ? volunteerHours * volunteerValuePerHour
     : 0;
   const formattedVolunteerHours = Number.isInteger(volunteerHours ?? 0)
     ? `${volunteerHours ?? 0}`
@@ -210,7 +219,7 @@ export const UserQuickInfo = ({
             />
             <Typography
               variant="informational"
-              textToDisplay={`$${monetaryVolunteerValue.toLocaleString("en-US")} Volunteer Value`}
+              textToDisplay={`$${formatCurrency(monetaryVolunteerValue)} Volunteer Value`}
             />
           </div>
         </div>

@@ -13,6 +13,7 @@ import type { SimpleUserInfo } from "../api/endpoints/types/user.api.types";
 import { supabase } from "../supabase/client";
 import { ensureUserId } from "./utils";
 import { getProfilesByIds, mapProfileToSimpleUserInfo } from "./profiles";
+import { getVolunteerValuePerHour } from "./volunteerValue";
 import {
   getEventTimeParts,
   parseEventDateAsLocalDate,
@@ -783,6 +784,7 @@ const ensureApprovedVolunteerImpact = async (
     signup.check_in_at,
     signup.check_out_at
   );
+  const volunteerValuePerHour = await getVolunteerValuePerHour();
   const { data: existingImpact, error: existingImpactError } = await supabase
     .from("impact")
     .select("id")
@@ -799,6 +801,7 @@ const ensureApprovedVolunteerImpact = async (
         user_type: profile.user_type,
         events_attended: 1,
         hours_volunteered: hoursVolunteered,
+        volunteer_value_per_hour: volunteerValuePerHour,
       })
       .eq("id", existingImpact.id);
 
@@ -815,6 +818,7 @@ const ensureApprovedVolunteerImpact = async (
     events_passed: 0,
     events_coordinated: 0,
     hours_volunteered: hoursVolunteered,
+    volunteer_value_per_hour: volunteerValuePerHour,
   });
 
   if (insertError) throw insertError;
@@ -835,7 +839,7 @@ const syncApprovedVolunteerImpactSummary = async (
 
   const { data: approvedImpacts, error: impactError } = await supabase
     .from("impact")
-    .select("hours_volunteered, events_attended")
+    .select("hours_volunteered, events_attended, volunteer_value_per_hour")
     .eq("impact_owner_id", userId)
     .not("event_id", "is", null)
     .gt("events_attended", 0);
@@ -861,12 +865,15 @@ const syncApprovedVolunteerImpactSummary = async (
 
   if (summaryError) throw summaryError;
 
+  const currentVolunteerValuePerHour = await getVolunteerValuePerHour();
+
   if (existingSummary) {
     const { error: updateError } = await supabase
       .from("impact")
       .update({
         events_attended: summary.eventsAttended,
         hours_volunteered: summary.hoursVolunteered,
+        volunteer_value_per_hour: currentVolunteerValuePerHour,
       })
       .eq("id", existingSummary.id);
 
@@ -881,6 +888,7 @@ const syncApprovedVolunteerImpactSummary = async (
       events_passed: 0,
       events_coordinated: 0,
       hours_volunteered: summary.hoursVolunteered,
+      volunteer_value_per_hour: currentVolunteerValuePerHour,
     });
 
     if (insertError) throw insertError;
@@ -2069,6 +2077,37 @@ export const addEventVolunteer = async (
     throw new Error("Volunteer is required");
   }
 
+  if (action.invitedByEntityId) {
+    const { data: inviterProfile, error: inviterProfileError } = await supabase
+      .from("profiles")
+      .select("user_type")
+      .eq("id", action.invitedByEntityId)
+      .single();
+
+    if (inviterProfileError) throw inviterProfileError;
+
+    if (["organization", "nonprofit"].includes(inviterProfile?.user_type ?? "")) {
+      const { data: memberIds, error: memberIdsError } = await supabase.rpc(
+        "get_entity_roster_member_ids",
+        {
+          target_entity_id: action.invitedByEntityId,
+        }
+      );
+
+      if (memberIdsError) throw memberIdsError;
+
+      const isEntityMember = (memberIds ?? []).some(
+        (member) => member.user_id === action.userId
+      );
+
+      if (!isEntityMember) {
+        throw new Error(
+          "Only organization members can be added to this volunteer list."
+        );
+      }
+    }
+  }
+
   const { error } = await supabase.rpc("manage_event_signup_check_time", {
     target_event_id: action.eventId,
     target_user_id: action.userId,
@@ -2153,6 +2192,23 @@ export const removeEventInvitationVolunteer = async (
     target_event_id: action.eventId,
     target_user_id: action.userId,
     target_inviter_entity_id: action.invitedByEntityId,
+  });
+
+  if (error) throw error;
+};
+
+export const removeEventVolunteer = async (
+  action: EventSignupAction
+): Promise<void> => {
+  await ensureUserId();
+
+  if (!action.userId) {
+    throw new Error("Volunteer is required");
+  }
+
+  const { error } = await supabase.rpc("remove_event_volunteer_signup", {
+    target_event_id: action.eventId,
+    target_user_id: action.userId,
   });
 
   if (error) throw error;
@@ -2609,6 +2665,8 @@ export const getVolunteerMatches = async (): Promise<VolunteerMatch[]> => {
     causesByUser.set(row.user_id, list);
   });
 
+  const currentVolunteerValuePerHour = await getVolunteerValuePerHour();
+
   return (profiles ?? []).map((profile) => {
     const details = detailMap.get(profile.id);
     const impact = impactMap.get(profile.id);
@@ -2645,7 +2703,7 @@ export const getVolunteerMatches = async (): Promise<VolunteerMatch[]> => {
       matchedEventCount: matchedEventIdsByUser.get(profile.id)?.size ?? 0,
       volunteerSummary: {
         hoursVolunteered,
-        volunteerValue: hoursVolunteered * 33.49,
+        volunteerValue: hoursVolunteered * currentVolunteerValuePerHour,
         eventsAttended,
       },
     };

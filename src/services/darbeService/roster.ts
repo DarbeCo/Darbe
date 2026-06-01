@@ -11,8 +11,8 @@ import type { Cause } from "../types/cause.types";
 import { supabase } from "../supabase/client";
 import { ensureUserId } from "./utils";
 import { getProfilesByIds, mapProfileToSimpleUserInfo } from "./profiles";
+import { getVolunteerValuePerHour } from "./volunteerValue";
 
-const VOLUNTEER_VALUE_PER_HOUR = 33.49;
 const FOLLOWERS_ROSTER_NAME = "Followers";
 const MEMBER_ROSTER_NAME = "Member Roster";
 const VOLUNTEER_COORDINATORS_ROSTER_NAME = "Volunteer Coordinators";
@@ -358,6 +358,8 @@ const mapRosterMembers = async (
     }
   });
 
+  const volunteerValuePerHour = await getVolunteerValuePerHour();
+
   return rows.map((row) => {
     const profile = profileMap.get(row.user_id);
     const user: SimpleUserInfo = profile
@@ -394,7 +396,7 @@ const mapRosterMembers = async (
       causes: causesByUser.get(row.user_id) ?? [],
       volunteerSummary: {
         hoursVolunteered,
-        volunteerValue: hoursVolunteered * VOLUNTEER_VALUE_PER_HOUR,
+        volunteerValue: hoursVolunteered * volunteerValuePerHour,
         eventsAttended: Number(impact?.events_attended ?? 0),
       },
     } as RosterMember & { rosterId: string };

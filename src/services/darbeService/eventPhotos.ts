@@ -10,6 +10,8 @@ export const ALLOWED_EVENT_PHOTO_MIME_TYPES = [
 ] as const;
 
 export const MAX_EVENT_PHOTO_BYTES = 10 * 1024 * 1024;
+export const MAX_EVENT_PHOTOS_PER_USER_PER_EVENT = 5;
+const EVENT_PHOTO_LIMIT_MESSAGE = `You can upload up to ${MAX_EVENT_PHOTOS_PER_USER_PER_EVENT} photos per event.`;
 
 export interface EventPhoto {
   id: string;
@@ -34,6 +36,16 @@ const getPublicUrl = (storagePath: string): string => {
     .from("event-photos")
     .getPublicUrl(storagePath);
   return data.publicUrl;
+};
+
+const isPolicyViolationError = (error: unknown) => {
+  const message = (error as { message?: string })?.message ?? "";
+  const code = (error as { code?: string })?.code ?? "";
+
+  return (
+    code === "42501" ||
+    message.toLowerCase().includes("row-level security policy")
+  );
 };
 
 const fetchUploadersByIds = async (
@@ -126,13 +138,31 @@ export const uploadEventPhoto = async (
   }
 
   const userId = await ensureUserId();
+  const { count: currentPhotoCount, error: countError } = await supabase
+    .from("event_photos")
+    .select("id", { count: "exact", head: true })
+    .eq("event_id", eventId)
+    .eq("uploaded_by", userId);
+
+  if (countError) throw countError;
+
+  if ((currentPhotoCount ?? 0) >= MAX_EVENT_PHOTOS_PER_USER_PER_EVENT) {
+    throw new Error(EVENT_PHOTO_LIMIT_MESSAGE);
+  }
+
   const storagePath = `${eventId}/${crypto.randomUUID()}-${file.name}`;
 
   const { error: uploadError } = await supabase.storage
     .from("event-photos")
     .upload(storagePath, file, { contentType: file.type });
 
-  if (uploadError) throw uploadError;
+  if (uploadError) {
+    if (isPolicyViolationError(uploadError)) {
+      throw new Error(EVENT_PHOTO_LIMIT_MESSAGE);
+    }
+
+    throw uploadError;
+  }
 
   const { data: inserted, error: insertError } = await supabase
     .from("event_photos")
@@ -146,6 +176,11 @@ export const uploadEventPhoto = async (
 
   if (insertError || !inserted) {
     await supabase.storage.from("event-photos").remove([storagePath]);
+
+    if (insertError && isPolicyViolationError(insertError)) {
+      throw new Error(EVENT_PHOTO_LIMIT_MESSAGE);
+    }
+
     throw insertError ?? new Error("Failed to record photo");
   }
 

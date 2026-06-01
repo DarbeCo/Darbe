@@ -39,6 +39,7 @@ import {
   useCheckOutFromEventMutation,
   useDenyEventVolunteerMutation,
   useRemoveEventInvitationVolunteerMutation,
+  useRemoveEventVolunteerMutation,
   useUnvolunteerFromEventMutation,
   useUpdateEventDetailsMutation,
   useUpdateEventSignupImpactDetailsMutation,
@@ -123,9 +124,6 @@ const timeInputValueToDecimalHour = (time: string) => {
   return Number(`${hour}.${minute.toString().padStart(2, "0")}`);
 };
 
-const formatImpactNumber = (value: number) =>
-  Number.isInteger(value) ? value.toString() : value.toFixed(2);
-
 const formatVolunteerActionTime = (timestamp?: string) => {
   if (!timestamp) {
     return "";
@@ -193,6 +191,18 @@ const timeInputValueToDisplayTime = (value?: string) => {
   });
 };
 
+const getSearchResultDisplayName = (result: {
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
+  organizationName?: string;
+  nonprofitName?: string;
+}) =>
+  result.fullName ||
+  result.organizationName ||
+  result.nonprofitName ||
+  `${result.firstName ?? ""} ${result.lastName ?? ""}`.trim();
+
 type ImpactEditState = {
   signupId: string;
   startTime: string;
@@ -248,6 +258,9 @@ type VolunteerSignupRow = ShortEventState["signups"][number] & {
   invitedVolunteerCheckedInCount?: number;
 };
 
+const isInvitationEntityUser = (user: SimpleUserInfo) =>
+  user.userType === "organization" || user.userType === "nonprofit";
+
 export const EventCard = ({
   event,
   isSignedUp,
@@ -294,6 +307,8 @@ export const EventCard = ({
     removeEventInvitationVolunteer,
     { isLoading: isRemovingInvitationVolunteer },
   ] = useRemoveEventInvitationVolunteerMutation();
+  const [removeEventVolunteer, { isLoading: isRemovingEventVolunteer }] =
+    useRemoveEventVolunteerMutation();
   const [approveAllEventVolunteers, { isLoading: isApprovingAllVolunteers }] =
     useApproveAllEventVolunteersMutation();
   const [updateEventDetails, { isLoading: isUpdatingEventDetails }] =
@@ -322,9 +337,6 @@ export const EventCard = ({
   >(new Set());
   const [isAddVolunteerOpen, setIsAddVolunteerOpen] = useState(false);
   const [addVolunteerSearch, setAddVolunteerSearch] = useState("");
-  const [invitationGroupSearches, setInvitationGroupSearches] = useState<
-    Record<string, string>
-  >({});
   const [activeInvitationAddGroupId, setActiveInvitationAddGroupId] =
     useState<string | null>(null);
   const [invitationAddSearch, setInvitationAddSearch] = useState("");
@@ -340,6 +352,28 @@ export const EventCard = ({
   const [impactDetailOverrides, setImpactDetailOverrides] = useState<
     Record<string, Omit<ImpactEditState, "signupId">>
   >({});
+  const activeInvitationAddEntity = activeInvitationAddGroupId
+    ? event.signups?.find((signup) => signup.user.id === activeInvitationAddGroupId)
+        ?.user ??
+      event.signups?.find(
+        (signup) => signup.invitedByEntity?.id === activeInvitationAddGroupId
+      )?.invitedByEntity ??
+      additionalVolunteerCoordinators.find(
+        (coordinator) => coordinator.id === activeInvitationAddGroupId
+      ) ??
+      (event.eventCoordinator?.id === activeInvitationAddGroupId
+        ? event.eventCoordinator
+        : undefined)
+    : undefined;
+  const isActiveInvitationAddEntityUser = activeInvitationAddEntity
+    ? isInvitationEntityUser(activeInvitationAddEntity)
+    : false;
+  const { data: activeInvitationEntityRosters = [] } = useGetRostersQuery(
+    activeInvitationAddGroupId ?? "",
+    {
+      skip: !activeInvitationAddGroupId || !isActiveInvitationAddEntityUser,
+    }
+  );
   const activeAddVolunteerSearch =
     activeInvitationAddGroupId ? invitationAddSearch : addVolunteerSearch;
   const { data: addVolunteerResults = [] } = useGetSearchResultsQuery(
@@ -365,16 +399,6 @@ export const EventCard = ({
 
       return nextGroupIds;
     });
-  };
-
-  const handleInvitationGroupSearchChange = (
-    inviterId: string,
-    value: string
-  ) => {
-    setInvitationGroupSearches((searches) => ({
-      ...searches,
-      [inviterId]: value,
-    }));
   };
 
   const handleInvitationAddToggle = (inviterId: string) => {
@@ -471,6 +495,8 @@ export const EventCard = ({
       }).unwrap();
       setAddVolunteerSearch("");
       setIsAddVolunteerOpen(false);
+      setApprovalDialogMessage("Volunteer Added");
+      setTimeout(() => setApprovalDialogMessage(""), 1400);
     } catch (error) {
       console.error("Error adding volunteer to event", error);
     }
@@ -493,6 +519,8 @@ export const EventCard = ({
         nextGroupIds.add(invitedByEntityId);
         return nextGroupIds;
       });
+      setApprovalDialogMessage("Volunteer Added");
+      setTimeout(() => setApprovalDialogMessage(""), 1400);
     } catch (error) {
       console.error("Error adding volunteer to invitation group", error);
     }
@@ -534,6 +562,17 @@ export const EventCard = ({
       }).unwrap();
     } catch (error) {
       console.error("Error removing volunteer from organization list", error);
+    }
+  };
+
+  const handleRemoveEventVolunteer = async (targetUserId: string) => {
+    try {
+      await removeEventVolunteer({
+        eventId: event.id,
+        userId: targetUserId,
+      }).unwrap();
+    } catch (error) {
+      console.error("Error removing volunteer from event", error);
     }
   };
 
@@ -662,13 +701,13 @@ export const EventCard = ({
       update.volunteerImpact = {
         ...event.volunteerImpact,
         individualImpactPerHour: isIndividual
-          ? eventFieldEditState.amount.trim()
+          ? ""
           : event.volunteerImpact.individualImpactPerHour,
         individualImpact: isIndividual
           ? eventFieldEditState.impact.trim()
           : event.volunteerImpact.individualImpact,
         groupImpactPerHour: !isIndividual
-          ? eventFieldEditState.amount.trim()
+          ? ""
           : event.volunteerImpact.groupImpactPerHour,
         groupImpact: !isIndividual
           ? eventFieldEditState.impact.trim()
@@ -743,9 +782,6 @@ export const EventCard = ({
     month: "short",
     day: "numeric",
   });
-  const calculatedEventDuration = event.endTime
-    ? event.endTime - event.startTime
-    : undefined;
   const formattedStartTime = formatDarbeTimeToString(event.startTime);
   const today = new Date();
   const todayTime = new Date(
@@ -785,6 +821,7 @@ export const EventCard = ({
     isApprovingVolunteer ||
     isDenyingVolunteer ||
     isRemovingInvitationVolunteer ||
+    isRemovingEventVolunteer ||
     isApprovingAllVolunteers ||
     isUpdatingImpactDetails ||
     isUpdatingEventTime;
@@ -811,42 +848,46 @@ export const EventCard = ({
         (coordinator) => coordinator.id === signup.user.id
       )
   );
-  const fallbackVolunteerCoordinator = volunteerCoordinators.find(
-    (coordinator) =>
-      coordinator.userType === "organization" ||
-      coordinator.userType === "nonprofit"
-  );
   const getVolunteerDisplayName = (user: SimpleUserInfo) =>
     user.fullName ||
     user.organizationName ||
     user.nonprofitName ||
     `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim();
-  const matchesInvitationGroupSearch = (
-    signup: ShortEventState["signups"][number],
-    searchValue: string
+  const getVolunteerLastNameSortValue = (
+    signup: ShortEventState["signups"][number]
   ) => {
-    const normalizedSearchValue = searchValue.trim().toLowerCase();
+    const displayNameParts = getVolunteerDisplayName(signup.user)
+      .trim()
+      .split(/\s+/);
 
-    if (!normalizedSearchValue) {
-      return true;
-    }
-
-    return [
-      getVolunteerDisplayName(signup.user),
-      signup.user.firstName,
-      signup.user.lastName,
-      signup.user.fullName,
-      signup.user.jobTitle,
-    ]
-      .filter(Boolean)
-      .some((value) => value?.toLowerCase().includes(normalizedSearchValue));
+    return (
+      signup.user.lastName ||
+      displayNameParts[displayNameParts.length - 1] ||
+      ""
+    ).toLowerCase();
   };
+  const sortVolunteerSignupsByLastName = (
+    signups: ShortEventState["signups"]
+  ) =>
+    [...signups].sort((firstSignup, secondSignup) => {
+      const lastNameComparison = getVolunteerLastNameSortValue(
+        firstSignup
+      ).localeCompare(getVolunteerLastNameSortValue(secondSignup));
+
+      if (lastNameComparison !== 0) {
+        return lastNameComparison;
+      }
+
+      return getVolunteerDisplayName(firstSignup.user).localeCompare(
+        getVolunteerDisplayName(secondSignup.user)
+      );
+    });
   const signupsByInviter = new Map<string, ShortEventState["signups"]>();
   const inviterById = new Map<string, NonNullable<ShortEventState["signups"][number]["invitedByEntity"]>>();
   const ungroupedSignups: ShortEventState["signups"] = [];
 
   nonCoordinatorSignups.forEach((signup) => {
-    const invitedByEntity = signup.invitedByEntity ?? fallbackVolunteerCoordinator;
+    const invitedByEntity = signup.invitedByEntity;
 
     if (!invitedByEntity?.id) {
       ungroupedSignups.push(signup);
@@ -865,10 +906,7 @@ export const EventCard = ({
         (signup) => signup.user.id === coordinator.id
       );
       const groupSignups = signupsByInviter.get(coordinator.id) ?? [];
-      const groupSearchValue = invitationGroupSearches[coordinator.id] ?? "";
-      const visibleGroupSignups = groupSignups.filter((signup) =>
-        matchesInvitationGroupSearch(signup, groupSearchValue)
-      );
+      const visibleGroupSignups = sortVolunteerSignupsByLastName(groupSignups);
       const hasInvitedVolunteers = groupSignups.length > 0;
       const coordinatorRow: VolunteerSignupRow = {
         id: coordinatorSignup?.id ?? `coordinator-${coordinator.id}`,
@@ -908,19 +946,60 @@ export const EventCard = ({
           ...signup,
           isCoordinator: false,
           isInvitationChild: true,
-          effectiveInvitedByEntity: signup.invitedByEntity ?? coordinator,
+          effectiveInvitedByEntity: signup.invitedByEntity,
         })),
       ];
     });
+
+  const parentVolunteerRows: VolunteerSignupRow[] = ungroupedSignups.flatMap(
+    (signup) => {
+      const groupSignups = signupsByInviter.get(signup.user.id) ?? [];
+      const visibleGroupSignups = sortVolunteerSignupsByLastName(groupSignups);
+      const shouldShowAsInvitationGroup =
+        isInvitationEntityUser(signup.user) || groupSignups.length > 0;
+
+      if (!shouldShowAsInvitationGroup) {
+        return [
+          {
+            ...signup,
+            isCoordinator: false,
+          },
+        ];
+      }
+
+      signupsByInviter.delete(signup.user.id);
+
+      const parentRow: VolunteerSignupRow = {
+        ...signup,
+        isCoordinator: false,
+        isInvitationGroup: true,
+        invitedVolunteerCount: groupSignups.length,
+        invitedVolunteerCheckedInCount: groupSignups.filter((signup) =>
+          Boolean(signup.checkInAt)
+        ).length,
+      };
+
+      if (!openInvitationGroupIds.has(signup.user.id)) {
+        return [parentRow];
+      }
+
+      return [
+        parentRow,
+        ...visibleGroupSignups.map((signup): VolunteerSignupRow => ({
+          ...signup,
+          isCoordinator: false,
+          isInvitationChild: true,
+          effectiveInvitedByEntity: signup.invitedByEntity,
+        })),
+      ];
+    }
+  );
 
   const invitationVolunteerRows: VolunteerSignupRow[] = Array.from(
     signupsByInviter.entries()
   ).flatMap(([inviterId, groupSignups]) => {
     const inviter = inviterById.get(inviterId);
-    const groupSearchValue = invitationGroupSearches[inviterId] ?? "";
-    const visibleGroupSignups = groupSignups.filter((signup) =>
-      matchesInvitationGroupSearch(signup, groupSearchValue)
-    );
+    const visibleGroupSignups = sortVolunteerSignupsByLastName(groupSignups);
 
     if (!inviter) {
       return visibleGroupSignups.map((signup): VolunteerSignupRow => ({
@@ -954,18 +1033,15 @@ export const EventCard = ({
         ...signup,
         isCoordinator: false,
         isInvitationChild: true,
-        effectiveInvitedByEntity: signup.invitedByEntity ?? inviter,
+        effectiveInvitedByEntity: signup.invitedByEntity,
       })),
     ];
   });
 
   const volunteerRows: VolunteerSignupRow[] = [
     ...coordinatorVolunteerRow,
+    ...parentVolunteerRows,
     ...invitationVolunteerRows,
-    ...ungroupedSignups.map((signup): VolunteerSignupRow => ({
-      ...signup,
-      isCoordinator: false,
-    })),
   ];
   const volunteerUserIds = new Set(volunteerRows.map((signup) => signup.user.id));
   const addableVolunteerResults = addVolunteerResults.filter(
@@ -974,9 +1050,17 @@ export const EventCard = ({
         result.userType ?? ""
       ) && !volunteerUserIds.has(result.id)
   );
+  const activeInvitationEntityMemberIds = new Set(
+    activeInvitationEntityRosters.flatMap((roster) =>
+      roster.members.map((member) => member.user.id)
+    )
+  );
   const addableInvitationVolunteerResults = addVolunteerResults.filter(
     (result) =>
-      result.userType === "individual" && !volunteerUserIds.has(result.id)
+      result.userType === "individual" &&
+      !volunteerUserIds.has(result.id) &&
+      (!isActiveInvitationAddEntityUser ||
+        activeInvitationEntityMemberIds.has(result.id))
   );
   const rosterOptions = [...eventOwnerRosters].sort((firstRoster, secondRoster) =>
     firstRoster.rosterName.localeCompare(secondRoster.rosterName)
@@ -1012,46 +1096,16 @@ export const EventCard = ({
     currentUserCheckedIn &&
     !currentUserCheckedOut;
 
-  // TODO: Move out to a hook/util?
   const calculateEventImpact = () => {
-    let totalEventGroupGoal;
-    let totalEventIndivdualGoal;
-    let eventImpactText = "";
-
     if (event.volunteerImpact.isIndividualImpact) {
-      if (calculatedEventDuration) {
-        totalEventIndivdualGoal =
-          Number(event.volunteerImpact.individualImpactPerHour ?? "1") *
-          event.maxVolunteerCount *
-          calculatedEventDuration;
-
-        eventImpactText = `${formatImpactNumber(totalEventIndivdualGoal)} ${event.volunteerImpact.individualImpact}`;
-      } else {
-        totalEventIndivdualGoal =
-          Number(event.volunteerImpact.individualImpactPerHour ?? "1") *
-          event.maxVolunteerCount;
-
-        eventImpactText = `${formatImpactNumber(totalEventIndivdualGoal)} ${event.volunteerImpact.individualImpact}`;
-      }
+      return event.volunteerImpact.individualImpact ?? "";
     }
+
     if (event.volunteerImpact.isGroupImpact) {
-      if (calculatedEventDuration) {
-        totalEventGroupGoal =
-          Number(event.volunteerImpact.groupImpactPerHour ?? "1") *
-          event.maxVolunteerCount *
-          calculatedEventDuration;
-
-        eventImpactText = `${formatImpactNumber(totalEventGroupGoal)} ${event.volunteerImpact.groupImpact}`;
-      } else {
-        totalEventGroupGoal =
-          Number(event.volunteerImpact.groupImpactPerHour ?? "1") *
-          event.maxVolunteerCount;
-
-        eventImpactText = `${formatImpactNumber(totalEventGroupGoal)} ${event.volunteerImpact.groupImpact}`;
-      }
+      return event.volunteerImpact.groupImpact ?? "";
     }
 
-    return eventImpactText;
+    return "";
   };
 
   const handleDetailsClick = () => {
@@ -1476,9 +1530,7 @@ export const EventCard = ({
             addVolunteerSearch.trim().length >= 3 && (
             <div className={styles.eventVolunteerAddPanel}>
               {addableVolunteerResults.map((result) => {
-                const resultName =
-                  result.fullName ||
-                  `${result.firstName ?? ""} ${result.lastName ?? ""}`.trim();
+                const resultName = getSearchResultDisplayName(result);
 
                 return (
                   <button
@@ -1585,6 +1637,13 @@ export const EventCard = ({
                 (canManageVolunteerCheckIns ||
                   signup.effectiveInvitedByEntity.id === currentUserId)
             );
+            const canRemoveParentVolunteer =
+              canManageVolunteerCheckIns &&
+              hasSignupRecord &&
+              !signup.isInvitationChild &&
+              !isVolunteerCoordinator &&
+              (signup.status === "volunteered" ||
+                signup.status === "confirmed");
             const canEditImpactDetails =
               canManageVolunteerCheckIns &&
               isCheckableUser &&
@@ -1716,46 +1775,42 @@ export const EventCard = ({
                           Check in status: {signup.invitedVolunteerCheckedInCount ?? 0}/
                           {event.maxVolunteerCount} Volunteers Checked in
                         </strong>
-                        <button
-                          type="button"
-                          className={styles.eventInvitationSeeVolunteersButton}
-                          onClick={() =>
-                            handleInvitationGroupToggle(signup.user.id)
-                          }
-                          aria-expanded={Boolean(isInvitationGroupOpen)}
-                        >
-                          See Volunteers
-                          <CustomSvgs
-                            svgPath={
-                              isInvitationGroupOpen
-                                ? "/svgs/common/goUpIcon.svg"
-                                : "/svgs/common/goDownIcon.svg"
+                        <div className={styles.eventInvitationGroupActions}>
+                          {canRemoveParentVolunteer && (
+                            <button
+                              type="button"
+                              className={styles.eventInvitationRemoveVolunteerButton}
+                              onClick={() =>
+                                handleRemoveEventVolunteer(signup.user.id)
+                              }
+                              disabled={isCheckInLocked}
+                            >
+                              Remove
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className={styles.eventInvitationSeeVolunteersButton}
+                            onClick={() =>
+                              handleInvitationGroupToggle(signup.user.id)
                             }
-                            variant="small"
-                            altText=""
-                          />
-                        </button>
-                      </div>
-                      {isInvitationGroupOpen && (
-                        <div className={styles.eventInvitationGroupTools}>
-                          <div className={styles.eventVolunteerSearchWrap}>
+                            aria-expanded={Boolean(isInvitationGroupOpen)}
+                          >
+                            See Volunteers
                             <CustomSvgs
-                              svgPath="/svgs/common/searchIcon.svg"
+                              svgPath={
+                                isInvitationGroupOpen
+                                  ? "/svgs/common/goUpIcon.svg"
+                                  : "/svgs/common/goDownIcon.svg"
+                              }
                               variant="small"
                               altText=""
                             />
-                            <input
-                              type="search"
-                              placeholder="Search volunteers"
-                              value={invitationGroupSearches[signup.user.id] ?? ""}
-                              onChange={(event) =>
-                                handleInvitationGroupSearchChange(
-                                  signup.user.id,
-                                  event.target.value
-                                )
-                              }
-                            />
-                          </div>
+                          </button>
+                        </div>
+                      </div>
+                      {isInvitationGroupOpen && (
+                        <div className={styles.eventInvitationGroupTools}>
                           {canManageVolunteerCheckIns && (
                             <button
                               type="button"
@@ -1781,7 +1836,7 @@ export const EventCard = ({
                             />
                             <input
                               type="search"
-                              placeholder="Search people to add"
+                              placeholder="Search members to add"
                               value={invitationAddSearch}
                               onChange={(event) =>
                                 setInvitationAddSearch(event.target.value)
@@ -1793,8 +1848,7 @@ export const EventCard = ({
                             <div className={styles.eventVolunteerAddPanel}>
                               {addableInvitationVolunteerResults.map((result) => {
                                 const resultName =
-                                  result.fullName ||
-                                  `${result.firstName ?? ""} ${result.lastName ?? ""}`.trim();
+                                  getSearchResultDisplayName(result);
 
                                 return (
                                   <button
@@ -1872,6 +1926,16 @@ export const EventCard = ({
                           signup.effectiveInvitedByEntity?.id ?? ""
                         )
                       }
+                      disabled={isCheckInLocked}
+                    >
+                      Remove
+                    </button>
+                  )}
+                  {canRemoveParentVolunteer && (
+                    <button
+                      type="button"
+                      className={styles.eventInvitationRemoveVolunteerButton}
+                      onClick={() => handleRemoveEventVolunteer(signup.user.id)}
                       disabled={isCheckInLocked}
                     >
                       Remove
@@ -2177,20 +2241,7 @@ export const EventCard = ({
                   </select>
                 </label>
                 <label>
-                  <span>Amount</span>
-                  <input
-                    value={eventFieldEditState.amount}
-                    onChange={(event) =>
-                      setEventFieldEditState((currentState) =>
-                        currentState?.field === "volunteerImpact"
-                          ? { ...currentState, amount: event.target.value }
-                          : currentState
-                      )
-                    }
-                  />
-                </label>
-                <label>
-                  <span>Impact</span>
+                  <span>Impact Text</span>
                   <input
                     value={eventFieldEditState.impact}
                     onChange={(event) =>

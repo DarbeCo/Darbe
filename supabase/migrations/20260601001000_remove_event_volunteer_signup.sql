@@ -1,9 +1,6 @@
-drop function if exists public.remove_event_invitation_volunteer(uuid, uuid, uuid, uuid);
-
-create or replace function public.remove_event_invitation_volunteer(
+create or replace function public.remove_event_volunteer_signup(
   target_event_id uuid,
-  target_user_id uuid,
-  target_inviter_entity_id uuid
+  target_user_id uuid
 )
 returns void
 language plpgsql
@@ -13,6 +10,7 @@ as $$
 declare
   acting_user_id uuid := auth.uid();
   managed_event record;
+  target_profile record;
   can_manage_as_roster_admin boolean := false;
 begin
   if acting_user_id is null then
@@ -25,10 +23,6 @@ begin
 
   if target_user_id is null then
     raise exception 'Volunteer is required';
-  end if;
-
-  if target_inviter_entity_id is null then
-    raise exception 'Organization is required';
   end if;
 
   select event_owner_id, event_coordinator_id, is_followers_only
@@ -61,45 +55,38 @@ begin
   )
     into can_manage_as_roster_admin;
 
-  if acting_user_id <> target_inviter_entity_id
-    and acting_user_id <> managed_event.event_owner_id
+  if acting_user_id <> managed_event.event_owner_id
     and acting_user_id <> managed_event.event_coordinator_id
     and can_manage_as_roster_admin = false then
-    raise exception 'You do not have permission to remove this volunteer from the organization list';
+    raise exception 'You do not have permission to remove this volunteer';
+  end if;
+
+  select user_type
+    into target_profile
+  from public.profiles
+  where id = target_user_id;
+
+  if not found then
+    raise exception 'Volunteer profile not found';
+  end if;
+
+  if target_profile.user_type in ('organization', 'nonprofit') then
+    delete from public.event_signups
+    where event_id = target_event_id
+      and invited_by_entity_id = target_user_id;
   end if;
 
   delete from public.event_signups
   where event_id = target_event_id
     and user_id = target_user_id
-    and invited_by_entity_id = target_inviter_entity_id;
+    and status in ('volunteered', 'confirmed');
 
-  if found then
-    return;
+  if not found then
+    raise exception 'Volunteer signup not found';
   end if;
-
-  delete from public.event_signups
-  where event_id = target_event_id
-    and user_id = target_user_id
-    and invited_by_entity_id is null
-    and status in ('volunteered', 'confirmed')
-    and (
-      target_inviter_entity_id = managed_event.event_coordinator_id
-      or exists (
-        select 1
-        from public.profiles profile
-        where profile.id = target_inviter_entity_id
-          and profile.user_type in ('organization', 'nonprofit')
-      )
-    );
-
-  if found then
-    return;
-  end if;
-
-  raise exception 'Volunteer is not assigned to this organization list';
 end;
 $$;
 
-grant execute on function public.remove_event_invitation_volunteer(uuid, uuid, uuid) to authenticated;
+grant execute on function public.remove_event_volunteer_signup(uuid, uuid) to authenticated;
 
 notify pgrst, 'reload schema';

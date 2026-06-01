@@ -14,7 +14,8 @@ import {
   useGetEventPhotosQuery,
   useUploadEventPhotoMutation,
 } from "../../services/api/endpoints/eventPhotos/eventPhotos.api";
-import { useAppDispatch } from "../../services/hooks";
+import { selectCurrentUserId } from "../../features/users/selectors";
+import { useAppDispatch, useAppSelector } from "../../services/hooks";
 import {
   setExternalData,
   setModalType,
@@ -23,6 +24,7 @@ import { EDIT_SECTIONS } from "../../features/users/userProfiles/constants";
 import {
   ALLOWED_EVENT_PHOTO_MIME_TYPES,
   MAX_EVENT_PHOTO_BYTES,
+  MAX_EVENT_PHOTOS_PER_USER_PER_EVENT,
 } from "../../services/darbeService/eventPhotos";
 
 import styles from "./styles/eventPhotos.module.css";
@@ -76,6 +78,7 @@ export const EventPhotoCarouselModal = ({
   externalData,
 }: EventPhotoCarouselModalProps) => {
   const dispatch = useAppDispatch();
+  const currentUserId = useAppSelector(selectCurrentUserId);
   const { eventId, entityId, listUserId, listScope } =
     parseContext(externalData);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -98,6 +101,15 @@ export const EventPhotoCarouselModal = ({
   const [deletePhoto, { isLoading: isDeleting }] =
     useDeleteEventPhotoMutation();
   const currentPhoto = photos?.[currentIndex];
+  const canDeleteCurrentPhoto =
+    Boolean(canDelete) ||
+    Boolean(currentPhoto?.uploadedBy && currentPhoto.uploadedBy === currentUserId);
+  const currentUserPhotoCount =
+    photos?.filter((photo) => photo.uploadedBy === currentUserId).length ?? 0;
+  const canUploadCurrentUserPhoto =
+    Boolean(canUpload) &&
+    currentUserPhotoCount < MAX_EVENT_PHOTOS_PER_USER_PER_EVENT;
+  const photoLimitMessage = `You can upload up to ${MAX_EVENT_PHOTOS_PER_USER_PER_EVENT} photos per event.`;
 
   useEffect(() => {
     if (!photos?.length) {
@@ -132,6 +144,11 @@ export const EventPhotoCarouselModal = ({
   };
 
   const handlePickFile = () => {
+    if (!canUploadCurrentUserPhoto) {
+      setUploadError(photoLimitMessage);
+      return;
+    }
+
     fileInputRef.current?.click();
   };
 
@@ -144,6 +161,12 @@ export const EventPhotoCarouselModal = ({
     if (!file) return;
 
     setUploadError(null);
+
+    if (!canUploadCurrentUserPhoto) {
+      setUploadError(photoLimitMessage);
+      return;
+    }
+
     try {
       await uploadPhoto({
         eventId,
@@ -211,7 +234,8 @@ export const EventPhotoCarouselModal = ({
               type="button"
               className={styles.eventPhotoCarouselUploadButton}
               onClick={handlePickFile}
-              disabled={isUploading}
+              title={!canUploadCurrentUserPhoto ? photoLimitMessage : undefined}
+              disabled={isUploading || !canUploadCurrentUserPhoto}
             >
               <CloudUpload fontSize="small" />
               <span>{isUploading ? "Uploading…" : "Add Photo"}</span>
@@ -229,6 +253,9 @@ export const EventPhotoCarouselModal = ({
 
       {uploadError && (
         <div className={styles.eventPhotoCarouselError}>{uploadError}</div>
+      )}
+      {canUpload && !canUploadCurrentUserPhoto && !uploadError && (
+        <div className={styles.eventPhotoCarouselError}>{photoLimitMessage}</div>
       )}
       {deleteError && (
         <div className={styles.eventPhotoCarouselError}>{deleteError}</div>
@@ -268,7 +295,7 @@ export const EventPhotoCarouselModal = ({
             alt=""
           />
 
-          {canDelete && (
+          {canDeleteCurrentPhoto && (
             <button
               type="button"
               className={styles.eventPhotoCarouselDeleteButton}

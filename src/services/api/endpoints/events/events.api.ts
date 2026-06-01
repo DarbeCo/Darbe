@@ -25,6 +25,7 @@ import {
   getVolunteerMatches,
   recommendEventToFollowers,
   removeEventInvitationVolunteer,
+  removeEventVolunteer,
   checkInForEvent,
   checkOutFromEvent,
   markNoShowForEvent,
@@ -339,6 +340,22 @@ const eventsApi = darbeBaseApi.injectEndpoints({
       },
       invalidatesTags: ["Events"],
     }),
+    removeEventVolunteer: builder.mutation<void, EventSignupAction>({
+      async queryFn(action) {
+        try {
+          await removeEventVolunteer(action);
+          return { data: undefined };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      invalidatesTags: ["Events"],
+    }),
     approveAllEventVolunteers: builder.mutation<void, string>({
       async queryFn(eventId) {
         try {
@@ -475,6 +492,7 @@ export const {
   useCreateEventMutation,
   useDenyEventVolunteerMutation,
   useRemoveEventInvitationVolunteerMutation,
+  useRemoveEventVolunteerMutation,
   useDeleteEventMutation,
   useVolunteerForEventMutation,
   usePassOnEventMutation,
