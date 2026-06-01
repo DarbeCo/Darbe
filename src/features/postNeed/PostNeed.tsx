@@ -41,6 +41,7 @@ const INITIAL_EVENT_STATE: CreateEvent = {
   recurrenceIntervalDays: 2,
   recurrenceCount: 2,
   isFollowersOnly: false,
+  eventPhotoVisibility: "public",
   maxVolunteerCount: 0,
   eventAddress: {
     locationName: "",

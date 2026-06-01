@@ -25,6 +25,8 @@ type VolunteerImpactSchema = {
   isGroupImpact?: boolean;
 };
 
+export type EventPhotoVisibility = "public" | "private";
+
 interface ShortVolunteerImpact {
   hoursVolunteered: number;
   volunteerValue: number;
@@ -90,6 +92,7 @@ export interface EventsState {
   isOutdoor?: boolean;
   eventRequirements: EventRequirementsSchema;
   eventCoverPhoto?: string;
+  eventPhotoVisibility?: EventPhotoVisibility;
   eventCoordinator:  SimpleUserInfo;
   eventOwner?: Omit<SimpleUserInfo, 'firstName' | 'lastName' | 'fullName'>;
   rosterId?: string;
@@ -112,6 +115,7 @@ export interface ShortEventState {
   endTime?: number;
   maxVolunteerCount: number;
   eventCoverPhoto?: string;
+  eventPhotoVisibility?: EventPhotoVisibility;
   eventDescription: string;
   volunteerImpact: Partial<VolunteerImpactSchema>;
   eventAddress: Partial<EventAddressSchema>;
@@ -155,4 +159,5 @@ export type EventEditableUpdate = {
   rosterId?: string | null;
   eventAddress?: Partial<EventAddressSchema>;
   volunteerImpact?: Partial<VolunteerImpactSchema>;
+  eventPhotoVisibility?: EventPhotoVisibility;
 };

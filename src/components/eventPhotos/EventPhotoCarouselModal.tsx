@@ -14,7 +14,10 @@ import {
   useGetEventPhotosQuery,
   useUploadEventPhotoMutation,
 } from "../../services/api/endpoints/eventPhotos/eventPhotos.api";
-import { selectCurrentUserId } from "../../features/users/selectors";
+import {
+  selectCurrentUserId,
+  selectUser,
+} from "../../features/users/selectors";
 import { useAppDispatch, useAppSelector } from "../../services/hooks";
 import {
   setExternalData,
@@ -79,6 +82,7 @@ export const EventPhotoCarouselModal = ({
 }: EventPhotoCarouselModalProps) => {
   const dispatch = useAppDispatch();
   const currentUserId = useAppSelector(selectCurrentUserId);
+  const { user } = useAppSelector(selectUser);
   const { eventId, entityId, listUserId, listScope } =
     parseContext(externalData);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -106,9 +110,12 @@ export const EventPhotoCarouselModal = ({
     Boolean(currentPhoto?.uploadedBy && currentPhoto.uploadedBy === currentUserId);
   const currentUserPhotoCount =
     photos?.filter((photo) => photo.uploadedBy === currentUserId).length ?? 0;
+  const canUploadUnlimitedPhotos =
+    user?.userType === "organization" || user?.userType === "nonprofit";
   const canUploadCurrentUserPhoto =
     Boolean(canUpload) &&
-    currentUserPhotoCount < MAX_EVENT_PHOTOS_PER_USER_PER_EVENT;
+    (canUploadUnlimitedPhotos ||
+      currentUserPhotoCount < MAX_EVENT_PHOTOS_PER_USER_PER_EVENT);
   const photoLimitMessage = `You can upload up to ${MAX_EVENT_PHOTOS_PER_USER_PER_EVENT} photos per event.`;
 
   useEffect(() => {

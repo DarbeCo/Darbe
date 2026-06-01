@@ -36,6 +36,7 @@ type EventRow = {
   is_outdoor: boolean | null;
   max_volunteer_count: number;
   event_cover_photo_url: string | null;
+  event_photo_visibility: "public" | "private" | null;
   event_coordinator_id: string;
   roster_id: string | null;
   adult_waiver_url: string | null;
@@ -469,6 +470,7 @@ const buildShortEvents = async (
       endTime: timeToDecimal(event.end_time),
       maxVolunteerCount: event.max_volunteer_count,
       eventCoverPhoto: event.event_cover_photo_url ?? "",
+      eventPhotoVisibility: event.event_photo_visibility ?? "public",
       eventDescription: event.event_description ?? "",
       volunteerImpact: mapImpactRow(impactMap.get(event.id)),
       eventAddress: mapAddressRow(addressMap.get(event.id)),
@@ -482,7 +484,7 @@ export const getShortEventsByIds = async (eventIds: string[]): Promise<ShortEven
   const { data, error } = await supabase
     .from("events")
     .select(
-      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_coordinator_id"
+      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_photo_visibility, event_coordinator_id"
     )
     .in("id", eventIds);
 
@@ -923,7 +925,7 @@ export const getEvents = async (
   let eventsQuery = supabase
     .from("events")
     .select(
-      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_coordinator_id"
+      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_photo_visibility, event_coordinator_id"
     )
     .order("event_date", { ascending: true });
 
@@ -937,7 +939,7 @@ export const getEvents = async (
 
   if (error) throw error;
 
-  let filteredEvents = events ?? [];
+  let filteredEvents = (events ?? []) as EventRow[];
   const invitationByEventId = new Map<string, SimpleUserInfo>();
 
   if (isRecommendableEntityScope) {
@@ -1122,7 +1124,7 @@ export const getEvents = async (
         await supabase
           .from("events")
           .select(
-            "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_coordinator_id"
+            "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_photo_visibility, event_coordinator_id"
           )
           .in("id", missingRecommendedEventIds);
 
@@ -1349,7 +1351,7 @@ export const getEntityUpcomingEvents = async (
   const { data, error } = await supabase
     .from("events")
     .select(
-      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_coordinator_id"
+      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_photo_visibility, event_coordinator_id"
     )
     .eq("event_owner_id", entityId)
     .gte("event_date", toLocalDateString(new Date()))
@@ -1386,7 +1388,7 @@ export const getRosterAdminEvents = async (): Promise<ShortEventState[]> => {
   const { data: events, error: eventsError } = await supabase
     .from("events")
     .select(
-      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_repeating, is_followers_only, event_parking_info, event_internal_location, is_indoor, is_outdoor, max_volunteer_count, event_cover_photo_url, event_coordinator_id, adult_waiver_url, minor_waiver_url"
+      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_repeating, is_followers_only, event_parking_info, event_internal_location, is_indoor, is_outdoor, max_volunteer_count, event_cover_photo_url, event_photo_visibility, event_coordinator_id, adult_waiver_url, minor_waiver_url"
     )
     .or(eventFilter)
     .order("event_date", { ascending: false });
@@ -1414,7 +1416,7 @@ export const getEventDetails = async (eventId: string): Promise<EventsState> => 
   const { data: event, error } = await supabase
     .from("events")
     .select(
-      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_repeating, is_followers_only, event_parking_info, event_internal_location, is_indoor, is_outdoor, max_volunteer_count, event_cover_photo_url, event_coordinator_id, adult_waiver_url, minor_waiver_url"
+      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_repeating, is_followers_only, event_parking_info, event_internal_location, is_indoor, is_outdoor, max_volunteer_count, event_cover_photo_url, event_photo_visibility, event_coordinator_id, adult_waiver_url, minor_waiver_url"
     )
     .eq("id", eventId)
     .single();
@@ -1471,6 +1473,9 @@ export const getEventDetails = async (eventId: string): Promise<EventsState> => 
     isOutdoor: event.is_outdoor ?? false,
     eventRequirements: mapRequirementsRow(requirementsRes.data ?? undefined),
     eventCoverPhoto: event.event_cover_photo_url ?? "",
+    eventPhotoVisibility:
+      (event.event_photo_visibility as EventsState["eventPhotoVisibility"]) ??
+      "public",
     eventCoordinator: toSimpleUser(coordinatorProfile, event.event_coordinator_id),
     eventOwner: toSimpleUser(ownerProfile, event.event_owner_id),
     rosterId: event.roster_id ?? undefined,
@@ -1518,6 +1523,7 @@ export const createEvent = async (newEvent: CreateEvent): Promise<SimpleEventSta
       is_outdoor: newEvent.isOutdoor ?? false,
       max_volunteer_count: newEvent.maxVolunteerCount,
       event_cover_photo_url: newEvent.eventCoverPhoto ?? "",
+      event_photo_visibility: newEvent.eventPhotoVisibility ?? "public",
       event_coordinator_id: newEvent.eventCoordinator || eventOwnerId,
       roster_id: newEvent.rosterId || null,
       adult_waiver_url: newEvent.adultWaiver ?? "",
@@ -1646,6 +1652,7 @@ export const updateEventDetails = async ({
   rosterId,
   eventAddress,
   volunteerImpact,
+  eventPhotoVisibility,
 }: EventEditableUpdate): Promise<void> => {
   await ensureCanEditEvent(eventId);
 
@@ -1654,6 +1661,7 @@ export const updateEventDetails = async ({
     event_description?: string;
     max_volunteer_count?: number;
     roster_id?: string | null;
+    event_photo_visibility?: "public" | "private";
   } = {};
 
   if (eventName !== undefined) eventUpdates.event_name = eventName;
@@ -1665,6 +1673,9 @@ export const updateEventDetails = async ({
   }
   if (rosterId !== undefined) {
     eventUpdates.roster_id = rosterId;
+  }
+  if (eventPhotoVisibility !== undefined) {
+    eventUpdates.event_photo_visibility = eventPhotoVisibility;
   }
 
   const updates = [];
@@ -2331,7 +2342,7 @@ export const getSignedUpEvents = async (
   const { data: events, error: eventsError } = await supabase
     .from("events")
     .select(
-      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_coordinator_id"
+      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_photo_visibility, event_coordinator_id"
     )
     .in("id", eventIds);
 
