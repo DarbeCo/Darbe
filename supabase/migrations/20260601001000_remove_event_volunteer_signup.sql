@@ -79,7 +79,7 @@ begin
   delete from public.event_signups
   where event_id = target_event_id
     and user_id = target_user_id
-    and status in ('volunteered', 'confirmed');
+    and status in ('volunteered', 'confirmed', 'approved', 'no_show');
 
   if not found then
     raise exception 'Volunteer signup not found';

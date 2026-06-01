@@ -37,7 +37,6 @@ import {
   useRecommendEventToFollowersMutation,
   useCheckInForEventMutation,
   useCheckOutFromEventMutation,
-  useDenyEventVolunteerMutation,
   useRemoveEventInvitationVolunteerMutation,
   useRemoveEventVolunteerMutation,
   useUnvolunteerFromEventMutation,
@@ -45,6 +44,7 @@ import {
   useUpdateEventSignupImpactDetailsMutation,
   useUpdateEventTimeMutation,
   useVolunteerForEventMutation,
+  useMarkNoShowForEventMutation,
 } from "../../services/api/endpoints/events/events.api";
 import { useGetRostersQuery } from "../../services/api/endpoints/roster/roster.api";
 import { useGetSearchResultsQuery } from "../../services/api/endpoints/search/search.api";
@@ -205,6 +205,7 @@ const getSearchResultDisplayName = (result: {
 
 type ImpactEditState = {
   signupId: string;
+  userId: string;
   startTime: string;
   endTime: string;
   location: string;
@@ -306,8 +307,6 @@ export const EventCard = ({
     useAddEventVolunteerMutation();
   const [approveEventVolunteer, { isLoading: isApprovingVolunteer }] =
     useApproveEventVolunteerMutation();
-  const [denyEventVolunteer, { isLoading: isDenyingVolunteer }] =
-    useDenyEventVolunteerMutation();
   const [
     removeEventInvitationVolunteer,
     { isLoading: isRemovingInvitationVolunteer },
@@ -320,6 +319,8 @@ export const EventCard = ({
     useUpdateEventDetailsMutation();
   const [updateImpactDetails, { isLoading: isUpdatingImpactDetails }] =
     useUpdateEventSignupImpactDetailsMutation();
+  const [markNoShowForEvent, { isLoading: isMarkingNoShow }] =
+    useMarkNoShowForEventMutation();
   const [updateEventTime, { isLoading: isUpdatingEventTime }] =
     useUpdateEventTimeMutation();
   const [unvolunteerFromEvent, { isLoading: isUnvolunteering }] =
@@ -355,7 +356,10 @@ export const EventCard = ({
     useState<EventFieldEditState | null>(null);
   const [eventFieldEditError, setEventFieldEditError] = useState("");
   const [impactDetailOverrides, setImpactDetailOverrides] = useState<
-    Record<string, Omit<ImpactEditState, "signupId">>
+    Record<string, Omit<ImpactEditState, "signupId" | "userId">>
+  >({});
+  const [signupStatusOverrides, setSignupStatusOverrides] = useState<
+    Record<string, ShortEventState["signups"][number]["status"]>
   >({});
   const activeInvitationAddEntity = activeInvitationAddGroupId
     ? event.signups?.find((signup) => signup.user.id === activeInvitationAddGroupId)
@@ -544,17 +548,6 @@ export const EventCard = ({
     }
   };
 
-  const handleDenyVolunteer = async (targetUserId: string) => {
-    try {
-      await denyEventVolunteer({
-        eventId: event.id,
-        userId: targetUserId,
-      }).unwrap();
-    } catch (error) {
-      console.error("Error denying volunteer impact", error);
-    }
-  };
-
   const handleRemoveInvitationVolunteer = async (
     targetUserId: string,
     invitedByEntityId: string
@@ -608,10 +601,43 @@ export const EventCard = ({
           impact: impactEditState.impact,
         },
       }));
+      if (impactEditState.startTime.trim() && impactEditState.endTime.trim()) {
+        setSignupStatusOverrides((currentOverrides) => ({
+          ...currentOverrides,
+          [impactEditState.signupId]: "confirmed",
+        }));
+      }
       setImpactEditState(null);
     } catch (error) {
       console.error("Error updating volunteer impact details", error);
       setImpactEditError("Unable to save impact details.");
+    }
+  };
+
+  const handleMarkImpactNoShow = async () => {
+    if (!impactEditState) {
+      return;
+    }
+
+    try {
+      setImpactEditError("");
+      await markNoShowForEvent({
+        eventId: event.id,
+        userId: impactEditState.userId,
+      }).unwrap();
+      setImpactDetailOverrides((currentOverrides) => {
+        const nextOverrides = { ...currentOverrides };
+        delete nextOverrides[impactEditState.signupId];
+        return nextOverrides;
+      });
+      setSignupStatusOverrides((currentOverrides) => ({
+        ...currentOverrides,
+        [impactEditState.signupId]: "no_show",
+      }));
+      setImpactEditState(null);
+    } catch (error) {
+      console.error("Error marking volunteer as no show", error);
+      setImpactEditError("Unable to mark volunteer as no show.");
     }
   };
 
@@ -828,14 +854,13 @@ export const EventCard = ({
     isCheckingOut ||
     isAddingVolunteer ||
     isApprovingVolunteer ||
-    isDenyingVolunteer ||
+    isMarkingNoShow ||
     isRemovingInvitationVolunteer ||
     isRemovingEventVolunteer ||
     isApprovingAllVolunteers ||
     isUpdatingImpactDetails ||
     isUpdatingEventTime;
   const isSignedUpCard = Boolean(isSignedUp);
-  const canSelectVolunteers = canManageVolunteerCheckIns;
   const checkedInVolunteerCount =
     event.signups?.filter((signup) => signup.checkInAt).length ?? 0;
   const currentUserSignup = event.signups?.find(
@@ -1588,11 +1613,44 @@ export const EventCard = ({
               signup.user.userType !== "nonprofit";
             const isVolunteerCoordinator =
               signup.user.id === event.eventCoordinator?.id;
-            const isCheckedIn = Boolean(signup.checkInAt);
-            const isCheckedOut = Boolean(signup.checkOutAt);
-            const isNoShow = signup.status === "no_show";
-            const isApproved = signup.status === "approved";
-            const isDenied = signup.status === "denied";
+            const isRemovedInvitationChild = Boolean(
+              signup.isInvitationChild && signup.invitationRemovedAt
+            );
+            const removedByName = signup.invitationRemovedBy
+              ? getVolunteerDisplayName(signup.invitationRemovedBy)
+              : "Unknown";
+            const impactDetailOverride = impactDetailOverrides[signup.id];
+            const hasSavedVolunteerTimes =
+              Boolean(signup.volunteerStartTime && signup.volunteerEndTime) ||
+              Boolean(impactDetailOverride?.startTime && impactDetailOverride.endTime);
+            const canUseDefaultVolunteerTimes =
+              !isPastEvent || Boolean(signup.checkInAt) || hasSavedVolunteerTimes;
+            const candidateStartTime =
+              timeInputValueToDisplayTime(
+                impactDetailOverride?.startTime ||
+                  signup.volunteerStartTime ||
+                  formatVolunteerActionTime(signup.checkInAt) ||
+                  (canUseDefaultVolunteerTimes
+                    ? formatEventTimeRangeValue(event.startTime)
+                    : "")
+              );
+            const candidateEndTime =
+              timeInputValueToDisplayTime(
+                impactDetailOverride?.endTime ||
+                  signup.volunteerEndTime ||
+                  formatVolunteerActionTime(signup.checkOutAt) ||
+                  (canUseDefaultVolunteerTimes
+                    ? formatEventTimeRangeValue(event.endTime)
+                    : "")
+              );
+            const isCheckedIn = Boolean(signup.checkInAt) || hasSavedVolunteerTimes;
+            const isCheckedOut = Boolean(signup.checkOutAt) || hasSavedVolunteerTimes;
+            const signupStatus =
+              signupStatusOverrides[signup.id] ?? signup.status;
+            const isNoShow =
+              signupStatus === "no_show" && !hasSavedVolunteerTimes;
+            const isApproved = signupStatus === "approved";
+            const isDenied = signupStatus === "denied";
             const canShowApprovalActions =
               canAdminManageVolunteers &&
               isCheckableUser &&
@@ -1643,12 +1701,14 @@ export const EventCard = ({
                 (canManageVolunteerCheckIns && isVolunteerCoordinator));
             const canShowSelfCheckAction =
               isCurrentVolunteer &&
+              !isRemovedInvitationChild &&
               isManageableVolunteer &&
               !isPastEvent &&
               !isCheckedOut &&
               isWithinEventTime;
             const canShowManagedCheckAction =
               canManageVolunteerCheckIns &&
+              !isRemovedInvitationChild &&
               isManageableVolunteer &&
               isWithinEventTime &&
               !isCheckedOut &&
@@ -1659,6 +1719,7 @@ export const EventCard = ({
               canShowSelfCheckAction || canShowManagedCheckAction;
             const canRemoveFromInvitationGroup = Boolean(
               signup.isInvitationChild &&
+                !isRemovedInvitationChild &&
                 signup.effectiveInvitedByEntity?.id &&
                 (canManageVolunteerCheckIns ||
                   signup.effectiveInvitedByEntity.id === currentUserId)
@@ -1667,11 +1728,11 @@ export const EventCard = ({
               canManageVolunteerCheckIns &&
               hasSignupRecord &&
               !signup.isInvitationChild &&
-              !isVolunteerCoordinator &&
-              (signup.status === "volunteered" ||
-                signup.status === "confirmed");
+              !isRemovedInvitationChild &&
+              !isVolunteerCoordinator;
             const canEditImpactDetails =
               canManageVolunteerCheckIns &&
+              !isRemovedInvitationChild &&
               isCheckableUser &&
               (hasSignupRecord || isVolunteerCoordinator) &&
               isPastEvent;
@@ -1681,26 +1742,6 @@ export const EventCard = ({
                 isApproved ||
                 isDenied ||
                 canEditImpactDetails);
-            const impactDetailOverride = impactDetailOverrides[signup.id];
-            const canUseDefaultVolunteerTimes = !isPastEvent || isCheckedIn;
-            const candidateStartTime =
-              timeInputValueToDisplayTime(
-                impactDetailOverride?.startTime ||
-                  signup.volunteerStartTime ||
-                  formatVolunteerActionTime(signup.checkInAt) ||
-                  (canUseDefaultVolunteerTimes
-                    ? formatEventTimeRangeValue(event.startTime)
-                    : "")
-              );
-            const candidateEndTime =
-              timeInputValueToDisplayTime(
-                impactDetailOverride?.endTime ||
-                  signup.volunteerEndTime ||
-                  formatVolunteerActionTime(signup.checkOutAt) ||
-                  (canUseDefaultVolunteerTimes
-                    ? formatEventTimeRangeValue(event.endTime)
-                    : "")
-              );
             const candidateLocation =
               impactDetailOverride?.location ||
               signup.volunteerLocation ||
@@ -1908,13 +1949,17 @@ export const EventCard = ({
                 <div className={styles.eventVolunteerCheckIn}>
                   {!signup.isInvitationGroup && !showApprovalCandidateLayout && (
                     <div className={styles.eventVolunteerCheckStatus}>
-                      {checkStatusText && <strong>{checkStatusText}</strong>}
-                      {checkedOutTimeText && (
+                      {isRemovedInvitationChild ? (
+                        <strong>Deleted by {removedByName}</strong>
+                      ) : (
+                        checkStatusText && <strong>{checkStatusText}</strong>
+                      )}
+                      {!isRemovedInvitationChild && checkedOutTimeText && (
                         <span className={styles.eventVolunteerCheckTime}>
                           {checkedOutTimeText}
                         </span>
                       )}
-                      {checkedInTimeText && (
+                      {!isRemovedInvitationChild && checkedInTimeText && (
                         <span className={styles.eventVolunteerCheckTime}>
                           {checkedInTimeText}
                         </span>
@@ -1957,7 +2002,7 @@ export const EventCard = ({
                       Remove
                     </button>
                   )}
-                  {canRemoveParentVolunteer && (
+                  {canRemoveParentVolunteer && !canShowApprovalActions && (
                     <button
                       type="button"
                       className={styles.eventInvitationRemoveVolunteerButton}
@@ -1977,14 +2022,16 @@ export const EventCard = ({
                       >
                         Approve
                       </button>
-                      <button
-                        type="button"
-                        className={styles.eventVolunteerDenyButton}
-                        onClick={() => handleDenyVolunteer(signup.user.id)}
-                        disabled={isCheckInLocked}
-                      >
-                        Deny
-                      </button>
+                      {canRemoveParentVolunteer && (
+                        <button
+                          type="button"
+                          className={styles.eventInvitationRemoveVolunteerButton}
+                          onClick={() => handleRemoveEventVolunteer(signup.user.id)}
+                          disabled={isCheckInLocked}
+                        >
+                          Remove
+                        </button>
+                      )}
                     </div>
                   )}
                   {!signup.isInvitationGroup && canEditImpactDetails && (
@@ -1994,6 +2041,7 @@ export const EventCard = ({
                       onClick={() => {
                         setImpactEditState({
                           signupId: signup.id,
+                          userId: signup.user.id,
                           startTime: timeTextToTimeInputValue(candidateStartTime),
                           endTime: timeTextToTimeInputValue(candidateEndTime),
                           location: candidateLocation,
@@ -2019,16 +2067,6 @@ export const EventCard = ({
               Check in status: {checkedInVolunteerCount}/{event.maxVolunteerCount}{" "}
               Volunteers Checked in
             </strong>
-            {canSelectVolunteers && (
-              <button type="button">
-                Select Volunteers
-                <CustomSvgs
-                  svgPath="/svgs/common/goDownIcon.svg"
-                  variant="small"
-                  altText=""
-                />
-              </button>
-            )}
           </div>
         </div>
       )}
@@ -2484,9 +2522,17 @@ export const EventCard = ({
             <div className={styles.eventImpactEditActions}>
               <button
                 type="button"
+                className={styles.eventImpactEditNoShow}
+                onClick={handleMarkImpactNoShow}
+                disabled={isUpdatingImpactDetails || isMarkingNoShow}
+              >
+                No Show
+              </button>
+              <button
+                type="button"
                 className={styles.eventImpactEditSave}
                 onClick={handleSaveImpactDetails}
-                disabled={isUpdatingImpactDetails}
+                disabled={isUpdatingImpactDetails || isMarkingNoShow}
               >
                 Save
               </button>
@@ -2494,6 +2540,7 @@ export const EventCard = ({
                 type="button"
                 className={styles.eventImpactEditCancel}
                 onClick={() => setImpactEditState(null)}
+                disabled={isUpdatingImpactDetails || isMarkingNoShow}
               >
                 Cancel
               </button>

@@ -52,6 +52,8 @@ interface Signups  {
   volunteerLocation?: string;
   volunteerImpact?: string;
   invitedByEntity?: SimpleUserInfo;
+  invitationRemovedAt?: string;
+  invitationRemovedBy?: SimpleUserInfo;
 } 
 
 export interface SimpleEventState {
