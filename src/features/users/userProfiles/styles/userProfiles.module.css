@@ -10,6 +10,14 @@
     padding-bottom: 80px;
   }
 
+  .userProfileLoading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 60vh;
+  }
+
   .userProfileFriendButtons {
     display: flex;
     flex-direction: column;
