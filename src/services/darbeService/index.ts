@@ -82,6 +82,7 @@ export {
   passOnEvent,
   recommendEventToFollowers,
   removeEventInvitationVolunteer,
+  removeEventVolunteer,
   unvolunteerFromEvent,
   updateEventDetails,
   updateEventSignupImpactDetails,
@@ -117,4 +118,8 @@ export {
   removeFromRoster,
 } from "./roster";
 export { getUserImpact } from "./impact";
+export {
+  FALLBACK_VOLUNTEER_VALUE_PER_HOUR,
+  getVolunteerValuePerHour,
+} from "./volunteerValue";
 export { getSearchResults } from "./search";

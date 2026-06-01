@@ -254,17 +254,11 @@ export const EventDetails = ({
   };
 
   const renderInternalImpactInputs = () => {
-    const impactAmount =
-      data.volunteerImpact.individualImpactPerHour ||
-      data.volunteerImpact.groupImpactPerHour ||
-      "";
     const impactText =
       data.volunteerImpact.individualImpact ||
       data.volunteerImpact.groupImpact ||
       "";
-    const hasValues =
-      Boolean(impactAmount) &&
-      Boolean(impactText);
+    const hasValues = Boolean(impactText);
     const inputGroupClass = [
       styles.internalImpactInputs,
       hasValues ? styles.internalImpactValidInputs : "",
@@ -274,14 +268,6 @@ export const EventDetails = ({
 
     return (
       <div className={inputGroupClass}>
-        <Inputs
-          label=""
-          name="individualImpactPerHour"
-          darbeInputType="standardInput"
-          placeholder="1"
-          value={impactAmount}
-          handleChange={handleChange}
-        />
         <div className={styles.internalImpactTextInput}>
           <Inputs
             label=""

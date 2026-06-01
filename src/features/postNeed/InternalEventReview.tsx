@@ -58,14 +58,10 @@ export const InternalEventReview = ({
     "John Doe";
   const coordinatorPhoto = coordinator?.profilePicture || defaultProfilePicture;
   const coverPhoto = data.eventCoverPhoto || defaultCoverPhoto;
-  const impactHours =
-    data.volunteerImpact.individualImpactPerHour ||
-    data.volunteerImpact.groupImpactPerHour;
   const impactText =
     data.volunteerImpact.individualImpact ||
     data.volunteerImpact.groupImpact;
-  const hasImpact = hasText(impactHours) && hasText(impactText);
-  const impactDisplay = `${impactHours} hr ${impactText}`;
+  const hasImpact = hasText(impactText);
   const eventDate = data.eventDate ? new Date(data.eventDate) : null;
   const formattedDate = eventDate
     ? eventDate.toLocaleDateString("en-US", {
@@ -188,7 +184,7 @@ export const InternalEventReview = ({
         <section className={styles.internalReviewInlineCard}>
           {renderEditButton(3, "volunteer impact")}
           <h2>Volunteer Impact:</h2>
-          <p>{impactDisplay}</p>
+          <p>{impactText}</p>
         </section>
       )}
 

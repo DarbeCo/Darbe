@@ -50,6 +50,7 @@ const formatHours = (hours?: number) =>
 
 const formatCurrency = (value?: number) =>
   `$${Number(value ?? 0).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
 

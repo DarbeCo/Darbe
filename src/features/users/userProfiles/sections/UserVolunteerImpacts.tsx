@@ -2,9 +2,19 @@ import { useState } from "react";
 import { CircularProgress } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
-import { useGetUserImpactQuery } from "../../../../services/api/endpoints/impact/impact.api";
+import {
+  useGetUserImpactQuery,
+  useGetVolunteerValuePerHourQuery,
+} from "../../../../services/api/endpoints/impact/impact.api";
 import { EventImpact } from "../../../../services/api/endpoints/types/impact.api.types";
 import { EVENTS_ROUTE, PROFILE_ROUTE } from "../../../../routes/route.constants";
+import { useAppDispatch } from "../../../../services/hooks";
+import {
+  setExternalData,
+  setModalType,
+  showModal,
+} from "../../../../components/modal/modalSlice";
+import { EDIT_SECTIONS } from "../constants";
 import { assetUrl } from "../../../../utils/assetUrl";
 import { parseEventDateAsLocalDate } from "../../../../utils/eventDateUtils";
 
@@ -15,7 +25,6 @@ interface UserVolunteerImpactsProps {
   title?: string;
 }
 
-const VOLUNTEER_VALUE_PER_HOUR = 33.49;
 const COLLAPSED_IMPACT_COUNT = 3;
 
 const getOwnerName = (impact: EventImpact) =>
@@ -35,33 +44,24 @@ const formatNumber = (value: number) =>
   Number.isInteger(value) ? `${value}` : value.toFixed(1);
 
 const formatCurrency = (value: number) =>
-  `$ ${Math.round(value).toLocaleString("en-US")}`;
+  `$ ${value.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
-const getImpactMetric = (impact: EventImpact) => {
+const getImpactText = (impact: EventImpact) => {
   const volunteerImpact = impact.event.volunteerImpact;
-  const hasIndividualImpact = volunteerImpact.isIndividualImpact;
-  const impactLabel = hasIndividualImpact
-    ? volunteerImpact.individualImpact
-    : volunteerImpact.groupImpact;
-  const impactRate = Number(
-    hasIndividualImpact
-      ? volunteerImpact.individualImpactPerHour
-      : volunteerImpact.groupImpactPerHour
-  );
-  const impactValue = Number.isFinite(impactRate)
-    ? impactRate * Math.max(impact.hoursVolunteered, 1)
-    : undefined;
 
-  return {
-    label: impactLabel || "Impact",
-    value: impactValue === undefined ? "--" : formatNumber(impactValue),
-  };
+  return volunteerImpact.isIndividualImpact
+    ? volunteerImpact.individualImpact || ""
+    : volunteerImpact.groupImpact || "";
 };
 
 export const UserVolunteerImpacts = ({
   userId,
   title = "Volunteer Experiences and Impacts",
 }: UserVolunteerImpactsProps) => {
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [showAll, setShowAll] = useState(false);
   const { data: userImpacts = [], isLoading } = useGetUserImpactQuery(
@@ -71,9 +71,16 @@ export const UserVolunteerImpacts = ({
       refetchOnMountOrArgChange: true,
     }
   );
+  const { data: volunteerValuePerHour = 36.14 } =
+    useGetVolunteerValuePerHourQuery();
   const visibleImpacts = showAll
     ? userImpacts
     : userImpacts.slice(0, COLLAPSED_IMPACT_COUNT);
+  const openEventPhotos = (eventId: string) => {
+    dispatch(setExternalData({ eventId, entityId: "" }));
+    dispatch(setModalType(EDIT_SECTIONS.eventPhotoCarousel));
+    dispatch(showModal());
+  };
 
   return (
     <section className={styles.userVolunteerImpacts}>
@@ -102,8 +109,8 @@ export const UserVolunteerImpacts = ({
           const ownerName = getOwnerName(impact);
           const volunteerValue =
             impact.volunteerValue ||
-            impact.hoursVolunteered * VOLUNTEER_VALUE_PER_HOUR;
-          const impactMetric = getImpactMetric(impact);
+            impact.hoursVolunteered * volunteerValuePerHour;
+          const impactText = getImpactText(impact);
 
           return (
             <article className={styles.profileImpactCard} key={impact.id}>
@@ -137,6 +144,11 @@ export const UserVolunteerImpacts = ({
                     {formatDate(impact.event.eventDate)}
                   </time>
                   <p>{impact.event.eventDescription}</p>
+                  {impactText && (
+                    <p className={styles.profileImpactEventImpact}>
+                      <strong>Impact:</strong> {impactText}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -150,8 +162,16 @@ export const UserVolunteerImpacts = ({
                   <dd>Volunteer Value</dd>
                 </div>
                 <div>
-                  <dt>{impactMetric.value}</dt>
-                  <dd>{impactMetric.label}</dd>
+                  <dt>
+                    <button
+                      type="button"
+                      className={styles.profileImpactPhotosLink}
+                      onClick={() => openEventPhotos(impact.event.id)}
+                    >
+                      View Photos
+                    </button>
+                  </dt>
+                  <dd>Event Photos</dd>
                 </div>
               </dl>
             </article>

@@ -5,9 +5,6 @@ import darbeLogo from "/svgs/common/darbeLogo.svg";
 import { assetUrl } from "../../../utils/assetUrl";
 import useScreenWidthHook from "../../../utils/commonHooks/UseScreenWidth";
 
-import Login_icon from "/svgs/common/Login_icon.svg";
-
-
 import styles from "../styles/landingComponents.module.css";
 
 export const LandingNavBar = () => {

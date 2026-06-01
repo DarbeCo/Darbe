@@ -482,12 +482,6 @@ export const PostNeed = () => {
         ? "Coordinator"
         : "",
       !hasValue(
-        eventData.volunteerImpact.individualImpactPerHour ||
-          eventData.volunteerImpact.groupImpactPerHour
-      )
-        ? "Impact Number"
-        : "",
-      !hasValue(
         eventData.volunteerImpact.individualImpact ||
           eventData.volunteerImpact.groupImpact
       )
@@ -544,12 +538,6 @@ export const PostNeed = () => {
         : "",
       !isEntityUser && !hasValue(eventData.eventCoordinator)
         ? "Coordinator"
-        : "",
-      !hasValue(
-        eventData.volunteerImpact.individualImpactPerHour ||
-          eventData.volunteerImpact.groupImpactPerHour
-      )
-        ? "Impact Number"
         : "",
       !hasValue(
         eventData.volunteerImpact.individualImpact ||

@@ -2,6 +2,7 @@ import type { EventImpact } from "../api/endpoints/types/impact.api.types";
 import { supabase } from "../supabase/client";
 import { ensureUserId } from "./utils";
 import { getShortEventsByIds } from "./events";
+import { getVolunteerValuePerHour } from "./volunteerValue";
 
 const getHoursBetweenTimestamps = (start?: string | null, end?: string | null) => {
   if (!start || !end) return 0;
@@ -17,7 +18,12 @@ const getHoursBetweenTimestamps = (start?: string | null, end?: string | null) =
 };
 
 const mapImpactRowsToEvents = async (
-  rows: Array<{ id: string; event_id: string | null; hours_volunteered: number | null }>
+  rows: Array<{
+    id: string;
+    event_id: string | null;
+    hours_volunteered: number | null;
+    volunteer_value_per_hour?: number | null;
+  }>
 ): Promise<EventImpact[]> => {
   const eventIds = Array.from(
     new Set(
@@ -28,6 +34,7 @@ const mapImpactRowsToEvents = async (
   );
   const events = await getShortEventsByIds(eventIds);
   const eventMap = new Map(events.map((event) => [event.id, event]));
+  const currentVolunteerValuePerHour = await getVolunteerValuePerHour();
 
   return rows
     .filter((impact) => impact.event_id && eventMap.has(impact.event_id))
@@ -35,7 +42,11 @@ const mapImpactRowsToEvents = async (
       id: impact.id,
       impactType: "individual" as const,
       hoursVolunteered: Number(impact.hours_volunteered ?? 0),
-      volunteerValue: 0,
+      volunteerValue:
+        Number(impact.hours_volunteered ?? 0) *
+        Number(
+          impact.volunteer_value_per_hour ?? currentVolunteerValuePerHour
+        ),
       event: eventMap.get(impact.event_id as string)!,
     }));
 };
@@ -135,7 +146,7 @@ export const getUserImpact = async (userId?: string): Promise<EventImpact[]> => 
 
   const { data: initialImpactRows, error } = await supabase
     .from("impact")
-    .select("id, event_id, hours_volunteered, events_attended")
+    .select("id, event_id, hours_volunteered, events_attended, volunteer_value_per_hour")
     .eq("impact_owner_id", currentUserId)
     .not("event_id", "is", null)
     .order("updated_at", { ascending: false });
@@ -159,6 +170,7 @@ export const getUserImpact = async (userId?: string): Promise<EventImpact[]> => 
   if (approvedSignupsError) throw approvedSignupsError;
 
   const impactRowsToCreate = [];
+  const currentVolunteerValuePerHour = await getVolunteerValuePerHour();
 
   for (const signup of approvedSignups ?? []) {
     const hoursVolunteered = getHoursBetweenTimestamps(
@@ -177,6 +189,7 @@ export const getUserImpact = async (userId?: string): Promise<EventImpact[]> => 
         events_passed: 0,
         events_coordinated: 0,
         hours_volunteered: hoursVolunteered,
+        volunteer_value_per_hour: currentVolunteerValuePerHour,
       });
       continue;
     }
@@ -190,6 +203,9 @@ export const getUserImpact = async (userId?: string): Promise<EventImpact[]> => 
         .update({
           events_attended: 1,
           hours_volunteered: hoursVolunteered,
+          volunteer_value_per_hour:
+            existingImpact.volunteer_value_per_hour ??
+            currentVolunteerValuePerHour,
         })
         .eq("id", existingImpact.id);
 
@@ -207,7 +223,7 @@ export const getUserImpact = async (userId?: string): Promise<EventImpact[]> => 
 
   const { data: impactRows, error: refreshedImpactError } = await supabase
     .from("impact")
-    .select("id, event_id, hours_volunteered")
+    .select("id, event_id, hours_volunteered, volunteer_value_per_hour")
     .eq("impact_owner_id", currentUserId)
     .not("event_id", "is", null)
     .gt("events_attended", 0)

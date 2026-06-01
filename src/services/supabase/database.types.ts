@@ -1092,6 +1092,7 @@ export interface Database {
           user_type: string;
           event_id: string | null;
           hours_volunteered: number;
+          volunteer_value_per_hour: number | null;
           events_created: number;
           events_attended: number;
           events_passed: number;
@@ -1105,6 +1106,7 @@ export interface Database {
           user_type: string;
           event_id?: string | null;
           hours_volunteered?: number;
+          volunteer_value_per_hour?: number | null;
           events_created?: number;
           events_attended?: number;
           events_passed?: number;
@@ -1118,11 +1120,39 @@ export interface Database {
           user_type?: string;
           event_id?: string | null;
           hours_volunteered?: number;
+          volunteer_value_per_hour?: number | null;
           events_created?: number;
           events_attended?: number;
           events_passed?: number;
           events_coordinated?: number;
           created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      volunteer_value_rates: {
+        Row: {
+          id: string;
+          hourly_value: number;
+          source: string;
+          source_year: number | null;
+          fetched_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          hourly_value: number;
+          source: string;
+          source_year?: number | null;
+          fetched_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          hourly_value?: number;
+          source?: string;
+          source_year?: number | null;
+          fetched_at?: string;
           updated_at?: string;
         };
         Relationships: [];
@@ -1316,6 +1346,17 @@ export interface Database {
           target_inviter_entity_id: string;
         };
         Returns: undefined;
+      };
+      remove_event_volunteer_signup: {
+        Args: {
+          target_event_id: string;
+          target_user_id: string;
+        };
+        Returns: undefined;
+      };
+      get_current_volunteer_value_per_hour: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
       };
       approve_all_event_volunteers: {
         Args: { target_event_id: string };

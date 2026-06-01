@@ -87,7 +87,6 @@
 
 .sectionTitle {
   font-family: var(--darbe-font-family);
-  font-size: var(--darbe-section-title-size);
   font-weight: 700;
   line-height: var(--darbe-section-title-line-height);
   text-align: left;
