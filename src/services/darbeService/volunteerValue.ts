@@ -1,6 +1,6 @@
 import { supabase } from "../supabase/client";
 
-export const FALLBACK_VOLUNTEER_VALUE_PER_HOUR = 36.14;
+export const FALLBACK_VOLUNTEER_VALUE_PER_HOUR = 33.59;
 
 let cachedVolunteerValuePerHour: number | undefined;
 

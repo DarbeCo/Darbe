@@ -92,7 +92,7 @@ export const UserQuickInfo = ({
   isEntity,
 }: UserQuickInfoProps) => {
   const dispatch = useAppDispatch();
-  const { data: volunteerValuePerHour = 36.14 } =
+  const { data: volunteerValuePerHour = 33.59 } =
     useGetVolunteerValuePerHourQuery();
   const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
   const formattedContactNumber = formatPhoneNumber(contactNumber);

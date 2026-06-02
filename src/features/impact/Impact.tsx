@@ -50,7 +50,7 @@ const ImpactPage = () => {
   const navigate = useNavigate();
   const userId = useAppSelector(selectCurrentUserId);
   const { data: userImpacts = [], isLoading } = useGetUserImpactQuery(userId);
-  const { data: volunteerValuePerHour = 36.14 } =
+  const { data: volunteerValuePerHour = 33.59 } =
     useGetVolunteerValuePerHourQuery();
 
   const handleProfileClick = (ownerId: string) => {

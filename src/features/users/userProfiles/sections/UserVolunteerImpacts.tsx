@@ -71,7 +71,7 @@ export const UserVolunteerImpacts = ({
       refetchOnMountOrArgChange: true,
     }
   );
-  const { data: volunteerValuePerHour = 36.14 } =
+  const { data: volunteerValuePerHour = 33.59 } =
     useGetVolunteerValuePerHourQuery();
   const visibleImpacts = showAll
     ? userImpacts
