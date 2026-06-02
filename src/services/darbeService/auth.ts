@@ -390,12 +390,14 @@ export const signOut = async () => {
 };
 
 export const resetPassword = async (email: string): Promise<void> => {
-  // Get the redirect URL from environment variables or construct it
-  const redirectUrl = import.meta.env.VITE_PASSWORD_RESET_REDIRECT_URL || 
+  const baseRedirectUrl =
+    import.meta.env.VITE_PASSWORD_RESET_REDIRECT_URL ||
     `${window.location.origin}/password-reset`;
+  const redirectUrl = new URL(baseRedirectUrl);
+  redirectUrl.searchParams.set("type", "recovery");
   
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: redirectUrl,
+    redirectTo: redirectUrl.toString(),
   });
   
   if (error) {

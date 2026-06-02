@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Alert, CircularProgress } from "@mui/material";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
@@ -13,7 +13,15 @@ import styles from "./styles/passwordResetPage.module.css";
 
 export const PasswordResetForm = () => {
   const [searchParams] = useSearchParams();
-  const isConfirmStep = searchParams.get("type") === "recovery";
+  const hashParams = useMemo(
+    () => new URLSearchParams(window.location.hash.replace(/^#/, "")),
+    []
+  );
+  const isConfirmStep =
+    searchParams.get("type") === "recovery" ||
+    hashParams.get("type") === "recovery" ||
+    searchParams.has("code") ||
+    hashParams.has("access_token");
   
   const [error, setError] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string>("");
