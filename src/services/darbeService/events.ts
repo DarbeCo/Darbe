@@ -2403,17 +2403,49 @@ export const getSignedUpEvents = async (
   when: "upcoming" | "past" | undefined
 ): Promise<UserEventSignups[]> => {
   const userId = await ensureUserId();
-  const { data: signups, error } = await supabase
+  const activeSignupStatuses = ["volunteered", "confirmed", "approved", "no_show"];
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("user_type")
+    .eq("id", userId)
+    .single();
+
+  if (profileError || !profile) {
+    throw profileError ?? new Error("User profile not found");
+  }
+
+  const { data: directSignups, error: directSignupsError } = await supabase
     .from("event_signups")
     .select(
       "event_id, status, event_action_timestamp, check_in_at, check_out_at, invited_by_entity_id"
     )
     .eq("user_id", userId)
-    .in("status", ["volunteered", "confirmed", "approved", "no_show"]);
+    .in("status", activeSignupStatuses);
 
-  if (error) throw error;
+  if (directSignupsError) throw directSignupsError;
 
-  const eventIds = Array.from(new Set((signups ?? []).map((row) => row.event_id)));
+  const isEntityUser =
+    profile.user_type === "organization" || profile.user_type === "nonprofit";
+  const { data: memberInvitationSignups, error: memberInvitationSignupsError } =
+    isEntityUser
+      ? await supabase
+          .from("event_signups")
+          .select(
+            "event_id, status, event_action_timestamp, check_in_at, check_out_at, invited_by_entity_id"
+          )
+          .eq("invited_by_entity_id", userId)
+          .is("invitation_removed_at", null)
+          .in("status", activeSignupStatuses)
+      : { data: [], error: null };
+
+  if (memberInvitationSignupsError) throw memberInvitationSignupsError;
+
+  const signups = [
+    ...(directSignups ?? []),
+    ...(memberInvitationSignups ?? []),
+  ];
+
+  const eventIds = Array.from(new Set(signups.map((row) => row.event_id)));
 
   if (!eventIds.length) return [];
 
@@ -2481,8 +2513,8 @@ export const getSignedUpEvents = async (
   );
   const eventMap = new Map(shortEvents.map((event) => [event.id, event]));
 
-  const profile = (await getProfilesByIds([userId]))[0];
-  const signedUpUser = toSimpleUser(profile, userId);
+  const signedUpProfile = (await getProfilesByIds([userId]))[0];
+  const signedUpUser = toSimpleUser(signedUpProfile, userId);
   const signupCountMap = await getSignupCounts(filteredEvents.map((event) => event.id));
 
   const latestSignupByEvent = new Map<
