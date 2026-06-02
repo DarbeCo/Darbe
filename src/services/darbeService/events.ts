@@ -1226,6 +1226,57 @@ export const recommendEventToFollowers = async (
     throw new Error("Only organizations and nonprofits can recommend events to followers.");
   }
 
+  const actionTimestamp = new Date().toISOString();
+  const { data: existingEntitySignups, error: existingEntitySignupsError } =
+    await supabase
+      .from("event_signups")
+      .select("id, status")
+      .eq("event_id", eventId)
+      .eq("user_id", recommenderEntityId);
+
+  if (existingEntitySignupsError) throw existingEntitySignupsError;
+
+  const hasActiveEntitySignup = (existingEntitySignups ?? []).some((signup) =>
+    ["volunteered", "confirmed", "approved"].includes(signup.status)
+  );
+
+  if (!hasActiveEntitySignup) {
+    const entitySignupIds = (existingEntitySignups ?? []).map(
+      (signup) => signup.id
+    );
+
+    if (entitySignupIds.length) {
+      const { error: restoreEntitySignupError } = await supabase
+        .from("event_signups")
+        .update({
+          status: "volunteered",
+          check_in_at: null,
+          check_out_at: null,
+          invited_by_entity_id: null,
+          invitation_removed_at: null,
+          invitation_removed_by: null,
+          event_action_timestamp: actionTimestamp,
+        })
+        .in("id", entitySignupIds);
+
+      if (restoreEntitySignupError) throw restoreEntitySignupError;
+    } else {
+      const { error: insertEntitySignupError } = await supabase
+        .from("event_signups")
+        .insert({
+          event_id: eventId,
+          user_id: recommenderEntityId,
+          status: "volunteered",
+          check_in_at: null,
+          check_out_at: null,
+          invited_by_entity_id: null,
+          event_action_timestamp: actionTimestamp,
+        });
+
+      if (insertEntitySignupError) throw insertEntitySignupError;
+    }
+  }
+
   const [
     { data: followers, error: followersError },
     { data: rosters, error: rostersError },
