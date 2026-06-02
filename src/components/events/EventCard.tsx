@@ -191,6 +191,144 @@ const timeInputValueToDisplayTime = (value?: string) => {
   });
 };
 
+const TIME_PICKER_HOURS = Array.from({ length: 12 }, (_, index) =>
+  (index + 1).toString()
+);
+const TIME_PICKER_MINUTES = Array.from({ length: 60 }, (_, index) =>
+  index.toString().padStart(2, "0")
+);
+const TIME_PICKER_MERIDIEMS = ["AM", "PM"] as const;
+
+const getTimePickerParts = (
+  value?: string
+): {
+  hour: string;
+  minute: string;
+  meridiem: (typeof TIME_PICKER_MERIDIEMS)[number];
+} => {
+  const normalizedValue = timeTextToTimeInputValue(value);
+
+  if (!normalizedValue) {
+    return {
+      hour: "",
+      minute: "",
+      meridiem: "AM" as (typeof TIME_PICKER_MERIDIEMS)[number],
+    };
+  }
+
+  const [hourValue, minuteValue] = normalizedValue.split(":").map(Number);
+  const meridiem = hourValue >= 12 ? "PM" : "AM";
+  const hour = hourValue % 12 || 12;
+
+  return {
+    hour: hour.toString(),
+    minute: minuteValue.toString().padStart(2, "0"),
+    meridiem,
+  };
+};
+
+const buildTimePickerValue = ({
+  hour,
+  minute,
+  meridiem,
+}: {
+  hour: string;
+  minute: string;
+  meridiem: (typeof TIME_PICKER_MERIDIEMS)[number];
+}) => {
+  if (!hour) {
+    return "";
+  }
+
+  let hourValue = Number(hour);
+
+  if (meridiem === "PM" && hourValue < 12) {
+    hourValue += 12;
+  }
+
+  if (meridiem === "AM" && hourValue === 12) {
+    hourValue = 0;
+  }
+
+  return `${hourValue.toString().padStart(2, "0")}:${(minute || "00").padStart(
+    2,
+    "0"
+  )}`;
+};
+
+const TimePickerSelect = ({
+  value,
+  onChange,
+  label,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  label: string;
+}) => {
+  const parts = getTimePickerParts(value);
+  const updatePart = (
+    part: "hour" | "minute" | "meridiem",
+    partValue: string
+  ) => {
+    onChange(
+      buildTimePickerValue({
+        hour: part === "hour" ? partValue : parts.hour || "12",
+        minute: part === "minute" ? partValue : parts.minute || "00",
+        meridiem:
+          part === "meridiem"
+            ? (partValue as (typeof TIME_PICKER_MERIDIEMS)[number])
+            : parts.meridiem,
+      })
+    );
+  };
+
+  return (
+    <div className={styles.eventTimePicker} aria-label={label}>
+      <select
+        aria-label={`${label} hour`}
+        value={parts.hour}
+        onChange={(event) => updatePart("hour", event.target.value)}
+      >
+        <option value="">Hr</option>
+        {TIME_PICKER_HOURS.map((hour) => (
+          <option key={hour} value={hour}>
+            {hour}
+          </option>
+        ))}
+      </select>
+      <span>:</span>
+      <select
+        aria-label={`${label} minute`}
+        value={parts.minute}
+        onChange={(event) => updatePart("minute", event.target.value)}
+      >
+        <option value="">Min</option>
+        {TIME_PICKER_MINUTES.map((minute) => (
+          <option key={minute} value={minute}>
+            {minute}
+          </option>
+        ))}
+      </select>
+      <select
+        aria-label={`${label} AM or PM`}
+        value={parts.meridiem}
+        onChange={(event) => updatePart("meridiem", event.target.value)}
+      >
+        {TIME_PICKER_MERIDIEMS.map((meridiem) => (
+          <option key={meridiem} value={meridiem}>
+            {meridiem}
+          </option>
+        ))}
+      </select>
+      {value && (
+        <button type="button" onClick={() => onChange("")}>
+          Clear
+        </button>
+      )}
+    </div>
+  );
+};
+
 const getSearchResultDisplayName = (result: {
   fullName?: string;
   firstName?: string;
@@ -2412,13 +2550,13 @@ export const EventCard = ({
             </label>
             <label>
               <span>Start Time</span>
-              <input
-                type="time"
+              <TimePickerSelect
                 value={eventTimeEditState.startTime}
-                onChange={(event) =>
+                label="Start time"
+                onChange={(value) =>
                   setEventTimeEditState((currentState) =>
                     currentState
-                      ? { ...currentState, startTime: event.target.value }
+                      ? { ...currentState, startTime: value }
                       : currentState
                   )
                 }
@@ -2426,13 +2564,13 @@ export const EventCard = ({
             </label>
             <label>
               <span>End Time</span>
-              <input
-                type="time"
+              <TimePickerSelect
                 value={eventTimeEditState.endTime}
-                onChange={(event) =>
+                label="End time"
+                onChange={(value) =>
                   setEventTimeEditState((currentState) =>
                     currentState
-                      ? { ...currentState, endTime: event.target.value }
+                      ? { ...currentState, endTime: value }
                       : currentState
                   )
                 }
@@ -2465,15 +2603,16 @@ export const EventCard = ({
       {impactEditState ? (
         <div className={styles.eventImpactEditOverlay}>
           <div className={styles.eventImpactEditDialog} role="dialog" aria-modal="true">
+            <h2>Edit Volunteer Time</h2>
             <label>
               <span>Start Time:</span>
-              <input
-                type="time"
+              <TimePickerSelect
                 value={impactEditState.startTime}
-                onChange={(event) =>
+                label="Volunteer start time"
+                onChange={(value) =>
                   setImpactEditState((currentState) =>
                     currentState
-                      ? { ...currentState, startTime: event.target.value }
+                      ? { ...currentState, startTime: value }
                       : currentState
                   )
                 }
@@ -2481,13 +2620,13 @@ export const EventCard = ({
             </label>
             <label>
               <span>End Time:</span>
-              <input
-                type="time"
+              <TimePickerSelect
                 value={impactEditState.endTime}
-                onChange={(event) =>
+                label="Volunteer end time"
+                onChange={(value) =>
                   setImpactEditState((currentState) =>
                     currentState
-                      ? { ...currentState, endTime: event.target.value }
+                      ? { ...currentState, endTime: value }
                       : currentState
                   )
                 }
