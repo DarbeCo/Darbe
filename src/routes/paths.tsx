@@ -4,6 +4,7 @@ import { Error } from "./Error";
 import { LandingPage } from "../layout/landing/LandingPage";
 import { SignupPage } from "../pages/signup/Signup";
 import { LoginPage } from "../pages/login/Login";
+import { PasswordResetPage } from "../pages/passwordReset/passReset";
 import { Home } from "../layout/main/MainPage";
 import { ProtectedRoute } from "./Protected";
 import { UserProfiles } from "../features/users/userProfiles/UserProfiles";
@@ -49,6 +50,11 @@ export const router = createBrowserRouter([
     path: "/login",
     element: <LoginPage />,
   },
+  {
+    path: "/password-reset",
+    element: <PasswordResetPage />,
+  },
+  
   {
     path: "/logout",
     element: <Logout />,

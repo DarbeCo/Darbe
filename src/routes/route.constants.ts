@@ -1,6 +1,7 @@
 // Base routes, no userIds
 export const NOTIFICATIONS_ROUTE = "/home/notifications";
 export const LOGIN_ROUTE = "/login";
+export const PASSWORD_RESET_ROUTE = "/password-reset";
 export const LOGOUT_ROUTE = "/logout";
 export const FRIENDS_ROUTE = "/home/friends";
 export const HOME_ROUTE = "/home";

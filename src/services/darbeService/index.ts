@@ -1,4 +1,4 @@
-export { checkEmailAvailability, signIn, signOut, signUpWithProfile } from "./auth";
+export { checkEmailAvailability, signIn, signOut, signUpWithProfile, resetPassword, updatePassword } from "./auth";
 export { getCauses, getMutualCauses } from "./causes";
 export { getUserActivity } from "./activity";
 export {

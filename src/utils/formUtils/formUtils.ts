@@ -5,7 +5,8 @@ export const isValidEmail = (email: string): boolean => {
 };
 
 export const isGoodEnoughPassword = (password: string): boolean => {
-  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+  // 8-20 characters, at least one letter and one number
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,20}$/;
 
   return passwordRegex.test(password);
 };

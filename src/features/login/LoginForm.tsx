@@ -9,6 +9,7 @@ import { LoginHeaders } from "./LoginHeaders";
 import { useAppDispatch } from "../../services/hooks";
 import { setUser } from "../users/userSlice";
 import { useSubmitLoginMutation } from "../../services/api/endpoints/login/login.api";
+import { PASSWORD_RESET_ROUTE } from "../../routes/route.constants";
 
 import styles from "./styles/loginPage.module.css";
 
@@ -51,6 +52,11 @@ export const LoginForm = () => {
     }
   };
 
+  const handleForgotPassword = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    navigate(PASSWORD_RESET_ROUTE);
+  };
+
   return (
     <div className={styles.loginFormArea}>
       <>
@@ -60,6 +66,9 @@ export const LoginForm = () => {
       </>
       <form onKeyDown={handleKeyPress} className={styles.loginForm}>
         <LoginInputs handleChange={setLoginData} />
+        <a href="#" onClick={handleForgotPassword} className={styles.forgotPasswordLink}>
+          Forgot Password?
+        </a>
         <div className={styles.loginButtonArea}>
           <DarbeButton
             buttonText="Login"
