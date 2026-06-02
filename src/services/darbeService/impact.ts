@@ -82,18 +82,37 @@ const getEntitySignupImpactRows = async (
     hours_volunteered: number | null;
   }>
 > => {
-  const { data: signups, error } = await supabase
-    .from("event_signups")
-    .select("id, event_id, check_in_at, check_out_at")
-    .eq("user_id", entityId)
-    .in("status", ["volunteered", "confirmed", "approved", "no_show"])
-    .not("event_id", "is", null);
+  const activeSignupStatuses = ["volunteered", "confirmed", "approved", "no_show"];
+  const [
+    { data: directSignups, error: directSignupsError },
+    { data: memberInvitationSignups, error: memberInvitationSignupsError },
+  ] = await Promise.all([
+    supabase
+      .from("event_signups")
+      .select("id, event_id, check_in_at, check_out_at")
+      .eq("user_id", entityId)
+      .in("status", activeSignupStatuses)
+      .not("event_id", "is", null),
+    supabase
+      .from("event_signups")
+      .select("id, event_id, check_in_at, check_out_at")
+      .eq("invited_by_entity_id", entityId)
+      .is("invitation_removed_at", null)
+      .in("status", activeSignupStatuses)
+      .not("event_id", "is", null),
+  ]);
 
-  if (error) throw error;
+  if (directSignupsError) throw directSignupsError;
+  if (memberInvitationSignupsError) throw memberInvitationSignupsError;
+
+  const signups = [
+    ...(directSignups ?? []),
+    ...(memberInvitationSignups ?? []),
+  ];
 
   const eventIds = Array.from(
     new Set(
-      (signups ?? [])
+      signups
         .map((signup) => signup.event_id)
         .filter((eventId): eventId is string => Boolean(eventId))
     )
@@ -108,18 +127,31 @@ const getEntitySignupImpactRows = async (
       .map((event) => event.id)
   );
 
-  return (signups ?? [])
+  const rowsByEventId = new Map<
+    string,
+    { id: string; event_id: string; hours_volunteered: number }
+  >();
+
+  signups
     .filter(
       (signup) => Boolean(signup.event_id) && pastEventIds.has(signup.event_id)
     )
-    .map((signup) => ({
-      id: signup.id,
-      event_id: signup.event_id,
-      hours_volunteered: getHoursBetweenTimestamps(
+    .forEach((signup) => {
+      const hoursVolunteered = getHoursBetweenTimestamps(
         signup.check_in_at,
         signup.check_out_at
-      ),
-    }));
+      );
+      const existingRow = rowsByEventId.get(signup.event_id);
+
+      rowsByEventId.set(signup.event_id, {
+        id: existingRow?.id ?? signup.id,
+        event_id: signup.event_id,
+        hours_volunteered:
+          (existingRow?.hours_volunteered ?? 0) + hoursVolunteered,
+      });
+    });
+
+  return Array.from(rowsByEventId.values());
 };
 
 const mergeImpactRowsByEvent = (
