@@ -157,9 +157,15 @@ export const EventSignup = () => {
     skip: userType !== "individual",
   });
   const { data: signedUpEvents, isLoading: isLoadingSignedUpEvents } =
-    useGetSignedUpEventsQuery({ when: "upcoming" });
+    useGetSignedUpEventsQuery(
+      { when: "upcoming" },
+      { skip: !currentUserId }
+    );
   const { data: pastSignedUpEvents, isLoading: isLoadingPastSignedUpEvents } =
-    useGetSignedUpEventsQuery({ when: "past" });
+    useGetSignedUpEventsQuery(
+      { when: "past" },
+      { skip: !currentUserId }
+    );
   const rosterAdminEventIdSet = useMemo(
     () => new Set(rosterAdminEvents.map((event) => event.id)),
     [rosterAdminEvents]
