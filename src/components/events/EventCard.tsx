@@ -344,6 +344,7 @@ const getSearchResultDisplayName = (result: {
 type ImpactEditState = {
   signupId: string;
   userId: string;
+  volunteerName: string;
   startTime: string;
   endTime: string;
   location: string;
@@ -494,7 +495,7 @@ export const EventCard = ({
     useState<EventFieldEditState | null>(null);
   const [eventFieldEditError, setEventFieldEditError] = useState("");
   const [impactDetailOverrides, setImpactDetailOverrides] = useState<
-    Record<string, Omit<ImpactEditState, "signupId" | "userId">>
+    Record<string, Omit<ImpactEditState, "signupId" | "userId" | "volunteerName">>
   >({});
   const [signupStatusOverrides, setSignupStatusOverrides] = useState<
     Record<string, ShortEventState["signups"][number]["status"]>
@@ -2180,6 +2181,7 @@ export const EventCard = ({
                         setImpactEditState({
                           signupId: signup.id,
                           userId: signup.user.id,
+                          volunteerName,
                           startTime: timeTextToTimeInputValue(candidateStartTime),
                           endTime: timeTextToTimeInputValue(candidateEndTime),
                           location: candidateLocation,
@@ -2604,6 +2606,9 @@ export const EventCard = ({
         <div className={styles.eventImpactEditOverlay}>
           <div className={styles.eventImpactEditDialog} role="dialog" aria-modal="true">
             <h2>Edit Volunteer Time</h2>
+            <p className={styles.eventImpactEditVolunteerName}>
+              {impactEditState.volunteerName}
+            </p>
             <label>
               <span>Start Time:</span>
               <TimePickerSelect

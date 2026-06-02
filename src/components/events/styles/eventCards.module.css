@@ -1603,6 +1603,15 @@
   line-height: 25px;
 }
 
+.eventImpactEditVolunteerName {
+  margin: -6px 0 2px;
+  color: #5f6b7f;
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
 .eventImpactEditDialog label {
   display: flex;
   flex-direction: column;
