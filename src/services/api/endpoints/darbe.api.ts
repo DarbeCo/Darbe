@@ -29,6 +29,7 @@ export const darbeBaseApi = createApi({
     "RosterMembers",
     "Documents",
     "Impact",
+    "VolunteerValue",
     "EventPhotos",
   ],
   endpoints: () => ({}),

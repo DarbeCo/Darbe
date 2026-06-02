@@ -10,6 +10,14 @@
     padding-bottom: 80px;
   }
 
+  .userProfileLoading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 60vh;
+  }
+
   .userProfileFriendButtons {
     display: flex;
     flex-direction: column;
@@ -623,6 +631,11 @@
     -webkit-line-clamp: 2;
   }
 
+  .profileImpactEventText .profileImpactEventImpact {
+    margin-top: 4px;
+    -webkit-line-clamp: 1;
+  }
+
   .profileImpactStats {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -668,6 +681,17 @@
     line-height: 12px;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .profileImpactPhotosLink {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #2c77e7;
+    font: inherit;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 
   .profileImpactShowAll {

@@ -151,6 +151,11 @@
   -webkit-line-clamp: 3;
 }
 
+.impactEventText .impactEventImpact {
+  margin-top: 12px;
+  -webkit-line-clamp: 2;
+}
+
 .impactStats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -197,6 +202,10 @@
   line-height: 1.35;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.impactTextValue {
+  font-size: 18px;
 }
 
 @media (max-width: 1259px) {

@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useMemo } from "react";
+import { CircularProgress } from "@mui/material";
 
 import { selectUser } from "../selectors";
 import { useGetUserImpactQuery } from "../../../services/api/endpoints/impact/impact.api";
@@ -41,13 +42,29 @@ export const UserProfiles = () => {
   const canEdit = user?.id === userId;
 
   // This loads the user profile information that we are looking at. Could be our own
-  const [triggerUserProfile, { data: userInformation }] =
-    useLazyGetUserProfileQuery();
+  const [
+    triggerUserProfile,
+    {
+      data: userInformation,
+      isFetching: isProfileFetching,
+      isUninitialized: isProfileUninitialized,
+      isError: isProfileError,
+    },
+  ] = useLazyGetUserProfileQuery();
   // This loads the current friends the user profile has. Could be our own
-  const [triggerFriends, { data: currentFriends }] = useLazyGetFriendsQuery();
+  const [
+    triggerFriends,
+    {
+      data: currentFriends,
+    },
+  ] = useLazyGetFriendsQuery();
   // This loads the current following data of the user profile. Could be our own
-  const [triggerFollowingData, { data: followingData }] =
-    useLazyGetUserFollowersQuery();
+  const [
+    triggerFollowingData,
+    {
+      data: followingData,
+    },
+  ] = useLazyGetUserFollowersQuery();
 
   useEffect(() => {
     if (!userId) return;
@@ -56,7 +73,7 @@ export const UserProfiles = () => {
     triggerUserProfile(userId);
     triggerFriends(userId);
     triggerFollowingData(userId);
-  }, [userId, triggerUserProfile, triggerFriends]);
+  }, [userId, triggerUserProfile, triggerFriends, triggerFollowingData]);
 
   const { data: userImpacts } = useGetUserImpactQuery(userId ?? "", {
     skip: !userId,
@@ -120,6 +137,11 @@ export const UserProfiles = () => {
   const mutualFriends = canEdit ? 0 : mutualFriendsData?.length ?? 0;
 
   const { isMobile, isDesktop } = useScreenWidthHook();
+  const isProfilePageLoading =
+    !userId ||
+    isProfileUninitialized ||
+    isProfileFetching ||
+    (!userInformation && !isProfileError);
 
   const entityInformation = isEntityProfile
     ? {
@@ -130,6 +152,14 @@ export const UserProfiles = () => {
         programs: userInformation?.programs,
       }
     : undefined;
+
+  if (isProfilePageLoading) {
+    return (
+      <div className={styles.userProfileLoading}>
+        <CircularProgress />
+      </div>
+    );
+  }
 
   return (
     <div className={styles.userProfiles}>

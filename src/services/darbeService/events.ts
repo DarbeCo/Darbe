@@ -13,6 +13,7 @@ import type { SimpleUserInfo } from "../api/endpoints/types/user.api.types";
 import { supabase } from "../supabase/client";
 import { ensureUserId } from "./utils";
 import { getProfilesByIds, mapProfileToSimpleUserInfo } from "./profiles";
+import { getVolunteerValuePerHour } from "./volunteerValue";
 import {
   getEventTimeParts,
   parseEventDateAsLocalDate,
@@ -35,6 +36,7 @@ type EventRow = {
   is_outdoor: boolean | null;
   max_volunteer_count: number;
   event_cover_photo_url: string | null;
+  event_photo_visibility: "public" | "private" | null;
   event_coordinator_id: string;
   roster_id: string | null;
   adult_waiver_url: string | null;
@@ -385,12 +387,30 @@ const buildShortEvents = async (
         .filter((id): id is string => Boolean(id))
     )
   );
-  const [signupJobTitleMap, invitedByEntityProfiles] = await Promise.all([
+  const invitationRemovedByIds = Array.from(
+    new Set(
+      (signupRowsRes.data ?? [])
+        .map((signup) => signup.invitation_removed_by)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+  const [
+    signupJobTitleMap,
+    invitedByEntityProfiles,
+    invitationRemovedByProfiles,
+  ] = await Promise.all([
     getJobTitleMap(signupUserIds),
     getProfilesByIds(invitedByEntityIds),
+    getProfilesByIds(invitationRemovedByIds),
   ]);
   const invitedByEntityMap = new Map(
     invitedByEntityProfiles.map((profile) => [
+      profile.id,
+      mapProfileToSimpleUserInfo(profile),
+    ])
+  );
+  const invitationRemovedByMap = new Map(
+    invitationRemovedByProfiles.map((profile) => [
       profile.id,
       mapProfileToSimpleUserInfo(profile),
     ])
@@ -416,6 +436,8 @@ const buildShortEvents = async (
       volunteerLocation?: string;
       volunteerImpact?: string;
       invitedByEntity?: SimpleUserInfo;
+      invitationRemovedAt?: string;
+      invitationRemovedBy?: SimpleUserInfo;
     }[]
   >();
 
@@ -445,6 +467,10 @@ const buildShortEvents = async (
       invitedByEntity: signup.invited_by_entity_id
         ? invitedByEntityMap.get(signup.invited_by_entity_id)
         : undefined,
+      invitationRemovedAt: signup.invitation_removed_at ?? undefined,
+      invitationRemovedBy: signup.invitation_removed_by
+        ? invitationRemovedByMap.get(signup.invitation_removed_by)
+        : undefined,
     });
     signupsByEvent.set(signup.event_id, eventSignups);
   });
@@ -468,6 +494,7 @@ const buildShortEvents = async (
       endTime: timeToDecimal(event.end_time),
       maxVolunteerCount: event.max_volunteer_count,
       eventCoverPhoto: event.event_cover_photo_url ?? "",
+      eventPhotoVisibility: event.event_photo_visibility ?? "public",
       eventDescription: event.event_description ?? "",
       volunteerImpact: mapImpactRow(impactMap.get(event.id)),
       eventAddress: mapAddressRow(addressMap.get(event.id)),
@@ -481,7 +508,7 @@ export const getShortEventsByIds = async (eventIds: string[]): Promise<ShortEven
   const { data, error } = await supabase
     .from("events")
     .select(
-      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_coordinator_id"
+      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_photo_visibility, event_coordinator_id"
     )
     .in("id", eventIds);
 
@@ -750,153 +777,6 @@ const getHoursBetweenTimestamps = (start?: string | null, end?: string | null) =
   return Math.max((endTime - startTime) / 3600000, 0);
 };
 
-const ensureApprovedVolunteerImpact = async (
-  eventId: string,
-  userId: string
-): Promise<void> => {
-  const { data: signup, error: signupError } = await supabase
-    .from("event_signups")
-    .select("check_in_at, check_out_at")
-    .eq("event_id", eventId)
-    .eq("user_id", userId)
-    .eq("status", "approved")
-    .not("check_in_at", "is", null)
-    .not("check_out_at", "is", null)
-    .order("event_action_timestamp", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (signupError) throw signupError;
-  if (!signup) return;
-
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("user_type")
-    .eq("id", userId)
-    .single();
-
-  if (profileError || !profile) {
-    throw profileError ?? new Error("Volunteer profile not found");
-  }
-
-  const hoursVolunteered = getHoursBetweenTimestamps(
-    signup.check_in_at,
-    signup.check_out_at
-  );
-  const { data: existingImpact, error: existingImpactError } = await supabase
-    .from("impact")
-    .select("id")
-    .eq("impact_owner_id", userId)
-    .eq("event_id", eventId)
-    .maybeSingle();
-
-  if (existingImpactError) throw existingImpactError;
-
-  if (existingImpact) {
-    const { error: updateError } = await supabase
-      .from("impact")
-      .update({
-        user_type: profile.user_type,
-        events_attended: 1,
-        hours_volunteered: hoursVolunteered,
-      })
-      .eq("id", existingImpact.id);
-
-    if (updateError) throw updateError;
-    return;
-  }
-
-  const { error: insertError } = await supabase.from("impact").insert({
-    impact_owner_id: userId,
-    user_type: profile.user_type,
-    event_id: eventId,
-    events_created: 0,
-    events_attended: 1,
-    events_passed: 0,
-    events_coordinated: 0,
-    hours_volunteered: hoursVolunteered,
-  });
-
-  if (insertError) throw insertError;
-};
-
-const syncApprovedVolunteerImpactSummary = async (
-  userId: string
-): Promise<void> => {
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("user_type")
-    .eq("id", userId)
-    .single();
-
-  if (profileError || !profile) {
-    throw profileError ?? new Error("Volunteer profile not found");
-  }
-
-  const { data: approvedImpacts, error: impactError } = await supabase
-    .from("impact")
-    .select("hours_volunteered, events_attended")
-    .eq("impact_owner_id", userId)
-    .not("event_id", "is", null)
-    .gt("events_attended", 0);
-
-  if (impactError) throw impactError;
-
-  const summary = (approvedImpacts ?? []).reduce(
-    (totals, impact) => ({
-      eventsAttended:
-        totals.eventsAttended + Number(impact.events_attended ?? 0),
-      hoursVolunteered:
-        totals.hoursVolunteered + Number(impact.hours_volunteered ?? 0),
-    }),
-    { eventsAttended: 0, hoursVolunteered: 0 }
-  );
-
-  const { data: existingSummary, error: summaryError } = await supabase
-    .from("impact")
-    .select("id")
-    .eq("impact_owner_id", userId)
-    .is("event_id", null)
-    .maybeSingle();
-
-  if (summaryError) throw summaryError;
-
-  if (existingSummary) {
-    const { error: updateError } = await supabase
-      .from("impact")
-      .update({
-        events_attended: summary.eventsAttended,
-        hours_volunteered: summary.hoursVolunteered,
-      })
-      .eq("id", existingSummary.id);
-
-    if (updateError) throw updateError;
-  } else {
-    const { error: insertError } = await supabase.from("impact").insert({
-      impact_owner_id: userId,
-      user_type: profile.user_type,
-      event_id: null,
-      events_created: 0,
-      events_attended: summary.eventsAttended,
-      events_passed: 0,
-      events_coordinated: 0,
-      hours_volunteered: summary.hoursVolunteered,
-    });
-
-    if (insertError) throw insertError;
-  }
-
-  const { error: detailsError } = await supabase.from("user_details").upsert(
-    {
-      user_id: userId,
-      volunteer_hours: summary.hoursVolunteered,
-    },
-    { onConflict: "user_id" }
-  );
-
-  if (detailsError) throw detailsError;
-};
-
 export const getEvents = async (
   scope: "default" | "recommendable" = "default"
 ): Promise<ShortEventState[]> => {
@@ -915,7 +795,7 @@ export const getEvents = async (
   let eventsQuery = supabase
     .from("events")
     .select(
-      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_coordinator_id"
+      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_photo_visibility, event_coordinator_id"
     )
     .order("event_date", { ascending: true });
 
@@ -929,7 +809,7 @@ export const getEvents = async (
 
   if (error) throw error;
 
-  let filteredEvents = events ?? [];
+  let filteredEvents = (events ?? []) as EventRow[];
   const invitationByEventId = new Map<string, SimpleUserInfo>();
 
   if (isRecommendableEntityScope) {
@@ -1114,7 +994,7 @@ export const getEvents = async (
         await supabase
           .from("events")
           .select(
-            "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_coordinator_id"
+            "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_photo_visibility, event_coordinator_id"
           )
           .in("id", missingRecommendedEventIds);
 
@@ -1190,6 +1070,57 @@ export const recommendEventToFollowers = async (
 
   if (profile.user_type !== "organization" && profile.user_type !== "nonprofit") {
     throw new Error("Only organizations and nonprofits can recommend events to followers.");
+  }
+
+  const actionTimestamp = new Date().toISOString();
+  const { data: existingEntitySignups, error: existingEntitySignupsError } =
+    await supabase
+      .from("event_signups")
+      .select("id, status")
+      .eq("event_id", eventId)
+      .eq("user_id", recommenderEntityId);
+
+  if (existingEntitySignupsError) throw existingEntitySignupsError;
+
+  const hasActiveEntitySignup = (existingEntitySignups ?? []).some((signup) =>
+    ["volunteered", "confirmed", "approved"].includes(signup.status)
+  );
+
+  if (!hasActiveEntitySignup) {
+    const entitySignupIds = (existingEntitySignups ?? []).map(
+      (signup) => signup.id
+    );
+
+    if (entitySignupIds.length) {
+      const { error: restoreEntitySignupError } = await supabase
+        .from("event_signups")
+        .update({
+          status: "volunteered",
+          check_in_at: null,
+          check_out_at: null,
+          invited_by_entity_id: null,
+          invitation_removed_at: null,
+          invitation_removed_by: null,
+          event_action_timestamp: actionTimestamp,
+        })
+        .in("id", entitySignupIds);
+
+      if (restoreEntitySignupError) throw restoreEntitySignupError;
+    } else {
+      const { error: insertEntitySignupError } = await supabase
+        .from("event_signups")
+        .insert({
+          event_id: eventId,
+          user_id: recommenderEntityId,
+          status: "volunteered",
+          check_in_at: null,
+          check_out_at: null,
+          invited_by_entity_id: null,
+          event_action_timestamp: actionTimestamp,
+        });
+
+      if (insertEntitySignupError) throw insertEntitySignupError;
+    }
   }
 
   const [
@@ -1341,7 +1272,7 @@ export const getEntityUpcomingEvents = async (
   const { data, error } = await supabase
     .from("events")
     .select(
-      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_coordinator_id"
+      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_photo_visibility, event_coordinator_id"
     )
     .eq("event_owner_id", entityId)
     .gte("event_date", toLocalDateString(new Date()))
@@ -1378,7 +1309,7 @@ export const getRosterAdminEvents = async (): Promise<ShortEventState[]> => {
   const { data: events, error: eventsError } = await supabase
     .from("events")
     .select(
-      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_repeating, is_followers_only, event_parking_info, event_internal_location, is_indoor, is_outdoor, max_volunteer_count, event_cover_photo_url, event_coordinator_id, adult_waiver_url, minor_waiver_url"
+      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_repeating, is_followers_only, event_parking_info, event_internal_location, is_indoor, is_outdoor, max_volunteer_count, event_cover_photo_url, event_photo_visibility, event_coordinator_id, adult_waiver_url, minor_waiver_url"
     )
     .or(eventFilter)
     .order("event_date", { ascending: false });
@@ -1406,7 +1337,7 @@ export const getEventDetails = async (eventId: string): Promise<EventsState> => 
   const { data: event, error } = await supabase
     .from("events")
     .select(
-      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_repeating, is_followers_only, event_parking_info, event_internal_location, is_indoor, is_outdoor, max_volunteer_count, event_cover_photo_url, event_coordinator_id, adult_waiver_url, minor_waiver_url"
+      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_repeating, is_followers_only, event_parking_info, event_internal_location, is_indoor, is_outdoor, max_volunteer_count, event_cover_photo_url, event_photo_visibility, event_coordinator_id, adult_waiver_url, minor_waiver_url"
     )
     .eq("id", eventId)
     .single();
@@ -1463,6 +1394,9 @@ export const getEventDetails = async (eventId: string): Promise<EventsState> => 
     isOutdoor: event.is_outdoor ?? false,
     eventRequirements: mapRequirementsRow(requirementsRes.data ?? undefined),
     eventCoverPhoto: event.event_cover_photo_url ?? "",
+    eventPhotoVisibility:
+      (event.event_photo_visibility as EventsState["eventPhotoVisibility"]) ??
+      "public",
     eventCoordinator: toSimpleUser(coordinatorProfile, event.event_coordinator_id),
     eventOwner: toSimpleUser(ownerProfile, event.event_owner_id),
     rosterId: event.roster_id ?? undefined,
@@ -1510,6 +1444,7 @@ export const createEvent = async (newEvent: CreateEvent): Promise<SimpleEventSta
       is_outdoor: newEvent.isOutdoor ?? false,
       max_volunteer_count: newEvent.maxVolunteerCount,
       event_cover_photo_url: newEvent.eventCoverPhoto ?? "",
+      event_photo_visibility: newEvent.eventPhotoVisibility ?? "public",
       event_coordinator_id: newEvent.eventCoordinator || eventOwnerId,
       roster_id: newEvent.rosterId || null,
       adult_waiver_url: newEvent.adultWaiver ?? "",
@@ -1638,6 +1573,7 @@ export const updateEventDetails = async ({
   rosterId,
   eventAddress,
   volunteerImpact,
+  eventPhotoVisibility,
 }: EventEditableUpdate): Promise<void> => {
   await ensureCanEditEvent(eventId);
 
@@ -1646,6 +1582,7 @@ export const updateEventDetails = async ({
     event_description?: string;
     max_volunteer_count?: number;
     roster_id?: string | null;
+    event_photo_visibility?: "public" | "private";
   } = {};
 
   if (eventName !== undefined) eventUpdates.event_name = eventName;
@@ -1657,6 +1594,9 @@ export const updateEventDetails = async ({
   }
   if (rosterId !== undefined) {
     eventUpdates.roster_id = rosterId;
+  }
+  if (eventPhotoVisibility !== undefined) {
+    eventUpdates.event_photo_visibility = eventPhotoVisibility;
   }
 
   const updates = [];
@@ -2051,10 +1991,9 @@ export const markNoShowForEvent = async (
     throw new Error("Volunteer is required");
   }
 
-  const { error } = await supabase.rpc("manage_event_signup_check_time", {
+  const { error } = await supabase.rpc("deny_event_volunteer_as_no_show", {
     target_event_id: action.eventId,
     target_user_id: action.userId,
-    check_action: "no_show",
   });
 
   if (error) throw error;
@@ -2067,6 +2006,37 @@ export const addEventVolunteer = async (
 
   if (!action.userId) {
     throw new Error("Volunteer is required");
+  }
+
+  if (action.invitedByEntityId) {
+    const { data: inviterProfile, error: inviterProfileError } = await supabase
+      .from("profiles")
+      .select("user_type")
+      .eq("id", action.invitedByEntityId)
+      .single();
+
+    if (inviterProfileError) throw inviterProfileError;
+
+    if (["organization", "nonprofit"].includes(inviterProfile?.user_type ?? "")) {
+      const { data: memberIds, error: memberIdsError } = await supabase.rpc(
+        "get_entity_roster_member_ids",
+        {
+          target_entity_id: action.invitedByEntityId,
+        }
+      );
+
+      if (memberIdsError) throw memberIdsError;
+
+      const isEntityMember = (memberIds ?? []).some(
+        (member) => member.user_id === action.userId
+      );
+
+      if (!isEntityMember) {
+        throw new Error(
+          "Only organization members can be added to this volunteer list."
+        );
+      }
+    }
   }
 
   const { error } = await supabase.rpc("manage_event_signup_check_time", {
@@ -2083,7 +2053,11 @@ export const addEventVolunteer = async (
 
   const { error: invitationError } = await supabase
     .from("event_signups")
-    .update({ invited_by_entity_id: action.invitedByEntityId })
+    .update({
+      invited_by_entity_id: action.invitedByEntityId,
+      invitation_removed_at: null,
+      invitation_removed_by: null,
+    })
     .eq("event_id", action.eventId)
     .eq("user_id", action.userId);
 
@@ -2114,9 +2088,6 @@ export const approveEventVolunteer = async (
   });
 
   if (error) throw error;
-
-  await ensureApprovedVolunteerImpact(action.eventId, action.userId);
-  await syncApprovedVolunteerImpactSummary(action.userId);
 };
 
 export const denyEventVolunteer = async (
@@ -2158,6 +2129,23 @@ export const removeEventInvitationVolunteer = async (
   if (error) throw error;
 };
 
+export const removeEventVolunteer = async (
+  action: EventSignupAction
+): Promise<void> => {
+  await ensureUserId();
+
+  if (!action.userId) {
+    throw new Error("Volunteer is required");
+  }
+
+  const { error } = await supabase.rpc("remove_event_volunteer_signup", {
+    target_event_id: action.eventId,
+    target_user_id: action.userId,
+  });
+
+  if (error) throw error;
+};
+
 export const approveAllEventVolunteers = async (
   eventId: string
 ): Promise<void> => {
@@ -2168,26 +2156,6 @@ export const approveAllEventVolunteers = async (
   });
 
   if (error) throw error;
-
-  const { data: approvedSignups, error: approvedSignupsError } = await supabase
-    .from("event_signups")
-    .select("user_id")
-    .eq("event_id", eventId)
-    .eq("status", "approved");
-
-  if (approvedSignupsError) throw approvedSignupsError;
-
-  await Promise.all(
-    (approvedSignups ?? []).map((signup) =>
-      ensureApprovedVolunteerImpact(eventId, signup.user_id)
-    )
-  );
-
-  await Promise.all(
-    Array.from(new Set((approvedSignups ?? []).map((signup) => signup.user_id))).map(
-      (userId) => syncApprovedVolunteerImpactSummary(userId)
-    )
-  );
 };
 
 export type EventSignupImpactDetails = {
@@ -2258,30 +2226,90 @@ export const getSignedUpEvents = async (
   when: "upcoming" | "past" | undefined
 ): Promise<UserEventSignups[]> => {
   const userId = await ensureUserId();
-  const { data: signups, error } = await supabase
+  const activeSignupStatuses = ["volunteered", "confirmed", "approved", "no_show"];
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("user_type")
+    .eq("id", userId)
+    .single();
+
+  if (profileError || !profile) {
+    throw profileError ?? new Error("User profile not found");
+  }
+
+  const { data: directSignups, error: directSignupsError } = await supabase
     .from("event_signups")
     .select(
       "event_id, status, event_action_timestamp, check_in_at, check_out_at, invited_by_entity_id"
     )
     .eq("user_id", userId)
-    .in("status", ["volunteered", "confirmed", "approved", "no_show"]);
+    .in("status", activeSignupStatuses);
 
-  if (error) throw error;
+  if (directSignupsError) throw directSignupsError;
 
-  const eventIds = Array.from(new Set((signups ?? []).map((row) => row.event_id)));
+  const isEntityUser =
+    profile.user_type === "organization" || profile.user_type === "nonprofit";
+  const { data: memberInvitationRows, error: memberInvitationRowsError } =
+    isEntityUser
+      ? await supabase.rpc("get_entity_invited_signup_events")
+      : { data: [], error: null };
 
-  if (!eventIds.length) return [];
+  if (memberInvitationRowsError) throw memberInvitationRowsError;
 
-  const { data: events, error: eventsError } = await supabase
-    .from("events")
-    .select(
-      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_coordinator_id"
-    )
-    .in("id", eventIds);
+  const memberInvitationSignups = (memberInvitationRows ?? []).map((row) => ({
+    event_id: row.event_id,
+    status: row.status,
+    event_action_timestamp: row.event_action_timestamp,
+    check_in_at: row.check_in_at,
+    check_out_at: row.check_out_at,
+    invited_by_entity_id: row.invited_by_entity_id,
+  }));
+
+  const signups = [
+    ...(directSignups ?? []),
+    ...memberInvitationSignups,
+  ];
+  const memberInvitationEvents = (memberInvitationRows ?? []).map((row) => ({
+    id: row.event_id,
+    event_owner_id: row.event_owner_id,
+    roster_id: row.roster_id,
+    event_name: row.event_name,
+    event_description: row.event_description,
+    event_date: row.event_date,
+    start_time: row.start_time,
+    end_time: row.end_time,
+    is_followers_only: row.is_followers_only,
+    max_volunteer_count: row.max_volunteer_count,
+    event_cover_photo_url: row.event_cover_photo_url,
+    event_photo_visibility: row.event_photo_visibility,
+    event_coordinator_id: row.event_coordinator_id,
+  })) as EventRow[];
+
+  const directEventIds = Array.from(
+    new Set((directSignups ?? []).map((row) => row.event_id))
+  );
+
+  const { data: events, error: eventsError } = directEventIds.length
+    ? await supabase
+        .from("events")
+        .select(
+          "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_photo_visibility, event_coordinator_id"
+        )
+        .in("id", directEventIds)
+    : { data: [], error: null };
 
   if (eventsError) throw eventsError;
 
-  let filteredEvents = events ?? [];
+  const eventById = new Map<string, EventRow>();
+  ([...((events ?? []) as EventRow[]), ...memberInvitationEvents]).forEach(
+    (event) => {
+      eventById.set(event.id, event);
+    }
+  );
+
+  let filteredEvents = Array.from(eventById.values());
+
+  if (!filteredEvents.length) return [];
 
   if (when) {
     const now = new Date();
@@ -2336,8 +2364,8 @@ export const getSignedUpEvents = async (
   );
   const eventMap = new Map(shortEvents.map((event) => [event.id, event]));
 
-  const profile = (await getProfilesByIds([userId]))[0];
-  const signedUpUser = toSimpleUser(profile, userId);
+  const signedUpProfile = (await getProfilesByIds([userId]))[0];
+  const signedUpUser = toSimpleUser(signedUpProfile, userId);
   const signupCountMap = await getSignupCounts(filteredEvents.map((event) => event.id));
 
   const latestSignupByEvent = new Map<
@@ -2609,6 +2637,8 @@ export const getVolunteerMatches = async (): Promise<VolunteerMatch[]> => {
     causesByUser.set(row.user_id, list);
   });
 
+  const currentVolunteerValuePerHour = await getVolunteerValuePerHour();
+
   return (profiles ?? []).map((profile) => {
     const details = detailMap.get(profile.id);
     const impact = impactMap.get(profile.id);
@@ -2645,7 +2675,7 @@ export const getVolunteerMatches = async (): Promise<VolunteerMatch[]> => {
       matchedEventCount: matchedEventIdsByUser.get(profile.id)?.size ?? 0,
       volunteerSummary: {
         hoursVolunteered,
-        volunteerValue: hoursVolunteered * 33.49,
+        volunteerValue: hoursVolunteered * currentVolunteerValuePerHour,
         eventsAttended,
       },
     };

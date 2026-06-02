@@ -784,6 +784,7 @@ export interface Database {
           is_outdoor: boolean | null;
           max_volunteer_count: number;
           event_cover_photo_url: string | null;
+          event_photo_visibility: string;
           event_coordinator_id: string;
           roster_id: string | null;
           adult_waiver_url: string | null;
@@ -807,6 +808,7 @@ export interface Database {
           is_outdoor?: boolean | null;
           max_volunteer_count: number;
           event_cover_photo_url?: string | null;
+          event_photo_visibility?: string;
           event_coordinator_id: string;
           roster_id?: string | null;
           adult_waiver_url?: string | null;
@@ -830,6 +832,7 @@ export interface Database {
           is_outdoor?: boolean | null;
           max_volunteer_count?: number;
           event_cover_photo_url?: string | null;
+          event_photo_visibility?: string;
           event_coordinator_id?: string;
           roster_id?: string | null;
           adult_waiver_url?: string | null;
@@ -931,6 +934,8 @@ export interface Database {
           volunteer_location: string | null;
           volunteer_impact: string | null;
           invited_by_entity_id: string | null;
+          invitation_removed_at: string | null;
+          invitation_removed_by: string | null;
           created_at: string;
         };
         Insert: {
@@ -946,6 +951,8 @@ export interface Database {
           volunteer_location?: string | null;
           volunteer_impact?: string | null;
           invited_by_entity_id?: string | null;
+          invitation_removed_at?: string | null;
+          invitation_removed_by?: string | null;
           created_at?: string;
         };
         Update: {
@@ -961,6 +968,8 @@ export interface Database {
           volunteer_location?: string | null;
           volunteer_impact?: string | null;
           invited_by_entity_id?: string | null;
+          invitation_removed_at?: string | null;
+          invitation_removed_by?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -1092,6 +1101,7 @@ export interface Database {
           user_type: string;
           event_id: string | null;
           hours_volunteered: number;
+          volunteer_value_per_hour: number | null;
           events_created: number;
           events_attended: number;
           events_passed: number;
@@ -1105,6 +1115,7 @@ export interface Database {
           user_type: string;
           event_id?: string | null;
           hours_volunteered?: number;
+          volunteer_value_per_hour?: number | null;
           events_created?: number;
           events_attended?: number;
           events_passed?: number;
@@ -1118,11 +1129,39 @@ export interface Database {
           user_type?: string;
           event_id?: string | null;
           hours_volunteered?: number;
+          volunteer_value_per_hour?: number | null;
           events_created?: number;
           events_attended?: number;
           events_passed?: number;
           events_coordinated?: number;
           created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      volunteer_value_rates: {
+        Row: {
+          id: string;
+          hourly_value: number;
+          source: string;
+          source_year: number | null;
+          fetched_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          hourly_value: number;
+          source: string;
+          source_year?: number | null;
+          fetched_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          hourly_value?: number;
+          source?: string;
+          source_year?: number | null;
+          fetched_at?: string;
           updated_at?: string;
         };
         Relationships: [];
@@ -1195,6 +1234,8 @@ export interface Database {
           volunteer_location: string | null;
           volunteer_impact: string | null;
           invited_by_entity_id: string | null;
+          invitation_removed_at: string | null;
+          invitation_removed_by: string | null;
           full_name: string | null;
           first_name: string | null;
           last_name: string | null;
@@ -1220,6 +1261,29 @@ export interface Database {
           id: string;
           event_id: string;
           hours_volunteered: number;
+        }[];
+      };
+      get_entity_invited_signup_events: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          event_id: string;
+          status: string;
+          event_action_timestamp: string;
+          check_in_at: string | null;
+          check_out_at: string | null;
+          invited_by_entity_id: string | null;
+          event_owner_id: string;
+          roster_id: string | null;
+          event_name: string;
+          event_description: string | null;
+          event_date: string;
+          start_time: string | null;
+          end_time: string | null;
+          is_followers_only: boolean | null;
+          max_volunteer_count: number;
+          event_cover_photo_url: string | null;
+          event_photo_visibility: string | null;
+          event_coordinator_id: string;
         }[];
       };
       get_roster_admin_events: {
@@ -1316,6 +1380,21 @@ export interface Database {
           target_inviter_entity_id: string;
         };
         Returns: undefined;
+      };
+      remove_event_volunteer_signup: {
+        Args: {
+          target_event_id: string;
+          target_user_id: string;
+        };
+        Returns: undefined;
+      };
+      get_current_volunteer_value_per_hour: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
+      can_view_event_photos: {
+        Args: { target_event_id: string };
+        Returns: boolean;
       };
       approve_all_event_volunteers: {
         Args: { target_event_id: string };

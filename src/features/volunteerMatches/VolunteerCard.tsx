@@ -18,7 +18,10 @@ const formatMemberSince = (createdAt: string) =>
   });
 
 const formatCurrency = (value?: number) =>
-  `$${Math.floor(Number(value ?? 0)).toLocaleString("en-US")}`;
+  `$${Number(value ?? 0).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
 const formatNumber = (value?: number) =>
   Number(value ?? 0).toLocaleString("en-US", {

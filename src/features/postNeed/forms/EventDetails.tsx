@@ -129,6 +129,15 @@ export const EventDetails = ({
     setIsCoordinatorDropdownOpen(false);
   };
 
+  const handlePhotoVisibilityChange = (
+    visibility: "public" | "private"
+  ) => {
+    onChange?.((prevState) => ({
+      ...prevState,
+      eventPhotoVisibility: visibility,
+    }));
+  };
+
   const handleWaiverClick = (waiverType: "adultWaiver" | "minorWaiver") => {
     if (waiverType === "adultWaiver") {
       adultWaiverInputRef.current?.click();
@@ -254,17 +263,11 @@ export const EventDetails = ({
   };
 
   const renderInternalImpactInputs = () => {
-    const impactAmount =
-      data.volunteerImpact.individualImpactPerHour ||
-      data.volunteerImpact.groupImpactPerHour ||
-      "";
     const impactText =
       data.volunteerImpact.individualImpact ||
       data.volunteerImpact.groupImpact ||
       "";
-    const hasValues =
-      Boolean(impactAmount) &&
-      Boolean(impactText);
+    const hasValues = Boolean(impactText);
     const inputGroupClass = [
       styles.internalImpactInputs,
       hasValues ? styles.internalImpactValidInputs : "",
@@ -274,14 +277,6 @@ export const EventDetails = ({
 
     return (
       <div className={inputGroupClass}>
-        <Inputs
-          label=""
-          name="individualImpactPerHour"
-          darbeInputType="standardInput"
-          placeholder="1"
-          value={impactAmount}
-          handleChange={handleChange}
-        />
         <div className={styles.internalImpactTextInput}>
           <Inputs
             label=""
@@ -611,6 +606,34 @@ export const EventDetails = ({
                 )}
               </div>
             </div>
+          </div>
+          <div className={styles.internalPhotoVisibilitySection}>
+            <span className={styles.internalOtherLabel}>Photo Visibility</span>
+            <div className={styles.internalPhotoVisibilityOptions}>
+              <label>
+                <input
+                  type="radio"
+                  name="eventPhotoVisibility"
+                  value="public"
+                  checked={(data.eventPhotoVisibility ?? "public") === "public"}
+                  onChange={() => handlePhotoVisibilityChange("public")}
+                />
+                <span>Public</span>
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="eventPhotoVisibility"
+                  value="private"
+                  checked={data.eventPhotoVisibility === "private"}
+                  onChange={() => handlePhotoVisibilityChange("private")}
+                />
+                <span>Private</span>
+              </label>
+            </div>
+            <p className={styles.internalPhotoVisibilityHint}>
+              Private photos can only be viewed by members.
+            </p>
           </div>
         </section>
 
