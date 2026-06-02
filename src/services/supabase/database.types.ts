@@ -1263,6 +1263,29 @@ export interface Database {
           hours_volunteered: number;
         }[];
       };
+      get_entity_invited_signup_events: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          event_id: string;
+          status: string;
+          event_action_timestamp: string;
+          check_in_at: string | null;
+          check_out_at: string | null;
+          invited_by_entity_id: string | null;
+          event_owner_id: string;
+          roster_id: string | null;
+          event_name: string;
+          event_description: string | null;
+          event_date: string;
+          start_time: string | null;
+          end_time: string | null;
+          is_followers_only: boolean | null;
+          max_volunteer_count: number;
+          event_cover_photo_url: string | null;
+          event_photo_visibility: string | null;
+          event_coordinator_id: string;
+        }[];
+      };
       get_roster_admin_events: {
         Args: Record<PropertyKey, never>;
         Returns: {

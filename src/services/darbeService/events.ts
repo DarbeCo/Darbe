@@ -2426,39 +2426,67 @@ export const getSignedUpEvents = async (
 
   const isEntityUser =
     profile.user_type === "organization" || profile.user_type === "nonprofit";
-  const { data: memberInvitationSignups, error: memberInvitationSignupsError } =
+  const { data: memberInvitationRows, error: memberInvitationRowsError } =
     isEntityUser
-      ? await supabase
-          .from("event_signups")
-          .select(
-            "event_id, status, event_action_timestamp, check_in_at, check_out_at, invited_by_entity_id"
-          )
-          .eq("invited_by_entity_id", userId)
-          .is("invitation_removed_at", null)
-          .in("status", activeSignupStatuses)
+      ? await supabase.rpc("get_entity_invited_signup_events")
       : { data: [], error: null };
 
-  if (memberInvitationSignupsError) throw memberInvitationSignupsError;
+  if (memberInvitationRowsError) throw memberInvitationRowsError;
+
+  const memberInvitationSignups = (memberInvitationRows ?? []).map((row) => ({
+    event_id: row.event_id,
+    status: row.status,
+    event_action_timestamp: row.event_action_timestamp,
+    check_in_at: row.check_in_at,
+    check_out_at: row.check_out_at,
+    invited_by_entity_id: row.invited_by_entity_id,
+  }));
 
   const signups = [
     ...(directSignups ?? []),
-    ...(memberInvitationSignups ?? []),
+    ...memberInvitationSignups,
   ];
+  const memberInvitationEvents = (memberInvitationRows ?? []).map((row) => ({
+    id: row.event_id,
+    event_owner_id: row.event_owner_id,
+    roster_id: row.roster_id,
+    event_name: row.event_name,
+    event_description: row.event_description,
+    event_date: row.event_date,
+    start_time: row.start_time,
+    end_time: row.end_time,
+    is_followers_only: row.is_followers_only,
+    max_volunteer_count: row.max_volunteer_count,
+    event_cover_photo_url: row.event_cover_photo_url,
+    event_photo_visibility: row.event_photo_visibility,
+    event_coordinator_id: row.event_coordinator_id,
+  })) as EventRow[];
 
-  const eventIds = Array.from(new Set(signups.map((row) => row.event_id)));
+  const directEventIds = Array.from(
+    new Set((directSignups ?? []).map((row) => row.event_id))
+  );
 
-  if (!eventIds.length) return [];
-
-  const { data: events, error: eventsError } = await supabase
-    .from("events")
-    .select(
-      "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_photo_visibility, event_coordinator_id"
-    )
-    .in("id", eventIds);
+  const { data: events, error: eventsError } = directEventIds.length
+    ? await supabase
+        .from("events")
+        .select(
+          "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_photo_visibility, event_coordinator_id"
+        )
+        .in("id", directEventIds)
+    : { data: [], error: null };
 
   if (eventsError) throw eventsError;
 
-  let filteredEvents = events ?? [];
+  const eventById = new Map<string, EventRow>();
+  ([...((events ?? []) as EventRow[]), ...memberInvitationEvents]).forEach(
+    (event) => {
+      eventById.set(event.id, event);
+    }
+  );
+
+  let filteredEvents = Array.from(eventById.values());
+
+  if (!filteredEvents.length) return [];
 
   if (when) {
     const now = new Date();
