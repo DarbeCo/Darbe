@@ -3,6 +3,10 @@ import { supabase } from "../supabase/client";
 import { ensureUserId } from "./utils";
 import { getShortEventsByIds } from "./events";
 import { getVolunteerValuePerHour } from "./volunteerValue";
+import {
+  parseEventDateAsLocalDate,
+  parseEventDateTimeAsLocalDate,
+} from "../../utils/eventDateUtils";
 
 const getHoursBetweenTimestamps = (start?: string | null, end?: string | null) => {
   if (!start || !end) return 0;
@@ -51,6 +55,103 @@ const mapImpactRowsToEvents = async (
     }));
 };
 
+const hasShortEventEnded = (
+  event: { eventDate: string; endTime?: number },
+  now = new Date()
+) => {
+  if (event.endTime !== undefined) {
+    return now > parseEventDateTimeAsLocalDate(event.eventDate, event.endTime);
+  }
+
+  const eventDate = parseEventDateAsLocalDate(event.eventDate);
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  );
+
+  return eventDate < startOfToday;
+};
+
+const getEntitySignupImpactRows = async (
+  entityId: string
+): Promise<
+  Array<{
+    id: string;
+    event_id: string | null;
+    hours_volunteered: number | null;
+  }>
+> => {
+  const { data: signups, error } = await supabase
+    .from("event_signups")
+    .select("id, event_id, check_in_at, check_out_at")
+    .eq("user_id", entityId)
+    .in("status", ["volunteered", "confirmed", "approved", "no_show"])
+    .not("event_id", "is", null);
+
+  if (error) throw error;
+
+  const eventIds = Array.from(
+    new Set(
+      (signups ?? [])
+        .map((signup) => signup.event_id)
+        .filter((eventId): eventId is string => Boolean(eventId))
+    )
+  );
+
+  if (!eventIds.length) return [];
+
+  const events = await getShortEventsByIds(eventIds);
+  const pastEventIds = new Set(
+    events
+      .filter((event) => hasShortEventEnded(event))
+      .map((event) => event.id)
+  );
+
+  return (signups ?? [])
+    .filter(
+      (signup) => Boolean(signup.event_id) && pastEventIds.has(signup.event_id)
+    )
+    .map((signup) => ({
+      id: signup.id,
+      event_id: signup.event_id,
+      hours_volunteered: getHoursBetweenTimestamps(
+        signup.check_in_at,
+        signup.check_out_at
+      ),
+    }));
+};
+
+const mergeImpactRowsByEvent = (
+  primaryRows: Array<{
+    id: string;
+    event_id: string | null;
+    hours_volunteered: number | null;
+    volunteer_value_per_hour?: number | null;
+  }>,
+  secondaryRows: Array<{
+    id: string;
+    event_id: string | null;
+    hours_volunteered: number | null;
+    volunteer_value_per_hour?: number | null;
+  }>
+) => {
+  const seenEventIds = new Set(
+    primaryRows
+      .map((row) => row.event_id)
+      .filter((eventId): eventId is string => Boolean(eventId))
+  );
+
+  return [
+    ...primaryRows,
+    ...secondaryRows.filter((row) => {
+      if (!row.event_id || seenEventIds.has(row.event_id)) return false;
+      seenEventIds.add(row.event_id);
+      return true;
+    }),
+  ];
+};
+
 const getEntityVolunteerImpact = async (entityId: string): Promise<EventImpact[]> => {
   const { data: publicImpactRows, error: publicImpactError } =
     await supabase.rpc("get_public_entity_volunteer_impact", {
@@ -58,7 +159,10 @@ const getEntityVolunteerImpact = async (entityId: string): Promise<EventImpact[]
     });
 
   if (!publicImpactError) {
-    return mapImpactRowsToEvents(publicImpactRows ?? []);
+    const entitySignupRows = await getEntitySignupImpactRows(entityId);
+    return mapImpactRowsToEvents(
+      mergeImpactRowsByEvent(publicImpactRows ?? [], entitySignupRows)
+    );
   }
 
   if ((publicImpactError as { code?: string }).code !== "PGRST202") {
@@ -77,15 +181,15 @@ const getEntityVolunteerImpact = async (entityId: string): Promise<EventImpact[]
   if (eventsError) throw eventsError;
 
   const eventIds = (events ?? []).map((event) => event.id);
-  if (!eventIds.length) return [];
-
-  const { data: signups, error: signupsError } = await supabase
-    .from("event_signups")
-    .select("event_id, check_in_at, check_out_at")
-    .in("event_id", eventIds)
-    .eq("status", "approved")
-    .not("check_in_at", "is", null)
-    .not("check_out_at", "is", null);
+  const { data: signups, error: signupsError } = eventIds.length
+    ? await supabase
+        .from("event_signups")
+        .select("event_id, check_in_at, check_out_at")
+        .in("event_id", eventIds)
+        .eq("status", "approved")
+        .not("check_in_at", "is", null)
+        .not("check_out_at", "is", null)
+    : { data: [], error: null };
 
   if (signupsError) throw signupsError;
 
@@ -98,12 +202,18 @@ const getEntityVolunteerImpact = async (entityId: string): Promise<EventImpact[]
     );
   });
 
-  return mapImpactRowsToEvents(
-    Array.from(hoursByEvent.entries()).map(([eventId, hoursVolunteered]) => ({
+  const ownedEventRows = Array.from(hoursByEvent.entries()).map(
+    ([eventId, hoursVolunteered]) => ({
       id: eventId,
       event_id: eventId,
       hours_volunteered: hoursVolunteered,
-    }))
+    })
+  );
+
+  const entitySignupRows = await getEntitySignupImpactRows(entityId);
+
+  return mapImpactRowsToEvents(
+    mergeImpactRowsByEvent(ownedEventRows, entitySignupRows)
   );
 };
 
