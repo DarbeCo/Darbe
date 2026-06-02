@@ -157,15 +157,9 @@ export const EventSignup = () => {
     skip: userType !== "individual",
   });
   const { data: signedUpEvents, isLoading: isLoadingSignedUpEvents } =
-    useGetSignedUpEventsQuery(
-      { when: "upcoming" },
-      { skip: userType !== "individual" }
-    );
+    useGetSignedUpEventsQuery({ when: "upcoming" });
   const { data: pastSignedUpEvents, isLoading: isLoadingPastSignedUpEvents } =
-    useGetSignedUpEventsQuery(
-      { when: "past" },
-      { skip: userType !== "individual" }
-    );
+    useGetSignedUpEventsQuery({ when: "past" });
   const rosterAdminEventIdSet = useMemo(
     () => new Set(rosterAdminEvents.map((event) => event.id)),
     [rosterAdminEvents]
@@ -260,17 +254,18 @@ export const EventSignup = () => {
         : eventsToDisplay;
 
     if (activeTab === "Past") {
+      const signedUpPastEvents = [...(pastSignedUpEvents ?? [])]
+        .filter(
+          ({ event }) =>
+            isPastEvent(event) && !hiddenEventIdSet.has(event.id)
+        )
+        .map(({ event, signupCount }) => ({
+          event,
+          signupCount,
+          isSignedUp: true,
+        }));
+
       if (!isPostNeedAdmin) {
-        const signedUpPastEvents = [...(pastSignedUpEvents ?? [])]
-          .filter(
-            ({ event }) =>
-              isPastEvent(event) && !hiddenEventIdSet.has(event.id)
-          )
-          .map(({ event, signupCount }) => ({
-            event,
-            signupCount,
-            isSignedUp: true,
-          }));
         const signedUpPastEventIds = new Set(
           signedUpPastEvents.map(({ event }) => event.id)
         );
@@ -290,30 +285,23 @@ export const EventSignup = () => {
         );
       }
 
-      return sourceEvents
+      const signedUpPastEventIds = new Set(
+        signedUpPastEvents.map(({ event }) => event.id)
+      );
+      const managedPastEvents = sourceEvents
         .filter((event) => isPastEvent(event))
+        .filter((event) => !signedUpPastEventIds.has(event.id))
+        .map((event) => ({ event }));
+
+      return [...signedUpPastEvents, ...managedPastEvents]
         .sort(
           (first, second) =>
-            getEventDateOnlyTime(second.eventDate) -
-            getEventDateOnlyTime(first.eventDate)
-        )
-        .map((event) => ({ event }));
+            getEventDateOnlyTime(second.event.eventDate) -
+            getEventDateOnlyTime(first.event.eventDate)
+        );
     }
 
     if (activeTab === "Current") {
-      if (isPostNeedAdmin) {
-        return sourceEvents
-          .filter(
-            (event) => isCurrentEvent(event) && !hiddenEventIdSet.has(event.id)
-          )
-          .sort(
-            (first, second) =>
-              getEventDateOnlyTime(first.eventDate) -
-              getEventDateOnlyTime(second.eventDate)
-          )
-          .map((event) => ({ event }));
-      }
-
       const signedUpCurrentEvents = [...(signedUpEvents ?? [])]
         .filter(
           ({ event, status }) =>
@@ -331,6 +319,25 @@ export const EventSignup = () => {
           signupCount,
           isSignedUp: true,
         }));
+
+      if (isPostNeedAdmin) {
+        const signedUpCurrentEventIds = new Set(
+          signedUpCurrentEvents.map(({ event }) => event.id)
+        );
+        const managedCurrentEvents = sourceEvents
+          .filter(
+            (event) => isCurrentEvent(event) && !hiddenEventIdSet.has(event.id)
+          )
+          .filter((event) => !signedUpCurrentEventIds.has(event.id))
+          .map((event) => ({ event }));
+
+        return [...signedUpCurrentEvents, ...managedCurrentEvents].sort(
+          (first, second) =>
+            getEventDateOnlyTime(first.event.eventDate) -
+            getEventDateOnlyTime(second.event.eventDate)
+        );
+      }
+
       const signedUpCurrentEventIds = new Set(
         signedUpCurrentEvents.map(({ event }) => event.id)
       );
