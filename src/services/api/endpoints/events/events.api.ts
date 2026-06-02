@@ -389,7 +389,7 @@ const eventsApi = darbeBaseApi.injectEndpoints({
           };
         }
       },
-      invalidatesTags: ["Events", "VolunteerMatches"],
+      invalidatesTags: ["Events", "Impact", "Profile", "VolunteerMatches"],
     }),
     updateEventTime: builder.mutation<void, EventTimeUpdate>({
       async queryFn(details) {

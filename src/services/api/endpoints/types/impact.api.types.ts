@@ -5,5 +5,6 @@ export interface EventImpact {
     impactType: "individual" | "group";
     hoursVolunteered: number;
     volunteerValue: number;
+    volunteerImpact?: string;
     event: ShortEventState
 }

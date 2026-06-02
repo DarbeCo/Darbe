@@ -253,6 +253,7 @@ export const UserProfiles = () => {
       )}
       <UserVolunteerImpacts
         userId={userId}
+        canEdit={canEdit}
         title={isEntityProfile ? "Our Impacts" : undefined}
       />
       {userId && <UserRecentActivity canEdit={canEdit} userId={userId} />}

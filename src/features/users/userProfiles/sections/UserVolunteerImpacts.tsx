@@ -22,6 +22,7 @@ import styles from "../styles/userProfiles.module.css";
 
 interface UserVolunteerImpactsProps {
   userId?: string;
+  canEdit?: boolean;
   title?: string;
 }
 
@@ -50,6 +51,11 @@ const formatCurrency = (value: number) =>
   })}`;
 
 const getImpactText = (impact: EventImpact) => {
+  const signupImpact = impact.volunteerImpact?.trim();
+  if (signupImpact) {
+    return signupImpact;
+  }
+
   const volunteerImpact = impact.event.volunteerImpact;
 
   return volunteerImpact.isIndividualImpact
@@ -59,6 +65,7 @@ const getImpactText = (impact: EventImpact) => {
 
 export const UserVolunteerImpacts = ({
   userId,
+  canEdit = false,
   title = "Volunteer Experiences and Impacts",
 }: UserVolunteerImpactsProps) => {
   const dispatch = useAppDispatch();
@@ -80,6 +87,9 @@ export const UserVolunteerImpacts = ({
     dispatch(setExternalData({ eventId, entityId: "" }));
     dispatch(setModalType(EDIT_SECTIONS.eventPhotoCarousel));
     dispatch(showModal());
+  };
+  const openEvent = (eventId: string) => {
+    navigate(`${EVENTS_ROUTE}/${eventId}`);
   };
 
   return (
@@ -132,7 +142,14 @@ export const UserVolunteerImpacts = ({
                 </button>
               </header>
 
-              <div className={styles.profileImpactEvent}>
+              <button
+                type="button"
+                className={`${styles.profileImpactEvent} ${
+                  canEdit ? styles.profileImpactEventClickable : ""
+                }`.trim()}
+                onClick={() => canEdit && openEvent(impact.event.id)}
+                disabled={!canEdit}
+              >
                 <img
                   className={styles.profileImpactEventImage}
                   src={coverPhoto}
@@ -150,7 +167,7 @@ export const UserVolunteerImpacts = ({
                     </p>
                   )}
                 </div>
-              </div>
+              </button>
 
               <dl className={styles.profileImpactStats}>
                 <div>

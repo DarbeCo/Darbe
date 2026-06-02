@@ -584,10 +584,22 @@
     display: grid;
     grid-template-columns: 72px minmax(0, 1fr);
     gap: 10px;
+    width: 100%;
     min-height: 90px;
     padding: 8px;
+    border: 0;
     border-bottom: 1px solid #d8d8d8;
+    background: transparent;
     box-sizing: border-box;
+    text-align: left;
+  }
+
+  .profileImpactEventClickable {
+    cursor: pointer;
+  }
+
+  .profileImpactEventClickable:hover h3 {
+    color: #2c77e7;
   }
 
   .profileImpactEventImage {

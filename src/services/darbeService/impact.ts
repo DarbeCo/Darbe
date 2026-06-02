@@ -8,6 +8,13 @@ import {
   parseEventDateTimeAsLocalDate,
 } from "../../utils/eventDateUtils";
 
+const IMPACT_SIGNUP_STATUSES = [
+  "volunteered",
+  "confirmed",
+  "approved",
+  "no_show",
+];
+
 const getHoursBetweenTimestamps = (start?: string | null, end?: string | null) => {
   if (!start || !end) return 0;
 
@@ -27,6 +34,7 @@ const mapImpactRowsToEvents = async (
     event_id: string | null;
     hours_volunteered: number | null;
     volunteer_value_per_hour?: number | null;
+    volunteer_impact?: string | null;
   }>
 ): Promise<EventImpact[]> => {
   const eventIds = Array.from(
@@ -51,8 +59,40 @@ const mapImpactRowsToEvents = async (
         Number(
           impact.volunteer_value_per_hour ?? currentVolunteerValuePerHour
         ),
+      volunteerImpact: impact.volunteer_impact ?? undefined,
       event: eventMap.get(impact.event_id as string)!,
     }));
+};
+
+const getSignupImpactByEventId = async (
+  userId: string,
+  eventIds: string[]
+) => {
+  if (!eventIds.length) {
+    return new Map<string, string | null>();
+  }
+
+  const { data, error } = await supabase
+    .from("event_signups")
+    .select("event_id, volunteer_impact, event_action_timestamp")
+    .eq("user_id", userId)
+    .in("event_id", eventIds)
+    .in("status", IMPACT_SIGNUP_STATUSES)
+    .order("event_action_timestamp", { ascending: false });
+
+  if (error) throw error;
+
+  const impactByEventId = new Map<string, string | null>();
+
+  (data ?? []).forEach((signup) => {
+    if (!signup.event_id || impactByEventId.has(signup.event_id)) {
+      return;
+    }
+
+    impactByEventId.set(signup.event_id, signup.volunteer_impact ?? null);
+  });
+
+  return impactByEventId;
 };
 
 const hasShortEventEnded = (
@@ -82,7 +122,6 @@ const getEntitySignupImpactRows = async (
     hours_volunteered: number | null;
   }>
 > => {
-  const activeSignupStatuses = ["volunteered", "confirmed", "approved", "no_show"];
   const [
     { data: directSignups, error: directSignupsError },
     { data: memberInvitationSignups, error: memberInvitationSignupsError },
@@ -91,14 +130,14 @@ const getEntitySignupImpactRows = async (
       .from("event_signups")
       .select("id, event_id, check_in_at, check_out_at")
       .eq("user_id", entityId)
-      .in("status", activeSignupStatuses)
+      .in("status", IMPACT_SIGNUP_STATUSES)
       .not("event_id", "is", null),
     supabase
       .from("event_signups")
       .select("id, event_id, check_in_at, check_out_at")
       .eq("invited_by_entity_id", entityId)
       .is("invitation_removed_at", null)
-      .in("status", activeSignupStatuses)
+      .in("status", IMPACT_SIGNUP_STATUSES)
       .not("event_id", "is", null),
   ]);
 
@@ -160,12 +199,14 @@ const mergeImpactRowsByEvent = (
     event_id: string | null;
     hours_volunteered: number | null;
     volunteer_value_per_hour?: number | null;
+    volunteer_impact?: string | null;
   }>,
   secondaryRows: Array<{
     id: string;
     event_id: string | null;
     hours_volunteered: number | null;
     volunteer_value_per_hour?: number | null;
+    volunteer_impact?: string | null;
   }>
 ) => {
   const seenEventIds = new Set(
@@ -302,7 +343,7 @@ export const getUserImpact = async (userId?: string): Promise<EventImpact[]> => 
   );
   const { data: approvedSignups, error: approvedSignupsError } = await supabase
     .from("event_signups")
-    .select("event_id, check_in_at, check_out_at")
+    .select("event_id, check_in_at, check_out_at, volunteer_impact")
     .eq("user_id", currentUserId)
     .eq("status", "approved")
     .not("event_id", "is", null)
@@ -373,5 +414,24 @@ export const getUserImpact = async (userId?: string): Promise<EventImpact[]> => 
 
   if (refreshedImpactError) throw refreshedImpactError;
 
-  return mapImpactRowsToEvents(impactRows ?? []);
+  const refreshedEventIds = Array.from(
+    new Set(
+      (impactRows ?? [])
+        .map((impact) => impact.event_id)
+        .filter((eventId): eventId is string => Boolean(eventId))
+    )
+  );
+  const volunteerImpactByEventId = await getSignupImpactByEventId(
+    currentUserId,
+    refreshedEventIds
+  );
+
+  return mapImpactRowsToEvents(
+    (impactRows ?? []).map((impact) => ({
+      ...impact,
+      volunteer_impact: impact.event_id
+        ? volunteerImpactByEventId.get(impact.event_id) ?? null
+        : null,
+    }))
+  );
 };

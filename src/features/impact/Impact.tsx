@@ -37,6 +37,11 @@ const formatCurrency = (value: number) =>
   })}`;
 
 const getImpactText = (impact: EventImpact) => {
+  const signupImpact = impact.volunteerImpact?.trim();
+  if (signupImpact) {
+    return signupImpact;
+  }
+
   const { event } = impact;
   const volunteerImpact = event.volunteerImpact;
   const hasIndividualImpact = volunteerImpact.isIndividualImpact;

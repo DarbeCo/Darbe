@@ -1253,6 +1253,7 @@ export interface Database {
           id: string;
           event_id: string;
           hours_volunteered: number;
+          volunteer_impact: string | null;
         }[];
       };
       get_public_entity_volunteer_impact: {
