@@ -83,8 +83,8 @@ const profilesApi = darbeBaseApi.injectEndpoints({
       string>({
       async queryFn(organizationId) {
         try {
-          await removeUserOrganization(organizationId);
-          return { data: {} };
+          const data = await removeUserOrganization(organizationId);
+          return { data };
         } catch (error) {
           return {
             error: {

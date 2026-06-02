@@ -753,12 +753,15 @@ export const removeUserLicense = async (licenseId: string) => {
 
 export const removeUserOrganization = async (organizationId: string) => {
   const userId = await ensureUserId();
+  const endedAt = new Date().toISOString().slice(0, 10);
   const { error } = await supabase
     .from("user_organizations")
-    .delete()
+    .update({ end_date: endedAt })
     .eq("id", organizationId)
     .eq("user_id", userId);
   if (error) throw error;
+
+  return getUserProfile(userId);
 };
 
 export const getUserProfile = async (userId: string): Promise<DarbeProfileSharedState> => {

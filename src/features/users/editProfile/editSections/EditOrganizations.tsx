@@ -43,12 +43,9 @@ export const EditOrganizations = () => {
     const id = organizationToDelete;
 
     if (id) {
-      await removeOrganization(id).unwrap();
-      const updatedOrganizations = localOrganizations.filter(
-        (organization) =>
-          organization._id !== id &&
-          (organization as typeof organization & { id?: string }).id !== id
-      );
+      const updatedProfile = await removeOrganization(id).unwrap();
+      const updatedOrganizations =
+        updatedProfile.organizations ?? localOrganizations;
       setLocalOrganizations(updatedOrganizations);
       dispatch(updateUserOrganizations(updatedOrganizations));
       setOrganizationToDelete(undefined);
@@ -117,7 +114,7 @@ export const EditOrganizations = () => {
               className={styles.profileOrganizationDeleteTitle}
               id="organization-delete-dialog-title"
             >
-              Are you sure you want to remove this organization?
+              Are you sure you want to end this organization membership?
             </h2>
             <div className={styles.profileOrganizationDeleteActions}>
               <button

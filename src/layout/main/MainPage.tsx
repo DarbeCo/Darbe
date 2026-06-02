@@ -96,6 +96,10 @@ export const Home = () => {
     overviewEntityRosterAccess?.isMember ||
     currentUserIsViewedProfile ||
     currentUserProfile?.organizations?.some((organization) => {
+      if (organization.endDate) {
+        return false;
+      }
+
       const organizationNameMatches =
         !!normalizedViewedEntityName &&
         normalizeOrgName(organization.organizationName) ===
