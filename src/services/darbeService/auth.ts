@@ -38,6 +38,9 @@ const DAY_TO_INDEX = DAY_ORDER.reduce(
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 
+const DEFAULT_PASSWORD_RESET_REDIRECT_URL =
+  "https://darbeco.github.io/Darbe/password-reset";
+
 const normalizeUserType = (userType: string) => {
   const normalizedUserType = userType.trim().toLowerCase();
   return normalizedUserType === "non-profit" || normalizedUserType === "non profit"
@@ -392,7 +395,9 @@ export const signOut = async () => {
 export const resetPassword = async (email: string): Promise<void> => {
   const baseRedirectUrl =
     import.meta.env.VITE_PASSWORD_RESET_REDIRECT_URL ||
-    `${window.location.origin}${import.meta.env.BASE_URL ?? "/"}password-reset`;
+    (import.meta.env.PROD
+      ? DEFAULT_PASSWORD_RESET_REDIRECT_URL
+      : `${window.location.origin}${import.meta.env.BASE_URL ?? "/"}password-reset`);
   const redirectUrl = new URL(baseRedirectUrl);
   redirectUrl.searchParams.set("type", "recovery");
   
