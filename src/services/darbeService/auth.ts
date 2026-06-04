@@ -392,7 +392,7 @@ export const signOut = async () => {
 export const resetPassword = async (email: string): Promise<void> => {
   const baseRedirectUrl =
     import.meta.env.VITE_PASSWORD_RESET_REDIRECT_URL ||
-    `${window.location.origin}https://darbeco.github.io/Darbe/password-reset?type=recovery`;
+    `${window.location.origin}${import.meta.env.BASE_URL ?? "/"}password-reset`;
   const redirectUrl = new URL(baseRedirectUrl);
   redirectUrl.searchParams.set("type", "recovery");
   
