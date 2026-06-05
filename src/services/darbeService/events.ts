@@ -1234,42 +1234,19 @@ export const recommendEventToFollowers = async (
 export const getEntityEventCounts = async (
   entityId: string
 ): Promise<EntityEventCounts> => {
-  const userId = await ensureUserId();
-  const { data, error } = await supabase
-    .from("events")
-    .select(
-      "event_owner_id, event_coordinator_id, event_date, start_time, end_time, is_followers_only"
-    )
-    .or(`event_owner_id.eq.${entityId},event_coordinator_id.eq.${entityId}`);
+  const { data, error } = await (supabase as any).rpc(
+    "get_public_entity_event_counts",
+    { target_entity_id: entityId }
+  );
 
   if (error) throw error;
 
-  const now = new Date();
-  const visibleEvents = await filterInternalEventsForViewer(
-    (data ?? []) as Pick<
-      EventRow,
-      | "event_owner_id"
-      | "event_coordinator_id"
-      | "event_date"
-      | "start_time"
-      | "end_time"
-      | "is_followers_only"
-    >[],
-    userId
-  );
+  const counts = Array.isArray(data) ? data[0] : data;
 
-  return visibleEvents.reduce<EntityEventCounts>(
-    (counts, event) => {
-      if (hasEventEnded(event, now)) {
-        counts.completedProjectsCount += 1;
-      } else {
-        counts.upcomingProjectsCount += 1;
-      }
-
-      return counts;
-    },
-    { upcomingProjectsCount: 0, completedProjectsCount: 0 }
-  );
+  return {
+    upcomingProjectsCount: counts?.upcoming_projects_count ?? 0,
+    completedProjectsCount: counts?.completed_projects_count ?? 0,
+  };
 };
 
 export const getEntityUpcomingEvents = async (
@@ -1281,7 +1258,7 @@ export const getEntityUpcomingEvents = async (
     .select(
       "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_photo_visibility, event_coordinator_id"
     )
-    .or(`event_owner_id.eq.${entityId},event_coordinator_id.eq.${entityId}`)
+    .eq("event_owner_id", entityId)
     .gte("event_date", toLocalDateString(new Date()))
     .order("event_date", { ascending: true })
     .order("start_time", { ascending: true });
