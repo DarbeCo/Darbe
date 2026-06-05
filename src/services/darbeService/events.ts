@@ -1237,8 +1237,10 @@ export const getEntityEventCounts = async (
   const userId = await ensureUserId();
   const { data, error } = await supabase
     .from("events")
-    .select("event_owner_id, event_date, start_time, end_time, is_followers_only")
-    .eq("event_owner_id", entityId);
+    .select(
+      "event_owner_id, event_coordinator_id, event_date, start_time, end_time, is_followers_only"
+    )
+    .or(`event_owner_id.eq.${entityId},event_coordinator_id.eq.${entityId}`);
 
   if (error) throw error;
 
@@ -1246,7 +1248,12 @@ export const getEntityEventCounts = async (
   const visibleEvents = await filterInternalEventsForViewer(
     (data ?? []) as Pick<
       EventRow,
-      "event_owner_id" | "event_date" | "start_time" | "end_time" | "is_followers_only"
+      | "event_owner_id"
+      | "event_coordinator_id"
+      | "event_date"
+      | "start_time"
+      | "end_time"
+      | "is_followers_only"
     >[],
     userId
   );
@@ -1274,7 +1281,7 @@ export const getEntityUpcomingEvents = async (
     .select(
       "id, event_owner_id, roster_id, event_name, event_description, event_date, start_time, end_time, is_followers_only, max_volunteer_count, event_cover_photo_url, event_photo_visibility, event_coordinator_id"
     )
-    .eq("event_owner_id", entityId)
+    .or(`event_owner_id.eq.${entityId},event_coordinator_id.eq.${entityId}`)
     .gte("event_date", toLocalDateString(new Date()))
     .order("event_date", { ascending: true })
     .order("start_time", { ascending: true });
