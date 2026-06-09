@@ -140,6 +140,9 @@ export const Roster = () => {
     [data, selectedRosterId]
   );
   const currentRosterName = getRosterDisplayName(currentRoster?.rosterName);
+  const currentRosterOwnerUserType =
+    currentRoster?.rosterOwner.userType ?? user.user?.userType;
+  const isOrganizationRoster = currentRosterOwnerUserType === "organization";
   const rosterId = currentRoster?.id;
   const rosterMembers = currentRoster?.members ?? [];
   const hasCreateEditAssignedRosterAccess = Boolean(
@@ -218,7 +221,12 @@ export const Roster = () => {
   const openAdminDialog = (member: RosterMember) => {
     if (!canManageRoster) return;
     setAdminDialogMember(member);
-    setAdminPermissions(member.adminPermissions ?? emptyPermissions);
+    setAdminPermissions({
+      ...(member.adminPermissions ?? emptyPermissions),
+      canEditExternalEvents: isOrganizationRoster
+        ? false
+        : member.adminPermissions?.canEditExternalEvents ?? false,
+    });
     setRemoveAsAdmin(false);
   };
 
@@ -230,6 +238,10 @@ export const Roster = () => {
   };
 
   const handlePermissionChange = (permission: PermissionKey) => {
+    if (permission === "canEditExternalEvents" && isOrganizationRoster) {
+      return;
+    }
+
     setAdminPermissions((currentPermissions) => ({
       ...currentPermissions,
       [permission]: !currentPermissions[permission],
@@ -253,7 +265,12 @@ export const Roster = () => {
       await promoteToAdmin({
         userId: adminDialogMember.user.id,
         rosterId,
-        permissions: adminPermissions,
+        permissions: {
+          ...adminPermissions,
+          canEditExternalEvents: isOrganizationRoster
+            ? false
+            : adminPermissions.canEditExternalEvents,
+        },
       }).unwrap();
     }
 
@@ -681,12 +698,22 @@ export const Roster = () => {
                 />
                 <span>Create/Edit Internal events</span>
               </label>
-              <label>
+              <label
+                className={
+                  isOrganizationRoster
+                    ? styles.rosterAdminDisabledPermission
+                    : undefined
+                }
+              >
                 <input
                   type="checkbox"
-                  checked={adminPermissions.canEditExternalEvents}
+                  checked={
+                    isOrganizationRoster
+                      ? false
+                      : adminPermissions.canEditExternalEvents
+                  }
                   onChange={() => handlePermissionChange("canEditExternalEvents")}
-                  disabled={removeAsAdmin}
+                  disabled={removeAsAdmin || isOrganizationRoster}
                 />
                 <span>Create/Edit external events</span>
               </label>

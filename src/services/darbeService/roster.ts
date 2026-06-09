@@ -113,6 +113,18 @@ const getRosterInfo = async (
   };
 };
 
+const getEntityUserType = async (entityId: string) => {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("user_type")
+    .eq("id", entityId)
+    .single();
+
+  if (error || !data) throw error ?? new Error("Entity profile not found");
+
+  return data.user_type;
+};
+
 const getOrCreateNamedRoster = async (
   entityId: string,
   rosterName: string
@@ -773,22 +785,30 @@ export const promoteUserToAdmin = async (
     roster.ownerId,
     "update roster administrators"
   );
+  const rosterOwnerUserType = await getEntityUserType(roster.ownerId);
+  const normalizedPermissions = {
+    ...permissions,
+    canEditExternalEvents:
+      rosterOwnerUserType === "organization"
+        ? false
+        : permissions.canEditExternalEvents,
+  };
 
   const { error } = await supabase
     .from("roster_members")
     .update({
       is_admin: true,
-      can_edit_assigned_roster: permissions.canEditAssignedRoster,
+      can_edit_assigned_roster: normalizedPermissions.canEditAssignedRoster,
       can_assign_volunteer_coordinators:
-        permissions.canAssignVolunteerCoordinators,
-      can_edit_internal_events: permissions.canEditInternalEvents,
-      can_edit_external_events: permissions.canEditExternalEvents,
+        normalizedPermissions.canAssignVolunteerCoordinators,
+      can_edit_internal_events: normalizedPermissions.canEditInternalEvents,
+      can_edit_external_events: normalizedPermissions.canEditExternalEvents,
     })
     .match({ roster_id: rosterId, user_id: userId });
   if (error) throw error;
 
   const shouldBeVolunteerCoordinator =
-    permissions.canAssignVolunteerCoordinators ||
+    normalizedPermissions.canAssignVolunteerCoordinators ||
     (await hasVolunteerCoordinatorPermission(roster.ownerId, userId));
 
   await syncVolunteerCoordinatorRoster(
