@@ -36,6 +36,7 @@ import {
   parseEventDateAsLocalDate,
   parseEventDateTimeAsLocalDate,
 } from "../../../utils/eventDateUtils";
+import { assetUrl } from "../../../utils/assetUrl";
 
 import styles from "../styles/entityEvents.module.css";
 
@@ -125,6 +126,17 @@ type VolunteerEventDisplay = {
   signupCount?: number;
 };
 
+type EventCreateType = "externalEvent" | "internalEvent";
+
+type EventAdminEntityOption = {
+  entityId: string;
+  entityName?: string;
+  profilePicture?: string;
+  userType?: string;
+  canEditInternalEvents: boolean;
+  canEditExternalEvents: boolean;
+};
+
 export const EventSignup = () => {
   const navigate = useNavigate();
   const userType = useAppSelector(selectUserType);
@@ -141,6 +153,10 @@ export const EventSignup = () => {
   const [incompleteDraftEvents, setIncompleteDraftEvents] = useState<
     ShortEventState[]
   >([]);
+  const [createEventChoice, setCreateEventChoice] = useState<{
+    eventType: EventCreateType;
+    options: EventAdminEntityOption[];
+  } | null>(null);
   const [hiddenEventIds, setHiddenEventIds] = useState<string[]>([]);
   const eventCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const { data: events, isLoading } = useGetEventsQuery();
@@ -184,6 +200,9 @@ export const EventSignup = () => {
         .map((access) => access.entityId),
     [rosterEventAdminEntityAccess]
   );
+  const hasInternalEventAdminRights = internalEventAdminEntityIds.length > 0;
+  const hasAnyEventAdminRights =
+    hasInternalEventAdminRights || externalEventAdminEntityIds.length > 0;
   const hasCoordinatorEvents = Boolean(
     currentUserId &&
       [...(events ?? []), ...rosterAdminEvents].some(
@@ -197,6 +216,8 @@ export const EventSignup = () => {
     ? adminTabs
     : userType === "nonprofit"
     ? nonprofitTabs
+    : hasInternalEventAdminRights
+    ? adminTabs
     : hasCoordinatorEvents
     ? ["Current", "Past", "Admin"]
     : nonAdminTabs;
@@ -220,7 +241,7 @@ export const EventSignup = () => {
   }, [activeTab, availableTabs, restoredTab]);
 
   useEffect(() => {
-    if (!currentUserId || !isPostNeedAdmin) {
+    if (!currentUserId || (!isPostNeedAdmin && !hasInternalEventAdminRights)) {
       setIncompleteDraftEvents([]);
       return;
     }
@@ -230,7 +251,7 @@ export const EventSignup = () => {
       .map(incompletePostNeedEventToShortEvent);
 
     setIncompleteDraftEvents(drafts);
-  }, [currentUserId, isPostNeedAdmin, activeTab]);
+  }, [currentUserId, hasInternalEventAdminRights, isPostNeedAdmin, activeTab]);
 
   const volunteerEvents = useMemo<VolunteerEventDisplay[]>(() => {
     const eventsById = new Map<string, ShortEventState>();
@@ -255,7 +276,7 @@ export const EventSignup = () => {
     );
     const coordinatorManagedEvents = adminManagedEvents;
     const sourceEvents =
-      isPostNeedAdmin || activeTab === "Admin"
+      isPostNeedAdmin || hasAnyEventAdminRights || activeTab === "Admin"
         ? adminManagedEvents
         : eventsToDisplay;
 
@@ -326,7 +347,7 @@ export const EventSignup = () => {
           isSignedUp: true,
         }));
 
-      if (isPostNeedAdmin) {
+      if (isPostNeedAdmin || hasAnyEventAdminRights) {
         const signedUpCurrentEventIds = new Set(
           signedUpCurrentEvents.map(({ event }) => event.id)
         );
@@ -401,6 +422,7 @@ export const EventSignup = () => {
     events,
     hiddenEventIds,
     incompleteDraftEvents,
+    hasAnyEventAdminRights,
     isPostNeedAdmin,
     pastSignedUpEvents,
     rosterAdminEventIdSet,
@@ -468,20 +490,61 @@ export const EventSignup = () => {
     });
   };
 
-  const handleCreateEvent = (eventType: "externalEvent" | "internalEvent") => {
-    const delegatedEventOwnerId =
-      userType === "individual"
-        ? eventType === "internalEvent"
-          ? internalEventAdminEntityIds[0]
-          : externalEventAdminEntityIds[0]
-        : undefined;
+  const getEntityOptionName = (option: EventAdminEntityOption) =>
+    option.entityName ||
+    (option.userType === "nonprofit" ? "Nonprofit" : "Organization");
 
+  const navigateToCreateEvent = (
+    eventType: EventCreateType,
+    delegatedEntity?: EventAdminEntityOption
+  ) => {
     navigate(CREATE_EVENT_ROUTE, {
       state: {
         initialEventType: eventType,
-        initialEventOwnerId: delegatedEventOwnerId,
+        initialEventOwnerId: delegatedEntity?.entityId,
+        initialEventOwnerName: delegatedEntity
+          ? getEntityOptionName(delegatedEntity)
+          : undefined,
+        initialEventOwnerProfilePicture: delegatedEntity?.profilePicture,
+        initialEventOwnerUserType: delegatedEntity?.userType,
       },
     });
+  };
+
+  const handleCreateEvent = (eventType: EventCreateType) => {
+    if (userType !== "individual") {
+      navigateToCreateEvent(eventType);
+      return;
+    }
+
+    const eligibleEntities = rosterEventAdminEntityAccess.filter((access) =>
+      eventType === "internalEvent"
+        ? access.canEditInternalEvents
+        : access.canEditExternalEvents
+    );
+
+    if (eligibleEntities.length === 0) {
+      return;
+    }
+
+    if (eligibleEntities.length === 1) {
+      navigateToCreateEvent(eventType, eligibleEntities[0]);
+      return;
+    }
+
+    setCreateEventChoice({
+      eventType,
+      options: eligibleEntities,
+    });
+  };
+
+  const handleCreateEventChoice = (option: EventAdminEntityOption) => {
+    if (!createEventChoice) {
+      return;
+    }
+
+    navigateToCreateEvent(createEventChoice.eventType, option);
+    setCreateEventChoice(null);
   };
 
   const handlePassEventSuccess = (eventId: string) => {
@@ -559,7 +622,7 @@ export const EventSignup = () => {
           <h1>Events</h1>
         </div>
         {((userType === "organization" || userType === "nonprofit") ||
-          (userType === "individual" && rosterAdminEntityIds.length > 0)) && (
+          (userType === "individual" && hasAnyEventAdminRights)) && (
           <div className={styles.nonprofitEventActions}>
             {(userType === "organization" ||
               userType === "nonprofit" ||
@@ -788,6 +851,52 @@ export const EventSignup = () => {
               )}
             </div>
           </>
+        )}
+        {createEventChoice && (
+          <div
+            className={styles.createEventEntityDialogOverlay}
+            onClick={() => setCreateEventChoice(null)}
+          >
+            <div
+              className={styles.createEventEntityDialog}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="create-event-entity-dialog-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className={styles.createEventEntityDialogHeader}>
+                <h2 id="create-event-entity-dialog-title">
+                  Create event for
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setCreateEventChoice(null)}
+                  aria-label="Close organization selection"
+                >
+                  x
+                </button>
+              </div>
+              <div className={styles.createEventEntityList}>
+                {createEventChoice.options.map((option) => (
+                  <button
+                    type="button"
+                    key={option.entityId}
+                    className={styles.createEventEntityOption}
+                    onClick={() => handleCreateEventChoice(option)}
+                  >
+                    <img
+                      src={
+                        option.profilePicture ||
+                        assetUrl("/images/defaultProfilePicture.jpg")
+                      }
+                      alt=""
+                    />
+                    <span>{getEntityOptionName(option)}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         )}
     </section>
   );

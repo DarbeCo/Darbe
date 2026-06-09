@@ -50,4 +50,7 @@ export interface RosterEventAdminEntityAccess {
   entityId: string;
   canEditInternalEvents: boolean;
   canEditExternalEvents: boolean;
+  entityName?: string;
+  profilePicture?: string;
+  userType?: string;
 }

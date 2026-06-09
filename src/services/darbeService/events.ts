@@ -626,62 +626,25 @@ type EventAdminEntityAccess = {
 };
 
 const getEventAdminEntityAccessForUser = async (
-  userId: string
+  _userId: string
 ): Promise<EventAdminEntityAccess[]> => {
-  const { data: memberships, error: membershipsError } = await supabase
-    .from("roster_members")
-    .select("roster_id, can_edit_internal_events, can_edit_external_events")
-    .eq("user_id", userId)
-    .eq("is_admin", true);
-
-  if (membershipsError) throw membershipsError;
-
-  const eventAdminMemberships = (memberships ?? []).filter(
-    (membership) =>
-      membership.can_edit_internal_events || membership.can_edit_external_events
+  const { data, error } = await (supabase as any).rpc(
+    "get_roster_event_admin_entity_access"
   );
-  const rosterIds = eventAdminMemberships.map((membership) => membership.roster_id);
-  if (!rosterIds.length) return [];
 
-  const { data: rosters, error: rostersError } = await supabase
-    .from("rosters")
-    .select("id, roster_owner_id")
-    .in("id", rosterIds);
+  if (error) throw error;
 
-  if (rostersError) throw rostersError;
-
-  const rosterOwnerByRosterId = new Map(
-    (rosters ?? []).map((roster) => [roster.id, roster.roster_owner_id])
+  return (data ?? []).map(
+    (access: {
+      entity_id: string;
+      can_edit_internal_events: boolean | null;
+      can_edit_external_events: boolean | null;
+    }) => ({
+      entityId: access.entity_id,
+      canEditInternalEvents: Boolean(access.can_edit_internal_events),
+      canEditExternalEvents: Boolean(access.can_edit_external_events),
+    })
   );
-  const accessByEntityId = new Map<string, EventAdminEntityAccess>();
-
-  eventAdminMemberships.forEach((membership) => {
-    const entityId = rosterOwnerByRosterId.get(membership.roster_id);
-
-    if (!entityId) {
-      return;
-    }
-
-    const currentAccess = accessByEntityId.get(entityId) ?? {
-      entityId,
-      canEditInternalEvents: false,
-      canEditExternalEvents: false,
-    };
-
-    accessByEntityId.set(entityId, {
-      entityId,
-      canEditInternalEvents: Boolean(
-        currentAccess.canEditInternalEvents ||
-          membership.can_edit_internal_events
-      ),
-      canEditExternalEvents: Boolean(
-        currentAccess.canEditExternalEvents ||
-          membership.can_edit_external_events
-      ),
-    });
-  });
-
-  return Array.from(accessByEntityId.values());
 };
 
 const hasEventAdminPermission = async (
@@ -689,6 +652,22 @@ const hasEventAdminPermission = async (
   userId: string,
   eventType: "internal" | "external"
 ) => {
+  const { data, error } = await (supabase as any).rpc(
+    "has_roster_event_admin_permission",
+    {
+      target_entity_id: entityId,
+      requested_event_type: eventType,
+    }
+  );
+
+  if (!error) {
+    return Boolean(data);
+  }
+
+  if ((error as { code?: string }).code !== "42883") {
+    throw error;
+  }
+
   const entityAccess = await getEventAdminEntityAccessForUser(userId);
   const access = entityAccess.find((entity) => entity.entityId === entityId);
 
@@ -760,6 +739,21 @@ const incrementImpact = async (
     .from("impact")
     .update(updated)
     .eq("id", existing.id);
+
+  if (error) throw error;
+};
+
+const incrementDelegatedEntityEventsCreated = async (
+  entityId: string,
+  amount: number
+) => {
+  const { error } = await (supabase as any).rpc(
+    "increment_roster_event_admin_entity_events_created",
+    {
+      target_entity_id: entityId,
+      amount,
+    }
+  );
 
   if (error) throw error;
 };
@@ -1470,7 +1464,11 @@ export const createEvent = async (newEvent: CreateEvent): Promise<SimpleEventSta
     if (result.error) throw result.error;
   });
 
-  await incrementImpact(eventOwnerId, { events_created: 1 });
+  if (eventOwnerId !== userId) {
+    await incrementDelegatedEntityEventsCreated(eventOwnerId, 1);
+  } else {
+    await incrementImpact(eventOwnerId, { events_created: 1 });
+  }
 
   return {
     eventName: event.event_name,

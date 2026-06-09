@@ -45,8 +45,10 @@ export const InternalEventReview = ({
   isSubmitting = false,
 }: InternalEventReviewProps) => {
   const { user } = useAppSelector(selectUser);
+  const coordinatorId = data.eventCoordinator || user?.id || "";
   const { data: coordinator } = useGetSimpleUserInfoQuery(
-    data.eventCoordinator,
+    coordinatorId,
+    { skip: !coordinatorId }
   );
 
   const ownerName =
@@ -55,8 +57,10 @@ export const InternalEventReview = ({
     coordinator?.fullName ||
     coordinator?.organizationName ||
     coordinator?.nonprofitName ||
+    user?.fullName ||
     "John Doe";
-  const coordinatorPhoto = coordinator?.profilePicture || defaultProfilePicture;
+  const coordinatorPhoto =
+    coordinator?.profilePicture || user?.profilePicture || defaultProfilePicture;
   const coverPhoto = data.eventCoverPhoto || defaultCoverPhoto;
   const impactText =
     data.volunteerImpact.individualImpact ||

@@ -978,59 +978,42 @@ export const getRosterAdminEntityIds = async (): Promise<string[]> => {
 export const getRosterEventAdminEntityAccess = async (): Promise<
   RosterEventAdminEntityAccess[]
 > => {
-  const userId = await ensureUserId();
-  const { data: memberships, error: membershipsError } = await supabase
-    .from("roster_members")
-    .select("roster_id, can_edit_internal_events, can_edit_external_events")
-    .eq("user_id", userId)
-    .eq("is_admin", true);
-
-  if (membershipsError) throw membershipsError;
-
-  const eventAdminMemberships = (memberships ?? []).filter(
-    (membership) =>
-      membership.can_edit_internal_events || membership.can_edit_external_events
+  const { data, error } = await (supabase as any).rpc(
+    "get_roster_event_admin_entity_access"
   );
-  const rosterIds = eventAdminMemberships.map((membership) => membership.roster_id);
-  if (!rosterIds.length) return [];
 
-  const { data: rosters, error: rostersError } = await supabase
-    .from("rosters")
-    .select("id, roster_owner_id")
-    .in("id", rosterIds);
+  if (error) throw error;
 
-  if (rostersError) throw rostersError;
+  const accessRows = (data ?? []) as Array<{
+    entity_id: string;
+    can_edit_internal_events: boolean | null;
+    can_edit_external_events: boolean | null;
+  }>;
+  const entityIds = Array.from(new Set(accessRows.map((access) => access.entity_id)));
+  const entityProfiles = await getProfilesByIds(entityIds);
+  const entityProfileById = new Map(entityProfiles.map((profile) => [profile.id, profile]));
 
-  const rosterOwnerByRosterId = new Map(
-    (rosters ?? []).map((roster) => [roster.id, roster.roster_owner_id])
-  );
-  const accessByEntityId = new Map<string, RosterEventAdminEntityAccess>();
+  return accessRows.map(
+    (access: {
+      entity_id: string;
+      can_edit_internal_events: boolean | null;
+      can_edit_external_events: boolean | null;
+    }) => {
+      const profile = entityProfileById.get(access.entity_id);
+      const entityName =
+        profile?.organization_name ||
+        profile?.nonprofit_name ||
+        profile?.full_name ||
+        undefined;
 
-  eventAdminMemberships.forEach((membership) => {
-    const entityId = rosterOwnerByRosterId.get(membership.roster_id);
-
-    if (!entityId) {
-      return;
+      return {
+        entityId: access.entity_id,
+        canEditInternalEvents: Boolean(access.can_edit_internal_events),
+        canEditExternalEvents: Boolean(access.can_edit_external_events),
+        entityName,
+        profilePicture: profile?.profile_picture_url ?? undefined,
+        userType: profile?.user_type ?? undefined,
+      };
     }
-
-    const currentAccess = accessByEntityId.get(entityId) ?? {
-      entityId,
-      canEditInternalEvents: false,
-      canEditExternalEvents: false,
-    };
-
-    accessByEntityId.set(entityId, {
-      entityId,
-      canEditInternalEvents: Boolean(
-        currentAccess.canEditInternalEvents ||
-          membership.can_edit_internal_events
-      ),
-      canEditExternalEvents: Boolean(
-        currentAccess.canEditExternalEvents ||
-          membership.can_edit_external_events
-      ),
-    });
-  });
-
-  return Array.from(accessByEntityId.values());
+  );
 };

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { IconButton } from "@mui/material";
 
@@ -163,6 +163,9 @@ type ActivePostNeedDraft = {
   eventType: string;
   incompleteEventId: string;
   eventOwnerId?: string;
+  eventOwnerName?: string;
+  eventOwnerProfilePicture?: string;
+  eventOwnerUserType?: string;
   eventData: CreateEvent;
 };
 
@@ -202,27 +205,17 @@ export const PostNeed = () => {
   const { user } = useAppSelector(selectUser);
   const isEntityUser =
     user?.userType === "organization" || user?.userType === "nonprofit";
-  const routeIncompleteEventId = (
-    location.state as {
-      incompleteEventId?: string;
-      initialEventType?: string;
-      initialEventOwnerId?: string;
-    } | null
-  )?.incompleteEventId;
-  const routeInitialEventType = (
-    location.state as {
-      incompleteEventId?: string;
-      initialEventType?: string;
-      initialEventOwnerId?: string;
-    } | null
-  )?.initialEventType;
-  const routeInitialEventOwnerId = (
-    location.state as {
-      incompleteEventId?: string;
-      initialEventType?: string;
-      initialEventOwnerId?: string;
-    } | null
-  )?.initialEventOwnerId;
+  const routeState = location.state as {
+    incompleteEventId?: string;
+    initialEventType?: string;
+    initialEventOwnerId?: string;
+    initialEventOwnerName?: string;
+    initialEventOwnerProfilePicture?: string;
+    initialEventOwnerUserType?: string;
+  } | null;
+  const routeIncompleteEventId = routeState?.incompleteEventId;
+  const routeInitialEventType = routeState?.initialEventType;
+  const routeInitialEventOwnerId = routeState?.initialEventOwnerId;
   const draftToFinish = routeIncompleteEventId
     ? getIncompletePostNeedEventById(routeIncompleteEventId)
     : undefined;
@@ -250,6 +243,49 @@ export const PostNeed = () => {
       routeInitialEventType === "internalEvent",
   });
   const eventOwnerId = eventData.eventOwner || userId;
+  const isDelegatedEventOwner = Boolean(eventOwnerId && eventOwnerId !== userId);
+  const incompleteEventOwner = useMemo(
+    () =>
+      isDelegatedEventOwner
+        ? draftToFinish?.owner ?? {
+            id: eventOwnerId,
+            fullName:
+              routeState?.initialEventOwnerName ||
+              activeDraft?.eventOwnerName ||
+              "Event Owner",
+            firstName: "",
+            lastName: "",
+            userType:
+              routeState?.initialEventOwnerUserType ||
+              activeDraft?.eventOwnerUserType,
+            organizationName:
+              (routeState?.initialEventOwnerUserType ||
+                activeDraft?.eventOwnerUserType) === "organization"
+                ? routeState?.initialEventOwnerName || activeDraft?.eventOwnerName
+                : undefined,
+            nonprofitName:
+              (routeState?.initialEventOwnerUserType ||
+                activeDraft?.eventOwnerUserType) === "nonprofit"
+                ? routeState?.initialEventOwnerName || activeDraft?.eventOwnerName
+                : undefined,
+            profilePicture:
+              routeState?.initialEventOwnerProfilePicture ||
+              activeDraft?.eventOwnerProfilePicture,
+          }
+        : buildIncompleteEventOwner(user),
+    [
+      activeDraft?.eventOwnerName,
+      activeDraft?.eventOwnerProfilePicture,
+      activeDraft?.eventOwnerUserType,
+      draftToFinish?.owner,
+      eventOwnerId,
+      isDelegatedEventOwner,
+      routeState?.initialEventOwnerName,
+      routeState?.initialEventOwnerProfilePicture,
+      routeState?.initialEventOwnerUserType,
+      user,
+    ]
+  );
   const [submitValidationDialog, setSubmitValidationDialog] = useState<{
     missingFields: string[];
     nextStep: number;
@@ -271,9 +307,31 @@ export const PostNeed = () => {
       eventType,
       incompleteEventId,
       eventOwnerId,
+      eventOwnerName: incompleteEventOwner.fullName,
+      eventOwnerProfilePicture: incompleteEventOwner.profilePicture,
+      eventOwnerUserType: incompleteEventOwner.userType,
       eventData,
     });
-  }, [currentStep, eventData, eventOwnerId, eventType, incompleteEventId, userId]);
+  }, [
+    currentStep,
+    eventData,
+    eventOwnerId,
+    eventType,
+    incompleteEventId,
+    incompleteEventOwner,
+    userId,
+  ]);
+
+  useEffect(() => {
+    if (!isDelegatedEventOwner || eventData.eventCoordinator || !userId) {
+      return;
+    }
+
+    setEventData((currentEventData) => ({
+      ...currentEventData,
+      eventCoordinator: userId,
+    }));
+  }, [eventData.eventCoordinator, isDelegatedEventOwner, userId]);
 
   const handlePostEvent = async () => {
     if (eventActionLockRef.current || isPostingEvent || isSavingIncomplete) {
@@ -479,7 +537,7 @@ export const PostNeed = () => {
     }
 
     const eventDetailsMissingFields = [
-      !isEntityUser && !hasValue(eventData.eventCoordinator)
+      !isEntityUser && !isDelegatedEventOwner && !hasValue(eventData.eventCoordinator)
         ? "Coordinator"
         : "",
       !hasValue(
@@ -537,7 +595,7 @@ export const PostNeed = () => {
       !hasValue(eventData.eventInternalLocation)
         ? "Assignment Location"
         : "",
-      !isEntityUser && !hasValue(eventData.eventCoordinator)
+      !isEntityUser && !isDelegatedEventOwner && !hasValue(eventData.eventCoordinator)
         ? "Coordinator"
         : "",
       !hasValue(
@@ -579,12 +637,20 @@ export const PostNeed = () => {
         data: buildIncompleteEventPayload(),
         savedAt: new Date().toISOString(),
         missingFields: getAllMissingRequiredFields(),
-        owner: buildIncompleteEventOwner(user),
+        owner: incompleteEventOwner,
       });
     }, 600);
 
     return () => window.clearTimeout(autosaveTimer);
-  }, [currentStep, eventData, eventType, incompleteEventId, isPostingEvent, user, userId]);
+  }, [
+    currentStep,
+    eventData,
+    eventType,
+    incompleteEventId,
+    incompleteEventOwner,
+    isPostingEvent,
+    userId,
+  ]);
 
   const handleSaveIncomplete = () => {
     if (eventActionLockRef.current || isPostingEvent || isSavingIncomplete) {
@@ -601,7 +667,7 @@ export const PostNeed = () => {
       data: buildIncompleteEventPayload(),
       savedAt: new Date().toISOString(),
       missingFields: getAllMissingRequiredFields(),
-      owner: buildIncompleteEventOwner(user),
+      owner: incompleteEventOwner,
     });
     setSubmitValidationDialog(null);
     setIncompleteSavedDialog(true);
