@@ -13,6 +13,7 @@ import {
   setModalType,
 } from "../../../../components/modal/modalSlice";
 import { ProfileFriendState } from "../../../friends/types";
+import { Cause } from "../../../../services/types/cause.types";
 import { formatPhoneNumber } from "../../../../utils/formUtils/formUtils";
 import { useGetVolunteerValuePerHourQuery } from "../../../../services/api/endpoints/impact/impact.api";
 
@@ -41,6 +42,8 @@ interface UserQuickInfoProps {
   causesCount?: number;
   mutualCauses?: number;
   mutualFriends?: number;
+  mutualCausePreviews?: Cause[];
+  mutualFriendPreviews?: ProfileFriendState[];
   userId?: string;
   friends?: ProfileFriendState[];
   causes?: string[];
@@ -86,6 +89,8 @@ export const UserQuickInfo = ({
   causesCount,
   mutualCauses,
   mutualFriends,
+  mutualCausePreviews,
+  mutualFriendPreviews,
   userId,
   friends,
   causes,
@@ -298,6 +303,8 @@ export const UserQuickInfo = ({
               causesCount={causesCount ?? 0}
               mutualCauses={mutualCauses ?? 0}
               mutualFriends={mutualFriends ?? 0}
+              mutualCausePreviews={mutualCausePreviews}
+              mutualFriendPreviews={mutualFriendPreviews}
               friends={friends}
               causes={causes}
             />

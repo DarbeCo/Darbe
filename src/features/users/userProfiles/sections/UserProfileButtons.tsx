@@ -1,6 +1,7 @@
 import { useAppDispatch } from "../../../../services/hooks";
 import { DarbeButton } from "../../../../components/buttons/DarbeButton";
 import { ProfileFriendState } from "../../../friends/types";
+import { Cause } from "../../../../services/types/cause.types";
 import { EDIT_SECTIONS } from "../constants";
 import {
   showModal,
@@ -9,6 +10,7 @@ import {
   setModalUserId,
   setExternalData,
 } from "../../../../components/modal/modalSlice";
+import { assetUrl } from "../../../../utils/assetUrl";
 
 import styles from "../styles/userProfiles.module.css";
 
@@ -20,8 +22,51 @@ interface UserProfileButtonsProps {
   canEdit?: boolean;
   mutualCauses?: number;
   mutualFriends?: number;
+  mutualCausePreviews?: Cause[];
+  mutualFriendPreviews?: ProfileFriendState[];
   userId?: string;
 }
+
+const MAX_MUTUAL_ICONS = 3;
+
+const MutualCountButton = ({
+  count,
+  label,
+  icons,
+  fallbackSrc,
+  onClick,
+}: {
+  count: number;
+  label: string;
+  icons: Array<{ id: string; image?: string; name?: string }>;
+  fallbackSrc: string;
+  onClick: () => void;
+}) => {
+  const visibleIcons = icons.slice(0, MAX_MUTUAL_ICONS);
+
+  return (
+    <button
+      type="button"
+      className={styles.profileIconCountButton}
+      onClick={onClick}
+      disabled={count === 0}
+    >
+      <span className={styles.profileIconCountStack} aria-hidden="true">
+        {visibleIcons.map((icon) => (
+          <img
+            key={icon.id}
+            src={icon.image || fallbackSrc}
+            alt=""
+            title={icon.name}
+          />
+        ))}
+      </span>
+      <span className={styles.profileIconCountText}>
+        {count} {label}
+      </span>
+    </button>
+  );
+};
 
 export const UserProfileButtons = ({
   friendCount,
@@ -31,9 +76,25 @@ export const UserProfileButtons = ({
   canEdit,
   mutualCauses,
   mutualFriends,
+  mutualCausePreviews = [],
+  mutualFriendPreviews = [],
   userId,
 }: UserProfileButtonsProps) => {
   const dispatch = useAppDispatch();
+  const mutualFriendIcons = mutualFriendPreviews.map((friend) => ({
+    id: friend.id,
+    image: friend.profilePicture,
+    name:
+      friend.fullName ||
+      friend.organizationName ||
+      friend.nonprofitName ||
+      `${friend.firstName ?? ""} ${friend.lastName ?? ""}`.trim(),
+  }));
+  const mutualCauseIcons = mutualCausePreviews.map((cause) => ({
+    id: cause.id,
+    image: cause.imageUrl,
+    name: cause.name,
+  }));
 
   const handleFriendsClick = () => {
     if (canEdit) {
@@ -80,10 +141,12 @@ export const UserProfileButtons = ({
           buttonText={`Friends ${friendCount}`}
         />
         {!canEdit && (
-          <DarbeButton
-            darbeButtonType="profileButtons"
+          <MutualCountButton
             onClick={handleMutualFriendsClick}
-            buttonText={`${mutualFriends} Mutuals`}
+            count={mutualFriends ?? 0}
+            label="mutual"
+            icons={mutualFriendIcons}
+            fallbackSrc={assetUrl("/images/defaultProfilePicture.jpg")}
           />
         )}
       </div>
@@ -95,10 +158,12 @@ export const UserProfileButtons = ({
           buttonText={`Causes ${causesCount}`}
         />
         {!canEdit && (
-          <DarbeButton
-            darbeButtonType="profileButtons"
+          <MutualCountButton
             onClick={handleMutualCausesClick}
-            buttonText={`${mutualCauses} Mutuals`}
+            count={mutualCauses ?? 0}
+            label="Shared"
+            icons={mutualCauseIcons}
+            fallbackSrc={assetUrl("/images/defaultCoverPhoto.jpg")}
           />
         )}
       </div>

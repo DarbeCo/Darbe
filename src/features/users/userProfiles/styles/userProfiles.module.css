@@ -38,6 +38,62 @@
     position: relative;
   }
 
+  .profileIconCountButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 343px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background-color: #f0f0f0;
+    color: #2c77e7;
+    font-family: "Open Sans", sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: normal;
+    text-transform: none;
+    cursor: pointer;
+    box-sizing: border-box;
+    white-space: nowrap;
+  }
+
+  .profileIconCountButton:disabled {
+    cursor: default;
+    opacity: 0.75;
+  }
+
+  .profileIconCountStack {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 42px;
+    min-width: 42px;
+    height: 22px;
+  }
+
+  .profileIconCountStack img {
+    width: 22px;
+    height: 22px;
+    border: 1.5px solid #ffffff;
+    border-radius: 50%;
+    background: #ffffff;
+    object-fit: cover;
+    box-sizing: border-box;
+    flex: 0 0 auto;
+  }
+
+  .profileIconCountStack img + img {
+    margin-left: -12px;
+  }
+
+  .profileIconCountText {
+    display: inline-block;
+    min-width: 0;
+  }
+
   .userProfileGroupsButtons {
     display: flex;
     flex-direction: row;
@@ -849,6 +905,14 @@
     justify-content: center;
     align-items: center;
     position: relative;
+  }
+
+  .profileIconCountButton {
+    width: 150px;
+    height: 20px;
+    background-color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
   }
 
   .userConnectionButtons {

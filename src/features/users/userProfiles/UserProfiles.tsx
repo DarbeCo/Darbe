@@ -23,6 +23,7 @@ import {
   useLazyGetFriendsQuery,
   useLazyGetUserFollowersQuery,
 } from "../../../services/api/endpoints/friends/friends.api";
+import { useGetMutualCausesQuery } from "../../../services/api/endpoints/causes/causes.api";
 import { setReceivedFriendRequests, setUserProfile } from "../userSlice";
 import { useAppDispatch, useAppSelector } from "../../../services/hooks";
 import { useLazyGetUserProfileQuery } from "../../../services/api/endpoints/profiles/profiles.api";
@@ -98,6 +99,9 @@ export const UserProfiles = () => {
   const { data: mutualFriendsData } = useGetMutualFriendsQuery(userId ?? "", {
     skip: !userId || canEdit,
   });
+  const { data: mutualCausesData } = useGetMutualCausesQuery(userId ?? "", {
+    skip: !userId || canEdit,
+  });
 
   // save logged in user profile info for faster access/edit purposes
   useEffect(() => {
@@ -128,11 +132,7 @@ export const UserProfiles = () => {
   );
   const currentCausesCount = userInformation?.user?.causes?.length || 0;
 
-  const mutualCauses = canEdit
-    ? 0
-    : userInformation?.user?.causes?.filter((cause) =>
-        user?.causes?.includes(cause)
-      )?.length;
+  const mutualCauses = canEdit ? 0 : mutualCausesData?.length ?? 0;
 
   const mutualFriends = canEdit ? 0 : mutualFriendsData?.length ?? 0;
 
@@ -199,6 +199,8 @@ export const UserProfiles = () => {
           causesCount={currentCausesCount}
           mutualCauses={mutualCauses}
           mutualFriends={mutualFriends}
+          mutualCausePreviews={mutualCausesData}
+          mutualFriendPreviews={mutualFriendsData}
           userId={userId}
           friends={currentFriends}
           causes={userInformation?.user?.causes}
@@ -223,6 +225,8 @@ export const UserProfiles = () => {
             canEdit={canEdit}
             mutualCauses={mutualCauses}
             mutualFriends={mutualFriends}
+            mutualCausePreviews={mutualCausesData}
+            mutualFriendPreviews={mutualFriendsData}
             userId={userId}
           />
         )}
