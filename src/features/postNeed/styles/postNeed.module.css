@@ -73,6 +73,20 @@
   opacity: 0.9;
 }
 
+.disabledEventTypeCard,
+.disabledEventTypeCard:hover,
+.disabledEventTypeCard:focus-visible {
+  border-color: #d8d8d8;
+  background-color: #f4f4f4;
+  color: #8a8a8a;
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.disabledEventTypeCard :global(svg) {
+  color: #a0a0a0;
+}
+
 .eventTypeCardText {
   display: flex;
   flex-direction: column;

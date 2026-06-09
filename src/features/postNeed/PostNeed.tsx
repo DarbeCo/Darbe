@@ -244,6 +244,12 @@ export const PostNeed = () => {
   });
   const eventOwnerId = eventData.eventOwner || userId;
   const isDelegatedEventOwner = Boolean(eventOwnerId && eventOwnerId !== userId);
+  const eventOwnerUserType = isDelegatedEventOwner
+    ? routeState?.initialEventOwnerUserType ||
+      activeDraft?.eventOwnerUserType ||
+      draftToFinish?.owner.userType
+    : user?.userType;
+  const canCreateCommunityEvent = eventOwnerUserType !== "organization";
   const incompleteEventOwner = useMemo(
     () =>
       isDelegatedEventOwner
@@ -297,6 +303,18 @@ export const PostNeed = () => {
     useCreateEventMutation();
 
   useEffect(() => {
+    if (eventType !== "externalEvent" || canCreateCommunityEvent) {
+      return;
+    }
+
+    setEventType("internalEvent");
+    setEventData((currentEventData) => ({
+      ...currentEventData,
+      isFollowersOnly: true,
+    }));
+  }, [canCreateCommunityEvent, eventType]);
+
+  useEffect(() => {
     if (!eventType && currentStep === -1) {
       return;
     }
@@ -335,6 +353,15 @@ export const PostNeed = () => {
 
   const handlePostEvent = async () => {
     if (eventActionLockRef.current || isPostingEvent || isSavingIncomplete) {
+      return;
+    }
+
+    if (eventType === "externalEvent" && !canCreateCommunityEvent) {
+      setEventType("internalEvent");
+      setEventData((currentEventData) => ({
+        ...currentEventData,
+        isFollowersOnly: true,
+      }));
       return;
     }
 
@@ -387,6 +414,10 @@ export const PostNeed = () => {
   };
 
   const handleEventSelection = (selectedEventType: string) => {
+    if (selectedEventType === "externalEvent" && !canCreateCommunityEvent) {
+      return;
+    }
+
     const isChangingEventType =
       Boolean(eventType) && eventType !== selectedEventType;
     setSubmitValidationDialog(null);
@@ -753,6 +784,7 @@ export const PostNeed = () => {
           <EventType
             onSelect={handleEventSelection}
             selectedEventType={eventType}
+            allowExternalEvent={canCreateCommunityEvent}
           />
           <div className={styles.selectionButtonArea}>
             <DarbeButton

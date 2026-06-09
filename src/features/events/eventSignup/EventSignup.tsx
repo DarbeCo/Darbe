@@ -200,9 +200,28 @@ export const EventSignup = () => {
         .map((access) => access.entityId),
     [rosterEventAdminEntityAccess]
   );
+  const postNeedAdminEntityAccess = useMemo(
+    () =>
+      rosterEventAdminEntityAccess.filter(
+        (access) =>
+          access.canEditExternalEvents && access.userType === "nonprofit"
+      ),
+    [rosterEventAdminEntityAccess]
+  );
   const hasInternalEventAdminRights = internalEventAdminEntityIds.length > 0;
   const hasAnyEventAdminRights =
     hasInternalEventAdminRights || externalEventAdminEntityIds.length > 0;
+  const canShowPostNeedAction =
+    userType === "organization" ||
+    userType === "nonprofit" ||
+    (userType === "individual" && externalEventAdminEntityIds.length > 0);
+  const canUsePostNeedAction =
+    userType === "nonprofit" ||
+    (userType === "individual" && postNeedAdminEntityAccess.length > 0);
+  const canShowInternalEventAction =
+    userType === "organization" ||
+    userType === "nonprofit" ||
+    (userType === "individual" && internalEventAdminEntityIds.length > 0);
   const hasCoordinatorEvents = Boolean(
     currentUserId &&
       [...(events ?? []), ...rosterAdminEvents].some(
@@ -512,16 +531,21 @@ export const EventSignup = () => {
   };
 
   const handleCreateEvent = (eventType: EventCreateType) => {
+    if (eventType === "externalEvent" && userType === "organization") {
+      return;
+    }
+
     if (userType !== "individual") {
       navigateToCreateEvent(eventType);
       return;
     }
 
-    const eligibleEntities = rosterEventAdminEntityAccess.filter((access) =>
+    const eligibleEntities =
       eventType === "internalEvent"
-        ? access.canEditInternalEvents
-        : access.canEditExternalEvents
-    );
+        ? rosterEventAdminEntityAccess.filter(
+            (access) => access.canEditInternalEvents
+          )
+        : postNeedAdminEntityAccess;
 
     if (eligibleEntities.length === 0) {
       return;
@@ -621,16 +645,15 @@ export const EventSignup = () => {
           />
           <h1>Events</h1>
         </div>
-        {((userType === "organization" || userType === "nonprofit") ||
-          (userType === "individual" && hasAnyEventAdminRights)) && (
+        {(canShowPostNeedAction || canShowInternalEventAction) && (
           <div className={styles.nonprofitEventActions}>
-            {(userType === "organization" ||
-              userType === "nonprofit" ||
-              (userType === "individual" &&
-                externalEventAdminEntityIds.length > 0)) && (
+            {canShowPostNeedAction && (
               <button
                 type="button"
-                className={styles.nonprofitEventAction}
+                className={`${styles.nonprofitEventAction} ${
+                  !canUsePostNeedAction ? styles.nonprofitEventActionDisabled : ""
+                }`}
+                disabled={!canUsePostNeedAction}
                 onClick={() => handleCreateEvent("externalEvent")}
               >
                 <CustomSvgs
@@ -641,10 +664,7 @@ export const EventSignup = () => {
                 <span>Post A Need</span>
               </button>
             )}
-            {(userType === "organization" ||
-              userType === "nonprofit" ||
-              (userType === "individual" &&
-                internalEventAdminEntityIds.length > 0)) && (
+            {canShowInternalEventAction && (
               <button
                 type="button"
                 className={styles.nonprofitEventAction}
