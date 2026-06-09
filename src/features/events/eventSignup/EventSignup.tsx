@@ -221,7 +221,11 @@ export const EventSignup = () => {
   const canShowInternalEventAction =
     userType === "organization" ||
     userType === "nonprofit" ||
-    (userType === "individual" && internalEventAdminEntityIds.length > 0);
+    (userType === "individual" && hasAnyEventAdminRights);
+  const canUseInternalEventAction =
+    userType === "organization" ||
+    userType === "nonprofit" ||
+    (userType === "individual" && hasInternalEventAdminRights);
   const hasCoordinatorEvents = Boolean(
     currentUserId &&
       [...(events ?? []), ...rosterAdminEvents].some(
@@ -235,7 +239,7 @@ export const EventSignup = () => {
     ? adminTabs
     : userType === "nonprofit"
     ? nonprofitTabs
-    : hasInternalEventAdminRights
+    : hasAnyEventAdminRights
     ? adminTabs
     : hasCoordinatorEvents
     ? ["Current", "Past", "Admin"]
@@ -260,7 +264,7 @@ export const EventSignup = () => {
   }, [activeTab, availableTabs, restoredTab]);
 
   useEffect(() => {
-    if (!currentUserId || (!isPostNeedAdmin && !hasInternalEventAdminRights)) {
+    if (!currentUserId || (!isPostNeedAdmin && !hasAnyEventAdminRights)) {
       setIncompleteDraftEvents([]);
       return;
     }
@@ -270,7 +274,7 @@ export const EventSignup = () => {
       .map(incompletePostNeedEventToShortEvent);
 
     setIncompleteDraftEvents(drafts);
-  }, [currentUserId, hasInternalEventAdminRights, isPostNeedAdmin, activeTab]);
+  }, [currentUserId, hasAnyEventAdminRights, isPostNeedAdmin, activeTab]);
 
   const volunteerEvents = useMemo<VolunteerEventDisplay[]>(() => {
     const eventsById = new Map<string, ShortEventState>();
@@ -667,7 +671,12 @@ export const EventSignup = () => {
             {canShowInternalEventAction && (
               <button
                 type="button"
-                className={styles.nonprofitEventAction}
+                className={`${styles.nonprofitEventAction} ${
+                  !canUseInternalEventAction
+                    ? styles.nonprofitEventActionDisabled
+                    : ""
+                }`}
+                disabled={!canUseInternalEventAction}
                 onClick={() => handleCreateEvent("internalEvent")}
               >
                 <CustomSvgs
