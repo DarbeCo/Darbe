@@ -3,12 +3,12 @@ import { AddCircle, CheckCircle } from "@mui/icons-material";
 import { CircularProgress, IconButton } from "@mui/material";
 
 import { NewRoster } from "../../services/api/endpoints/types/roster.api.types";
-import { useGetEntityFollowersQuery } from "../../services/api/endpoints/profiles/profiles.api";
 import { useAppDispatch, useAppSelector } from "../../services/hooks";
 import { selectCurrentUserId } from "../../features/users/selectors";
 import { SimpleUserInfo } from "../../services/api/endpoints/types/user.api.types";
 import {
   useCreateRosterMutation,
+  useGetRosterAddCandidatesQuery,
   useGetRostersQuery,
 } from "../../services/api/endpoints/roster/roster.api";
 import { hideModal } from "../modal/modalSlice";
@@ -50,7 +50,10 @@ export const SimpleCreateRoster = ({
     rosterOwner: ownerId,
     members: [],
   });
-  const { data: followers, isLoading } = useGetEntityFollowersQuery(ownerId);
+  const { data: addCandidates, isLoading } = useGetRosterAddCandidatesQuery({
+    ownerId,
+    searchText: memberSearchQuery,
+  });
   const { data: rosters = [] } = useGetRostersQuery(ownerId);
   const [createNewRoster, { isLoading: isCreatingRoster }] =
     useCreateRosterMutation();
@@ -71,7 +74,7 @@ export const SimpleCreateRoster = ({
   const recentMembers = useMemo(() => {
     const query = memberSearchQuery.trim().toLowerCase();
 
-    return [...(followers ?? [])]
+    return [...(addCandidates ?? [])]
       .filter((member) => {
         if (!query) return true;
 
@@ -80,7 +83,7 @@ export const SimpleCreateRoster = ({
           .includes(query);
       })
       .slice(0, 5);
-  }, [followers, memberSearchQuery]);
+  }, [addCandidates, memberSearchQuery]);
   const selectedMemberIds = new Set(newRosterData.members);
 
   useEffect(() => {

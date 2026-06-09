@@ -3,6 +3,7 @@ import {
     EligibleRosterMembers,
     NewRoster,
     Roster,
+    RosterAddCandidateParams,
     RosterAdminPermissions,
     RosterEventAdminEntityAccess,
     RosterMember,
@@ -16,6 +17,7 @@ import {
     getAllRosterMembers,
     getEntityRosterAccess,
     getEntityRosterMembers,
+    getRosterAddCandidates,
     getRosterEventAdminEntityAccess,
     getRosterAdminEntityIds,
     getRosterAdmins,
@@ -226,6 +228,25 @@ const rosterApi = darbeBaseApi.injectEndpoints({
             },
             providesTags: ["Roster", "RosterMembers"],
         }),
+        getRosterAddCandidates: builder.query<
+            SimpleUserInfo[],
+            RosterAddCandidateParams
+        >({
+            async queryFn(params) {
+                try {
+                    const data = await getRosterAddCandidates(params);
+                    return { data };
+                } catch (error) {
+                    return {
+                        error: {
+                            status: "CUSTOM_ERROR",
+                            data: { message: (error as Error).message },
+                        },
+                    };
+                }
+            },
+            providesTags: ["Roster", "RosterMembers"],
+        }),
         getRosterAdminEntityIds: builder.query<string[], void>({
             async queryFn() {
                 try {
@@ -277,6 +298,7 @@ export const {
     useGetAllRosterMembersQuery,
     useGetEntityRosterAccessQuery,
     useGetEntityRosterMembersQuery,
+    useGetRosterAddCandidatesQuery,
     useGetRosterAdminEntityIdsQuery,
     useGetRosterEventAdminEntityAccessQuery
 } = rosterApi;

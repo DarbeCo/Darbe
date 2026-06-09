@@ -116,6 +116,41 @@
   white-space: nowrap;
 }
 
+.editRosterSearch {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #eaeaea;
+  box-sizing: border-box;
+}
+
+.editRosterSearch span {
+  color: #263238;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.editRosterSearch input {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #d8d8d8;
+  border-radius: 4px;
+  color: #263238;
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  line-height: 18px;
+  box-sizing: border-box;
+}
+
+.editRosterSearch input:focus {
+  border-color: #2c77e7;
+  outline: none;
+}
+
 .editRosterList {
   display: flex;
   flex: 1 1 auto;

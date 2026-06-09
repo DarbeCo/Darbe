@@ -46,6 +46,12 @@ export interface EligibleRosterMembers {
   eligibleStaff: SimpleUserInfo[];
 }
 
+export interface RosterAddCandidateParams {
+  rosterId?: string;
+  ownerId?: string;
+  searchText?: string;
+}
+
 export interface RosterEventAdminEntityAccess {
   entityId: string;
   canEditInternalEvents: boolean;

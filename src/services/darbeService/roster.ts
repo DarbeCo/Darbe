@@ -2,6 +2,7 @@ import type {
   EligibleRosterMembers,
   NewRoster,
   Roster,
+  RosterAddCandidateParams,
   RosterAdminPermissions,
   RosterEventAdminEntityAccess,
   RosterMember,
@@ -858,6 +859,55 @@ export const addToRoster = async (followerId: string, rosterId: string): Promise
   if (isMembershipRoster(roster.name)) {
     await syncUserOrganizationMembership(followerId, roster.ownerId);
   }
+};
+
+export const getRosterAddCandidates = async ({
+  rosterId,
+  ownerId,
+  searchText = "",
+}: RosterAddCandidateParams): Promise<SimpleUserInfo[]> => {
+  const roster = rosterId ? await getRosterInfo(rosterId) : undefined;
+  const rosterOwnerId = roster?.ownerId ?? ownerId ?? (await ensureUserId());
+  await ensureCanManageEntityRoster(rosterOwnerId, "edit rosters");
+
+  const rosterMemberIds = new Set<string>();
+
+  if (rosterId) {
+    const { data: currentMembers, error: currentMembersError } = await supabase
+      .from("roster_members")
+      .select("user_id")
+      .eq("roster_id", rosterId);
+
+    if (currentMembersError) throw currentMembersError;
+
+    (currentMembers ?? []).forEach((member) => {
+      rosterMemberIds.add(member.user_id);
+    });
+  }
+
+  const term = searchText.trim();
+  let query = supabase
+    .from("profiles")
+    .select(
+      "id, full_name, first_name, last_name, profile_picture_url, nonprofit_name, organization_name, user_type"
+    )
+    .eq("user_type", "individual")
+    .order("last_name", { ascending: true })
+    .order("first_name", { ascending: true })
+    .limit(50);
+
+  if (term) {
+    query = query.or(
+      `first_name.ilike.%${term}%,last_name.ilike.%${term}%,full_name.ilike.%${term}%`
+    );
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  return (data ?? [])
+    .filter((profile) => !rosterMemberIds.has(profile.id))
+    .map(mapProfileToSimpleUserInfo);
 };
 
 export const removeFromRoster = async (memberId: string, rosterId: string): Promise<void> => {
