@@ -47,13 +47,14 @@ export const DarbeAvatar = ({
   const styleToUse = styleVariants[variant || "default"];
 
   // TODO: Make sure we get the right user and the right name, this defaults to YOU
-  const userName = getUserDisplayName(userProfile?.user);
+  const userName =
+    getUserDisplayName(userProfile?.user) || getUserDisplayName(user ?? undefined);
 
   const formattedDateTime = overrideTimeStamp
     ? formatDateTime(overrideTimeStamp, DATE_CONSTANTS.MONTH_AT_TIME)
     : new Date().toLocaleDateString();
   const imageURLtoUse =
-    overrideProfilePicture ?? userProfile?.user.profilePicture;
+    overrideProfilePicture ?? userProfile?.user.profilePicture ?? user?.profilePicture;
 
   return (
     <NavLink

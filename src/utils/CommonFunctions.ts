@@ -69,15 +69,21 @@ export const getUserDisplayName = (user: Partial<UserState> | undefined) => {
   if (!user) {
     return "";
   }
-  if (user?.fullName) {
+  if (user.fullName?.trim()) {
     return user.fullName;
   }
-  if (user?.organizationName) {
+  const firstLastName = `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim();
+  if (firstLastName) {
+    return firstLastName;
+  }
+  if (user.organizationName?.trim()) {
     return user.organizationName;
   }
-  if (user?.nonprofitName) {
+  if (user.nonprofitName?.trim()) {
     return user.nonprofitName;
   }
+
+  return "";
 };
 
 export const getUserStateFromZip = (zip: string | undefined) => {
