@@ -44,6 +44,37 @@ const sortRosterRows = <
     );
   });
 
+const getRosterMemberSortName = (member: RosterMember) => {
+  const user = member.user;
+  const lastName = user.lastName?.trim();
+  const firstName = user.firstName?.trim();
+
+  return [
+    lastName,
+    firstName,
+    user.fullName?.trim(),
+    user.organizationName?.trim(),
+    user.nonprofitName?.trim(),
+  ]
+    .filter(Boolean)
+    .join(" ");
+};
+
+const sortRosterMembersByLastName = (members: RosterMember[]) =>
+  [...members].sort((left, right) => {
+    const nameCompare = getRosterMemberSortName(left).localeCompare(
+      getRosterMemberSortName(right),
+      undefined,
+      { sensitivity: "base" }
+    );
+
+    if (nameCompare !== 0) {
+      return nameCompare;
+    }
+
+    return left.user.id.localeCompare(right.user.id);
+  });
+
 const getVisibleRosterRows = <
   T extends { roster_name: string | null; created_at: string | null }
 >(
@@ -525,7 +556,7 @@ export const getRosters = async (ownerId?: string): Promise<Roster[]> => {
       id: roster.id,
       rosterOwner: ownerInfo,
       rosterName: displayRosterName(roster.roster_name),
-      members: membersByRoster.get(roster.id) ?? [],
+      members: sortRosterMembersByLastName(membersByRoster.get(roster.id) ?? []),
       createdAt: roster.created_at,
     }));
   }
@@ -596,7 +627,7 @@ export const getRosters = async (ownerId?: string): Promise<Roster[]> => {
     id: roster.id,
     rosterOwner: ownerInfo,
     rosterName: displayRosterName(roster.roster_name),
-    members: membersByRoster.get(roster.id) ?? [],
+    members: sortRosterMembersByLastName(membersByRoster.get(roster.id) ?? []),
     createdAt: roster.created_at,
   }));
 };
@@ -610,14 +641,16 @@ export const getRosterMembers = async (rosterId: string): Promise<RosterMember[]
   if (error) throw error;
 
   const rosterMembers = await mapRosterMembers(data ?? []);
-  return rosterMembers.map((member) => ({
-    user: member.user,
-    isAdmin: member.isAdmin,
-    adminPermissions: member.adminPermissions,
-    memberSince: member.memberSince,
-    causes: member.causes,
-    volunteerSummary: member.volunteerSummary,
-  }));
+  return sortRosterMembersByLastName(
+    rosterMembers.map((member) => ({
+      user: member.user,
+      isAdmin: member.isAdmin,
+      adminPermissions: member.adminPermissions,
+      memberSince: member.memberSince,
+      causes: member.causes,
+      volunteerSummary: member.volunteerSummary,
+    }))
+  );
 };
 
 export const createRoster = async (newRoster: NewRoster): Promise<Roster> => {
