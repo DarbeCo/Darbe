@@ -29,12 +29,14 @@ import {
   useGetEventsQuery,
   useGetRosterAdminEventsQuery,
   useGetSignedUpEventsQuery,
+  useGetVolunteerMatchesQuery,
 } from "../../../services/api/endpoints/events/events.api";
 import { useGetUserImpactQuery } from "../../../services/api/endpoints/impact/impact.api";
 import { useGetRosterAdminEntityIdsQuery } from "../../../services/api/endpoints/roster/roster.api";
 import { ShortEventState } from "../../../services/api/endpoints/types/events.api.types";
 import { parseEventDateTimeAsLocalDate } from "../../../utils/eventDateUtils";
 import { getViewedImpactIds } from "../../../utils/impactViewed";
+import { getViewedMatchIds } from "../../../utils/matchViewed";
 import { NavBarItem } from "./NavBarItem";
 
 import styles from "../styles/mainPage.module.css";
@@ -71,6 +73,9 @@ const isCurrentEvent = (
   event: Pick<ShortEventState, "eventDate" | "endTime">
 ) => !isPastEvent(event);
 
+const getUpcomingMatchEvents = (events: ShortEventState[] = []) =>
+  events.filter(isCurrentEvent);
+
 type SideNavBarItemConfig = {
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
   svgPath: string;
@@ -104,6 +109,12 @@ export const SideNavBar = () => {
   const { data: events = [] } = useGetEventsQuery(undefined, {
     skip: !userId,
   });
+  const { data: recommendableMatchEvents = [] } = useGetEventsQuery(
+    { scope: "recommendable" },
+    {
+      skip: userType !== "organization",
+    }
+  );
   const { data: rosterAdminEntityIds = [] } =
     useGetRosterAdminEntityIdsQuery(undefined, {
       skip: !userId,
@@ -121,6 +132,12 @@ export const SideNavBar = () => {
   const { data: userImpacts = [] } = useGetUserImpactQuery(userId, {
     skip: !userId,
   });
+  const { data: volunteerMatches = [] } = useGetVolunteerMatchesQuery(
+    undefined,
+    {
+      skip: userType === "individual",
+    }
+  );
   const unreadMessageCount = useMemo(
     () =>
       messageThreads.reduce(
@@ -186,6 +203,20 @@ export const SideNavBar = () => {
       (impact) => !viewedImpactIdSet.has(impact.id)
     ).length;
   }, [userId, userImpacts]);
+  const newMatchCount = useMemo(() => {
+    if (!userId) return 0;
+
+    const viewedMatchIdSet = new Set(getViewedMatchIds(userId));
+    const matchIds = [
+      ...getUpcomingMatchEvents(events).map((event) => `event:${event.id}`),
+      ...getUpcomingMatchEvents(recommendableMatchEvents).map(
+        (event) => `recommendation:${event.id}`
+      ),
+      ...volunteerMatches.map((match) => `volunteer:${match.id}`),
+    ];
+
+    return matchIds.filter((matchId) => !viewedMatchIdSet.has(matchId)).length;
+  }, [events, recommendableMatchEvents, userId, volunteerMatches]);
 
   const handleClick = (route: string) => {
     if (route === "home") {
@@ -277,6 +308,7 @@ export const SideNavBar = () => {
       svgPath: "/svgs/common/matchIcon.svg",
       altText: "match",
       text: "Match",
+      count: newMatchCount,
     },
     {
       onClick: () => handleClick("impact"),

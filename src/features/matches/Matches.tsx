@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAppSelector } from "../../services/hooks";
@@ -10,10 +10,11 @@ import {
   useGetEventsQuery,
   useGetVolunteerMatchesQuery,
 } from "../../services/api/endpoints/events/events.api";
-import { selectUserType } from "../users/selectors";
+import { selectCurrentUserId, selectUserType } from "../users/selectors";
 import { VolunteerMatches } from "../volunteerMatches/VolunteerMatches";
 import { EDIT_PROFILE_ROUTE } from "../../routes/route.constants";
 import { EDIT_SECTIONS } from "../users/userProfiles/constants";
+import { markMatchIdsViewed } from "../../utils/matchViewed";
 import styles from "./styles/matches.module.css";
 
 type OrganizationMatchTab = "eventVolunteers" | "recommendations";
@@ -25,6 +26,7 @@ const formatEventTabCount = (count: number) =>
 export const Matches = () => {
   const navigate = useNavigate();
   const userType = useAppSelector(selectUserType);
+  const currentUserId = useAppSelector(selectCurrentUserId);
   const isOrganization = userType === "organization";
   const [organizationMatchTab, setOrganizationMatchTab] =
     useState<OrganizationMatchTab>("eventVolunteers");
@@ -90,6 +92,24 @@ export const Matches = () => {
   const organizationInvitationMatchCount = getUpcomingEventMatches(
     recommendableEventMatchesData
   ).length;
+  const currentMatchIds = useMemo(
+    () => [
+      ...getUpcomingEventMatches(eventMatchesData).map(
+        (event) => `event:${event.id}`
+      ),
+      ...getUpcomingEventMatches(recommendableEventMatchesData).map(
+        (event) => `recommendation:${event.id}`
+      ),
+      ...(volunteerMatchesData ?? []).map((match) => `volunteer:${match.id}`),
+    ],
+    [eventMatchesData, recommendableEventMatchesData, volunteerMatchesData]
+  );
+
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    markMatchIdsViewed(currentUserId, currentMatchIds);
+  }, [currentMatchIds, currentUserId]);
 
   const summaryCards = [
     {
