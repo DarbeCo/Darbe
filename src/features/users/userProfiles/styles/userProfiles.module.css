@@ -466,15 +466,35 @@
     background: #fff;
   }
 
-  .profileSectionText {
+  .profileSectionTextContainer {
     display: flex;
-    flex-direction: row;
-    justify-content: start;
-    align-items: flex-start;
+    flex-direction: column;
+    width: 80%;
     padding-left: 45px;
     padding-bottom: 20px;
-    width: 80%;
+  }
+
+  .profileSectionText {
     white-space: pre-wrap;
+  }
+
+  .truncateLines {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -webkit-line-clamp: 8;
+  }
+
+  .showMoreButton {
+    margin-top: 10px;
+    border: none;
+    background: transparent;
+    color: var(--color-brand);
+    cursor: pointer;
+    font-size: 0.9rem;
+    text-align: left;
+    padding: 0;
   }
 
   .profileSectionHeader {
@@ -549,6 +569,9 @@
     border-radius: 8px;
     background: #fff;
     box-sizing: border-box;
+    p {
+      margin-left: 16px;
+    }
   }
 
   .userVolunteerImpactsTitle {
@@ -558,6 +581,7 @@
     font-size: 16px;
     font-weight: 700;
     line-height: 22px;
+    padding-left: 16px;
   }
 
   .profileImpactLoading {

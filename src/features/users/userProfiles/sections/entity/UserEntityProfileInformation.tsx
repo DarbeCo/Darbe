@@ -74,6 +74,8 @@ export const UserEntityProfileInformation = ({
             canEdit={canEdit}
             isEntity
             isEmptySection={emptyAboutUsTab}
+            truncateLines={8}
+            showMore
           />
         );
       case "programs":

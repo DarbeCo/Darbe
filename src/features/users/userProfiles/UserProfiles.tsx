@@ -265,6 +265,7 @@ export const UserProfiles = () => {
         <UserDocuments
           canEdit={canEdit}
           documents={userInformation?.entityDetails?.documents}
+          nonprofitType={userInformation?.nonprofitType}
         />
       )}
       {isEntityProfile && (

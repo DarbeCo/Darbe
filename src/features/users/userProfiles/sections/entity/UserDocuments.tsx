@@ -10,9 +10,10 @@ import styles from "./styles/entityDetails.module.css";
 interface UserDocumentsProps {
   canEdit: boolean;
   documents?: EntityDocument[];
+  nonprofitType?: string;
 }
 
-export const UserDocuments = ({ canEdit, documents }: UserDocumentsProps) => {
+export const UserDocuments = ({ canEdit, documents, nonprofitType }: UserDocumentsProps) => {
   const financialDocuments = documents?.filter(
     (doc) => doc.documentCategory === "financial"
   );
@@ -32,15 +33,22 @@ export const UserDocuments = ({ canEdit, documents }: UserDocumentsProps) => {
       <div className={styles.entityDetailsHeader}>
         <Typography
           variant="sectionTitle"
-          textToDisplay="Financials"
+          textToDisplay={`Non Profit type: ${nonprofitType}`}
           extraClass="paddingLeft"
         />
         {canEdit && <EditProfileIcon onClick={handleEdit} />}
       </div>
+      {nonprofitType && (
+        <Typography
+          variant="blueTextSmall"
+          extraClass="paddingLeft"
+        />
+      )}
       {!financialDocuments?.length && (
         <Typography
           variant="blueTextSmall"
-          textToDisplay="No financials available"
+          textToDisplay="No Non Profit documents available"
+          extraClass="paddingLeft"
         />
       )}
       {financialDocuments && financialDocuments.length > 0 && (
