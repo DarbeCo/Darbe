@@ -131,7 +131,7 @@ export const UserQuickInfo = ({
   const userClassOverride = isEntity
     ? styles.entityQuickInfoGroupsNonMobile
     : styles.userQuickInfoOverride;
-  const organizationDetails = [website, associatedEntityName].filter(Boolean);
+  const organizationDetails = [associatedEntityName].filter(Boolean);
 
   const entityDetailsDisplay = entityName ? (
     <div className={styles.userQuickInfoGroupsEntity}>
@@ -155,42 +155,17 @@ export const UserQuickInfo = ({
                 : "Phone #: Unknown"
             }
           />
-          <a
-            href={websiteUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-disabled={!websiteUrl}
-          >
-            <Typography
-              variant="blueTextSmall"
-              textToDisplay={
-                website ? `Website: ${website}` : "Website: Unknown"
-              }
-            />
-          </a>
         </>
       )}
       {isOrganizationProfile &&
         (organizationDetails.length ? (
-          organizationDetails.map((detail) =>
-            detail === website ? (
-              <a
-                key={detail}
-                href={websiteUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-disabled={!websiteUrl}
-              >
-                <Typography variant="blueTextSmall" textToDisplay={detail} />
-              </a>
-            ) : (
-              <Typography
-                key={detail}
-                variant="blueTextSmall"
-                textToDisplay={detail}
-              />
-            )
-          )
+          organizationDetails.map((detail) => (
+            <Typography
+              key={detail}
+              variant="blueTextSmall"
+              textToDisplay={detail}
+            />
+          ))
         ) : (
           <Typography
             variant="blueTextSmall"
