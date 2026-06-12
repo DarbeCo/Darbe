@@ -10,6 +10,24 @@ type NotificationInsert = {
   contentTypeId: string;
 };
 
+const getNotificationViewedStorageKey = (userId: string) =>
+  `darbe:lastViewedNotifications:${userId}`;
+
+const getLastViewedNotificationsAt = (userId: string) => {
+  if (typeof window === "undefined") return null;
+
+  return window.localStorage.getItem(getNotificationViewedStorageKey(userId));
+};
+
+const setLastViewedNotificationsAt = (userId: string) => {
+  if (typeof window === "undefined") return;
+
+  window.localStorage.setItem(
+    getNotificationViewedStorageKey(userId),
+    new Date().toISOString()
+  );
+};
+
 const fallbackSimpleUser = (id: string) => ({
   id,
   fullName: "",
@@ -105,18 +123,32 @@ export const getNotifications = async (userId?: string): Promise<Notification[]>
 
 export const getNotificationCount = async (): Promise<number> => {
   const userId = await ensureUserId();
-  const { count, error } = await supabase
+  const lastViewedAt = getLastViewedNotificationsAt(userId);
+  let query = supabase
     .from("notifications")
     .select("id", { count: "exact", head: true })
-    .eq("recipient_user_id", userId)
-    .eq("read", false);
+    .eq("recipient_user_id", userId);
+
+  if (lastViewedAt) {
+    query = query.gt("created_at", lastViewedAt);
+  } else {
+    query = query.eq("read", false);
+  }
+
+  const { count, error } = await query;
 
   if (error) throw error;
   return count ?? 0;
 };
 
+export const markNotificationsViewed = async (): Promise<void> => {
+  const userId = await ensureUserId();
+  setLastViewedNotificationsAt(userId);
+};
+
 export const markNotificationsRead = async (): Promise<void> => {
   const userId = await ensureUserId();
+  setLastViewedNotificationsAt(userId);
   const { error } = await supabase
     .from("notifications")
     .update({ read: true })

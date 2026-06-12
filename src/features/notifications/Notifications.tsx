@@ -1,11 +1,21 @@
+import { useEffect } from "react";
+
 import { NotificationCard } from "../../components/notification/NotificationCard";
-import { useGetNotificationsQuery } from "../../services/api/endpoints/notifications/notifications.api";
+import {
+  useGetNotificationsQuery,
+  useMarkNotificationsViewedMutation,
+} from "../../services/api/endpoints/notifications/notifications.api";
 import styles from "./styles/notifications.module.css";
 
 export const Notifications = () => {
   const { data: userNotifications, isLoading } =
     useGetNotificationsQuery();
+  const [markNotificationsViewed] = useMarkNotificationsViewedMutation();
   const hasNotifications = Boolean(userNotifications?.length);
+
+  useEffect(() => {
+    void markNotificationsViewed();
+  }, [markNotificationsViewed]);
 
   return (
     <section className={styles.notificationPageDisplay}>

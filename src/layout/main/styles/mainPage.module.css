@@ -71,6 +71,31 @@
     justify-content: center;
   }
 
+  .navBarItemLabel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-width: 0;
+  }
+
+  .navBarItemCount {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #2c77e7;
+    color: #ffffff;
+    font-family: "Open Sans", sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 17px;
+    box-sizing: border-box;
+  }
+
   .mobileDashboardButton {
     position: fixed;
     right: 14px;
@@ -351,6 +376,30 @@
     justify-content: center;
   }
 
+  .navBarItemLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+  }
+
+  .navBarItemCount {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #2c77e7;
+    color: #ffffff;
+    font-family: "Open Sans", sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 18px;
+    box-sizing: border-box;
+  }
+
   .navBarItemText {
     font-family: "Open Sans", sans-serif;
     font-size: 13px;
@@ -420,6 +469,11 @@
 
   .navBarMenuItem span {
     display: inline;
+  }
+
+  .navBarMenuItem .navBarItemLabel,
+  .navBarMenuItem .navBarItemCount {
+    display: inline-flex;
   }
 
   .simpleLinksArea {

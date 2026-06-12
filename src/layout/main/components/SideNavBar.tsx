@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { Menu } from "@mui/material";
 
@@ -23,19 +23,169 @@ import {
 import { useAppDispatch } from "../../../services/hooks";
 import { useModal } from "../../../utils/commonHooks/UseModal";
 import { MiniMenuItems } from "../../../components/miniMenu/MiniMenuItems";
+import { useGetMessagesQuery } from "../../../services/api/endpoints/messages/messages.api";
+import { useGetNotificationCountQuery } from "../../../services/api/endpoints/notifications/notifications.api";
+import {
+  useGetEventsQuery,
+  useGetRosterAdminEventsQuery,
+  useGetSignedUpEventsQuery,
+} from "../../../services/api/endpoints/events/events.api";
+import { useGetUserImpactQuery } from "../../../services/api/endpoints/impact/impact.api";
+import { useGetRosterAdminEntityIdsQuery } from "../../../services/api/endpoints/roster/roster.api";
+import { ShortEventState } from "../../../services/api/endpoints/types/events.api.types";
+import { parseEventDateTimeAsLocalDate } from "../../../utils/eventDateUtils";
+import { getViewedImpactIds } from "../../../utils/impactViewed";
 import { NavBarItem } from "./NavBarItem";
 
 import styles from "../styles/mainPage.module.css";
+
+const getDateOnlyTime = (date: Date) =>
+  new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+
+const getEventDateOnlyTime = (eventDate: string) => {
+  const [year, month, day] = eventDate.split("T")[0].split("-").map(Number);
+
+  if (year && month && day) {
+    return new Date(year, month - 1, day).getTime();
+  }
+
+  return getDateOnlyTime(new Date(eventDate));
+};
+
+const isPastEvent = (
+  event: Pick<ShortEventState, "eventDate" | "endTime">
+) => {
+  const todayTime = getDateOnlyTime(new Date());
+  const eventDateTime = getEventDateOnlyTime(event.eventDate);
+
+  if (event.endTime !== undefined) {
+    return (
+      new Date() > parseEventDateTimeAsLocalDate(event.eventDate, event.endTime)
+    );
+  }
+
+  return eventDateTime < todayTime;
+};
+
+const isCurrentEvent = (
+  event: Pick<ShortEventState, "eventDate" | "endTime">
+) => !isPastEvent(event);
+
+type SideNavBarItemConfig = {
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  svgPath: string;
+  altText: string;
+  text: string;
+  count?: number;
+  showZeroCount?: boolean;
+};
 
 export const SideNavBar = () => {
   const { user } = useSelector(selectUser);
   const isIndividual = user?.userType === "individual";
   const userId = user?.id ?? "";
+  const userType = user?.userType;
   const navigate = useNavigateHook();
   const location = useLocation();
   const dispatch = useAppDispatch();
   const { isVisible, hide, toggle } = useModal();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const { data: unreadNotificationCount = 0 } =
+    useGetNotificationCountQuery(undefined, {
+      pollingInterval: 7500,
+      skipPollingIfUnfocused: true,
+      skip: !userId,
+    });
+  const { data: messageThreads = [] } = useGetMessagesQuery(undefined, {
+    pollingInterval: 7500,
+    skipPollingIfUnfocused: true,
+    skip: !userId,
+  });
+  const { data: events = [] } = useGetEventsQuery(undefined, {
+    skip: !userId,
+  });
+  const { data: rosterAdminEntityIds = [] } =
+    useGetRosterAdminEntityIdsQuery(undefined, {
+      skip: !userId,
+    });
+  const { data: rosterAdminEvents = [] } = useGetRosterAdminEventsQuery(
+    undefined,
+    {
+      skip: userType !== "individual",
+    }
+  );
+  const { data: signedUpEvents = [] } = useGetSignedUpEventsQuery(
+    { when: "upcoming" },
+    { skip: !userId }
+  );
+  const { data: userImpacts = [] } = useGetUserImpactQuery(userId, {
+    skip: !userId,
+  });
+  const unreadMessageCount = useMemo(
+    () =>
+      messageThreads.reduce(
+        (total, thread) =>
+          total +
+          thread.messages.filter(
+            (message) => !message.isRead && message.senderId !== userId
+          ).length,
+        0
+      ),
+    [messageThreads, userId]
+  );
+  const currentEventsCount = useMemo(() => {
+    if (!userId) return 0;
+
+    const eventsById = new Map<string, ShortEventState>();
+
+    [
+      ...events,
+      ...rosterAdminEvents,
+      ...signedUpEvents.map(({ event }) => event),
+    ].forEach((event) => {
+      eventsById.set(event.id, event);
+    });
+
+    const rosterAdminEventIdSet = new Set(
+      rosterAdminEvents.map((event) => event.id)
+    );
+    const eventsToDisplay = Array.from(eventsById.values());
+    const adminManagedEvents = eventsToDisplay.filter(
+      (event) =>
+        event.eventOwner.id === userId ||
+        event.eventCoordinator?.id === userId ||
+        rosterAdminEntityIds.includes(event.eventOwner.id) ||
+        rosterAdminEventIdSet.has(event.id)
+    );
+    const signedUpCurrentEvents = signedUpEvents
+      .filter(
+        ({ event, status }) => status !== "passed" && isCurrentEvent(event)
+      )
+      .map(({ event }) => event);
+    const signedUpCurrentEventIds = new Set(
+      signedUpCurrentEvents.map((event) => event.id)
+    );
+    const managedCurrentEvents = adminManagedEvents
+      .filter((event) => isCurrentEvent(event))
+      .filter((event) => !signedUpCurrentEventIds.has(event.id));
+
+    return signedUpCurrentEventIds.size + managedCurrentEvents.length;
+  }, [
+    events,
+    rosterAdminEntityIds,
+    rosterAdminEvents,
+    signedUpEvents,
+    userId,
+  ]);
+  const newImpactCount = useMemo(() => {
+    if (!userId) return 0;
+
+    const viewedImpactIdSet = new Set(getViewedImpactIds(userId));
+
+    return userImpacts.filter(
+      (impact) => !viewedImpactIdSet.has(impact.id)
+    ).length;
+  }, [userId, userImpacts]);
 
   const handleClick = (route: string) => {
     if (route === "home") {
@@ -100,7 +250,7 @@ export const SideNavBar = () => {
     return pathname.startsWith(`/home/${navBarItem}`);
   };
 
-  const navBarItems = [
+  const navBarItems: SideNavBarItemConfig[] = [
     {
       onClick: () => handleClick("home"),
       svgPath: "/svgs/common/homeIcon.svg",
@@ -112,6 +262,8 @@ export const SideNavBar = () => {
       svgPath: "/svgs/common/eventsIcon.svg",
       altText: "events",
       text: "Events",
+      count: currentEventsCount,
+      showZeroCount: true,
     },
     {
       onClick: (event: React.MouseEvent<HTMLButtonElement>) =>
@@ -131,18 +283,21 @@ export const SideNavBar = () => {
       svgPath: "/svgs/common/impactIcon.svg",
       altText: "impact",
       text: "Impact",
+      count: newImpactCount,
     },
     {
       onClick: () => handleClick("notifications"),
       svgPath: "/svgs/common/notificationsDesktopIcon.svg",
       altText: "impact",
       text: "Notifications",
+      count: unreadNotificationCount,
     },
     {
       onClick: () => handleClick("messages"),
       svgPath: "/svgs/common/messagesIcon.svg",
       altText: "messages",
       text: "Messages",
+      count: unreadMessageCount,
     },
   ];
 
@@ -156,6 +311,8 @@ export const SideNavBar = () => {
             svgPath={item.svgPath}
             altText={item.altText}
             text={item.text}
+            count={item.count}
+            showZeroCount={item.showZeroCount}
             isBlue={determineCSS(item.text.toLowerCase())}
             variant="default"
           />

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { CircularProgress } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
@@ -9,6 +10,7 @@ import { EventImpact } from "../../services/api/endpoints/types/impact.api.types
 import { useAppSelector } from "../../services/hooks";
 import { EVENTS_ROUTE, PROFILE_ROUTE } from "../../routes/route.constants";
 import { assetUrl } from "../../utils/assetUrl";
+import { markImpactIdsViewed } from "../../utils/impactViewed";
 import { selectCurrentUserId } from "../users/selectors";
 import { parseEventDateAsLocalDate } from "../../utils/eventDateUtils";
 
@@ -57,6 +59,15 @@ const ImpactPage = () => {
   const { data: userImpacts = [], isLoading } = useGetUserImpactQuery(userId);
   const { data: volunteerValuePerHour = 33.59 } =
     useGetVolunteerValuePerHourQuery();
+
+  useEffect(() => {
+    if (!userId || isLoading) return;
+
+    markImpactIdsViewed(
+      userId,
+      userImpacts.map((impact) => impact.id)
+    );
+  }, [isLoading, userId, userImpacts]);
 
   const handleProfileClick = (ownerId: string) => {
     navigate(`${PROFILE_ROUTE}/${ownerId}`);

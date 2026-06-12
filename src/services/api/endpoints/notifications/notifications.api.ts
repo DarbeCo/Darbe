@@ -4,6 +4,7 @@ import {
   getNotificationCount,
   getNotifications,
   markNotificationsRead,
+  markNotificationsViewed,
 } from "../../../darbeService";
 
 const notificationsApi = darbeBaseApi.injectEndpoints({
@@ -55,12 +56,29 @@ const notificationsApi = darbeBaseApi.injectEndpoints({
         }
       },
       invalidatesTags: ['NotificationCount'],
-    })
+    }),
+    markNotificationsViewed: builder.mutation<void, void>({
+      async queryFn() {
+        try {
+          await markNotificationsViewed();
+          return { data: undefined };
+        } catch (error) {
+          return {
+            error: {
+              status: "CUSTOM_ERROR",
+              data: { message: (error as Error).message },
+            },
+          };
+        }
+      },
+      invalidatesTags: ["NotificationCount"],
+    }),
   }),
 });
 
 export const {
   useGetNotificationsQuery,
   useGetNotificationCountQuery,
-  useMarkNotificationsReadMutation
+  useMarkNotificationsReadMutation,
+  useMarkNotificationsViewedMutation,
  } = notificationsApi;

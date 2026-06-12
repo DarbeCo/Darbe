@@ -100,6 +100,7 @@ export {
   getNotificationCount,
   getNotifications,
   markNotificationsRead,
+  markNotificationsViewed,
 } from "./notifications";
 export {
   addToRoster,
