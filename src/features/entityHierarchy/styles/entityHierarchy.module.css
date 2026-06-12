@@ -2,7 +2,9 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
-  width: min(100%, 980px);
+  align-self: stretch;
+  width: 100%;
+  min-height: calc(100vh - 170px);
   padding: 0 0 28px;
   box-sizing: border-box;
 }
@@ -43,11 +45,44 @@
   line-height: 17px;
 }
 
+.hierarchyHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.hierarchyPanelToggle {
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid #2c77e7;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #2c77e7;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 17px;
+  cursor: pointer;
+}
+
+.hierarchyPanelToggle:hover,
+.hierarchyPanelToggle:focus-visible {
+  background: #f2f7ff;
+  outline: none;
+}
+
 .hierarchyLayout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 280px;
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.hierarchyLayoutFull {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .hierarchyCanvas,
@@ -60,7 +95,7 @@
 }
 
 .hierarchyCanvas {
-  min-height: 520px;
+  min-height: 100%;
   overflow-x: auto;
   padding: 26px 18px 34px;
 }
@@ -76,6 +111,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
+  min-height: 100%;
   min-width: 560px;
 }
 
@@ -112,6 +149,23 @@
   height: 42px;
   border-radius: 50%;
   object-fit: cover;
+}
+
+.hierarchyPendingPlaceholder {
+  border-style: dashed;
+  background: #f8fbff;
+}
+
+.hierarchyPlaceholderIcon {
+  display: flex;
+  flex: 0 0 42px;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #edf4ff;
+  color: #8aa9d6;
 }
 
 .hierarchyRootIcon {
@@ -266,15 +320,44 @@
   flex-direction: column;
   gap: 12px;
   padding: 16px;
+  min-height: 100%;
 }
 
-.hierarchyCandidatePanel h2 {
+.hierarchyCandidatePanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hierarchyCandidatePanelHeader h2 {
   margin: 0;
   color: #263238;
   font-family: "Open Sans", sans-serif;
   font-size: 16px;
   font-weight: 700;
   line-height: 22px;
+}
+
+.hierarchyCandidatePanelHeader button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #f3f3f3;
+  color: #565656;
+  cursor: pointer;
+}
+
+.hierarchyCandidatePanelHeader button:hover,
+.hierarchyCandidatePanelHeader button:focus-visible {
+  background: #e9f1ff;
+  color: #2c77e7;
+  outline: none;
 }
 
 .hierarchyCandidatePanel label {
@@ -421,6 +504,11 @@
   .hierarchyHeader {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .hierarchyHeaderActions {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .hierarchyLayout {

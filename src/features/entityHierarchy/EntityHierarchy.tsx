@@ -50,20 +50,42 @@ const EntityNodeCard = ({
   onRemove: (node: EntityHierarchyNode) => void;
 }) => {
   const isDirectChild = node.parentEntityId === rootEntityId;
+  const isPublicPendingPlaceholder = !canEdit && node.status === "pending";
 
   return (
     <li className={styles.hierarchyBranch}>
-      <article className={styles.hierarchyNode}>
-        <img
-          src={node.profilePicture || assetUrl("/images/defaultProfilePicture.jpg")}
-          alt=""
-        />
-        <div>
-          <strong>{node.entityName}</strong>
-          <span>{getEntityTypeLabel(node.userType)}</span>
-          {node.status === "pending" && <em>Pending approval</em>}
-        </div>
-        {canEdit && isDirectChild && (
+      <article
+        className={`${styles.hierarchyNode} ${
+          isPublicPendingPlaceholder ? styles.hierarchyPendingPlaceholder : ""
+        }`.trim()}
+      >
+        {isPublicPendingPlaceholder ? (
+          <>
+            <div className={styles.hierarchyPlaceholderIcon}>
+              <Business fontSize="small" />
+            </div>
+            <div>
+              <strong>Pending approval</strong>
+              <span>Organization/non-profit pending approval</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <img
+              src={
+                node.profilePicture ||
+                assetUrl("/images/defaultProfilePicture.jpg")
+              }
+              alt=""
+            />
+            <div>
+              <strong>{node.entityName}</strong>
+              <span>{getEntityTypeLabel(node.userType)}</span>
+              {node.status === "pending" && <em>Pending approval</em>}
+            </div>
+          </>
+        )}
+        {canEdit && isDirectChild && !isPublicPendingPlaceholder && (
           <button
             type="button"
             className={styles.hierarchyRemoveButton}
@@ -74,7 +96,7 @@ const EntityNodeCard = ({
           </button>
         )}
       </article>
-      {node.children.length > 0 && (
+      {!isPublicPendingPlaceholder && node.children.length > 0 && (
         <ul className={styles.hierarchyChildren}>
           {node.children.map((childNode) => (
             <EntityNodeCard
@@ -108,6 +130,7 @@ export const EntityHierarchy = () => {
   const [nodeToRemove, setNodeToRemove] =
     useState<EntityHierarchyNode | null>(null);
   const [isRootDragOver, setIsRootDragOver] = useState(false);
+  const [isCandidatePanelOpen, setIsCandidatePanelOpen] = useState(true);
   const [statusMessage, setStatusMessage] = useState("");
   const { data: rootProfile, isLoading: isLoadingProfile } =
     useGetUserProfileQuery(entityId, { skip: !entityId });
@@ -186,14 +209,29 @@ export const EntityHierarchy = () => {
           <span>Entity Hierarchy</span>
           <h1>{rootName}</h1>
         </div>
-        <p>
-          {canEdit
-            ? "Drag organizations and non-profits onto your entity to build your family tree."
-            : "Explore this organization's public family tree."}
-        </p>
+        <div className={styles.hierarchyHeaderActions}>
+          <p>
+            {canEdit
+              ? "Drag organizations and non-profits onto your entity to build your hierarchy tree."
+              : "Explore this organization's hierarchy tree."}
+          </p>
+          {canEdit && (
+            <button
+              type="button"
+              className={styles.hierarchyPanelToggle}
+              onClick={() => setIsCandidatePanelOpen((isOpen) => !isOpen)}
+            >
+              {isCandidatePanelOpen ? "Close Editor" : "Add Entity"}
+            </button>
+          )}
+        </div>
       </header>
 
-      <div className={styles.hierarchyLayout}>
+      <div
+        className={`${styles.hierarchyLayout} ${
+          canEdit && isCandidatePanelOpen ? "" : styles.hierarchyLayoutFull
+        }`.trim()}
+      >
         <div className={styles.hierarchyCanvas}>
           {isLoadingHierarchy ? (
             <div className={styles.hierarchyLoading}>
@@ -254,9 +292,18 @@ export const EntityHierarchy = () => {
           )}
         </div>
 
-        {canEdit && (
+        {canEdit && isCandidatePanelOpen && (
           <aside className={styles.hierarchyCandidatePanel}>
-            <h2>Add Child Entity</h2>
+            <div className={styles.hierarchyCandidatePanelHeader}>
+              <h2>Add To Hierarchy</h2>
+              <button
+                type="button"
+                onClick={() => setIsCandidatePanelOpen(false)}
+                aria-label="Close add entity editor"
+              >
+                <Close fontSize="small" />
+              </button>
+            </div>
             <label>
               <span>Search Darbe entities</span>
               <input

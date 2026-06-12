@@ -70,6 +70,7 @@ returns table (
 language sql
 security definer
 set search_path = public
+set row_security = off
 as $$
   with recursive hierarchy as (
     select
@@ -80,7 +81,7 @@ as $$
       1 as depth
     from public.entity_hierarchy link
     where link.parent_entity_id = root_entity_id
-      and link.status = 'accepted'
+      and link.status in ('accepted', 'pending')
 
     union all
 
@@ -93,7 +94,8 @@ as $$
     from public.entity_hierarchy child_link
     join hierarchy
       on hierarchy.child_entity_id = child_link.parent_entity_id
-    where child_link.status = 'accepted'
+    where hierarchy.status = 'accepted'
+      and child_link.status in ('accepted', 'pending')
   )
   select
     hierarchy.id,
@@ -101,12 +103,24 @@ as $$
     hierarchy.child_entity_id,
     hierarchy.status,
     hierarchy.depth,
-    profile.id as entity_id,
-    coalesce(profile.organization_name, profile.nonprofit_name, profile.full_name) as entity_name,
-    profile.profile_picture_url,
-    profile.user_type
+    case
+      when hierarchy.status = 'pending' then hierarchy.child_entity_id
+      else profile.id
+    end as entity_id,
+    case
+      when hierarchy.status = 'pending' then 'Pending approval'
+      else coalesce(profile.organization_name, profile.nonprofit_name, profile.full_name)
+    end as entity_name,
+    case
+      when hierarchy.status = 'pending' then null
+      else profile.profile_picture_url
+    end as profile_picture_url,
+    case
+      when hierarchy.status = 'pending' then null
+      else profile.user_type
+    end as user_type
   from hierarchy
-  join public.profiles profile
+  left join public.profiles profile
     on profile.id = hierarchy.child_entity_id;
 $$;
 
@@ -125,6 +139,7 @@ returns table (
 language plpgsql
 security definer
 set search_path = public
+set row_security = off
 as $$
 begin
   if auth.uid() <> root_entity_id then

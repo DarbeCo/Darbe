@@ -11,10 +11,10 @@ type EntityHierarchyRow = {
   child_entity_id: string;
   status: EntityHierarchyStatus;
   depth: number;
-  entity_id: string;
-  entity_name: string;
+  entity_id: string | null;
+  entity_name: string | null;
   profile_picture_url: string | null;
-  user_type: string;
+  user_type: string | null;
 };
 
 type EntityHierarchyCandidateRow = {
@@ -49,9 +49,9 @@ const buildHierarchyTree = (
       id: row.child_entity_id,
       hierarchyId: row.id,
       parentEntityId: row.parent_entity_id,
-      entityName: row.entity_name,
+      entityName: row.entity_name || "Pending approval",
       profilePicture: row.profile_picture_url ?? undefined,
-      userType: row.user_type,
+      userType: row.user_type || "",
       status: row.status,
       children: [],
     });
