@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAppDispatch } from "../../../../services/hooks";
@@ -56,6 +57,7 @@ interface ProfileSectionProps {
   isComplexData?: boolean;
   profileData?: ProfileDataObject;
   isEntity?: boolean;
+  showMore?: boolean;
 }
 
 export const ProfileSection = ({
@@ -66,11 +68,13 @@ export const ProfileSection = ({
   isComplexData,
   isEntity,
   profileData,
+  showMore,
 }: ProfileSectionProps) => {
   const svgPath = `/svgs/common/${sectionType}Icon.svg`;
   const sectionTittle = PROFILE_SECTIONS[sectionType];
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const [showFullText, setShowFullText] = useState(false);
 
   const sectionToEdit = () => {
     if (
@@ -107,6 +111,14 @@ export const ProfileSection = ({
       navigate(`${EDIT_PROFILE_ROUTE}?section=${sectionRoute}`);
     }
   };
+
+  const isTextLongEnough =
+    !!text &&
+    (text.trim().split("\n").length > 8 || text.length > 320);
+
+  const shouldTruncateText = showMore && !showFullText && isTextLongEnough;
+
+  const toggleShowFullText = () => setShowFullText((current) => !current);
 
   // TODO: Simplify these or move them out to a new file, same for the isComplexData check
   const militarySection = ({ data }: { data: MilitaryServiceState[] }) => {
@@ -404,14 +416,33 @@ export const ProfileSection = ({
             valuesSection({ data: profileData as SimpleEntityData[] })}
         </div>
       ) : (
-        <div className={styles.profileSectionText}>
-          {isEmptySection ? (
-            <Typography
-              variant="grayText"
-              textToDisplay="Greetings! This section will be containing some fun information about this user. Thank you for your patience."
-            />
-          ) : (
-            <Typography variant="text" textToDisplay={text} />
+        <div className={styles.profileSectionTextContainer}>
+          <div
+            className={
+              shouldTruncateText
+                ? `${styles.profileSectionText} ${styles.truncateLines}`
+                : styles.profileSectionText
+            }
+            style={showFullText ? { display: "block" } : undefined}
+          >
+            {isEmptySection ? (
+              <Typography
+                variant="grayText"
+                textToDisplay="Greetings! This section will be containing some fun information about this user. Thank you for your patience."
+              />
+            ) : (
+              <Typography variant="text" textToDisplay={text} />
+            )}
+          </div>
+          {showMore && !isEmptySection && text && text.trim().length > 0 && (
+            <button
+              type="button"
+              className={styles.showMoreButton}
+              onClick={toggleShowFullText}
+              aria-expanded={showFullText}
+            >
+              {showFullText ? "Show less" : "Show more"}
+            </button>
           )}
         </div>
       )}
