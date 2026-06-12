@@ -11,6 +11,7 @@ import {
   useRemoveMemberFromRosterMutation,
 } from "../../services/api/endpoints/roster/roster.api";
 import { useAppSelector } from "../../services/hooks";
+import { ConfirmDialog } from "../confirmDialog/ConfirmDialog";
 import { UserAvatars } from "../avatars/UserAvatars";
 import { Typography } from "../typography/Typography";
 import { PROFILE_ROUTE } from "../../routes/route.constants";
@@ -37,6 +38,10 @@ export const SimpleRosterEdit = ({ externalData }: SimpleRosterEditProps) => {
   const userId = useAppSelector(selectCurrentUserId);
   const ownerId = rosterOwnerId ?? userId;
   const [candidateSearchText, setCandidateSearchText] = useState("");
+  const [memberToRemove, setMemberToRemove] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const { data, isLoading } = useGetRosterMembersQuery(rosterId, {
     skip: !rosterId,
   });
@@ -59,8 +64,11 @@ export const SimpleRosterEdit = ({ externalData }: SimpleRosterEditProps) => {
     await addToRoster({ followerId, rosterId }).unwrap();
   };
 
-  const handleRemoveMemberFromRoster = async (memberId: string) => {
-    await removeFromRoster({ memberId, rosterId }).unwrap();
+  const handleRemoveMemberFromRoster = async () => {
+    if (!memberToRemove) return;
+
+    await removeFromRoster({ memberId: memberToRemove.id, rosterId }).unwrap();
+    setMemberToRemove(null);
   };
 
   return (
@@ -151,7 +159,16 @@ export const SimpleRosterEdit = ({ externalData }: SimpleRosterEditProps) => {
                   <button
                     type="button"
                     className={`${styles.editRosterIconButton} ${styles.editRosterRemoveButton}`}
-                    onClick={() => handleRemoveMemberFromRoster(member.user.id)}
+                    onClick={() =>
+                      setMemberToRemove({
+                        id: member.user.id,
+                        name:
+                          member.user.fullName ||
+                          member.user.nonprofitName ||
+                          member.user.organizationName ||
+                          "this member",
+                      })
+                    }
                     disabled={isBusy}
                     aria-label="Remove member from roster"
                   >
@@ -162,6 +179,16 @@ export const SimpleRosterEdit = ({ externalData }: SimpleRosterEditProps) => {
             </div>
           </section>
         </>
+      )}
+      {memberToRemove && (
+        <ConfirmDialog
+          title={`Remove ${memberToRemove.name}?`}
+          message="This will remove them from this roster."
+          confirmLabel="Remove"
+          isLoading={isRemovingFromRoster}
+          onConfirm={handleRemoveMemberFromRoster}
+          onCancel={() => setMemberToRemove(null)}
+        />
       )}
     </div>
   );

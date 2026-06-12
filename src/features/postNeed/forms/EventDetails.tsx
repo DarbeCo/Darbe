@@ -16,6 +16,7 @@ import {
 import { assetUrl } from "../../../utils/assetUrl";
 import { useAppSelector } from "../../../services/hooks";
 import { selectCurrentUserId, selectUser } from "../../users/selectors";
+import { ConfirmDialog } from "../../../components/confirmDialog/ConfirmDialog";
 
 import styles from "../styles/postNeed.module.css";
 
@@ -32,6 +33,9 @@ export const EventDetails = ({
   const [isInviteDropdownOpen, setIsInviteDropdownOpen] = useState(false);
   const [isCoordinatorDropdownOpen, setIsCoordinatorDropdownOpen] =
     useState(false);
+  const [waiverToRemove, setWaiverToRemove] = useState<
+    "adultWaiver" | "minorWaiver" | null
+  >(null);
   const currentUserId = useAppSelector(selectCurrentUserId);
   const ownerId = eventOwnerId ?? currentUserId;
   const { data: rosterMembers, isLoading } = useGetRosterAdminsQuery(ownerId);
@@ -165,11 +169,14 @@ export const EventDetails = ({
     event.target.value = "";
   };
 
-  const handleRemoveWaiver = (waiverType: "adultWaiver" | "minorWaiver") => {
+  const handleRemoveWaiver = () => {
+    if (!waiverToRemove) return;
+
     onChange?.((prevState) => ({
       ...prevState,
-      [waiverType]: "",
+      [waiverToRemove]: "",
     }));
+    setWaiverToRemove(null);
   };
 
   const renderWaiverFileInputs = () => (
@@ -398,7 +405,7 @@ export const EventDetails = ({
                 <button
                   className={styles.waiverRemoveButton}
                   type="button"
-                  onClick={() => handleRemoveWaiver("adultWaiver")}
+                  onClick={() => setWaiverToRemove("adultWaiver")}
                 >
                   Remove
                 </button>
@@ -465,6 +472,16 @@ export const EventDetails = ({
             </div>
           )}
         </section>
+        {waiverToRemove && (
+          <ConfirmDialog
+            title={`Remove the ${
+              waiverToRemove === "adultWaiver" ? "adult waiver" : "minor waiver"
+            }?`}
+            confirmLabel="Remove"
+            onConfirm={handleRemoveWaiver}
+            onCancel={() => setWaiverToRemove(null)}
+          />
+        )}
       </div>
     );
   }
@@ -574,7 +591,7 @@ export const EventDetails = ({
                     <button
                       className={styles.waiverRemoveButton}
                       type="button"
-                      onClick={() => handleRemoveWaiver("adultWaiver")}
+                      onClick={() => setWaiverToRemove("adultWaiver")}
                     >
                       Remove
                     </button>
@@ -598,7 +615,7 @@ export const EventDetails = ({
                     <button
                       className={styles.waiverRemoveButton}
                       type="button"
-                      onClick={() => handleRemoveWaiver("minorWaiver")}
+                      onClick={() => setWaiverToRemove("minorWaiver")}
                     >
                       Remove
                     </button>
@@ -695,6 +712,16 @@ export const EventDetails = ({
             </div>
           )}
         </section>
+        {waiverToRemove && (
+          <ConfirmDialog
+            title={`Remove the ${
+              waiverToRemove === "adultWaiver" ? "adult waiver" : "minor waiver"
+            }?`}
+            confirmLabel="Remove"
+            onConfirm={handleRemoveWaiver}
+            onCancel={() => setWaiverToRemove(null)}
+          />
+        )}
       </div>
     );
   }

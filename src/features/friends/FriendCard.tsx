@@ -2,25 +2,29 @@ import { AddCircleTwoTone, CancelTwoTone } from "@mui/icons-material"
 import { UserAvatars } from "../../components/avatars/UserAvatars"
 import { FriendRequestState } from "./types"
 import styles from "./styles/friendRequests.module.css";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useDeleteFriendRequestMutation, useAcceptFriendRequestMutation } from "../../services/api/endpoints/friends/friends.api";
+import { ConfirmDialog } from "../../components/confirmDialog/ConfirmDialog";
 
 
 
 const FriendsCard = ({ friendRequest}: { friendRequest: FriendRequestState }) => {
+    const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
     const [deleteFriendRequest] =
         useDeleteFriendRequestMutation();
     
     const [acceptFriendRequest] = useAcceptFriendRequestMutation()
+    const requesterName = friendRequest.requesterId.fullName || "this friend request";
 
     const handleDenyFriendRequest = useCallback(async () => {
         try {
             await deleteFriendRequest(friendRequest.requesterId.id)
+            setShowRemoveConfirm(false);
         } catch (err) {
             console.log(err, 'Error deleting incoming friend request')
         }
-    }, [deleteFriendRequest])
+    }, [deleteFriendRequest, friendRequest.requesterId.id])
 
     const handleAcceptFriendRequest = useCallback(async () => {
         try {
@@ -51,8 +55,17 @@ const FriendsCard = ({ friendRequest}: { friendRequest: FriendRequestState }) =>
                 />
                 <CancelTwoTone
                 className={styles.denyFriendRequestIcon}
-                 onClick={handleDenyFriendRequest}/>
+                 onClick={() => setShowRemoveConfirm(true)}/>
             </div>
+            {showRemoveConfirm && (
+                <ConfirmDialog
+                    title={`Remove request from ${requesterName}?`}
+                    message="This will deny the friend request."
+                    confirmLabel="Remove"
+                    onConfirm={handleDenyFriendRequest}
+                    onCancel={() => setShowRemoveConfirm(false)}
+                />
+            )}
         </div>
     )
 }

@@ -27,20 +27,25 @@ export const EditOrganizations = () => {
     string | undefined
   >();
   const [organizationToDelete, setOrganizationToDelete] = useState<
-    string | undefined
+    OrganizationState | undefined
   >();
   const [isOrganizationFormOpen, setIsOrganizationFormOpen] = useState(false);
+
+  const getOrganizationId = (organization?: OrganizationState) =>
+    organization?._id ?? (organization as OrganizationState & { id?: string })?.id;
 
   useEffect(() => {
     setLocalOrganizations(userOrganizations ?? []);
   }, [userOrganizations]);
 
   const deleteOrganization = (id: string | undefined) => {
-    setOrganizationToDelete(id);
+    setOrganizationToDelete(
+      localOrganizations.find((organization) => getOrganizationId(organization) === id)
+    );
   };
 
   const handleConfirmDeleteOrganization = async () => {
-    const id = organizationToDelete;
+    const id = getOrganizationId(organizationToDelete);
 
     if (id) {
       const updatedProfile = await removeOrganization(id).unwrap();
@@ -114,7 +119,8 @@ export const EditOrganizations = () => {
               className={styles.profileOrganizationDeleteTitle}
               id="organization-delete-dialog-title"
             >
-              Are you sure you want to end this organization membership?
+              Are you sure you want to end your membership with{" "}
+              {organizationToDelete.organizationName || "this organization"}?
             </h2>
             <div className={styles.profileOrganizationDeleteActions}>
               <button

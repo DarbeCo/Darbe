@@ -344,7 +344,7 @@ export const EventPhotoCarouselModal = ({
             role="dialog"
             aria-modal="true"
           >
-            <h2>Delete this photo?</h2>
+            <h2>Delete photo {currentIndex + 1}?</h2>
             <div className={styles.eventPhotoConfirmActions}>
               <button
                 type="button"

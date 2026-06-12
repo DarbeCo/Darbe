@@ -9,6 +9,7 @@ import {
   useDeleteFriendRequestMutation,
 } from "../../services/api/endpoints/friends/friends.api";
 import { PROFILE_ROUTE } from "../../routes/route.constants";
+import { ConfirmDialog } from "../../components/confirmDialog/ConfirmDialog";
 
 const PendingFriends = ({
   friendRequest,
@@ -23,6 +24,11 @@ const PendingFriends = ({
   const deleteLockRef = useRef(false);
   const [isAccepting, setIsAccepting] = useState(false);
   const acceptLockRef = useRef(false);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const receiverName =
+    friendRequest.receiverId.fullName ||
+    `${friendRequest.receiverId.firstName ?? ""} ${friendRequest.receiverId.lastName ?? ""}`.trim() ||
+    "this friend request";
 
   const handleDeletePendingFriendRequest = useCallback(async () => {
     if (!friendRequest.receiverId?.id) return;
@@ -32,6 +38,7 @@ const PendingFriends = ({
     setIsDeleting(true);
     try {
       await deleteFriendRequest(friendRequest.receiverId.id).unwrap();
+      setShowRemoveConfirm(false);
     } catch (err) {
       deleteLockRef.current = false;
       setIsDeleting(false);
@@ -89,11 +96,21 @@ const PendingFriends = ({
         />
         <CancelTwoTone
           className={styles.removeCurrentFriendIcon}
-          onClick={handleDeletePendingFriendRequest}
+          onClick={() => setShowRemoveConfirm(true)}
           aria-disabled={isDeleting}
           style={isDeleting ? { opacity: 0.5, pointerEvents: "none" } : undefined}
         />
       </div>
+      {showRemoveConfirm && (
+        <ConfirmDialog
+          title={`Remove request for ${receiverName}?`}
+          message="This will cancel the pending friend request."
+          confirmLabel="Remove"
+          isLoading={isDeleting}
+          onConfirm={handleDeletePendingFriendRequest}
+          onCancel={() => setShowRemoveConfirm(false)}
+        />
+      )}
     </div>
   );
 };

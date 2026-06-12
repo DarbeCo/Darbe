@@ -26,6 +26,7 @@ import {
   setModalType,
   showModal,
 } from "../../components/modal/modalSlice";
+import { ConfirmDialog } from "../../components/confirmDialog/ConfirmDialog";
 import { EDIT_SECTIONS } from "../users/userProfiles/constants";
 import { PROFILE_ROUTE } from "../../routes/route.constants";
 import { assetUrl } from "../../utils/assetUrl";
@@ -97,6 +98,9 @@ export const Roster = () => {
   const [removeAsAdmin, setRemoveAsAdmin] = useState(false);
   const [showRemoveAdminConfirm, setShowRemoveAdminConfirm] = useState(false);
   const [showDeleteRosterConfirm, setShowDeleteRosterConfirm] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<RosterMember | null>(
+    null
+  );
   const [adminStatusMessage, setAdminStatusMessage] = useState("");
   const [pendingRequestRows, setPendingRequestRows] = useState<
     OrgJoinRequestState[]
@@ -291,11 +295,16 @@ export const Roster = () => {
     navigate(`${PROFILE_ROUTE}/${member.user.id}`);
   };
 
-  const handleRemoveMember = async (memberId: string) => {
+  const handleRemoveMember = async () => {
     if (!canManageRoster) return;
     if (!rosterId) return;
+    if (!memberToRemove) return;
 
-    await removeMemberFromRoster({ memberId, rosterId }).unwrap();
+    await removeMemberFromRoster({
+      memberId: memberToRemove.user.id,
+      rosterId,
+    }).unwrap();
+    setMemberToRemove(null);
   };
 
   const handleInvite = () => {
@@ -580,7 +589,7 @@ export const Roster = () => {
                                 <button
                                   type="button"
                                   className={styles.rosterRemoveAction}
-                                  onClick={() => handleRemoveMember(member.user.id)}
+                                  onClick={() => setMemberToRemove(member)}
                                   disabled={isRosterActionLoading}
                                 >
                                   Remove
@@ -666,6 +675,21 @@ export const Roster = () => {
             <h2 id="roster-admin-dialog-title">
               {adminDialogMember.isAdmin ? "Edit Admin" : "Make Admin"}
             </h2>
+            <div className={styles.rosterAdminMemberHeader}>
+              <img
+                src={
+                  adminDialogMember.user.profilePicture ||
+                  assetUrl("/images/defaultProfilePicture.jpg")
+                }
+                alt=""
+              />
+              <strong>
+                {adminDialogMember.user.fullName ||
+                  adminDialogMember.user.organizationName ||
+                  adminDialogMember.user.nonprofitName ||
+                  "Roster Member"}
+              </strong>
+            </div>
             <p>Please choose admin responsibilities.</p>
 
             <div className={styles.rosterAdminPermissions}>
@@ -767,7 +791,14 @@ export const Roster = () => {
             role="dialog"
             aria-modal="true"
           >
-            <p>Are you sure you want to remove this person an admin?</p>
+            <p>
+              Are you sure you want to remove{" "}
+              {adminDialogMember.user.fullName ||
+                adminDialogMember.user.organizationName ||
+                adminDialogMember.user.nonprofitName ||
+                "this person"}{" "}
+              as an admin?
+            </p>
             <div className={styles.rosterRemoveAdminConfirmActions}>
               <button
                 type="button"
@@ -789,33 +820,30 @@ export const Roster = () => {
       )}
 
       {showDeleteRosterConfirm && currentRoster && (
-        <div className={styles.rosterRailConfirmOverlay}>
-          <div
-            className={styles.rosterRailConfirm}
-            role="dialog"
-            aria-modal="true"
-          >
-            <p>
-              Are you sure you want to remove {currentRosterName}?
-            </p>
-            <div className={styles.rosterRailConfirmActions}>
-              <button
-                type="button"
-                onClick={handleDeleteRoster}
-                disabled={isDeletingRoster}
-              >
-                Yes
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowDeleteRosterConfirm(false)}
-                disabled={isDeletingRoster}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmDialog
+          title={`Remove ${currentRosterName}?`}
+          message="This will delete the roster."
+          confirmLabel="Remove"
+          isLoading={isDeletingRoster}
+          onConfirm={handleDeleteRoster}
+          onCancel={() => setShowDeleteRosterConfirm(false)}
+        />
+      )}
+
+      {memberToRemove && (
+        <ConfirmDialog
+          title={`Remove ${
+            memberToRemove.user.fullName ||
+            memberToRemove.user.organizationName ||
+            memberToRemove.user.nonprofitName ||
+            "this member"
+          }?`}
+          message={`This will remove them from ${currentRosterName}.`}
+          confirmLabel="Remove"
+          isLoading={isRemovingMember}
+          onConfirm={handleRemoveMember}
+          onCancel={() => setMemberToRemove(null)}
+        />
       )}
 
       {adminStatusMessage && (

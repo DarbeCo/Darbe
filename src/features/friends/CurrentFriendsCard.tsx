@@ -1,7 +1,8 @@
 import { CancelTwoTone } from "@mui/icons-material";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserAvatars } from "../../components/avatars/UserAvatars";
+import { ConfirmDialog } from "../../components/confirmDialog/ConfirmDialog";
 import { useDeleteFriendMutation } from "../../services/api/endpoints/friends/friends.api";
 import { ProfileFriendState } from "./types";
 import styles from "./styles/currentFriends.module.css";
@@ -21,16 +22,18 @@ const formatConnectedDate = (connectedAt?: string) => {
 
 const CurrentFriendsCard = ({ friend }: { friend: ProfileFriendState }) => {
   const navigate = useNavigate();
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
   const [removeFriend] = useDeleteFriendMutation();
 
   const handleDenyFriendRequest = useCallback(async () => {
     try {
       await removeFriend(friend.id);
+      setShowRemoveConfirm(false);
     } catch (err) {
       console.log(err, "Error deleting incoming friend request");
     }
-  }, [removeFriend, friend.id]);
+  }, [removeFriend, friend.fullName, friend.id]);
 
   const redirectToFriendProfile = (friendId: string) => {
     navigate(`${PROFILE_ROUTE}/${friendId}`);
@@ -61,9 +64,18 @@ const CurrentFriendsCard = ({ friend }: { friend: ProfileFriendState }) => {
       <div className={styles.currentFriendButton}>
         <CancelTwoTone
           className={styles.removeCurrentFriendIcon}
-          onClick={handleDenyFriendRequest}
+          onClick={() => setShowRemoveConfirm(true)}
         />
       </div>
+      {showRemoveConfirm && (
+        <ConfirmDialog
+          title={`Remove ${friend.fullName || "this friend"}?`}
+          message="This will remove them from your friends."
+          confirmLabel="Remove"
+          onConfirm={handleDenyFriendRequest}
+          onCancel={() => setShowRemoveConfirm(false)}
+        />
+      )}
     </div>
   );
 };

@@ -1,9 +1,11 @@
 import { IconButton } from "@mui/material";
 import { Create, RemoveCircleOutlineSharp } from "@mui/icons-material";
+import { useState } from "react";
 
 import { SkillState } from "../../../userProfiles/types";
 import { useRemoveUserSkillMutationMutation } from "../../../../../services/api/endpoints/profiles/profiles.api";
 import { useAppDispatch } from "../../../../../services/hooks";
+import { ConfirmDialog } from "../../../../../components/confirmDialog/ConfirmDialog";
 
 import styles from "./styles/subSections.module.css";
 import { updateUserSkills } from "../../../userSlice";
@@ -17,6 +19,7 @@ interface UserSkillsProps {
 export const UserSkills = ({ onEditSkill, skills }: UserSkillsProps) => {
   const dispatch = useAppDispatch();
   const [removeSkill] = useRemoveUserSkillMutationMutation();
+  const [skillToDelete, setSkillToDelete] = useState<string | undefined>();
 
   const deleteSkill = async (skillName: string | undefined) => {
     if (!skillName) return;
@@ -25,6 +28,7 @@ export const UserSkills = ({ onEditSkill, skills }: UserSkillsProps) => {
 
     if (updatedUser.skills) {
       dispatch(updateUserSkills(updatedUser.skills));
+      setSkillToDelete(undefined);
       return;
     }
 
@@ -33,6 +37,7 @@ export const UserSkills = ({ onEditSkill, skills }: UserSkillsProps) => {
         (skills ?? []).filter((skill) => skill.skillName !== skillName)
       )
     );
+    setSkillToDelete(undefined);
   };
 
   return (
@@ -47,12 +52,21 @@ export const UserSkills = ({ onEditSkill, skills }: UserSkillsProps) => {
             <IconButton onClick={() => onEditSkill(skill._id)}>
               <Create />
             </IconButton>
-            <IconButton onClick={() => deleteSkill(skill.skillName)}>
+            <IconButton onClick={() => setSkillToDelete(skill.skillName)}>
               <RemoveCircleOutlineSharp sx={{ color: "red" }} />
             </IconButton>
           </div>
         </div>
       ))}
+      {skillToDelete && (
+        <ConfirmDialog
+          title={`Remove ${skillToDelete}?`}
+          message="This will remove it from your skills."
+          confirmLabel="Remove"
+          onConfirm={() => deleteSkill(skillToDelete)}
+          onCancel={() => setSkillToDelete(undefined)}
+        />
+      )}
     </>
   );
 };

@@ -11,6 +11,7 @@ import {
   useGetRosterAddCandidatesQuery,
   useGetRostersQuery,
 } from "../../services/api/endpoints/roster/roster.api";
+import { ConfirmDialog } from "../confirmDialog/ConfirmDialog";
 import { hideModal } from "../modal/modalSlice";
 import { assetUrl } from "../../utils/assetUrl";
 
@@ -58,6 +59,9 @@ export const SimpleCreateRoster = ({
   const [createNewRoster, { isLoading: isCreatingRoster }] =
     useCreateRosterMutation();
   const [rosterNameError, setRosterNameError] = useState("");
+  const [memberToRemove, setMemberToRemove] = useState<SimpleUserInfo | null>(
+    null
+  );
   const rosterName = newRosterData.rosterName.trim();
   const rosterNameAlreadyExists = useMemo(() => {
     if (!rosterName) return false;
@@ -101,17 +105,32 @@ export const SimpleCreateRoster = ({
     }));
   };
 
-  const handleToggleMember = (memberId: string) => {
-    setNewRosterData((currentData) => {
-      const memberIsSelected = currentData.members.includes(memberId);
+  const handleToggleMember = (member: SimpleUserInfo) => {
+    const memberIsSelected = newRosterData.members.includes(member.id);
 
+    if (memberIsSelected) {
+      setMemberToRemove(member);
+      return;
+    }
+
+    setNewRosterData((currentData) => {
       return {
         ...currentData,
         members: memberIsSelected
-          ? currentData.members.filter((id) => id !== memberId)
-          : [...currentData.members, memberId],
+          ? currentData.members.filter((id) => id !== member.id)
+          : [...currentData.members, member.id],
       };
     });
+  };
+
+  const handleConfirmRemoveMember = () => {
+    if (!memberToRemove) return;
+
+    setNewRosterData((currentData) => ({
+      ...currentData,
+      members: currentData.members.filter((id) => id !== memberToRemove.id),
+    }));
+    setMemberToRemove(null);
   };
 
   const handleSubmit = async () => {
@@ -207,7 +226,7 @@ export const SimpleCreateRoster = ({
                         ? `Remove ${getDisplayName(member)}`
                         : `Add ${getDisplayName(member)}`
                     }
-                    onClick={() => handleToggleMember(member.id)}
+                    onClick={() => handleToggleMember(member)}
                     className={styles.createRosterMemberAction}
                   >
                     {memberIsSelected ? <CheckCircle /> : <AddCircle />}
@@ -231,6 +250,15 @@ export const SimpleCreateRoster = ({
           <span aria-hidden="true">&gt;</span>
         </button>
       </div>
+      {memberToRemove && (
+        <ConfirmDialog
+          title={`Remove ${getDisplayName(memberToRemove)}?`}
+          message="This will remove them from this roster draft."
+          confirmLabel="Remove"
+          onConfirm={handleConfirmRemoveMember}
+          onCancel={() => setMemberToRemove(null)}
+        />
+      )}
     </div>
   );
 };

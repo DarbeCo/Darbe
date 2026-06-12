@@ -21,7 +21,9 @@ export const UserLicenses = ({
 }: UserLicensesProps) => {
   const dispatch = useAppDispatch();
   const [removeLicense] = useRemoveUserLicenseMutationMutation();
-  const [licenseToDelete, setLicenseToDelete] = useState<string | undefined>();
+  const [licenseToDelete, setLicenseToDelete] = useState<
+    LicenseState | undefined
+  >();
 
   const deleteLicense = async (licenseId: string | undefined) => {
     if (!licenseId) return;
@@ -78,7 +80,7 @@ export const UserLicenses = ({
               <IconButton onClick={() => onEditLicense(license?._id)}>
                 <Create />
               </IconButton>
-              <IconButton onClick={() => setLicenseToDelete(license?._id)}>
+              <IconButton onClick={() => setLicenseToDelete(license)}>
                 <RemoveCircleOutlineSharp sx={{ color: "red" }} />
               </IconButton>
             </div>
@@ -97,13 +99,14 @@ export const UserLicenses = ({
               className={styles.licenseDeleteTitle}
               id="license-delete-dialog-title"
             >
-              Are you sure you want to remove this license?
+              Are you sure you want to remove{" "}
+              {licenseToDelete.licenseName || "this license"}?
             </h2>
             <div className={styles.licenseDeleteActions}>
               <button
                 type="button"
                 className={styles.licenseDeleteYesButton}
-                onClick={() => deleteLicense(licenseToDelete)}
+                onClick={() => deleteLicense(licenseToDelete._id)}
               >
                 Yes
               </button>

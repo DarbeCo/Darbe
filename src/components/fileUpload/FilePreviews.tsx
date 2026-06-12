@@ -1,6 +1,8 @@
 import { IconButton } from "@mui/material";
+import { useState } from "react";
 
 import { CustomSvgs } from "../customSvgs/CustomSvgs";
+import { ConfirmDialog } from "../confirmDialog/ConfirmDialog";
 
 import styles from "./styles/fileStyles.module.css";
 
@@ -19,6 +21,11 @@ export const FilePreviews = ({
   isCoverPhoto,
   isEventPhoto,
 }: FilePreviewsProps) => {
+  const [fileToRemove, setFileToRemove] = useState<{
+    file: File;
+    index: number;
+  } | null>(null);
+
   if (!uploadedFiles) {
     return null;
   }
@@ -49,6 +56,12 @@ export const FilePreviews = ({
 
   const imageClassNames = determinePictureStyles();
   const imageId = determinePictureId();
+  const handleRemoveFile = () => {
+    if (!fileToRemove) return;
+
+    handleRemovingImage(fileToRemove.index);
+    setFileToRemove(null);
+  };
 
   return (
     <div className={styles.filePreview}>
@@ -63,7 +76,7 @@ export const FilePreviews = ({
           {!nonPostMode && (
             <IconButton
               className={styles.removeFileButton}
-              onClick={() => handleRemovingImage(index)}
+              onClick={() => setFileToRemove({ file, index })}
             >
               <CustomSvgs
                 altText="delete file icon"
@@ -74,6 +87,14 @@ export const FilePreviews = ({
           )}
         </div>
       ))}
+      {fileToRemove && (
+        <ConfirmDialog
+          title={`Remove ${fileToRemove.file.name || "this file"}?`}
+          confirmLabel="Remove"
+          onConfirm={handleRemoveFile}
+          onCancel={() => setFileToRemove(null)}
+        />
+      )}
     </div>
   );
 };

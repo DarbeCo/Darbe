@@ -494,7 +494,7 @@ export const PictureModal = ({
               <div className={styles.pictureModalConfirmOverlay}>
                 <div className={styles.pictureModalConfirmCard}>
                   <span className={styles.pictureModalConfirmText}>
-                    Are you sure you want to delete?
+                    Are you sure you want to delete {pictureTitle}?
                   </span>
                   <div className={styles.pictureModalConfirmActions}>
                     <button

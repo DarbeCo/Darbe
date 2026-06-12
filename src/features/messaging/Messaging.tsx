@@ -37,6 +37,7 @@ import {
   getMessagePreviewText,
   isImageMessage,
 } from "../../components/messaging/messageUtils";
+import { ConfirmDialog } from "../../components/confirmDialog/ConfirmDialog";
 import useScreenWidthHook from "../../utils/commonHooks/UseScreenWidth";
 
 import styles from "./styles/messaging.module.css";
@@ -133,6 +134,8 @@ export const Messaging = () => {
   const [draftThread, setDraftThread] = useState<ThreadSummary | null>(null);
   const [draftMessage, setDraftMessage] = useState("");
   const [selectedImage, setSelectedImage] = useState("");
+  const [showRemoveAttachmentConfirm, setShowRemoveAttachmentConfirm] =
+    useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
   const messageListEndRef = useRef<HTMLDivElement>(null);
@@ -539,7 +542,10 @@ export const Messaging = () => {
             {selectedImage && (
               <div className={styles.messagingAttachmentPreview}>
                 <img src={selectedImage} alt="Selected attachment" />
-                <button type="button" onClick={() => setSelectedImage("")}>
+                <button
+                  type="button"
+                  onClick={() => setShowRemoveAttachmentConfirm(true)}
+                >
                   Remove
                 </button>
               </div>
@@ -726,6 +732,17 @@ export const Messaging = () => {
           )}
         </div>
       </aside>
+      {showRemoveAttachmentConfirm && (
+        <ConfirmDialog
+          title="Remove selected attachment?"
+          confirmLabel="Remove"
+          onConfirm={() => {
+            setSelectedImage("");
+            setShowRemoveAttachmentConfirm(false);
+          }}
+          onCancel={() => setShowRemoveAttachmentConfirm(false)}
+        />
+      )}
     </section>
   );
 };

@@ -24,7 +24,9 @@ export const VerticalMore = ({
   canEdit,
 }: VerticalMoreProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [showPostDeleteConfirm, setShowPostDeleteConfirm] = useState(false);
+  const [deleteConfirmCategory, setDeleteConfirmCategory] = useState<
+    string | null
+  >(null);
   const open = Boolean(anchorEl);
 
   const [deletePost, { isLoading: isDeletingPost }] = useDeletePostMutation();
@@ -35,43 +37,57 @@ export const VerticalMore = ({
   const location = useLocation();
   const history = useNavigate();
 
-  const handleConfirmPostDelete = async () => {
+  const getDeleteItemName = () => {
+    if (deleteConfirmCategory === ITEM_CATEGORIES.POST) return "this post";
+    if (deleteConfirmCategory === ITEM_CATEGORIES.COMMENT) return "this comment";
+    if (deleteConfirmCategory === ITEM_CATEGORIES.EVENT) return "this event";
+    if (deleteConfirmCategory === ITEM_CATEGORIES.MESSAGES) {
+      return "this message thread";
+    }
+
+    return "this item";
+  };
+
+  const isDeleting =
+    deleteConfirmCategory === ITEM_CATEGORIES.POST ? isDeletingPost : false;
+
+  const handleConfirmDelete = async () => {
     try {
-      await deletePost(itemId).unwrap();
-      setShowPostDeleteConfirm(false);
+      if (deleteConfirmCategory === ITEM_CATEGORIES.POST) {
+        await deletePost(itemId).unwrap();
 
-      const inSinglePostView = location.pathname.includes("post");
+        const inSinglePostView = location.pathname.includes("post");
 
-      if (inSinglePostView) {
-        history(HOME_ROUTE);
+        if (inSinglePostView) {
+          history(HOME_ROUTE);
+        }
       }
+      if (deleteConfirmCategory === ITEM_CATEGORIES.COMMENT) {
+        await deleteComment(itemId).unwrap();
+      }
+      if (deleteConfirmCategory === ITEM_CATEGORIES.EVENT) {
+        await deleteEvent(itemId).unwrap();
+
+        const inSingleEventView = location.pathname.includes("event");
+
+        if (inSingleEventView) {
+          history(HOME_ROUTE);
+        }
+      }
+      if (deleteConfirmCategory === ITEM_CATEGORIES.MESSAGES) {
+        await deleteMessagesThread(itemId).unwrap();
+      }
+
+      setDeleteConfirmCategory(null);
     } catch (error) {
-      console.error("Error deleting post", error);
+      console.error("Error deleting item", error);
     }
   };
 
   const handleDelete = () => {
     setAnchorEl(null);
 
-    if (itemCategory === ITEM_CATEGORIES.POST) {
-      setShowPostDeleteConfirm(true);
-      return;
-    }
-    if (itemCategory === ITEM_CATEGORIES.COMMENT) {
-      deleteComment(itemId);
-    }
-    if (itemCategory === ITEM_CATEGORIES.EVENT) {
-      deleteEvent(itemId);
-
-      const inSingleEventView = location.pathname.includes("event");
-
-      if (inSingleEventView) {
-        history(HOME_ROUTE);
-      }
-    }
-    if (itemCategory === ITEM_CATEGORIES.MESSAGES) {
-      deleteMessagesThread(itemId);
-    }
+    setDeleteConfirmCategory(itemCategory);
   };
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -95,7 +111,7 @@ export const VerticalMore = ({
       <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
         {canEdit && <MenuItem onClick={handleDelete}>Delete</MenuItem>}
       </Menu>
-      {showPostDeleteConfirm ? (
+      {deleteConfirmCategory ? (
         <div className={styles.deletePostOverlay}>
           <div
             className={styles.deletePostDialog}
@@ -107,22 +123,22 @@ export const VerticalMore = ({
               className={styles.deletePostTitle}
               id={`delete-post-dialog-title-${itemId}`}
             >
-              Are you sure you want to delete?
+              Are you sure you want to delete {getDeleteItemName()}?
             </h2>
             <div className={styles.deletePostActions}>
               <button
                 type="button"
                 className={styles.deletePostYesButton}
-                onClick={handleConfirmPostDelete}
-                disabled={isDeletingPost}
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
               >
                 Yes
               </button>
               <button
                 type="button"
                 className={styles.deletePostCancelButton}
-                onClick={() => setShowPostDeleteConfirm(false)}
-                disabled={isDeletingPost}
+                onClick={() => setDeleteConfirmCategory(null)}
+                disabled={isDeleting}
               >
                 Cancel
               </button>

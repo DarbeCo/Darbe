@@ -13,6 +13,7 @@ import { UserAvatars } from "../avatars/UserAvatars";
 import { Typography } from "../typography/Typography";
 import { DarbeButton } from "../buttons/DarbeButton";
 import { CustomSvgs } from "../customSvgs/CustomSvgs";
+import { ConfirmDialog } from "../confirmDialog/ConfirmDialog";
 import {
   formatDarbeTimeToString,
   getUserStateFromZip,
@@ -474,6 +475,13 @@ export const EventCard = ({
   const [showPassConfirmDialog, setShowPassConfirmDialog] = useState(false);
   const [showPassRejectedDialog, setShowPassRejectedDialog] = useState(false);
   const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false);
+  const [volunteerRemovalConfirm, setVolunteerRemovalConfirm] = useState<{
+    type: "event" | "invitation";
+    targetUserId: string;
+    invitedByEntityId?: string;
+    title: string;
+    message?: string;
+  } | null>(null);
   const [isDeletingEvent, setIsDeletingEvent] = useState(false);
   const [approvalDialogMessage, setApprovalDialogMessage] = useState("");
   const [isVolunteerListOpen, setIsVolunteerListOpen] = useState(false);
@@ -691,23 +699,69 @@ export const EventCard = ({
     targetUserId: string,
     invitedByEntityId: string
   ) => {
+    const targetSignup = event.signups?.find(
+      (signup) => signup.user.id === targetUserId
+    );
+    const inviterSignup = event.signups?.find(
+      (signup) => signup.user.id === invitedByEntityId
+    );
+    const targetName = targetSignup
+      ? getVolunteerDisplayName(targetSignup.user)
+      : "this volunteer";
+    const inviterName = inviterSignup
+      ? getVolunteerDisplayName(inviterSignup.user)
+      : "this invitation group";
+
+    setVolunteerRemovalConfirm({
+      type: "invitation",
+      targetUserId,
+      invitedByEntityId,
+      title: `Remove ${targetName}?`,
+      message: `This will remove them from ${inviterName}'s invitation list for ${event.eventName}.`,
+    });
+  };
+
+  const confirmRemoveInvitationVolunteer = async (
+    targetUserId: string,
+    invitedByEntityId: string
+  ) => {
+
     try {
       await removeEventInvitationVolunteer({
         eventId: event.id,
         userId: targetUserId,
         invitedByEntityId,
       }).unwrap();
+      setVolunteerRemovalConfirm(null);
     } catch (error) {
       console.error("Error removing volunteer from organization list", error);
     }
   };
 
   const handleRemoveEventVolunteer = async (targetUserId: string) => {
+    const targetSignup = event.signups?.find(
+      (signup) => signup.user.id === targetUserId
+    );
+    const targetName = targetSignup
+      ? getVolunteerDisplayName(targetSignup.user)
+      : "this volunteer";
+
+    setVolunteerRemovalConfirm({
+      type: "event",
+      targetUserId,
+      title: `Remove ${targetName}?`,
+      message: `This will remove them from ${event.eventName}.`,
+    });
+  };
+
+  const confirmRemoveEventVolunteer = async (targetUserId: string) => {
+
     try {
       await removeEventVolunteer({
         eventId: event.id,
         userId: targetUserId,
       }).unwrap();
+      setVolunteerRemovalConfirm(null);
     } catch (error) {
       console.error("Error removing volunteer from event", error);
     }
@@ -2222,7 +2276,7 @@ export const EventCard = ({
               className={styles.eventDeleteConfirmTitle}
               id={`delete-event-dialog-title-${event.id}`}
             >
-              Are you sure you want to delete this event?
+              Are you sure you want to delete {event.eventName}?
             </h2>
             <div className={styles.eventDeleteConfirmActions}>
               <button
@@ -2244,6 +2298,28 @@ export const EventCard = ({
             </div>
           </div>
         </div>
+      )}
+      {volunteerRemovalConfirm && (
+        <ConfirmDialog
+          title={volunteerRemovalConfirm.title}
+          message={volunteerRemovalConfirm.message}
+          confirmLabel="Remove"
+          isLoading={isRemovingEventVolunteer || isRemovingInvitationVolunteer}
+          onConfirm={() => {
+            if (volunteerRemovalConfirm.type === "invitation") {
+              void confirmRemoveInvitationVolunteer(
+                volunteerRemovalConfirm.targetUserId,
+                volunteerRemovalConfirm.invitedByEntityId ?? ""
+              );
+              return;
+            }
+
+            void confirmRemoveEventVolunteer(
+              volunteerRemovalConfirm.targetUserId
+            );
+          }}
+          onCancel={() => setVolunteerRemovalConfirm(null)}
+        />
       )}
       {showVolunteerDialog ? (
         <div className={styles.eventVolunteerDialogOverlay}>

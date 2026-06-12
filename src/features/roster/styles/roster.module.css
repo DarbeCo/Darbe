@@ -651,6 +651,29 @@
   text-align: center;
 }
 
+.rosterAdminMemberHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.rosterAdminMemberHeader img {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.rosterAdminMemberHeader strong {
+  color: #263238;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
 .rosterAdminDialog p {
   margin: 0 0 18px;
   color: #000000;
