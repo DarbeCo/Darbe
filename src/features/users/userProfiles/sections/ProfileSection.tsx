@@ -58,6 +58,7 @@ interface ProfileSectionProps {
   profileData?: ProfileDataObject;
   isEntity?: boolean;
   showMore?: boolean;
+  truncateLines?: number;
 }
 
 export const ProfileSection = ({
@@ -69,6 +70,7 @@ export const ProfileSection = ({
   isEntity,
   profileData,
   showMore,
+  truncateLines = 8,
 }: ProfileSectionProps) => {
   const svgPath = `/svgs/common/${sectionType}Icon.svg`;
   const sectionTittle = PROFILE_SECTIONS[sectionType];
@@ -423,7 +425,13 @@ export const ProfileSection = ({
                 ? `${styles.profileSectionText} ${styles.truncateLines}`
                 : styles.profileSectionText
             }
-            style={showFullText ? { display: "block" } : undefined}
+            style={
+              showFullText
+                ? { display: "block" }
+                : shouldTruncateText
+                ? { WebkitLineClamp: truncateLines }
+                : undefined
+            }
           >
             {isEmptySection ? (
               <Typography
