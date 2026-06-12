@@ -19,7 +19,7 @@ export const isValidZipCode = (zip: string): boolean => {
 
 // TODO: DELETE ONCE BETA IS DONE
 export const isValidBetaZipCode = (zip: string): boolean => {
-  const houstonZipRegex = /^(770[0-9]|77[1-9][0-9])$/;
+  const houstonZipRegex = /^77\d{3}$/;
 
   return houstonZipRegex.test(zip);
 };
