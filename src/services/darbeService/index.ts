@@ -103,6 +103,15 @@ export {
   markNotificationsViewed,
 } from "./notifications";
 export {
+  acceptEntityChildRequest,
+  getEntityHierarchyCandidates,
+  getManageEntityHierarchy,
+  getPublicEntityHierarchy,
+  rejectEntityChildRequest,
+  removeEntityChild,
+  requestEntityChild,
+} from "./entityHierarchy";
+export {
   addToRoster,
   createRoster,
   deleteRoster,

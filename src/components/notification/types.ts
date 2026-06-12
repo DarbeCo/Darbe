@@ -16,6 +16,7 @@ export interface Notification {
     | "orgJoinRequest"
     | "acceptedOrgJoinRequest"
     | "deniedOrgJoinRequest"
+    | "entityHierarchyChildRequest"
     | "follow"
     | "post"
   /** Used in certain cases to send the user to that item */

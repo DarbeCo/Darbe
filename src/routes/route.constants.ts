@@ -19,6 +19,7 @@ export const CONTACT_DARBE_ROUTE = "/home/contact";
 export const HELP_DARBE_ROUTE = "/home/help";
 export const IMPACT_ROUTE = "/home/impact";
 export const ANNUAL_ROUTE = "/home/annual";
+export const HIERARCHY_ROUTE = "/home/hierarchy";
 export const POST_A_NEED = "/home/post_a_need";
 export const POST_A_DONATION = "/home/post_a_donation";
 export const COOKIE_NAME = "token";

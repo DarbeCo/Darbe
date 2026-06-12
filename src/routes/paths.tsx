@@ -21,6 +21,7 @@ import { Matches } from "../features/matches/Matches";
 import { Roster } from "../features/roster/Roster";
 import { FriendsList } from "../features/friends/Friends";
 import ImpactPage from "../features/impact/Impact";
+import { EntityHierarchy } from "../features/entityHierarchy/EntityHierarchy";
 import { PrivacyPolicy } from "../pages/privacy/PrivacyPolicy";
 import { ContactUs } from "../pages/contact/ContactUs";
 
@@ -83,6 +84,10 @@ export const router = createBrowserRouter([
       {
         path: "impact",
         element: <ImpactPage />,
+      },
+      {
+        path: "hierarchy/:entityId",
+        element: <EntityHierarchy />,
       },
       {
         path: "messaging/:userId",

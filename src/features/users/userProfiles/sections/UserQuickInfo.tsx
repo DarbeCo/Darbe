@@ -1,5 +1,6 @@
 import { AttachMoney } from "@mui/icons-material";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../../../../services/hooks";
 
 import { EditProfileIcon } from "./EditProfileIcon";
@@ -16,6 +17,7 @@ import { ProfileFriendState } from "../../../friends/types";
 import { Cause } from "../../../../services/types/cause.types";
 import { formatPhoneNumber } from "../../../../utils/formUtils/formUtils";
 import { useGetVolunteerValuePerHourQuery } from "../../../../services/api/endpoints/impact/impact.api";
+import { HIERARCHY_ROUTE } from "../../../../routes/route.constants";
 
 import styles from "../styles/userProfiles.module.css";
 
@@ -97,6 +99,7 @@ export const UserQuickInfo = ({
   isEntity,
 }: UserQuickInfoProps) => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { data: volunteerValuePerHour = 33.59 } =
     useGetVolunteerValuePerHourQuery();
   const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
@@ -113,6 +116,11 @@ export const UserQuickInfo = ({
   };
   const handleContactClick = () => {
     setIsContactDialogOpen(true);
+  };
+  const handleHierarchyClick = () => {
+    if (!userId) return;
+
+    navigate(`${HIERARCHY_ROUTE}/${userId}`);
   };
 
   const isFullStateName = state?.length && state?.length > 2;
@@ -172,6 +180,13 @@ export const UserQuickInfo = ({
             textToDisplay="Organization details unavailable"
           />
         ))}
+      <button
+        type="button"
+        className={styles.entityDetailsLinkButton}
+        onClick={handleHierarchyClick}
+      >
+        Hierarchy
+      </button>
     </div>
   ) : null;
 
@@ -216,14 +231,16 @@ export const UserQuickInfo = ({
             />
           </div>
         )}
-          {isOrganizationProfile && (
-            <button
-              type="button"
-              className={styles.entityContactButton}
-              onClick={handleContactClick}
-            >
-              Contact Us
-            </button>
+          {isEntity && isOrganizationProfile && (
+            <div className={styles.entityQuickActions}>
+              <button
+                type="button"
+                className={styles.entityContactButton}
+                onClick={handleContactClick}
+              >
+                Contact Us
+              </button>
+            </div>
           )}
         </div>
       {(!isEntity || isMobile) && entityDetailsDisplay}

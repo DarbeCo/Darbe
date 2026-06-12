@@ -31,6 +31,7 @@ export const darbeBaseApi = createApi({
     "Impact",
     "VolunteerValue",
     "EventPhotos",
+    "EntityHierarchy",
   ],
   endpoints: () => ({}),
 });

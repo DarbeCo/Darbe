@@ -5,12 +5,13 @@ import {
   Favorite,
   PersonAdd,
   PostAdd,
+  AccountTree,
 } from "@mui/icons-material";
 import { useState } from "react";
 
 import { Notification } from "./types";
 import { formatDateTime } from "../../utils/CommonFunctions";
-import { PROFILE_ROUTE } from "../../routes/route.constants";
+import { HIERARCHY_ROUTE, PROFILE_ROUTE } from "../../routes/route.constants";
 import { DATE_CONSTANTS } from "../../utils/CommonConstants";
 import { assetUrl } from "../../utils/assetUrl";
 import {
@@ -19,6 +20,10 @@ import {
   useDenyFriendRequestMutation,
   useDenyOrgJoinRequestMutation,
 } from "../../services/api/endpoints/friends/friends.api";
+import {
+  useAcceptEntityChildRequestMutation,
+  useRejectEntityChildRequestMutation,
+} from "../../services/api/endpoints/entityHierarchy/entityHierarchy.api";
 
 import styles from "./styles/notifications.module.css";
 
@@ -38,6 +43,10 @@ export const NotificationCard = ({ notification }: NotificationCardProps) => {
     useAcceptFriendRequestMutation();
   const [denyFriendRequest, { isLoading: isDenyingFriendRequest }] =
     useDenyFriendRequestMutation();
+  const [acceptEntityChildRequest, { isLoading: isAcceptingHierarchyRequest }] =
+    useAcceptEntityChildRequestMutation();
+  const [rejectEntityChildRequest, { isLoading: isRejectingHierarchyRequest }] =
+    useRejectEntityChildRequestMutation();
   const [actionDialogMessage, setActionDialogMessage] = useState("");
   const formattedDate = formatDateTime(createdAt, DATE_CONSTANTS.N_TIME_AGO);
 
@@ -131,6 +140,15 @@ export const NotificationCard = ({ notification }: NotificationCardProps) => {
           actionText: "posted something new.",
           previewText: "Open their profile to see the latest activity.",
         };
+      case "entityHierarchyChildRequest":
+        return {
+          icon: <AccountTree />,
+          iconClassName: styles.notificationFollowBadge,
+          actionText: "added you as a child entity.",
+          previewText: notification.read
+            ? "This hierarchy request has been handled."
+            : "Accept or reject this hierarchy request.",
+        };
       default:
         return {
           icon: <PostAdd />,
@@ -143,6 +161,10 @@ export const NotificationCard = ({ notification }: NotificationCardProps) => {
 
   const handleClick = (userId: string) => {
     navigate(`${PROFILE_ROUTE}/${userId}`);
+  };
+
+  const handleHierarchyClick = () => {
+    navigate(`${HIERARCHY_ROUTE}/${senderUserId.id}`);
   };
 
   const handleAcceptOrgJoinRequest = async () => {
@@ -193,6 +215,30 @@ export const NotificationCard = ({ notification }: NotificationCardProps) => {
     }
   };
 
+  const handleAcceptHierarchyRequest = async () => {
+    try {
+      await acceptEntityChildRequest(contentTypeId).unwrap();
+      setActionDialogMessage("Hierarchy request accepted.");
+      setTimeout(() => setActionDialogMessage(""), 1400);
+    } catch (error) {
+      console.error("Error accepting hierarchy request", error);
+      setActionDialogMessage("Unable to accept this hierarchy request.");
+      setTimeout(() => setActionDialogMessage(""), 1800);
+    }
+  };
+
+  const handleRejectHierarchyRequest = async () => {
+    try {
+      await rejectEntityChildRequest(contentTypeId).unwrap();
+      setActionDialogMessage("Hierarchy request rejected.");
+      setTimeout(() => setActionDialogMessage(""), 1400);
+    } catch (error) {
+      console.error("Error rejecting hierarchy request", error);
+      setActionDialogMessage("Unable to reject this hierarchy request.");
+      setTimeout(() => setActionDialogMessage(""), 1800);
+    }
+  };
+
   const nameToUse =
     senderUserId?.fullName ||
     senderUserId?.organizationName ||
@@ -202,9 +248,13 @@ export const NotificationCard = ({ notification }: NotificationCardProps) => {
   const notificationDetails = getNotificationDetails(contentType);
   const isJoinRequest = contentType === "orgJoinRequest";
   const isFriendRequest = contentType === "friendRequest" && !notification.read;
+  const isHierarchyRequest =
+    contentType === "entityHierarchyChildRequest" && !notification.read;
   const isJoinActionLoading = isAcceptingJoinRequest || isDenyingJoinRequest;
   const isFriendActionLoading =
     isAcceptingFriendRequest || isDenyingFriendRequest;
+  const isHierarchyActionLoading =
+    isAcceptingHierarchyRequest || isRejectingHierarchyRequest;
 
   return (
     <>
@@ -243,7 +293,14 @@ export const NotificationCard = ({ notification }: NotificationCardProps) => {
         </div>
         <p className={styles.notificationPreview}>
           {notificationDetails.previewText}{" "}
-          <button type="button" onClick={() => handleClick(senderUserId.id)}>
+          <button
+            type="button"
+            onClick={
+              contentType === "entityHierarchyChildRequest"
+                ? handleHierarchyClick
+                : () => handleClick(senderUserId.id)
+            }
+          >
             see more
           </button>
         </p>
@@ -282,6 +339,26 @@ export const NotificationCard = ({ notification }: NotificationCardProps) => {
               className={styles.notificationDenyButton}
               onClick={handleDenyFriendRequest}
               disabled={isFriendActionLoading}
+            >
+              Reject
+            </button>
+          </div>
+        )}
+        {isHierarchyRequest && (
+          <div className={styles.notificationActions}>
+            <button
+              type="button"
+              className={styles.notificationAcceptButton}
+              onClick={handleAcceptHierarchyRequest}
+              disabled={isHierarchyActionLoading}
+            >
+              Accept
+            </button>
+            <button
+              type="button"
+              className={styles.notificationDenyButton}
+              onClick={handleRejectHierarchyRequest}
+              disabled={isHierarchyActionLoading}
             >
               Reject
             </button>
