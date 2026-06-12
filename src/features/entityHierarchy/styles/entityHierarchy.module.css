@@ -323,6 +323,10 @@
   min-height: 100%;
 }
 
+.hierarchyCandidateBackdrop {
+  display: none;
+}
+
 .hierarchyCandidatePanelHeader {
   display: flex;
   align-items: center;
@@ -517,5 +521,33 @@
 
   .hierarchyCanvas {
     min-height: 420px;
+  }
+
+  .hierarchyCandidateBackdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1290;
+    display: block;
+    padding: 0;
+    border: 0;
+    background: rgba(0, 0, 0, 0.35);
+    cursor: default;
+  }
+
+  .hierarchyCandidatePanel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 1300;
+    width: min(420px, calc(100vw - 28px));
+    max-height: min(680px, calc(100vh - 48px));
+    min-height: 0;
+    padding: 16px;
+    transform: translate(-50%, -50%);
+    overflow: hidden;
+  }
+
+  .hierarchyCandidateList {
+    max-height: min(470px, calc(100vh - 210px));
   }
 }

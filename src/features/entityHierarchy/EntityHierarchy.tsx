@@ -293,9 +293,19 @@ export const EntityHierarchy = () => {
         </div>
 
         {canEdit && isCandidatePanelOpen && (
-          <aside className={styles.hierarchyCandidatePanel}>
+          <>
+          <button
+            type="button"
+            className={styles.hierarchyCandidateBackdrop}
+            onClick={() => setIsCandidatePanelOpen(false)}
+            aria-label="Close add entity editor"
+          />
+          <aside
+            className={styles.hierarchyCandidatePanel}
+            aria-labelledby="hierarchy-candidate-panel-title"
+          >
             <div className={styles.hierarchyCandidatePanelHeader}>
-              <h2>Add To Hierarchy</h2>
+              <h2 id="hierarchy-candidate-panel-title">Add To Hierarchy</h2>
               <button
                 type="button"
                 onClick={() => setIsCandidatePanelOpen(false)}
@@ -346,6 +356,7 @@ export const EntityHierarchy = () => {
               ))}
             </div>
           </aside>
+          </>
         )}
       </div>
 
