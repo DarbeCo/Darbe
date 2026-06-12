@@ -7,7 +7,7 @@ import {
 } from "../../../components/orgOverview/OrgOverview";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { VolunteerAnnualSummary } from "../../../components/volunteerStats/VolunteerAnnualSummary";
+import { VolunteerAnalytics } from "../../../components/volunteerStats/VolunteerAnalytics";
 import { VolunteerCurrentMatches } from "../../../components/volunteerStats/VolunteerCurrentMatches";
 import { VolunteerRecentImpacts } from "../../../components/volunteerStats/VolunteerRecentImpacts";
 import { RosterRightPanel } from "../../../features/roster/RosterRightPanel";
@@ -46,7 +46,7 @@ export const RightPanel = ({
           {showOrgOverviewInStats && <OrgOverview {...(orgOverviewProps ?? {})} />}
           <VolunteerCurrentMatches />
           <VolunteerRecentImpacts />
-          {!showOrgOverviewInStats && <VolunteerAnnualSummary />}
+          <VolunteerAnalytics />
         </div>
       )}
     </>
@@ -106,13 +106,12 @@ const useMobilePanelItems = ({
               content: <OrgOverview {...(orgOverviewProps ?? {})} />,
             },
           ]
-        : [
-            {
-              id: "annual",
-              label: "Annual",
-              content: <VolunteerAnnualSummary />,
-            },
-          ]),
+        : []),
+      {
+        id: "analytics",
+        label: "Analytics",
+        content: <VolunteerAnalytics />,
+      },
       {
         id: "matches",
         label: "Current Match",

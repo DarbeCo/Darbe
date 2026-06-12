@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { VolunteerAnnualSummary } from "./VolunteerAnnualSummary";
+import { VolunteerAnalytics } from "./VolunteerAnalytics";
 import { VolunteerCurrentMatches } from "./VolunteerCurrentMatches";
 import { VolunteerRecentImpacts } from "./VolunteerRecentImpacts";
 import { CarouselButtons } from "./CarouselButtons";
@@ -8,7 +8,7 @@ import styles from "./styles/volunteerStats.module.css";
 
 export const VolunteerCarouselCards = () => {
   const carouselData = [
-    <VolunteerAnnualSummary simpleMode />,
+    <VolunteerAnalytics simpleMode />,
     <VolunteerCurrentMatches simpleMode />,
     <VolunteerRecentImpacts simpleMode />,
   ];
