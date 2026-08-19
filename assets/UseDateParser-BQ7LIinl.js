@@ -1,1 +1,0 @@
-const n=t=>{if(!t)return{month:void 0,year:void 0};let e=t;typeof t=="string"&&(e=new Date(t));const o=e.toLocaleString("en-US",{month:"short"}),r=e.toLocaleString("en-US",{year:"numeric"});return{month:o,year:r}};export{n as U};

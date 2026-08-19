@@ -1,0 +1,1 @@
+const a=t=>{if(!t)return{month:void 0,year:void 0};let r=t;if(typeof t=="string"){const e=t.match(/^(\d{4})-(\d{2})-(\d{2})$/);r=e?new Date(Number(e[1]),Number(e[2])-1,Number(e[3])):new Date(t)}const n=r.toLocaleString("en-US",{month:"short"}),o=r.toLocaleString("en-US",{year:"numeric"});return{month:n,year:o}};export{a as U};
