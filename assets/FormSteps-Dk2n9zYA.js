@@ -1,0 +1,1 @@
+import{a,j as $}from"./index-CFuuKKYf.js";const m=({step:s,formName:r,entityType:t})=>{const o=a(`/svgs/forms/${t}/${r}/${s}.svg`);return $.jsx("img",{src:o,alt:`${t} ${r} form step ${s}`})};export{m as F};
